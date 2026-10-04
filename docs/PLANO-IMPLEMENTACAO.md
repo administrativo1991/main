@@ -36,7 +36,7 @@ Li a aba `Outubro` célula a célula. As colunas são estas, e não exatamente a
 Diferenças que mudam o desenho:
 
 1. **Automáticas são F, G, H e N** (o briefing dizia E–G e M). E = Procedimento é digitável e obrigatório na planilha.
-2. **A aba `Procedimentos`** (procedimento · especialidade · valor · observação, 56 linhas, sem fisioterapia) **é a tabela de preços e a lista do campo "Procedimento" do Checkout** — decisão da Roberta, 04/10. Conferi em 04/10: a aba já tem exatamente a lista decidida e a validação de `Outubro!E` já aponta pra ela, então não criei uma cópia dentro de `Listas` (seriam duas fontes de verdade). **O valor preenche sozinho pelo procedimento escolhido e só fica editável quando o procedimento está com valor em branco** (Avaliação neuropsicológica, Avaliação de altas habilidades, Teste vocacional). A modalidade do paciente decide o procedimento padrão (ex.: "Social (R$ 200/mês)" → "Sessão de psicologia – plano social", valor 0, Pago? = "Pacote já pago").
+2. **A aba `Procedimentos`** (procedimento · especialidade · valor · observação, 56 linhas, sem fisioterapia) **é a tabela de preços e a lista do campo "Procedimento" do Checkout** — decisão da Roberta, 04/10. Conferi em 04/10: a aba já tem exatamente a lista decidida e a validação de `Outubro!E` já aponta pra ela, então não criei uma cópia dentro de `Listas` (seriam duas fontes de verdade). **O valor preenche sozinho pelo procedimento escolhido e só fica editável quando o procedimento está com valor em branco** (Avaliação neuropsicológica, Avaliação de altas habilidades, Teste vocacional). **Em qualquer procedimento, inclusive nos de valor cheio, existe o botão "Aplicar desconto"** (Roberta, 04/10): abre o campo de desconto em R$ ou %, recalcula o valor, exige um motivo curto (quem autorizou) e grava "Desconto R$ X — motivo" na Observação; a gestão vê todos os descontos do mês na tela de pendências. A modalidade do paciente decide o procedimento padrão (ex.: "Social (R$ 200/mês)" → "Sessão de psicologia – plano social", valor 0, Pago? = "Pacote já pago").
 3. **"Pago?" tem 6 opções**, não 3. O app mostra as 6 (lidas da planilha) e pré-seleciona pela regra de cobrança. "Recebeu? Sim/Não/Não se aplica" do briefing vira isso.
 4. **"Cancelado pela clínica" não existe em `Listas!A`** (só 4 opções; a validação aceita até A6). Preciso que a gestão acrescente em `Listas!A6` — ou eu acrescento na cópia e você replica.
 5. **Não há coluna de log** ("quem registrou"). Proponho **coluna U `Registrado por (app)`** na aba do mês e **coluna T `Registrado por (app)`** em `Pacientes`, formato `email · dd/mm/aaaa hh:mm`, com alterações acrescentadas na mesma célula (`| alterado por …`). Acrescentar coluna no fim não quebra fórmula nenhuma.
@@ -107,7 +107,7 @@ Comportamento por regra de cobrança (`Listas!G`):
 
 | Regra (R) | Valor | Pago? pré-selecionado | Observações |
 |---|---|---|---|
-| Tabela / vazio | do procedimento, **travado**; editável só se o procedimento está sem valor | Sim | procedimento sem valor → campo em branco + aviso "preencher à mão" |
+| Tabela / vazio | do procedimento, **travado**; editável só se o procedimento está sem valor | Sim | procedimento sem valor → campo em branco + aviso "preencher à mão". Botão **"Aplicar desconto"** sempre disponível: desconto em R$ ou %, motivo obrigatório, vai pra Observação |
 | Valor fixo combinado | número extraído de `Pacientes!N` (se não der pra extrair, em branco + aviso) | Sim | |
 | Paga o que consegue | livre, sem validar | Sim | o que for digitado quita |
 | Mensalidade fixa | em branco, campos de dinheiro desabilitados | Pacote já pago | link "ver em Mensalistas" |
@@ -126,7 +126,7 @@ Lista com filtro em dia / vence / atrasado, valor, pagador, mês atual pago?. "R
 
 ### 4.5 Gestão (só perfil gestão)
 - Editar paciente: modalidade restrita, Regra de cobrança, Observação de cobrança, pagador, convênio.
-- Pendências (lê a aba do mês e a anterior): particular atendido com Pago? vazio ou "Não" · NF não emitida com Pago? = Sim · convênio sem guia · falta sem aviso de particular (taxa a decidir, com botão "cobrar no próximo agendamento" que cria aviso no bloco ⚠ do paciente / "relevar").
+- Pendências (lê a aba do mês e a anterior): particular atendido com Pago? vazio ou "Não" · NF não emitida com Pago? = Sim · convênio sem guia · falta sem aviso de particular (taxa a decidir, com botão "cobrar no próximo agendamento" que cria aviso no bloco ⚠ do paciente / "relevar") · **descontos aplicados no mês** (paciente, valor cheio, valor cobrado, motivo, quem registrou).
 - Criar aba do mês seguinte; criar par de colunas do mês em `Mensalistas`.
 - Exportar o mês (xlsx, mesmas colunas A–U).
 - Versão imprimível de todas as listas.
@@ -165,7 +165,7 @@ Cada semana termina com uma versão publicada pra você testar.
 
 **7.4 Pacote R$ 280 em fev/2027.** Resolvido pela tabela `Procedimentos` editável + modalidade por paciente; nada no código. Sem decisão necessária agora.
 
-**Já decidido em 04/10 (Roberta):** `Procedimentos` como lista do campo Procedimento, valor automático editável só quando em branco, fisioterapia fora; modalidade em lista única visível à recepção com aviso nas restritas; rótulos antigos renomeados em `Pacientes!F`. Observação minha: a aba `Mensalistas`, coluna B, ainda usa "Pacote mensal" e "Social mensal" (40 linhas). Não mexi porque a decisão falou só de `Pacientes!F`; o app vai tratar os dois rótulos como sinônimos até você querer renomear lá também.
+**Já decidido em 04/10 (Roberta):** `Procedimentos` como lista do campo Procedimento, valor automático editável só quando em branco, fisioterapia fora; modalidade em lista única visível à recepção com aviso nas restritas; rótulos antigos renomeados em `Pacientes!F`; botão "Aplicar desconto" disponível em todo procedimento, com motivo obrigatório e conferência pela gestão. Observação minha: a aba `Mensalistas`, coluna B, ainda usa "Pacote mensal" e "Social mensal" (40 linhas). Não mexi porque a decisão falou só de `Pacientes!F`; o app vai tratar os dois rótulos como sinônimos até você querer renomear lá também.
 
 **7.5 (nova) Regra de duplicata ampliada** com "≥ 1 sobrenome em comum" — sem ela, Isac × Isaac não avisa (nascimentos diferentes). **Aprova?**
 
