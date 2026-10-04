@@ -1,6 +1,6 @@
 # Checkout — Plano de implementação (entregável 1, pra aprovação)
 
-Clínica Nascente · 04/10/2026 · base: planilha `Controle da Recepção 2026` (id `1WvuEvxKvtRs14ddAa2QqhQkJywwQOZmZqU0o6QyqUqs`)
+Clínica Nascente · 04/10/2026 (rev. 2, com as decisões da Roberta de 04/10) · base: planilha `Controle da Recepção 2026` (id `1WvuEvxKvtRs14ddAa2QqhQkJywwQOZmZqU0o6QyqUqs`)
 
 Escrevi este plano depois de ler a planilha real (cabeçalhos, fórmulas, validações e proteções de todas as abas), o PDF "Checkout — resumo do desenho (30-09)" e a nota "ENTRADA_Checkout_pagadores_e_valores (03-10)". **Não escrevi código ainda.** A seção 7 lista o que preciso que você decida.
 
@@ -36,7 +36,7 @@ Li a aba `Outubro` célula a célula. As colunas são estas, e não exatamente a
 Diferenças que mudam o desenho:
 
 1. **Automáticas são F, G, H e N** (o briefing dizia E–G e M). E = Procedimento é digitável e obrigatório na planilha.
-2. **Existe a aba `Procedimentos`** (procedimento · especialidade · valor · observação), protegida pra gestão. Ela **é** a tabela de preços editável que o briefing pede — não vou criar outra. O valor do checkout vem do procedimento escolhido, e a modalidade do paciente decide qual procedimento é o padrão (ex.: modalidade "Social" → "Sessão de psicologia – plano social", valor 0, Pago? = "Pacote já pago").
+2. **A aba `Procedimentos`** (procedimento · especialidade · valor · observação, 56 linhas, sem fisioterapia) **é a tabela de preços e a lista do campo "Procedimento" do Checkout** — decisão da Roberta, 04/10. Conferi em 04/10: a aba já tem exatamente a lista decidida e a validação de `Outubro!E` já aponta pra ela, então não criei uma cópia dentro de `Listas` (seriam duas fontes de verdade). **O valor preenche sozinho pelo procedimento escolhido e só fica editável quando o procedimento está com valor em branco** (Avaliação neuropsicológica, Avaliação de altas habilidades, Teste vocacional). A modalidade do paciente decide o procedimento padrão (ex.: "Social (R$ 200/mês)" → "Sessão de psicologia – plano social", valor 0, Pago? = "Pacote já pago").
 3. **"Pago?" tem 6 opções**, não 3. O app mostra as 6 (lidas da planilha) e pré-seleciona pela regra de cobrança. "Recebeu? Sim/Não/Não se aplica" do briefing vira isso.
 4. **"Cancelado pela clínica" não existe em `Listas!A`** (só 4 opções; a validação aceita até A6). Preciso que a gestão acrescente em `Listas!A6` — ou eu acrescento na cópia e você replica.
 5. **Não há coluna de log** ("quem registrou"). Proponho **coluna U `Registrado por (app)`** na aba do mês e **coluna T `Registrado por (app)`** em `Pacientes`, formato `email · dd/mm/aaaa hh:mm`, com alterações acrescentadas na mesma célula (`| alterado por …`). Acrescentar coluna no fim não quebra fórmula nenhuma.
@@ -86,7 +86,7 @@ Aba por mês: o app descobre a aba pelo nome do mês em pt-BR (`Novembro`), e a 
 ## 4. Telas (ordem de entrega)
 
 ### 4.1 Novo paciente → `Pacientes`
-Campos conforme briefing. Modalidades da recepção: Avulso (padrão) · Pacote 4 (R$ 400) · Pacote 12 (R$ 960) · Convênio. As demais (Social, 280/360, Mensal valor especial, Por sessão, pacotes de nutrição/ABA/AAPI) só aparecem pro perfil gestão. R e S não aparecem.
+Campos conforme briefing. **Modalidade: lista única, as 17 opções de `Listas!H2:H18`, visível à recepção** (decisão da Roberta, 04/10) — Avulso (valor da tabela) é o padrão. Ao lado de **Social (R$ 200/mês)**, **Pacote mensal preexistente (R$ 280 ou R$ 360)** e **Mensal (valor especial)** o app mostra o aviso "só com aviso da psicóloga/gestão pelo grupo Nascente | Tratamentos" e pede confirmação antes de salvar. Conferi em 04/10: `Listas!H` já tem as 17 opções (incluindo Pro bono e Permuta) e a coluna F de `Pacientes` já usa os rótulos novos; não restou "Social mensal" nem "Pacote mensal" lá. R e S não aparecem.
 
 Validação de duplicata (roda a cada tecla, antes de salvar):
 - **Bloqueia:** CPF igual (comparando só dígitos).
@@ -98,7 +98,7 @@ Casos de teste: Isac/Isaac, Natalha/Natalia (como pagadoras), Laura de Oliveira 
 
 ### 4.2 Checkout → aba do mês
 Fluxo em uma tela só, de cima pra baixo:
-1. Paciente (busca por nome com tolerância a acento) · Profissional (lista) · Procedimento (filtrado pela especialidade do profissional, padrão pela modalidade) · Data/Hora (agora, editável). Botão "Novo paciente" abre o 4.1 e volta com o paciente selecionado.
+1. Paciente (busca por nome com tolerância a acento) · Profissional (lista) · Procedimento (lista da aba `Procedimentos`, filtrada pela especialidade do profissional, padrão pela modalidade; o valor vem junto) · Data/Hora (agora, editável). Botão "Novo paciente" abre o 4.1 e volta com o paciente selecionado.
 2. **Bloco laranja "⚠ Atenção na cobrança"** = R + S de `Pacientes`, só leitura, acima de qualquer campo de dinheiro. Se mensalista: situação (em dia · vence dia 10 · atrasado desde dd/mm). Atrasado e hoje ≥ 16 → faixa vermelha "Não atender — chamar a gestão" (não bloqueia).
 3. O que aconteceu (lista da planilha).
 4. Pago? · Valor · Forma · Quem pagou (pré-preenchido com `Pacientes!O`; se diferente, pergunta "tornar pagador habitual?" → update de O/P) · NF emitida? · Nº NF · Guia assinada? (só convênio) · Observação.
@@ -107,7 +107,7 @@ Comportamento por regra de cobrança (`Listas!G`):
 
 | Regra (R) | Valor | Pago? pré-selecionado | Observações |
 |---|---|---|---|
-| Tabela / vazio | do procedimento | Sim | editar valor mostra aviso amarelo "diferente da tabela" |
+| Tabela / vazio | do procedimento, **travado**; editável só se o procedimento está sem valor | Sim | procedimento sem valor → campo em branco + aviso "preencher à mão" |
 | Valor fixo combinado | número extraído de `Pacientes!N` (se não der pra extrair, em branco + aviso) | Sim | |
 | Paga o que consegue | livre, sem validar | Sim | o que for digitado quita |
 | Mensalidade fixa | em branco, campos de dinheiro desabilitados | Pacote já pago | link "ver em Mensalistas" |
@@ -164,6 +164,8 @@ Cada semana termina com uma versão publicada pra você testar.
 **7.3 Valor fechado dentro da sessão.** Por ora só a gestão altera (via 4.5); a recepção escreve na Observação e a gestão promove. Deixo um botão na tela da gestão "promover observação pro cadastro" pra encurtar o caminho. **Ok?**
 
 **7.4 Pacote R$ 280 em fev/2027.** Resolvido pela tabela `Procedimentos` editável + modalidade por paciente; nada no código. Sem decisão necessária agora.
+
+**Já decidido em 04/10 (Roberta):** `Procedimentos` como lista do campo Procedimento, valor automático editável só quando em branco, fisioterapia fora; modalidade em lista única visível à recepção com aviso nas restritas; rótulos antigos renomeados em `Pacientes!F`. Observação minha: a aba `Mensalistas`, coluna B, ainda usa "Pacote mensal" e "Social mensal" (40 linhas). Não mexi porque a decisão falou só de `Pacientes!F`; o app vai tratar os dois rótulos como sinônimos até você querer renomear lá também.
 
 **7.5 (nova) Regra de duplicata ampliada** com "≥ 1 sobrenome em comum" — sem ela, Isac × Isaac não avisa (nascimentos diferentes). **Aprova?**
 
