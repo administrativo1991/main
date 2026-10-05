@@ -271,6 +271,29 @@ function onModalidade(){
 }
 
 /* ---------- carregar ---------- */
+function grupoModalidade(m){
+  var x=m.toLowerCase();
+  if(x.indexOf('nutri')>=0) return 'Nutrição';
+  if(x.indexOf('psicopedagog')>=0) return 'Psicopedagogia';
+  if(x.indexOf('aba')>=0) return 'Terapia ABA';
+  if(x.indexOf('psicolog')>=0||/^social/.test(x)||x.indexOf('mensal')>=0) return 'Psicologia';
+  return 'Geral (todas as especialidades)';
+}
+function preencherModalidades(){
+  var sel=$("#n-mod"), atual=sel.value, esp=($("#n-prof").selectedOptions[0]||{}).dataset||{};
+  var ordem=['Geral (todas as especialidades)','Psicologia','Nutrição','Psicopedagogia','Terapia ABA'];
+  var pref=esp.esp||''; if(pref){ ordem=ordem.filter(function(g){ return g!==pref; }); ordem.splice(1,0,pref); }
+  var grupos={}; BOOT.listas.modalidades.forEach(function(m){ var g=grupoModalidade(m); (grupos[g]=grupos[g]||[]).push(m); });
+  sel.innerHTML='';
+  ordem.concat(Object.keys(grupos).filter(function(g){ return ordem.indexOf(g)<0; })).forEach(function(g){
+    if(!grupos[g]) return;
+    var og=document.createElement('optgroup'); og.label=g;
+    grupos[g].forEach(function(m){ var o=document.createElement('option'); o.value=m; o.textContent=m; og.appendChild(o); });
+    sel.appendChild(og);
+  });
+  if(atual) sel.value=atual;
+  if(!sel.value) sel.selectedIndex=0;
+}
 function preencherSelect(sel, itens, vazio){ sel.innerHTML=''; if(vazio){ var o0=document.createElement('option'); o0.value=''; o0.textContent=vazio; sel.appendChild(o0);} itens.forEach(function(x){ var o=document.createElement('option'); o.value=x.nome||x; o.textContent=x.nome?x.nome+(x.especialidade?' · '+x.especialidade:''):x; sel.appendChild(o); }); }
 function carregar(){
   $("#carregando").hidden=false; $("#f-novo").hidden=true;
@@ -279,9 +302,10 @@ function carregar(){
     $("#who-email").textContent=b.usuario.email||'(sem e-mail)';
     $("#who-perfil").textContent=' perfil '+(b.usuario.perfil==='gestao'?'gestão':'recepção')+(MOCK?' · simulação':'');
     $("#nome-planilha").textContent='"'+b.planilha+'"';
-    preencherSelect($("#n-mod"), b.listas.modalidades);
     preencherSelect($("#n-conv"), b.listas.convenios);
     preencherSelect($("#n-prof"), b.profissionais, '—');
+    Array.prototype.forEach.call($("#n-prof").options,function(o){ var pr=b.profissionais.filter(function(x){return x.nome===o.value;})[0]; if(pr){ var e=pr.especialidade.toLowerCase(); o.dataset.esp = e.indexOf('nutri')>=0?'Nutrição':e.indexOf('psicopedagog')>=0?'Psicopedagogia':e.indexOf('aba')>=0?'Terapia ABA':e.indexOf('psic')>=0?'Psicologia':''; } });
+    preencherModalidades();
     var dl=$("#dl-pagadores"); dl.innerHTML=''; var vistos={};
     b.pacientes.forEach(function(p){ String(p.pagador||'').split(/\s*\/\s*/).forEach(function(n){ n=n.trim(); if(n&&!vistos[n]){ vistos[n]=1; var o=document.createElement('option'); o.value=n; dl.appendChild(o);} }); });
     $("#carregando").hidden=true; $("#f-novo").hidden=false;
@@ -349,6 +373,7 @@ $("#n-whats").addEventListener('input',function(){ this.value=mascaraFone(this.v
 ["n-nome","n-cpf","n-nasc","n-pagador"].forEach(function(id){ $("#"+id).addEventListener('input',checarDup); });
 CAMPOS.forEach(function(id){ $("#"+id).addEventListener('input',salvarRascunho); $("#"+id).addEventListener('change',salvarRascunho); });
 $("#n-mod").addEventListener('change',onModalidade);
+$("#n-prof").addEventListener('change',function(){ preencherModalidades(); onModalidade(); });
 $("#n-conv").addEventListener('change',function(){ $("#l-cart").hidden = this.value==='Particular'; });
 $("#f-novo").addEventListener('submit',function(e){ e.preventDefault(); salvar(false); });
 $("#btn-limpar").addEventListener('click',function(){ limparForm(true); });
