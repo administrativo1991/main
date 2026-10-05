@@ -127,7 +127,7 @@ body.nav-roxo nav button[aria-current="page"]{background:#F1EEF6;color:#543060}
 @media (prefers-reduced-motion: reduce){ .toast{transition:none} }
 </style>
 
-<div class="banner">Recepção Nascente · protótipo navegável · nomes, valores e datas fictícios · data simulada: segunda, 16/11/2026 <span class="opt">Menu: <button id="opt-claro" aria-pressed="true">claro</button><button id="opt-roxo" aria-pressed="false">roxo</button></span></div>
+<div class="banner">Recepção Nascente · protótipo navegável · nomes, valores e datas fictícios · data simulada: segunda, 16/11/2026</div>
 <div class="app">
 <nav aria-label="Telas">
   <div class="brand"><span class="eyebrow">Clínica</span><span class="logo">nascente</span><small>Recepção · atendimentos</small></div>
@@ -633,9 +633,7 @@ $("#m-salvar").addEventListener("click",()=>{ const m=MEN.find(x=>x[0]===$("#m-r
 renderMen("todos");
 
 // opção de menu
-function setNav(roxo){ document.body.classList.toggle("nav-roxo",roxo); $("#opt-roxo").setAttribute("aria-pressed",String(roxo)); $("#opt-claro").setAttribute("aria-pressed",String(!roxo)); try{localStorage.setItem("ck-nav",roxo?"roxo":"claro")}catch(e){} }
-$("#opt-roxo").addEventListener("click",()=>setNav(true)); $("#opt-claro").addEventListener("click",()=>setNav(false));
-try{ setNav(localStorage.getItem("ck-nav")==="roxo"); }catch(e){}
+document.body.classList.add("nav-roxo"); // decisão Roberta 05/10: menu em roxo escuro
 // aba inicial
 let tab="dia"; try{ tab=localStorage.getItem("ck-tab")||tab; }catch(e){}
 if(location.hash && ["dia","checkout","novo","mensal","gestao"].includes(location.hash.slice(1))) tab=location.hash.slice(1);
