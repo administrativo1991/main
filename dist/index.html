@@ -62,7 +62,7 @@ input.erro{border-color:var(--bad);outline-color:var(--bad)}
 .btn:disabled{opacity:.5;cursor:not-allowed;filter:none}
 .btn:focus-visible{outline:2px solid var(--lilas);outline-offset:2px}
 .actions{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-top:16px}
-.dia-nav{display:inline-flex;align-items:center;gap:4px}.dia-nav input{width:118px;text-align:center}.dia-nav .btn{padding:6px 10px;font-size:18px;line-height:1}
+.dia-nav{display:inline-flex;align-items:center;gap:4px;position:relative}.dia-nav input{width:118px;text-align:center}.dia-nav .btn{padding:6px 10px;font-size:18px;line-height:1}
 .hint{font-family:var(--font-body);font-size:12.5px;color:var(--muted);font-weight:400}
 .alert{border-radius:14px;padding:13px 16px;border:1px solid;border-left-width:5px;margin:12px 0;display:flex;gap:12px;align-items:flex-start}
 .alert .ic{font-size:22px;line-height:1}
@@ -183,7 +183,7 @@ tr.done td{color:var(--muted)}
   <div class="topbar">
     <div><h1 id="d-titulo">Lista do dia</h1><p class="sub">Agenda recorrente do dia + agendamentos avulsos + o que já foi registrado. Clique numa linha para ver os botões.</p></div>
     <div class="actions no-print" style="margin:0">
-      <span class="dia-nav"><button class="btn secondary small" type="button" id="d-ant" title="Dia anterior" aria-label="Dia anterior">&lsaquo;</button><input id="d-data" inputmode="numeric" maxlength="10" placeholder="dd/mm/aaaa" title="Digite uma data ou use as setas"><button class="btn secondary small" type="button" id="d-prox" title="Dia seguinte" aria-label="Dia seguinte">&rsaquo;</button></span>
+      <span class="dia-nav"><button class="btn secondary small" type="button" id="d-ant" title="Dia anterior" aria-label="Dia anterior">&lsaquo;</button><input id="d-data" inputmode="numeric" maxlength="10" placeholder="dd/mm/aaaa" title="Digite uma data ou use as setas"><button class="btn secondary small" type="button" id="d-prox" title="Dia seguinte" aria-label="Dia seguinte">&rsaquo;</button><button class="btn secondary small" type="button" id="d-cal-btn" title="Escolher no calendário" aria-label="Escolher no calendário">&#128197;</button><input type="date" id="d-cal" tabindex="-1" aria-hidden="true" style="position:absolute;opacity:0;width:1px;height:1px;padding:0;border:0;pointer-events:none"></span>
       <button class="btn secondary small" type="button" id="d-hoje">Hoje</button>
       <button class="btn secondary small" type="button" id="d-add">+ Agendar no dia</button>
       <button class="btn secondary small" type="button" id="d-rec">Agenda recorrente</button>
@@ -1034,6 +1034,8 @@ $("#d-hoje").addEventListener('click',function(){ $("#d-data").value=hojeStr(); 
 function mudarDia(n){ var dt=dataObj($("#d-data").value)||new Date(); dt.setDate(dt.getDate()+n); $("#d-data").value=('0'+dt.getDate()).slice(-2)+'/'+('0'+(dt.getMonth()+1)).slice(-2)+'/'+dt.getFullYear(); carregarDia(); }
 $("#d-ant").addEventListener('click',function(){ mudarDia(-1); });
 $("#d-prox").addEventListener('click',function(){ mudarDia(1); });
+$("#d-cal-btn").addEventListener('click',function(){ var c=$("#d-cal"), dt=dataObj($("#d-data").value)||new Date(); c.value=dt.getFullYear()+'-'+('0'+(dt.getMonth()+1)).slice(-2)+'-'+('0'+dt.getDate()).slice(-2); if(c.showPicker){ try{ c.showPicker(); return; }catch(e){} } c.style.cssText='width:150px'; c.focus(); });
+$("#d-cal").addEventListener('change',function(){ var m=this.value.match(/^(\d{4})-(\d{2})-(\d{2})$/); if(!m) return; $("#d-data").value=m[3]+'/'+m[2]+'/'+m[1]; carregarDia(); });
 $("#d-data").addEventListener('input',function(){ this.value=mascaraData(this.value); });
 $("#d-data").addEventListener('change',function(){ if(dataObj(this.value)) carregarDia(); });
 $("#d-print").addEventListener('click',function(){ window.print(); });
