@@ -42,22 +42,22 @@
 *{box-sizing:border-box}
 body{background:var(--bg);color:var(--fg);font-family:var(--font-body);font-size:15px;line-height:1.5;margin:0}
 .app{display:grid;grid-template-columns:232px minmax(0,1fr);min-height:100vh}
-nav{background:linear-gradient(170deg,#5B3568 0%,#3F234A 100%);color:#F1EEF6;padding:22px 14px;display:flex;flex-direction:column;gap:4px;position:sticky;top:env(safe-area-inset-top,0px);height:100vh}
-.brand{margin:0 8px 18px;color:#F1EEF6}
-.brand .eyebrow{font-family:var(--font-head);font-weight:500;font-size:10px;letter-spacing:.3em;text-transform:uppercase;color:#DCB4A0;display:block}
-.brand .logo{font-family:var(--font-head);font-weight:500;font-size:30px;line-height:1.05;letter-spacing:-.01em;display:block}
-.brand small{display:block;font-family:var(--font-head);font-weight:500;font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:#C9B8D2;margin-top:8px}
-nav button{all:unset;cursor:pointer;padding:10px 12px;border-radius:12px;font-family:var(--font-head);font-weight:500;font-size:14px;color:#F1EEF6;display:flex;justify-content:space-between;align-items:center}
-nav button:hover{background:rgba(241,238,246,.10)}
-nav button[aria-current="page"]{background:#F1EEF6;color:#543060;font-weight:600}
-nav button:focus-visible{outline:2px solid #DCB4A0;outline-offset:2px}
-.who{margin-top:auto;font-size:12px;color:#C9B8D2;padding:0 8px}
-.who b{display:block;color:#F1EEF6;font-weight:600;word-break:break-all}
+nav{background:var(--faixa);color:var(--fg);border-right:1px solid var(--line);padding:22px 14px;display:flex;flex-direction:column;gap:4px;position:sticky;top:env(safe-area-inset-top,0px);height:100vh}
+.brand{margin:0 8px 18px;color:var(--roxo)}
+.brand .eyebrow{font-family:var(--font-head);font-weight:500;font-size:10px;letter-spacing:.3em;text-transform:uppercase;color:var(--lilas);display:block}
+.brand .logo{font-family:var(--font-head);font-weight:500;font-size:30px;line-height:1.05;letter-spacing:-.01em;display:block;color:var(--roxo)}
+.brand small{display:block;font-family:var(--font-head);font-weight:500;font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--muted);margin-top:8px}
+nav button{all:unset;cursor:pointer;padding:10px 12px;border-radius:12px;font-family:var(--font-head);font-weight:500;font-size:14px;color:var(--fg);display:flex;justify-content:space-between;align-items:center}
+nav button:hover{background:var(--chip)}
+nav button[aria-current="page"]{background:var(--accent);color:var(--accent-fg);font-weight:600}
+nav button:focus-visible{outline:2px solid var(--lilas);outline-offset:2px}
+.who{margin-top:auto;font-size:12px;color:var(--muted);padding:0 8px}
+.who b{display:block;color:var(--fg);font-weight:600;word-break:break-all}
 main{padding-block:26px;padding-inline:clamp(16px,3vw,40px);min-width:0}
 .screen[hidden]{display:none}
 h1{font-family:var(--font-head);font-weight:600;font-size:24px;color:var(--roxo);margin:0 0 4px;text-wrap:balance;letter-spacing:-.01em}
-:root[data-theme="dark"] h1{color:#F1EEF6}
-@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]) h1{color:#F1EEF6} }
+:root[data-theme="dark"] h1,:root[data-theme="dark"] .brand,:root[data-theme="dark"] .brand .logo{color:#F1EEF6}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]) h1,:root:not([data-theme="light"]) .brand,:root:not([data-theme="light"]) .brand .logo{color:#F1EEF6} }
 h2{color:var(--roxo)}
 @media (prefers-color-scheme: dark){ :root:not([data-theme="light"]) h2{color:#F1EEF6} }
 :root[data-theme="dark"] h2{color:#F1EEF6}
@@ -122,7 +122,7 @@ tr.done td{color:var(--muted)}
 .readonly{background:var(--bg);border-radius:10px;padding:9px 11px;border:1px solid var(--line);color:var(--fg)}
 @media (max-width:760px){
   .app{grid-template-columns:1fr}
-  nav{position:fixed;bottom:0;left:0;right:0;top:auto;height:auto;flex-direction:row;padding:6px 6px calc(6px + env(safe-area-inset-bottom,0px));overflow-x:auto;z-index:5;background:#3F234A}
+  nav{position:fixed;bottom:0;left:0;right:0;top:auto;height:auto;flex-direction:row;padding:6px 6px calc(6px + env(safe-area-inset-bottom,0px));overflow-x:auto;z-index:5;border-right:0;border-top:1px solid var(--line)}
   nav .brand,.who{display:none}
   nav button{flex:1 0 auto;justify-content:center;font-size:13px;padding:8px 10px}
   nav button .n{display:none}
