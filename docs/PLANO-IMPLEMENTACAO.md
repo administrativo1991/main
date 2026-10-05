@@ -153,7 +153,7 @@ Lista com filtro em dia / vence / atrasado, valor, pagador, mês atual pago?. "R
 | Semana | Entrega | Critério |
 |---|---|---|
 | 05–09/10 | ✅ 05/10: carregador, servidor, tela **Novo paciente**, módulo de duplicatas com 10 grupos de testes automáticos (Isac/Isaac, Natalha/Natalia, gêmeos, Isabella/Isabelli, Agatha×3, CPF). ✅ Instalado na cópia em 04/10 às 22h09 (implantação v1); a tela abriu lendo a cópia. Falta: primeiro cadastro de teste e conferência da linha em Pacientes | duplicatas Isac/Isaac e Natalha/Natalia testadas |
-| 12–16/10 | **Atendimento** com bloco ⚠ e regras de cobrança | 6 casos do briefing: tabela, paga o que consegue, mensalidade fixa, pro bono, convênio, mensalista atrasado |
+| 12–16/10 | ✅ Adiantado para 05/10: **Atendimento** publicado na cópia, com bloco ⚠, regras de cobrança, procedimento derivado, desconto, pacotes (aba `Pacotes` + coluna V), sessão extra, pagador novo, gravação na aba do mês (colunas U/V criadas no fim). Testado no navegador com os 6 casos do briefing mais pacote 2/4, pacote encerrado com lançamento, falta e pediatria. Falta: teste da Roberta na cópia e conferência das linhas | 6 casos do briefing: tabela, paga o que consegue, mensalidade fixa, pro bono, convênio, mensalista atrasado |
 | 19–23/10 | Lista do dia imprimível + Mensalistas | recepção registra em < 1 min |
 | 26–30/10 | Gestão, pendências, exportar mês, READMEs recepção e gestão, piloto na planilha real | gestão fecha outubro pelo app |
 | 01/11 | Virada: aba Novembro, modelo antecipado | |
@@ -203,3 +203,10 @@ Ou seja: **"desmarcou" é o aviso em tempo; "faltou com aviso" é o aviso tarde 
 **7.10 (anotado 05/10) "Mensalidade fixa" × modalidades mensais.** No comportamento são iguais (valor fixo por mês, independe de quantas sessões). A regra de cobrança "Mensalidade fixa (independe do nº de sessões)" é redundante com as modalidades Social, Pacote mensal preexistente e Mensal (valor especial). O app trata toda modalidade mensal igual, com ou sem essa regra. Quando o app estiver pronto, decidir se tira "Mensalidade fixa" de `Listas!G`, deixando a regra de cobrança só pra exceções (paga o que consegue, valor fixo combinado, pro bono, permuta, convênio).
 
 **7.7 ✅ Decidido 05/10: sim, muda em novembro** (vai pro checklist da virada). Rótulos de `Listas!B` na virada. "Mensalista (paga no mês seguinte)" é o modelo antigo. Em novembro vira "Mensalista (mensalidade do mês)"? O app lê o rótulo da planilha, então basta você trocar o texto — só preciso saber se troca, pra eu não fixar nada.
+
+
+## 10. Como publicar uma atualização (nota técnica)
+
+1. Editar `app/server/*.js` ou `app/client/index.html`; `node build.js`; `node tests/duplicatas.test.js`; teste no navegador em simulação (`dist/index.html`, sem Google).
+2. Gravar os fontes na planilha de código (`arquivos`): linha 2 `duplicatas.js`, linha 3 `server.js`, linhas 4+ `index.html` em partes de até 45.000 caracteres (coluna B = nº da parte). O carregador junta as partes e guarda em cache por 90 s.
+3. O carregador (`dist/Code.gs`) só muda em caso raro; aí a Roberta repete o passo "Implantar → Gerenciar implantações → Nova versão".
