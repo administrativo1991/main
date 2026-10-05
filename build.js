@@ -10,11 +10,24 @@ fs.mkdirSync(path.join(raiz, 'dist'), { recursive: true });
 fs.writeFileSync(path.join(raiz, 'dist/index.html'), client.replace('/*__DUPLICATAS__*/', () => dup));
 fs.writeFileSync(path.join(raiz, 'dist/server.js'), dup + '\n' + server);
 fs.writeFileSync(path.join(raiz, 'dist/Code.gs'), loader.replace('__CODIGO_PLANILHA_ID__', cfg.codigoPlanilhaId));
-// pedaços para a planilha de código (células de até 45.000 caracteres)
-const TAM = 45000, linhas = [];
+// pedaços para a planilha de código: cada arquivo é dividido em células de até 12.000 caracteres,
+// cortadas em fim de linha. O carregador junta as partes pelo número da coluna "parte".
+// Células pequenas = cada atualização reescreve só o pedaço que mudou.
+const TAM = 12000, linhas = [];
+function pedacos(txt) {
+  const partes = []; let atual = '';
+  const ls = txt.split('\n');
+  ls.forEach((l, i) => {
+    const peca = l + (i < ls.length - 1 ? '\n' : '');
+    if (atual && atual.length + peca.length > TAM) { partes.push(atual); atual = ''; }
+    atual += peca;
+  });
+  if (atual) partes.push(atual);
+  return partes;
+}
 // na planilha de código ficam os 3 arquivos-fonte separados; o carregador monta (index + duplicatas, duplicatas + server)
 for (const [nome, txt] of [['duplicatas.js', dup], ['server.js', server], ['index.html', client]]) {
-  for (let i = 0, k = 0; i < txt.length; i += TAM, k++) linhas.push([nome, k, txt.slice(i, i + TAM)]);
+  pedacos(txt).forEach((t, k) => linhas.push([nome, k, t]));
 }
 fs.writeFileSync(path.join(raiz, 'dist/pedacos.json'), JSON.stringify(linhas));
 console.log('dist ok:', linhas.map(l => l[0] + '#' + l[1] + ' (' + l[2].length + ')').join(', '));

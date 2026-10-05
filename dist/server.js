@@ -148,10 +148,11 @@
 var CONFIG = {
   TZ: 'America/Sao_Paulo',
   GESTAO: ['administrativo@clinicanascente.com.br'],
-  ABA: { PACIENTES: 'Pacientes', LISTAS: 'Listas', PROFISSIONAIS: 'Profissionais', PROCEDIMENTOS: 'Procedimentos', MENSALISTAS: 'Mensalistas', PACOTES: 'Pacotes', AGENDA: 'Agenda recorrente', DIA: 'Lista do dia' },
+  ABA: { PACIENTES: 'Pacientes', LISTAS: 'Listas', PROFISSIONAIS: 'Profissionais', PROCEDIMENTOS: 'Procedimentos', MENSALISTAS: 'Mensalistas', PACOTES: 'Pacotes', AGENDA: 'Agenda recorrente', DIA: 'Lista do dia', ALTERACOES: 'Alterações de cadastro' },
   DIAS: ['Domingo','Segunda','Terça','Quarta','Quinta','Sexta','Sábado'],
   HA: ['ID', 'Paciente', 'Profissional', 'Dia da semana', 'Hora', 'Frequência', 'Começa em', 'Termina em', 'Ativo', 'Observação', 'Registrado por (app)'],
   HD: ['ID', 'Data', 'Hora', 'Paciente', 'Profissional', 'Origem', 'Observação', 'Registrado por (app)'],
+  HC: ['Data/hora', 'Paciente', 'Campo', 'De', 'Para', 'Quem informou', 'Registrado por (app)'],
   MESES: ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'],
   VIRADA: '2026-11-01', // a partir daqui a mensalidade é antecipada (vence dia 10, tolerância 15)
   // cabeçalhos da aba do mês (os existentes são lidos como estão; U e V são criados no fim se faltarem)
@@ -656,6 +657,13 @@ API.listaDoDia = function (d) {
   linhasComo_(planilha_().getSheetByName(CONFIG.ABA.DIA)).forEach(function (r) {
     if (r['Data'] !== chave || !r['Paciente']) return;
     var origem = String(r['Origem'] || 'Avulso');
+    if (/^Confirmado/i.test(origem)) { // confirmação da véspera: marca o item, não cria outro
+      var alvoC = itens.filter(function (it) { return it.paciente === r['Paciente'] && it.profissional === r['Profissional']; })[0];
+      var quem = String(r['Registrado por (app)'] || '').split(' · ');
+      if (alvoC) alvoC.confirmado = { por: quem[0] || '', quando: quem[1] || '' };
+      else itens.push({ hora: horaTxt_(r['Hora']), paciente: r['Paciente'], profissional: r['Profissional'], origem: 'Semanal', confirmado: { por: quem[0] || '', quando: quem[1] || '' }, listaId: r['ID'], obs: r['Observação'] || '' });
+      return;
+    }
     if (/^Não vem/i.test(origem)) { // ausência avisada / remarcação: marca o item fixo, não cria outro
       var alvo = itens.filter(function (it) { return it.paciente === r['Paciente'] && it.profissional === r['Profissional']; })[0];
       if (alvo) { alvo.naoVem = origem; alvo.obs = (alvo.obs ? alvo.obs + ' · ' : '') + (r['Observação'] || ''); }
@@ -696,6 +704,68 @@ API.remarcar = function (d) {
   if (!r1.ok) return r1;
   var r2 = API.acrescentarAoDia({ data: fmtData_(para), hora: d.horaPara || d.horaDe || '', paciente: paciente, profissional: profissional, origem: 'Remarcação de ' + fmtData_(de), observacao: d.observacao || '' });
   return r2.ok ? { ok: true, ids: [r1.id, r2.id] } : r2;
+};
+// Confirmação da véspera: uma linha em "Lista do dia" com Origem "Confirmado" (quem confirmou fica em "Registrado por (app)")
+API.confirmar = function (d) {
+  d = d || {};
+  return API.acrescentarAoDia({ data: d.data, hora: d.hora || '', paciente: d.paciente, profissional: d.profissional, origem: 'Confirmado', observacao: d.observacao || '' });
+};
+
+/* ---------- Editar cadastro (recepção e gestão; toda alteração vai pro log) ---------- */
+var CAMPOS_CADASTRO = { modalidade: 'MODALIDADE', convenio: 'CONVENIO', carteirinha: 'CARTEIRINHA', regra: 'REGRA', valorCombinado: 'VALOR_COMB', obsCobranca: 'OBS_COBRANCA', pagador: 'PAGADOR', whats: 'WHATS', profRef: 'PROF_REF' };
+function linhaPaciente_(nome) {
+  var alvo = Duplicatas.normalizar(String(nome || ''));
+  return indicePacientes_().filter(function (p) { return Duplicatas.normalizar(p.nome) === alvo; })[0] || null;
+}
+API.lerCadastro = function (d) {
+  d = d || {};
+  var p = linhaPaciente_(d.nome);
+  if (!p) return { ok: false, erros: ['Paciente não encontrado em Pacientes.'] };
+  var s = aba_(CONFIG.ABA.PACIENTES), h = cabecalhos_(s), H = CONFIG.H;
+  var r = s.getRange(p.linha, 1, 1, s.getLastColumn()).getValues()[0];
+  var val = function (k) { var c = h[H[k]]; if (!c) return ''; var v = r[c - 1]; return (v instanceof Date) ? fmtData_(v) : String(v == null ? '' : v).trim(); };
+  var campos = {}; Object.keys(CAMPOS_CADASTRO).forEach(function (k) { campos[k] = val(CAMPOS_CADASTRO[k]); });
+  return { ok: true, linha: p.linha, nome: p.nome, nasc: val('NASC'), cpfFinal: Duplicatas.digitos(val('CPF')).slice(-4), ativo: val('ATIVO'), indicacao: val('INDICACAO'), primeira: val('PRIMEIRA'), campos: campos };
+};
+API.atualizarCadastro = function (d) {
+  d = d || {}; var campos = d.campos || {}, erros = [];
+  var quem = String(d.quemInformou || '').replace(/\s+/g, ' ').trim();
+  if (!quem) erros.push('Informe quem passou a informação (ex.: Juliana no grupo Tratamentos, a própria mãe).');
+  var lista = function (cab) { try { return colunaLista_(cab); } catch (e) { return []; } };
+  var mods = lista(CONFIG.LISTAS.MODALIDADE), convs = lista(CONFIG.LISTAS.CONVENIO), regras = lista(CONFIG.LISTAS.REGRA);
+  if (campos.modalidade != null && campos.modalidade !== '' && mods.length && mods.indexOf(campos.modalidade) < 0) erros.push('Modalidade fora da lista.');
+  if (campos.convenio != null && campos.convenio !== '' && convs.length && convs.indexOf(campos.convenio) < 0) erros.push('Convênio fora da lista.');
+  if (campos.regra != null && campos.regra !== '' && regras.length && regras.indexOf(campos.regra) < 0) erros.push('Regra de cobrança fora da lista.');
+  if (campos.modalidade === 'Convênio' && (!campos.convenio || campos.convenio === 'Particular')) erros.push('Modalidade "Convênio" exige escolher o convênio.');
+  if (erros.length) return { ok: false, erros: erros };
+  var lock = LockService.getScriptLock(); lock.waitLock(20000);
+  try {
+    var p = linhaPaciente_(d.nome);
+    if (!p) return { ok: false, erros: ['Paciente não encontrado em Pacientes.'] };
+    var g = garantirColunasPacientes_(), s = aba_(CONFIG.ABA.PACIENTES), h = g.h, H = CONFIG.H, u = usuario_();
+    var atual = s.getRange(p.linha, 1, 1, s.getLastColumn()).getValues()[0];
+    var mudancas = [];
+    Object.keys(CAMPOS_CADASTRO).forEach(function (k) {
+      if (!(k in campos) || campos[k] == null) return; // só grava o que a tela mandou
+      var c = h[H[CAMPOS_CADASTRO[k]]]; if (!c) return;
+      var de = atual[c - 1], deTxt = (de instanceof Date) ? fmtData_(de) : String(de == null ? '' : de).trim();
+      var para = String(campos[k]).replace(/\s+/g, ' ').trim();
+      if (para === deTxt) return;
+      s.getRange(p.linha, c).setValue(para);
+      if (k === 'pagador' && h[H.PAGADOR_EXTRATO]) s.getRange(p.linha, h[H.PAGADOR_EXTRATO]).setValue(para);
+      mudancas.push({ campo: H[CAMPOS_CADASTRO[k]], de: deTxt, para: para });
+    });
+    if (!mudancas.length) return { ok: true, alterados: [], aviso: 'Nada mudou.' };
+    var carimbo = (u.email || 'app') + ' · ' + agora_();
+    if (h[H.LOG]) { var cl = s.getRange(p.linha, h[H.LOG]); cl.setValue((String(cl.getValue() || '') + ' | cadastro alterado por ' + carimbo + ' (' + mudancas.map(function (m) { return m.campo.split(' (')[0]; }).join(', ') + '; informou: ' + quem + ')').replace(/^ \| /, '')); }
+    var sl = abaComCabecalho_(CONFIG.ABA.ALTERACOES, CONFIG.HC), hl = cabecalhos_(sl);
+    mudancas.forEach(function (m) {
+      var linha = proximaLinha_(sl, hl['Paciente']);
+      gravarCelulas_(sl, linha, hl, { 'Data/hora': agora_(), 'Paciente': p.nome, 'Campo': m.campo, 'De': m.de, 'Para': m.para, 'Quem informou': quem, 'Registrado por (app)': carimbo });
+    });
+    SpreadsheetApp.flush();
+    return { ok: true, alterados: mudancas.map(function (m) { return m.campo; }), colunasCriadas: g.criadas };
+  } finally { lock.releaseLock(); }
 };
 // Gestão: cria a aba de um mês copiando a estrutura (cabeçalho, fórmulas automáticas, validações) da aba-modelo
 API.criarAbaMes = function (d) {
