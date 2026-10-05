@@ -21,6 +21,7 @@
   color-scheme:light;
 }
 *{box-sizing:border-box}
+[hidden]{display:none!important}
 html,body{margin:0;height:100%}
 body{background:var(--bg);color:var(--fg);font-family:var(--font-body);font-size:15px;line-height:1.5}
 .app{display:grid;grid-template-columns:232px minmax(0,1fr);min-height:100%}
@@ -79,6 +80,12 @@ input.erro{border-color:var(--bad);outline-color:var(--bad)}
 .check{flex-direction:row;align-items:flex-start;gap:10px;font-family:var(--font-body);font-size:14px;color:var(--fg);font-weight:400}
 .check input{width:auto;margin-top:3px}
 .breve-box{background:var(--card2);border-radius:16px;padding:24px;color:var(--muted);font-family:var(--font-serif);font-style:italic}
+.readonly{background:var(--bg);border-radius:10px;padding:9px 11px;border:1px solid var(--line);color:var(--fg);min-height:40px}
+.money{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.money input{flex:1 1 120px}
+.pill.bad{background:var(--bad-bg);color:var(--bad)}
+label.inline{flex-direction:row;align-items:center;gap:8px;font-family:var(--font-body);font-size:14px;color:var(--fg);font-weight:400}
+label.inline input{width:auto}
 @media (max-width:760px){
   .app{grid-template-columns:1fr}
   nav{position:fixed;bottom:0;left:0;right:0;top:auto;height:auto;flex-direction:row;padding:6px 6px calc(6px + env(safe-area-inset-bottom,0px));overflow-x:auto;z-index:5;background:#3F234A}
@@ -97,7 +104,7 @@ input.erro{border-color:var(--bad);outline-color:var(--bad)}
 <nav aria-label="Telas">
   <div class="brand"><span class="eyebrow">Clínica</span><span class="logo">nascente</span><small>Recepção · atendimentos</small></div>
   <button data-go="dia">Lista do dia <span class="breve">em breve</span></button>
-  <button data-go="atendimento">Atendimento <span class="breve">em breve</span></button>
+  <button data-go="atendimento">Atendimento</button>
   <button data-go="novo" aria-current="page">Novo paciente</button>
   <button data-go="mensal">Mensalistas <span class="breve">em breve</span></button>
   <button data-go="gestao">Gestão <span class="breve">em breve</span></button>
@@ -140,6 +147,80 @@ input.erro{border-color:var(--bad);outline-color:var(--bad)}
     </form>
   </div>
   <div id="n-sucesso"></div>
+</section>
+
+<section class="screen" id="s-atend" hidden>
+  <h1>Registrar atendimento</h1>
+  <p class="sub">Registro inteiro na chegada, numa etapa só. Grava uma linha na aba <b id="a-aba-nome">do mês</b>.</p>
+  <div class="card">
+    <div id="a-carregando" class="carregando">Carregando…</div>
+    <form id="f-atend" hidden novalidate>
+      <div class="grid">
+        <label class="dupla"><span class="lt">Paciente <span class="req">*</span></span><input id="a-pac" list="dl-pacientes" autocomplete="off" placeholder="Comece a digitar o nome…"><datalist id="dl-pacientes"></datalist>
+          <span class="hint">Só quem está em Pacientes. Não achou? <a href="#" id="a-novo">Novo paciente</a></span></label>
+        <label><span class="lt">Profissional <span class="req">*</span></span><select id="a-prof"><option value="">—</option></select></label>
+        <label><span class="lt">Data e hora</span><div class="money"><input id="a-data" inputmode="numeric" maxlength="10" style="flex:2 1 110px"><input id="a-hora" inputmode="numeric" maxlength="5" placeholder="hh:mm" style="flex:1 1 70px"></div></label>
+        <label><span class="lt">Tipo de atendimento</span><select id="a-tipo"></select></label>
+        <label class="dupla"><span class="lt">Procedimento <span class="hint">o app escolhe pela modalidade e grava na planilha</span></span><div class="readonly" id="a-proc-view">—</div>
+          <span class="hint"><a href="#" id="a-proc-alterar">alterar procedimento</a></span><select id="a-proc" hidden></select></label>
+      </div>
+      <div id="a-atencao"></div>
+      <div id="a-pacotebox" class="alert note" hidden><div style="flex:1">
+        <div class="t" id="a-pk-titulo">Lançar pacote</div>
+        <p class="hint">Cria uma linha em <b>Pacotes</b> e uma linha de recebimento na aba do mês. A sessão de hoje já conta como 1.</p>
+        <div class="grid" style="margin-top:8px">
+          <label>Sessões<input id="a-pk-n" inputmode="numeric"></label>
+          <label>Valor (R$)<input id="a-pk-valor" inputmode="decimal"></label>
+          <label>Forma<select id="a-pk-forma"></select></label>
+          <label>Quem pagou<input id="a-pk-quem"></label>
+          <label>NF emitida?<select id="a-pk-nf"><option>Sim</option><option>Não</option></select></label>
+          <label>Nº da NF<input id="a-pk-nfn"></label>
+        </div>
+        <div class="actions" style="margin-top:8px"><button class="btn small" type="button" id="a-pk-salvar">Salvar pacote e recebimento</button><button class="btn secondary small" type="button" id="a-pk-cancel">Cancelar</button></div>
+      </div></div>
+      <div id="a-extrabox" class="alert note" hidden><div style="flex:1">
+        <div class="t">Liberar sessão extra (sem cobrar)</div>
+        <p class="hint">Fica registrada na linha do atendimento e na lista da gestão. Não consome sessão do pacote.</p>
+        <div class="grid" style="margin-top:8px">
+          <label>Quem liberou<select id="a-extra-quem"><option>Recepção</option><option>Gestão</option><option>Psicóloga</option></select></label>
+          <label class="dupla">Motivo (obrigatório)<input id="a-extra-motivo" placeholder="ex.: paciente em crise, Juliana pediu pra atender"></label>
+        </div>
+        <div class="actions" style="margin-top:8px"><button class="btn small" type="button" id="a-extra-ok">Liberar e registrar como pacote</button><button class="btn secondary small" type="button" id="a-extra-cancel">Cancelar</button></div>
+      </div></div>
+      <div class="grid" style="margin-top:12px">
+        <label><span class="lt">O que aconteceu <span class="req">*</span></span><select id="a-oque"></select></label>
+        <label><span class="lt">Pago?</span><select id="a-pago"></select></label>
+        <label><span class="lt">Valor (R$) <span class="hint" id="a-valor-hint"></span></span><div class="money"><input id="a-valor" inputmode="decimal" readonly><button class="btn secondary small" type="button" id="a-desc">Aplicar desconto</button></div></label>
+        <label id="l-forma"><span class="lt">Forma de pagamento</span><select id="a-forma"></select></label>
+        <label id="l-datapag" hidden><span class="lt">Data do pagamento</span><input id="a-datapag" inputmode="numeric" maxlength="10"></label>
+      </div>
+      <div id="a-descbox" class="alert note" hidden><div style="flex:1">
+        <div class="t">Desconto</div>
+        <div class="grid" style="margin-top:8px">
+          <label>Desconto<input id="a-desc-val" placeholder="20 ou 10%" inputmode="decimal"></label>
+          <label>Quem autorizou (obrigatório)<input id="a-desc-motivo" placeholder="ex.: Juliana, no grupo Tratamentos"></label>
+          <label>Valor final<input id="a-desc-final" readonly></label>
+        </div>
+        <p class="hint" style="margin-top:6px">Vai pra Observação como "Desconto R$ X — motivo" e aparece na lista de descontos do mês, na Gestão.</p>
+      </div></div>
+      <div class="grid" style="margin-top:12px">
+        <label class="dupla"><span class="lt">Quem pagou <span class="hint">pré-preenchido com o pagador habitual; esse nome vai pra NF</span></span><input id="a-quem" list="dl-pagadores" autocomplete="off"></label>
+        <label><span class="lt">NF emitida?</span><select id="a-nf"><option>Não</option><option>Sim</option><option>Não se aplica</option></select></label>
+        <label><span class="lt">Nº da NF</span><input id="a-nfn" autocomplete="off"></label>
+        <label id="l-guia" hidden><span class="lt">Guia de convênio assinada?</span><select id="a-guia"><option>Sim</option><option>Não</option></select></label>
+        <label class="wide"><span class="lt">Observação <span class="hint">o que você descobrir na hora vai aqui; a gestão decide se vira regra do cadastro</span></span><textarea id="a-obs"></textarea></label>
+      </div>
+      <div id="a-pagador-novo" class="alert note" hidden><div><div class="t">Pagador diferente do habitual</div>
+        <label class="inline"><input type="checkbox" id="a-tornar"> Tornar <b id="a-pagador-nome"></b> o pagador habitual deste paciente (atualiza o cadastro)</label></div></div>
+      <div id="a-erros"></div>
+      <div class="actions">
+        <button class="btn" type="submit" id="a-salvar">Salvar atendimento</button>
+        <button class="btn secondary" type="button" id="a-limpar">Limpar</button>
+        <span class="hint">Rascunho guardado neste computador até salvar.</span>
+      </div>
+    </form>
+  </div>
+  <div id="a-sucesso"></div>
 </section>
 
 <section class="screen" id="s-breve" hidden>
@@ -321,10 +402,27 @@ var mockBase = [
 function mock(nome, d){
   return new Promise(function(res){ setTimeout(function(){
     if(nome==='bootstrap') return res({usuario:{email:'simulacao@local',perfil:'gestao'},planilha:'(simulação, sem planilha)',hora:'',
-      listas:{modalidades:["Avulso (valor da tabela)","Avulso com desconto – cartão de parceria","Pacote 4 sessões – psicologia (R$ 400)","Pacote 12 sessões – psicologia (R$ 960)","Pacote nutrição 6 consultas (R$ 600)","Pacote nutrição 12 consultas (R$ 1.100)","Pacote psicopedagogia 4 sessões (R$ 480)","Pacote ABA 4 sessões (R$ 360)","AAPI JF – pacote psicologia com estagiário (R$ 200/mês)","AAPI JF – pacote ABA (R$ 320/mês)","Convênio","Social (R$ 200/mês)","Pacote mensal preexistente (R$ 280 ou R$ 360)","Mensal (valor especial)","Por sessão","Pro bono","Permuta"],
+      listas:{oque:["Atendido","Desmarcou com antecedência (≥ 24h)","Faltou avisando em cima da hora (< 24h)","Faltou sem aviso","Cancelado pela clínica"],pago:["Sim","Não","Convênio (fatura)","Mensalista (paga no mês seguinte)","Pacote já pago","Não se aplica (pro bono / permuta)"],formas:["Pix","Dinheiro","Cartão de débito","Cartão de crédito","Link de pagamento"],modalidades:["Avulso (valor da tabela)","Avulso com desconto – cartão de parceria","Pacote 4 sessões – psicologia (R$ 400)","Pacote 12 sessões – psicologia (R$ 960)","Pacote nutrição 6 consultas (R$ 600)","Pacote nutrição 12 consultas (R$ 1.100)","Pacote psicopedagogia 4 sessões (R$ 480)","Pacote ABA 4 sessões (R$ 360)","AAPI JF – pacote psicologia com estagiário (R$ 200/mês)","AAPI JF – pacote ABA (R$ 320/mês)","Convênio","Social (R$ 200/mês)","Pacote mensal preexistente (R$ 280 ou R$ 360)","Mensal (valor especial)","Por sessão","Pro bono","Permuta"],
       modalidadesEsp:[],
       convenios:["Particular","Cedplan","Sabin Sinai","Unafisco","AAPI JF","Plan Minas","PLASC","AMIL","ASSEFAZ","FUSEX","IPSM","Sulamérica","18 de Julho","Aeronáutica"]},
-      profissionais:[{nome:"Juliana Ribeiro",especialidade:"Psicologia"},{nome:"Dr. Victor Cunha",especialidade:"Pediatria"}], pacientes: mockBase});
+      profissionais:[{nome:"Juliana Ribeiro",especialidade:"Psicologia"},{nome:"Giovana Grossi",especialidade:"Psicologia (estágio)"},{nome:"Dr. Victor Cunha",especialidade:"Pediatria"},{nome:"Marileia Rodrigues",especialidade:"Psicanálise e ABA"}], pacientes: mockBase});
+    if(nome==='bootstrapAtendimento') return res({ hoje:'16/11/2026', abaMes:'Novembro', abaMesExiste:true, mensalistasInfo:{modeloNovo:true, mes:'NOVEMBRO', coluna:'NOVEMBRO — pago?'},
+      procedimentos:[{nome:'Consulta pediátrica',especialidade:'Pediatria',valor:200},{nome:'Consulta pediátrica – cartão de parceria ou AAPI JF',especialidade:'Pediatria',valor:160},{nome:'Retorno pediátrico (com pedido de exames, até 30 dias)',especialidade:'Pediatria',valor:0},
+        {nome:'Anamnese psicologia',especialidade:'Psicologia',valor:140},{nome:'Sessão de psicologia',especialidade:'Psicologia',valor:120},{nome:'Sessão de psicologia – cartão de parceria',especialidade:'Psicologia',valor:100},{nome:'Sessão de psicologia – pacote 4 sessões',especialidade:'Psicologia',valor:0},{nome:'Sessão de psicologia – plano social',especialidade:'Psicologia',valor:0},{nome:'Sessão de psicologia – mensal valor especial',especialidade:'Psicologia',valor:0},{nome:'Sessão de psicologia – convênio',especialidade:'Psicologia',valor:0},{nome:'Taxa de falta – psicologia',especialidade:'Psicologia',valor:120},{nome:'Aplicação de teste – avaliação neuropsicológica',especialidade:'Psicologia',valor:0},{nome:'Avaliação neuropsicológica',especialidade:'Psicologia',valor:null},{nome:'Pacote 4 sessões – psicologia (compra)',especialidade:'Psicologia',valor:400},{nome:'Pacote 12 sessões – psicologia (compra)',especialidade:'Psicologia',valor:960}],
+      pacotes:{ 'Ana Luísa Fontes Braga':{id:'P-1',n:4,usadas:2,compra:'03/11/2026',validade:'29/12/2026',status:'ativo'}, 'Luana Castro Figueiredo':{id:'P-2',n:4,usadas:4,compra:'13/10/2026',validade:'08/12/2026',status:'encerrado'} },
+      mensalistas:{ 'Sofia Ramos Teixeira':{modalidade:'Social (R$ 200/mês)',valor:200,pagador:'Associação Boa Esperança',mes:'NOVEMBRO',pago:'',dataPago:''}, 'Theo Barreto Lima':{modalidade:'Mensal (valor especial)',valor:150,pagador:'Daniela Barreto Lima',mes:'NOVEMBRO',pago:'Sim',dataPago:'06/11/2026'} },
+      pacientes:[ {linha:2,nome:'Beatriz Almeida Rocha',nasc:'03/05/1994',modalidade:'Avulso (valor da tabela)',regra:'Tabela',obsCobranca:'',pagador:'Beatriz Almeida Rocha',convenio:'Particular',valorCombinado:''},
+        {linha:3,nome:'Carlos Henrique Dias',nasc:'21/09/1979',modalidade:'Por sessão',regra:'Paga o que consegue',obsCobranca:'Paga o que consegue — o que pagar quita a sessão. Referência: R$ 70/sessão.',pagador:'Carlos Henrique Dias',convenio:'Particular',valorCombinado:''},
+        {linha:4,nome:'Theo Barreto Lima',nasc:'12/07/2015',modalidade:'Mensal (valor especial)',regra:'Mensalidade fixa (independe do nº de sessões)',obsCobranca:'R$ 150/mês fixo, independente do nº de sessões.',pagador:'Daniela Barreto Lima',convenio:'Particular',valorCombinado:'R$ 150/mês'},
+        {linha:5,nome:'Lívia Fontes Pereira',nasc:'26/01/2010',modalidade:'Pro bono',regra:'Pro bono',obsCobranca:'Não cobrar. Só registrar o atendimento.',pagador:'',convenio:'Particular',valorCombinado:''},
+        {linha:6,nome:'Pedro Augusto Neves',nasc:'31/07/1980',modalidade:'Convênio',regra:'Convênio',obsCobranca:'Cedplan — guia assinada antes da sessão.',pagador:'',convenio:'Cedplan',valorCombinado:''},
+        {linha:7,nome:'Sofia Ramos Teixeira',nasc:'16/06/1999',modalidade:'Social (R$ 200/mês)',regra:'',obsCobranca:'',pagador:'Associação Boa Esperança',convenio:'Particular',valorCombinado:''},
+        {linha:8,nome:'Ana Luísa Fontes Braga',nasc:'14/02/1996',modalidade:'Pacote 4 sessões – psicologia (R$ 400)',regra:'Tabela',obsCobranca:'',pagador:'Ana Luísa Fontes Braga',convenio:'Particular',valorCombinado:''},
+        {linha:9,nome:'Luana Castro Figueiredo',nasc:'30/10/1988',modalidade:'Pacote 4 sessões – psicologia (R$ 400)',regra:'Tabela',obsCobranca:'',pagador:'Luana Castro Figueiredo',convenio:'Particular',valorCombinado:''},
+        {linha:10,nome:'Helena Vasconcelos Prado',nasc:'02/02/2024',modalidade:'Avulso (valor da tabela)',regra:'',obsCobranca:'',pagador:'Renata Vasconcelos Prado',convenio:'Particular',valorCombinado:''},
+        {linha:11,nome:'Marcos Vinícius Tavares',nasc:'08/12/1989',modalidade:'Avulso (valor da tabela)',regra:'Valor fixo combinado',obsCobranca:'Sessão R$ 100 combinado com a Juliana.',pagador:'Marcos Vinícius Tavares',convenio:'Particular',valorCombinado:'Sessão R$ 100'} ] });
+    if(nome==='registrarAtendimento') return res({ok:true,id:'A-sim-1',linha:42,aba:'Novembro',pacote:d.pacoteId&&!d.sessaoExtra?{usadas:3,n:4}:null});
+    if(nome==='lancarPacote') return res({ok:true,id:'P-novo',validade:'11/01/2027',linhaRecebimento:43,aba:'Novembro'});
     if(nome==='criarPaciente'){
       var dup = Duplicatas.verificar(d, mockBase);
       if(dup.bloqueio) return res({ok:false,erros:['CPF já cadastrado: '+dup.bloqueio.paciente.nome]});
@@ -340,8 +438,10 @@ function mock(nome, d){
 var TIT = {dia:'Lista do dia', atendimento:'Registrar atendimento', mensal:'Mensalistas', gestao:'Gestão'};
 function go(id){
   $("#s-novo").hidden = id!=='novo';
-  $("#s-breve").hidden = id==='novo';
-  if(id!=='novo') $("#breve-titulo").textContent = TIT[id]||'';
+  $("#s-atend").hidden = id!=='atendimento';
+  $("#s-breve").hidden = (id==='novo'||id==='atendimento');
+  if(id!=='novo'&&id!=='atendimento') $("#breve-titulo").textContent = TIT[id]||'';
+  if(id==='atendimento') iniciarAtend();
   document.querySelectorAll("nav button").forEach(function(b){ if(b.dataset.go===id) b.setAttribute("aria-current","page"); else b.removeAttribute("aria-current"); });
   window.scrollTo(0,0);
 }
@@ -404,7 +504,9 @@ function valorDaModalidade(m){
   var r=m.match(/R\$\s?[\d.,]+(\/mês)?( ou R\$\s?[\d.,]+)?/); return r?r[0]:'';
 }
 function onModalidade(){
-  var m=$("#n-mod").value; $("#n-valor").value=valorDaModalidade(m);
+  var m=$("#n-mod").value, ref=valorDaModalidade(m);
+  if(AT && /^Avulso/.test(m) && $("#n-prof").value){ var esps=espsDoProf($("#n-prof").value), base=tiposDe(esps)[0]; if(base){ var nomeP=/cartão/.test(m)?derivarProc(base.nome,{modalidade:m,regra:''}):base.nome, pp=procObj(nomeP); if(pp&&pp.valor!=null) ref='R$ '+brl(pp.valor)+' ('+pp.nome+')'; } }
+  $("#n-valor").value=ref;
   var w=$("#n-modwarn"); w.innerHTML='';
   if(MOD_RESTRITA.indexOf(m)>=0){
     w.innerHTML='<div class="alert note"><div class="ic">✋</div><div><div class="t">Só com aviso da psicóloga ou da gestão</div><p>"'+esc(m)+'" é definida pela gestão, pelo grupo <b>Nascente | Tratamentos</b>. A recepção não negocia valor.</p><label class="check"><input type="checkbox" id="n-modok"> Confirmo que o aviso foi dado no grupo</label></div></div>';
@@ -497,7 +599,9 @@ function salvar(confirmou){
     BOOT.pacientes.push({linha:r.linha,nome:d.nome,cpf:d.cpf,nasc:d.nasc,pagador:d.pagador,modalidade:d.modalidade,convenio:d.convenio,ativo:'Sim'});
     limparRascunho();
     $("#n-sucesso").innerHTML='<div class="alert ok"><div class="ic">✓</div><div><div class="t">'+esc(r.nome)+' cadastrado(a) na linha '+r.linha+' de Pacientes</div><p>Agora cadastre no ControleOdonto. '+(r.colunasCriadas&&r.colunasCriadas.length?'Colunas novas criadas na planilha: '+esc(r.colunasCriadas.join(', '))+'. ':'')+'</p></div></div>';
+    if(AT) AT.pacientes.push({linha:r.linha,nome:d.nome,nasc:d.nasc,modalidade:d.modalidade,regra:'',obsCobranca:'',pagador:d.pagador,convenio:d.convenio,valorCombinado:''});
     limparForm(false); toast('Cadastrado em Pacientes');
+    if(voltarParaAtend){ voltarParaAtend=false; atVoltarPara=d.nome; go('atendimento'); if(AT){ $("#a-pac").value=d.nome; atVoltarPara=null; onPacAt(true); } }
   }).catch(function(e){
     $("#banner").hidden=false; $("#banner").textContent='Não consegui gravar na planilha ('+e.message+'). Seus dados estão guardados aqui: tente de novo em instantes.';
   }).finally(function(){ salvando=false; $("#btn-salvar").textContent='Cadastrar'; atualizarBotao(); });
@@ -518,9 +622,220 @@ $("#n-whats").addEventListener('input',function(){ this.value=mascaraFone(this.v
 CAMPOS.forEach(function(id){ $("#"+id).addEventListener('input',salvarRascunho); $("#"+id).addEventListener('change',salvarRascunho); });
 $("#n-mod").addEventListener('change',onModalidade);
 $("#n-prof").addEventListener('change',function(){ preencherModalidades(); onModalidade(); });
+// carrega os dados do atendimento logo após o cadastro básico (procedimentos servem também ao valor de referência)
+var _carregarOrig=carregar; carregar=function(){ _carregarOrig(); var t=setInterval(function(){ if(BOOT){ clearInterval(t); iniciarAtend(); } },300); };
 $("#n-conv").addEventListener('change',function(){ $("#l-cart").hidden = this.value==='Particular'; });
 $("#f-novo").addEventListener('submit',function(e){ e.preventDefault(); salvar(false); });
 $("#btn-limpar").addEventListener('click',function(){ limparForm(true); });
+/* ================= ATENDIMENTO ================= */
+var AT=null, atIniciado=false, cur=null, baseValor=null, atVoltarPara=null;
+var ESP_KEYS=[['psicopedagog','Psicopedagogia'],['psican','Psicanálise'],['psicolog','Psicologia'],['pediatr','Pediatria'],['gineco','Ginecologia e obstetrícia'],['clinic','Clínica geral'],['clínic','Clínica geral'],['nutri','Nutrição'],['aba','Terapia ABA']];
+function espsDoProf(nome){ var pr=(BOOT.profissionais||[]).filter(function(x){return x.nome===nome;})[0]; if(!pr) return []; var e=pr.especialidade.toLowerCase(), out=[]; ESP_KEYS.forEach(function(k){ if(e.indexOf(k[0])>=0 && out.indexOf(k[1])<0) out.push(k[1]); }); return out; }
+function procsDe(esps){ return AT.procedimentos.filter(function(p){ return !esps.length || esps.indexOf(p.especialidade)>=0; }); }
+function ehVariante(p, lista){ var i=p.nome.indexOf(' – '); if(i<0) return false; var base=p.nome.slice(0,i); return lista.some(function(q){ return q.nome===base; }); }
+function tiposDe(esps){ var l=procsDe(esps); return l.filter(function(p){ return !ehVariante(p,l) && !/\(compra\)/.test(p.nome) && !/^Mensalidade/.test(p.nome); }); }
+function pick(lista, prefixo){ var o=(lista||[]).filter(function(x){ return x.toLowerCase().indexOf(prefixo.toLowerCase())===0; })[0]; return o||''; }
+function num(v){ if(v==null||v==='') return null; var n=Number(String(v).replace(/\./g,'').replace(',','.')); return isNaN(n)?null:n; }
+function brl(n){ return n==null?'':Number(n).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2}); }
+function hojeStr(){ var d=new Date(); return ('0'+d.getDate()).slice(-2)+'/'+('0'+(d.getMonth()+1)).slice(-2)+'/'+d.getFullYear(); }
+function agoraHora(){ var d=new Date(); return ('0'+d.getHours()).slice(-2)+':'+('0'+d.getMinutes()).slice(-2); }
+function ehMensal(p){ return /\/mês|^Social|preexistente|Mensal \(valor especial\)/.test(p.modalidade||'') || /^Mensalidade fixa/.test(p.regra||''); }
+function ehPacote(p){ return /^Pacote /.test(p.modalidade||'') && !/mensal/.test(p.modalidade||''); }
+function pacoteInfoMod(m){ var n=(m.match(/(\d+)\s*(sessões|consultas)/)||[])[1], v=(m.match(/R\$\s?([\d.]+)/)||[])[1]; return { n:parseInt(n,10)||4, valor:v?num(v):null }; }
+function derivarProc(base, p){
+  var l=AT.procedimentos, cands=l.filter(function(q){ return q.nome.indexOf(base+' – ')===0; });
+  if(!cands.length||!p) return base;
+  var m=(p.modalidade||'').toLowerCase(), regra=(p.regra||'').toLowerCase(), chaves=[];
+  if(ehPacote(p)){ var pk=AT.pacotes[p.nome]; var ok=pk&&pk.status==='ativo'&&(pk.n-pk.usadas)>0&&!(pk.validade&&venceu(pk.validade)); if((!ok||p._avulsa)&&!p._extra) return base; }
+  if(regra==='convênio'||m==='convênio') chaves.push('convênio');
+  else if(m.indexOf('cartão')>=0) chaves.push('cartão');
+  else if(/^pacote 4/.test(m)||/psicopedagogia 4|aba 4/.test(m)) chaves.push('pacote 4');
+  else if(/^pacote 12/.test(m)) chaves.push('pacote 12');
+  else if(/nutrição 6/.test(m)) chaves.push('pacote 6');
+  else if(/nutrição 12/.test(m)) chaves.push('pacote 12');
+  else if(/^social/.test(m)) chaves.push('plano social');
+  else if(/preexistente/.test(m)) chaves.push('pacote mensal preexistente');
+  else if(/valor especial/.test(m)) chaves.push('mensal valor especial');
+  else if(/aapi jf – pacote psicologia/.test(m)) chaves.push('aapi jf (estagi');
+  else if(/aapi jf – pacote aba/.test(m)) chaves.push('pacote aapi');
+  for(var i=0;i<chaves.length;i++){ var c=cands.filter(function(q){ return q.nome.toLowerCase().indexOf(chaves[i])>=0; })[0]; if(c) return c.nome; }
+  return base;
+}
+function procObj(nome){ return AT.procedimentos.filter(function(p){ return p.nome===nome; })[0]||null; }
+function iniciarAtend(){
+  if(atIniciado) return; atIniciado=true;
+  call('bootstrapAtendimento').then(function(a){
+    AT=a;
+    $("#a-aba-nome").textContent=a.abaMes+(a.abaMesExiste?'':' (ainda não existe!)');
+    var dl=$("#dl-pacientes"); dl.innerHTML=''; a.pacientes.forEach(function(p){ var o=document.createElement('option'); o.value=p.nome; dl.appendChild(o); });
+    preencherSelect($("#a-prof"), BOOT.profissionais, '—');
+    preencherSelect($("#a-oque"), BOOT.listas.oque||[]);
+    preencherSelect($("#a-pago"), BOOT.listas.pago||[], '—');
+    preencherSelect($("#a-forma"), BOOT.listas.formas||[]);
+    preencherSelect($("#a-pk-forma"), BOOT.listas.formas||[]);
+    $("#a-data").value=hojeStr(); $("#a-hora").value=agoraHora(); $("#a-datapag").value=hojeStr();
+    $("#a-carregando").hidden=true; $("#f-atend").hidden=false;
+    if(lerRascunhoAt()) toast('Rascunho recuperado');
+    onPacAt();
+    if(atVoltarPara){ $("#a-pac").value=atVoltarPara; atVoltarPara=null; onPacAt(true); }
+  }).catch(function(e){ $("#a-carregando").textContent='Não consegui carregar: '+e.message; atIniciado=false; });
+}
+var CAMPOS_AT=["a-pac","a-prof","a-data","a-hora","a-tipo","a-oque","a-pago","a-valor","a-forma","a-datapag","a-quem","a-nf","a-nfn","a-guia","a-obs"];
+function salvarRascunhoAt(){ try{ var o={}; CAMPOS_AT.forEach(function(id){ o[id]=$("#"+id).value; }); localStorage.setItem('rn-atend', JSON.stringify(o)); }catch(e){} }
+function lerRascunhoAt(){ try{ var o=JSON.parse(localStorage.getItem('rn-atend')||'null'); if(!o||!o['a-pac']) return false; ["a-pac","a-prof","a-obs","a-nfn","a-quem"].forEach(function(id){ if(o[id]) $("#"+id).value=o[id]; }); return true; }catch(e){ return false; } }
+function limparRascunhoAt(){ try{ localStorage.removeItem('rn-atend'); }catch(e){} }
+
+function fillTipos(){
+  var esps=espsDoProf($("#a-prof").value), tipos=tiposDe(esps), t=$("#a-tipo"), atual=t.value; t.innerHTML='';
+  tipos.forEach(function(p){ var o=document.createElement('option'); o.value=p.nome; o.textContent=p.nome; t.appendChild(o); });
+  if(atual && tipos.some(function(p){return p.nome===atual;})) t.value=atual;
+  else { var pad=tipos.filter(function(p){ return /^(Sessão|Consulta)/.test(p.nome); })[0]; if(pad) t.value=pad.nome; }
+  var sel=$("#a-proc"); sel.innerHTML=''; procsDe(esps).forEach(function(p){ var o=document.createElement('option'); o.value=p.nome; o.textContent=p.nome+(p.valor==null?' (valor à mão)':' · R$ '+brl(p.valor)); sel.appendChild(o); });
+}
+function aplicarTipo(){ var base=$("#a-tipo").value; if(!base) { $("#a-proc-view").textContent='—'; return; } var nome=derivarProc(base, cur); $("#a-proc").value=nome; if($("#a-proc").value!==nome){ var o=document.createElement('option'); o.value=nome; o.textContent=nome; $("#a-proc").appendChild(o); $("#a-proc").value=nome; } mostrarProc(); aplicarRegra(); }
+function mostrarProc(){ var p=procObj($("#a-proc").value); $("#a-proc-view").textContent = p ? p.nome+(p.valor==null?'  (valor à mão)':'  · R$ '+brl(p.valor)) : ($("#a-proc").value||'—'); }
+
+var ultimoPacRender=null;
+function onPacAt(force){
+  var nome=$("#a-pac").value.trim();
+  if(force!==true && nome===ultimoPacRender) return; // o 'change' que dispara ao sair do campo não pode refazer a tela (perderia o clique no botão)
+  ultimoPacRender=nome;
+  cur=AT?AT.pacientes.filter(function(p){ return p.nome===nome; })[0]||null:null;
+  var box=$("#a-atencao"); box.innerHTML=''; $("#a-pacotebox").hidden=true; $("#a-extrabox").hidden=true; $("#a-descbox").hidden=true; $("#a-pagador-novo").hidden=false; $("#a-pagador-novo").hidden=true; cur&&(cur._extra=false);
+  if(!cur){ fillTipos(); aplicarTipo(); return; }
+  // profissional: se o paciente tem um de referência e nada escolhido, não adivinhamos; só montamos os tipos
+  fillTipos();
+  if(cur.regra && !/^Tabela$/i.test(cur.regra) || cur.obsCobranca){
+    box.innerHTML+='<div class="alert warn"><div class="ic">⚠</div><div><div class="t">Atenção na cobrança'+(cur.regra?' · '+esc(cur.regra):'')+'</div><p>'+esc(cur.obsCobranca||'Siga a regra acima. Se o paciente disser algo diferente, anote na Observação e avise a gestão.')+(cur.valorCombinado?'<br><span class="hint">Cadastro: '+esc(cur.valorCombinado)+'</span>':'')+'</p></div></div>';
+  }
+  if(ehMensal(cur)){
+    var m=AT.mensalistas[cur.nome], info=AT.mensalistasInfo||{}, dia=new Date().getDate();
+    if(m && /^sim/i.test(m.pago)) box.innerHTML+='<div class="alert ok"><div class="ic">✓</div><div><div class="t">Mensalidade de '+esc(m.mes.toLowerCase())+' em dia</div><p>Pago em '+esc(m.dataPago||'—')+(m.valor?' · R$ '+brl(m.valor):'')+'. Pago? fica como "Pacote já pago".</p></div></div>';
+    else if(!info.modeloNovo) box.innerHTML+='<div class="alert note"><div class="ic">ⓘ</div><div><div class="t">Mensalista · modelo antigo até 31/10</div><p>'+(m?'Mensalidade de '+esc(m.mes.toLowerCase())+' ainda não marcada como paga em Mensalistas.':'Não encontrei este paciente na aba Mensalistas.')+' Registre o atendimento normalmente.</p></div></div>';
+    else if(dia>=16) box.innerHTML+='<div class="alert bad"><div class="ic">⛔</div><div><div class="t">Não atender — chamar a gestão</div><p>Mensalidade de '+esc((m&&m.mes||'').toLowerCase())+' não paga. A partir do dia 16 sem pagar, o atendimento pausa até regularizar.'+(m?'':' (paciente não encontrado na aba Mensalistas)')+'</p></div></div>';
+    else if(dia>=11) box.innerHTML+='<div class="alert warn"><div class="ic">⚠</div><div><div class="t">Mensalidade venceu dia 10 · tolerância até dia 15</div><p>Receba a mensalidade hoje, se possível. Depois do dia 15 o atendimento pausa.</p></div></div>';
+    else box.innerHTML+='<div class="alert note"><div class="ic">ⓘ</div><div><div class="t">Mensalidade de '+esc((m&&m.mes||'').toLowerCase())+' vence dia 10</div><p>Ainda não paga. Lembre o pagador.</p></div></div>';
+  }
+  if(ehPacote(cur)){
+    var pk=AT.pacotes[cur.nome], r=pk?pk.n-pk.usadas:0, vencido=pk&&pk.validade&&venceu(pk.validade);
+    if(pk && pk.status==='ativo' && r>0 && !vencido) box.innerHTML+='<div class="alert ok"><div class="ic">✓</div><div><div class="t">Pacote de '+pk.n+' sessões · '+pk.usadas+' de '+pk.n+' usadas · esta é a '+(pk.usadas+1)+'ª</div><p>Comprado em '+esc(pk.compra)+', válido até '+esc(pk.validade)+'. '+(r===1?'<b>Última sessão do pacote:</b> avise que o próximo é pago na chegada.':'Faltam '+r+' depois desta.')+' Pago? fica como "Pacote já pago".</p></div></div>';
+    else {
+      var pim=pacoteInfoMod(cur.modalidade);
+      box.innerHTML+='<div class="alert warn"><div class="ic">⚠</div><div><div class="t">'+(pk?(vencido&&r>0?'Pacote vencido em '+esc(pk.validade)+' · '+r+' sessão(ões) não usada(s)':'Pacote encerrado · '+pk.usadas+' de '+pk.n+' usadas'):'Sem pacote ativo')+'</div><p>Esta sessão não está paga. Lançar o pacote e receber agora?</p><div class="actions" style="margin-top:8px"><button class="btn small" type="button" id="a-btn-pacote">Lançar pacote de '+pim.n+' sessões'+(pim.valor?' (R$ '+brl(pim.valor)+')':'')+' e receber</button><button class="btn secondary small" type="button" id="a-btn-avulsa">Cobrar sessão avulsa</button><button class="btn secondary small" type="button" id="a-btn-extra">Liberar sessão extra</button></div></div></div>';
+    }
+  }
+  var bp=$("#a-btn-pacote"); if(bp) bp.addEventListener('click',function(){ var pim=pacoteInfoMod(cur.modalidade); $("#a-pk-titulo").textContent='Lançar pacote de '+pim.n+' sessões'; $("#a-pk-n").value=pim.n; $("#a-pk-valor").value=brl(pim.valor||''); $("#a-pk-quem").value=cur.pagador||cur.nome; $("#a-pacotebox").hidden=false; $("#a-pacotebox").scrollIntoView({behavior:'smooth',block:'center'}); });
+  var ba=$("#a-btn-avulsa"); if(ba) ba.addEventListener('click',function(){ cur._avulsa=true; aplicarTipo(); toast('Cobrando como sessão avulsa'); });
+  var be=$("#a-btn-extra"); if(be) be.addEventListener('click',function(){ $("#a-extrabox").hidden=false; $("#a-extrabox").scrollIntoView({behavior:'smooth',block:'center'}); });
+  $("#a-quem").value=cur.pagador||cur.nome;
+  $("#l-guia").hidden = !(cur.convenio && cur.convenio!=='Particular') && (cur.regra||'')!=='Convênio';
+  aplicarTipo();
+}
+function venceu(ddmmaaaa){ var m=ddmmaaaa.match(/^(\d{2})\/(\d{2})\/(\d{4})$/); if(!m) return false; return new Date(+m[3],+m[2]-1,+m[1],23,59)<new Date(); }
+function aplicarRegra(){
+  var v=$("#a-valor"), h=$("#a-valor-hint"), pago=$("#a-pago"), forma=$("#a-forma"), nf=$("#a-nf"), desc=$("#a-desc"), opts=BOOT.listas.pago||[];
+  var p=procObj($("#a-proc").value), procV=p?p.valor:null;
+  [v,forma,nf].forEach(function(x){ x.disabled=false; }); desc.disabled=false; v.readOnly=true; v.value=''; h.textContent='';
+  if(!cur){ if(p&&procV!=null){ v.value=brl(procV); h.textContent='vem do procedimento'; } baseValor=procV; return; }
+  var regra=cur.regra||'', oque=$("#a-oque").value;
+  var falta=!/^Atendido/.test(oque);
+  var pk=AT.pacotes[cur.nome], pacoteOk = ehPacote(cur) && pk && pk.status==='ativo' && (pk.n-pk.usadas)>0 && !(pk.validade&&venceu(pk.validade)) && !cur._avulsa;
+  if(cur._extra){ v.disabled=true; forma.disabled=true; desc.disabled=true; pago.value=pick(opts,'Pacote'); nf.value='Não se aplica'; h.textContent='sessão extra liberada'; }
+  else if(/^Paga o que/.test(regra)){ v.readOnly=false; v.placeholder='valor que pagou'; h.textContent='livre — o que pagar quita'; pago.value=pick(opts,'Sim'); nf.value='Não'; }
+  else if(/^Valor fixo/.test(regra)){ var vc=num((cur.valorCombinado||'').match(/[\d.]+,?\d*/)||''); if(vc!=null){ v.value=brl(vc); h.textContent='valor combinado do cadastro'; } else { v.readOnly=false; h.textContent='combinado: preencher à mão (não achei o número no cadastro)'; } pago.value=pick(opts,'Sim'); nf.value='Não'; }
+  else if(/^Pro bono|^Permuta/.test(regra)){ v.disabled=true; forma.disabled=true; desc.disabled=true; pago.value=pick(opts,'Não se aplica'); nf.value='Não se aplica'; h.textContent='sem cobrança'; }
+  else if(regra==='Convênio' || (cur.convenio && cur.convenio!=='Particular' && cur.modalidade==='Convênio')){ v.value=brl(0); v.disabled=true; forma.disabled=true; desc.disabled=true; pago.value=pick(opts,'Convênio'); nf.value='Não se aplica'; h.textContent='faturado no convênio'; }
+  else if(ehMensal(cur)||/^Mensalidade/.test(regra)){ v.disabled=true; forma.disabled=true; desc.disabled=true; pago.value=pick(opts,'Pacote'); nf.value='Não se aplica'; h.textContent='já pago na mensalidade'; }
+  else if(pacoteOk){ v.disabled=true; forma.disabled=true; desc.disabled=true; pago.value=pick(opts,'Pacote'); nf.value='Não se aplica'; h.textContent='já pago no pacote'; }
+  else {
+    if(procV==null){ v.readOnly=false; v.placeholder='preencher à mão'; h.textContent='procedimento sem valor na tabela'; }
+    else { v.value=brl(procV); h.textContent='vem do procedimento (travado)'; }
+    pago.value=pick(opts,'Sim'); nf.value='Não';
+  }
+  baseValor=procV;
+  if(falta){ v.value=''; v.disabled=true; forma.disabled=true; desc.disabled=true; pago.value=''; nf.value='Não se aplica'; h.textContent = (/sem aviso|em cima da hora/.test(oque) && !ehMensal(cur) && !(cur.convenio&&cur.convenio!=='Particular') && !/^Pro bono|^Permuta/.test(regra)) ? (pacoteOk?'consome 1 sessão do pacote':'falta: vira pendência de taxa pra gestão') : 'sem cobrança nesta linha'; }
+  $("#l-datapag").hidden = pago.value!=='Sim';
+}
+function calcDescAt(){ var raw=$("#a-desc-val").value.trim(), fin=baseValor; if(fin==null) return; if(raw.endsWith('%')) fin=baseValor*(1-parseFloat(raw.replace(',','.'))/100); else if(raw) fin=baseValor-(num(raw)||0); if(isNaN(fin)||fin<0) fin=baseValor; $("#a-desc-final").value=brl(fin); if(!$("#a-descbox").hidden && raw) $("#a-valor").value=brl(fin); }
+function dadosAt(){
+  var obs=$("#a-obs").value.trim();
+  if(!$("#a-descbox").hidden && $("#a-desc-val").value.trim()) obs=('Desconto: R$ '+$("#a-desc-final").value+' (tabela R$ '+brl(baseValor)+') — '+$("#a-desc-motivo").value.trim()+'. '+obs).trim();
+  if(cur&&cur._extra) obs=('Sessão extra liberada por '+cur._extraQuem+' — '+cur._extraMotivo+'. '+obs).trim();
+  var pk=cur?AT.pacotes[cur.nome]:null, usaPacote = cur && ehPacote(cur) && pk && (cur._extra || (pk.status==='ativo' && (pk.n-pk.usadas)>0 && !cur._avulsa));
+  return { paciente:$("#a-pac").value.trim(), profissional:$("#a-prof").value, data:$("#a-data").value, hora:$("#a-hora").value, procedimento:$("#a-proc").value,
+    oque:$("#a-oque").value, pago:$("#a-pago").value, valor:$("#a-valor").disabled?'':$("#a-valor").value, forma:$("#a-forma").value, dataPagamento:$("#a-datapag").value,
+    quemPagou:$("#a-quem").value.trim(), nf:$("#a-nf").value, nfNumero:$("#a-nfn").value.trim(), guia:$("#l-guia").hidden?'':$("#a-guia").value, observacao:obs,
+    pacoteId: usaPacote?pk.id:'', sessaoExtra: !!(cur&&cur._extra), tornarPagadorHabitual: $("#a-tornar").checked };
+}
+function validarAt(){
+  var e=[];
+  if(!cur) e.push('Escolha um paciente da lista (só quem está em Pacientes).');
+  if(!$("#a-prof").value) e.push('Escolha o profissional.');
+  if(!$("#a-proc").value) e.push('Escolha o tipo de atendimento.');
+  if(!dataValida($("#a-data").value)) e.push('Data inválida.');
+  if($("#a-hora").value && !/^\d{1,2}:\d{2}$/.test($("#a-hora").value)) e.push('Hora inválida (hh:mm).');
+  if(!$("#a-descbox").hidden && $("#a-desc-val").value.trim() && !$("#a-desc-motivo").value.trim()) e.push('Desconto: informe quem autorizou.');
+  if($("#a-pago").value==='Sim' && !(num($("#a-valor").value)>0)) e.push('Pago? = Sim exige um valor maior que zero.');
+  return e;
+}
+var salvandoAt=false;
+function salvarAt(){
+  if(salvandoAt) return;
+  var erros=validarAt(); $("#a-erros").innerHTML = erros.length?'<div class="alert bad"><div class="ic">!</div><div><div class="t">Falta corrigir</div><p>'+erros.map(esc).join('<br>')+'</p></div></div>':'';
+  if(erros.length) return;
+  salvandoAt=true; $("#a-salvar").disabled=true; $("#a-salvar").textContent='Gravando…';
+  var d=dadosAt();
+  call('registrarAtendimento', d).then(function(r){
+    if(!r.ok){ $("#a-erros").innerHTML='<div class="alert bad"><div class="ic">!</div><div><div class="t">Não gravou</div><p>'+(r.erros||[]).map(esc).join('<br>')+'</p></div></div>'; return; }
+    if(r.pacote && AT.pacotes[d.paciente]){ AT.pacotes[d.paciente].usadas=r.pacote.usadas; if(r.pacote.usadas>=r.pacote.n) AT.pacotes[d.paciente].status='encerrado'; }
+    if(d.tornarPagadorHabitual && cur){ cur.pagador=d.quemPagou; }
+    $("#a-sucesso").innerHTML='<div class="alert ok"><div class="ic">✓</div><div><div class="t">'+esc(d.paciente)+' · '+esc(d.oque)+' · gravado na aba '+esc(r.aba)+', linha '+r.linha+'</div><p>'+esc(d.procedimento)+(d.valor?' · R$ '+esc(d.valor):'')+(d.pago?' · Pago? '+esc(d.pago):'')+(r.pacote?' · pacote '+r.pacote.usadas+'/'+r.pacote.n+' usadas':'')+'. ID '+esc(r.id)+'.</p></div></div>';
+    limparAt(false); toast('Atendimento gravado');
+  }).catch(function(e){ $("#banner").hidden=false; $("#banner").textContent='Não consegui gravar na planilha ('+e.message+'). Seus dados estão guardados aqui: tente de novo em instantes.'; })
+  .finally(function(){ salvandoAt=false; $("#a-salvar").disabled=false; $("#a-salvar").textContent='Salvar atendimento'; });
+}
+function limparAt(apagaSucesso){
+  $("#a-pac").value=''; cur=null; $("#a-oque").selectedIndex=0; $("#a-obs").value=''; $("#a-nfn").value=''; $("#a-desc-val").value=''; $("#a-desc-motivo").value=''; $("#a-extra-motivo").value=''; $("#a-tornar").checked=false;
+  $("#a-data").value=hojeStr(); $("#a-hora").value=agoraHora(); $("#a-datapag").value=hojeStr(); $("#a-erros").innerHTML='';
+  if(apagaSucesso!==false) $("#a-sucesso").innerHTML='';
+  limparRascunhoAt(); onPacAt(true); $("#a-pac").focus();
+}
+function lancarPacoteAt(){
+  if(!cur) return;
+  var pim=pacoteInfoMod(cur.modalidade), compra=AT.procedimentos.filter(function(p){ return /\(compra\)/.test(p.nome) && p.nome.toLowerCase().indexOf(String($("#a-pk-n").value))>=0 && espsDoProf($("#a-prof").value).concat(['Psicologia']).indexOf(p.especialidade)>=0; })[0];
+  var d={ paciente:cur.nome, sessoes:$("#a-pk-n").value, valor:$("#a-pk-valor").value, data:$("#a-data").value, hora:$("#a-hora").value, profissional:$("#a-prof").value, modalidade:cur.modalidade,
+    validadeDias: parseInt($("#a-pk-n").value,10)>=12?168:56, pago:'Sim', forma:$("#a-pk-forma").value, quemPagou:$("#a-pk-quem").value.trim(), nf:$("#a-pk-nf").value, nfNumero:$("#a-pk-nfn").value.trim(), procedimentoCompra: compra?compra.nome:('Pacote '+$("#a-pk-n").value+' sessões (compra)') };
+  $("#a-pk-salvar").disabled=true;
+  call('lancarPacote', d).then(function(r){
+    if(!r.ok){ toast((r.erros||['Não gravou']).join(' ')); return; }
+    AT.pacotes[cur.nome]={id:r.id,n:parseInt(d.sessoes,10),usadas:0,compra:d.data,validade:r.validade,status:'ativo'}; cur._avulsa=false;
+    $("#a-pacotebox").hidden=true; toast('Pacote lançado · recebimento de R$ '+brl(num(d.valor))+' gravado na aba '+r.aba); onPacAt(true);
+  }).catch(function(e){ toast('Erro: '+e.message); }).finally(function(){ $("#a-pk-salvar").disabled=false; });
+}
+$("#a-pac").addEventListener('change',onPacAt);
+$("#a-pac").addEventListener('input',function(){ if(AT&&AT.pacientes.some(function(p){return p.nome===$("#a-pac").value;})) onPacAt(); });
+$("#a-prof").addEventListener('change',function(){ fillTipos(); aplicarTipo(); });
+$("#a-tipo").addEventListener('change',aplicarTipo);
+$("#a-proc").addEventListener('change',function(){ mostrarProc(); aplicarRegra(); });
+$("#a-proc-alterar").addEventListener('click',function(e){ e.preventDefault(); $("#a-proc").hidden=!$("#a-proc").hidden; });
+$("#a-oque").addEventListener('change',aplicarRegra);
+$("#a-pago").addEventListener('change',function(){ $("#l-datapag").hidden = this.value!=='Sim'; });
+$("#a-desc").addEventListener('click',function(){ $("#a-descbox").hidden=!$("#a-descbox").hidden; if($("#a-descbox").hidden){ aplicarRegra(); } else calcDescAt(); });
+$("#a-desc-val").addEventListener('input',calcDescAt);
+$("#a-extra-cancel").addEventListener('click',function(){ $("#a-extrabox").hidden=true; });
+$("#a-extra-ok").addEventListener('click',function(){ if(!$("#a-extra-motivo").value.trim()) return toast('Informe o motivo'); cur._extra=true; cur._extraQuem=$("#a-extra-quem").value; cur._extraMotivo=$("#a-extra-motivo").value.trim(); $("#a-extrabox").hidden=true; aplicarTipo(); toast('Sessão extra liberada · não consome nem cobra'); });
+$("#a-pk-cancel").addEventListener('click',function(){ $("#a-pacotebox").hidden=true; });
+$("#a-pk-salvar").addEventListener('click',lancarPacoteAt);
+$("#a-quem").addEventListener('change',function(){ var q=this.value.trim(); var dif = cur && q && q!==(cur.pagador||cur.nome); $("#a-pagador-novo").hidden=!dif; if(dif) $("#a-pagador-nome").textContent=q; });
+$("#a-data").addEventListener('input',function(){ this.value=mascaraData(this.value); });
+$("#a-datapag").addEventListener('input',function(){ this.value=mascaraData(this.value); });
+$("#a-hora").addEventListener('input',function(){ var v=this.value.replace(/\D/g,'').slice(0,4); this.value = v.length>2 ? v.slice(0,2)+':'+v.slice(2) : v; });
+$("#f-atend").addEventListener('submit',function(e){ e.preventDefault(); salvarAt(); });
+$("#a-limpar").addEventListener('click',function(){ limparAt(true); });
+$("#a-novo").addEventListener('click',function(e){ e.preventDefault(); voltarParaAtend=true; go('novo'); });
+CAMPOS_AT.forEach(function(id){ $("#"+id).addEventListener('input',salvarRascunhoAt); $("#"+id).addEventListener('change',salvarRascunhoAt); });
+var voltarParaAtend=false;
+
 carregar();
 })();
 </script>
