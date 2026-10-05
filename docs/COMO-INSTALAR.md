@@ -30,6 +30,8 @@ Mande o link para `atendimento@clinicanascente.com.br` e peça para salvar como 
 
 Nada a fazer. Em até 2 minutos a tela nova aparece sozinha (basta recarregar a página). Se eu precisar mudar o próprio carregador (raro), aviso e você repete o passo 3 e depois **Implantar → Gerenciar implantações → ✎ → Versão: Nova versão → Implantar**.
 
+**Pendente em 05/10:** o carregador mudou uma vez, pra pedir a permissão do Drive (a exportação da Gestão agora salva na pasta do Controle Financeiro). Cole o `dist/Code.gs` novo no `Código.gs`, salve, publique a nova versão como acima e, ao abrir o app, autorize de novo quando o Google pedir (vai aparecer o Drive na lista de permissões). Até fazer isso, exportar funciona, mas o arquivo fica na raiz do Meu Drive.
+
 ## Se der algum erro
 
 Copie a mensagem que apareceu na tela (ou um print) e me mande. Nada do que você digitou se perde: o rascunho fica guardado no computador até gravar.

@@ -36,7 +36,7 @@ Escolha o mês no topo. Cartões, todos imprimíveis:
 Botões:
 - **Criar aba de <mês seguinte>**: duplica a estrutura da aba corrente (cabeçalho, fórmulas automáticas, validações) sem os dados. Pede dois cliques. Faça na última semana do mês.
 - **Criar colunas de <mês seguinte> em Mensalistas**: acrescenta o par "MÊS — pago?" e "Data" no fim. Dois cliques.
-- **Exportar <mês> (.xlsx)**: cria no **seu Drive** (conta `administrativo@`) uma planilha nova só com os valores da aba do mês, chamada "Recepção <mês> <ano> — exportado <data>", e mostra o link pra baixar o .xlsx e o link da cópia. A cópia fica no Drive até você apagar.
+- **Exportar <mês> (.xlsx)**: grava uma planilha só com os valores da aba do mês na pasta do Drive **Clínica Nascente / Controle Financeiro / <ano> / <MM Mês_AA> / 2_Atendimentos** (ex.: `2026/10 Out_26/2_Atendimentos`), com o nome **`OUT 26 - Recepção atendimentos (app)`** (padrão `MMM AA - Descrição`). Exportar de novo o mesmo mês **sobrescreve** esse arquivo, então há sempre uma cópia por mês, a mais recente. A tela mostra o link pra baixar o .xlsx, o link do arquivo no Drive e a pasta onde ficou. Se a pasta do mês ainda não existir, o app cria no mesmo padrão e avisa. A exportação é uma cópia: a fonte continua sendo a aba do mês.
 
 ## Rotina mensal
 
@@ -59,6 +59,7 @@ Atendido e falta sem aviso consomem sessão; desmarcou com antecedência não co
 ## Se algo der errado
 
 - **Erro na tela**: a mensagem vem com o texto do Apps Script. Abra a planilha → Extensões → Apps Script → Execuções pra ver o detalhe.
+- **Exportar diz que não conseguiu usar a pasta do Drive**: o carregador (`Código.gs`) está numa versão antiga, sem a permissão do Drive. Siga `COMO-INSTALAR.md` › "Quando eu atualizar o app" (colar o `dist/Code.gs` novo e publicar nova versão). Enquanto isso o arquivo fica na raiz do Meu Drive.
 - **App não carrega / tela em branco**: o código fica na planilha "Recepção Nascente — código do app (não mexer)", aba `arquivos`. Não edite essa planilha. Se alguém mexeu, me avise.
 - **Alguém inseriu linha no meio da aba do mês**: o app localiza linhas pelo ID, então não grava em cima da linha errada. Mas as colunas automáticas da planilha podem precisar de conferência.
 - **Precisa tirar um registro**: não apague a linha. Troque "O que aconteceu" pra "Cancelado pela clínica" e anote o motivo na Observação.

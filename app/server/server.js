@@ -6,6 +6,7 @@
 
 var CONFIG = {
   TZ: 'America/Sao_Paulo',
+  PASTA_FINANCEIRO: '1TVCErWCv4bn0ed66T5eZSvcATPIoxboc', // Drive: Clínica Nascente/Controle Financeiro (as exportações vão em <ano>/<MM Mês_AA>/2_Atendimentos)
   GESTAO: ['administrativo@clinicanascente.com.br'],
   ABA: { PACIENTES: 'Pacientes', LISTAS: 'Listas', PROFISSIONAIS: 'Profissionais', PROCEDIMENTOS: 'Procedimentos', MENSALISTAS: 'Mensalistas', PACOTES: 'Pacotes', AGENDA: 'Agenda recorrente', DIA: 'Lista do dia', ALTERACOES: 'Alterações de cadastro' },
   DIAS: ['Domingo','Segunda','Terça','Quarta','Quinta','Sexta','Sábado'],
@@ -792,21 +793,45 @@ API.gestaoResumo = function (d) {
   out.colunasMensalistas = sM ? colunasMensalistas_(sM.getRange(1, 1, 1, sM.getLastColumn()).getValues()[0].map(function (x) { return String(x || '').trim(); })).map(function (c) { return c.mes; }) : [];
   return out;
 };
-// Exporta a aba do mês (só valores) para uma planilha nova no Drive da conta, com link direto pro .xlsx
+// Pasta "Controle Financeiro/<ano>/<MM Mês_AA>/2_Atendimentos" no Drive (decisão Roberta 05/10). Cria o mês no padrão "10 Out_26" só se não existir.
+function pastaAtendimentos_(mesIdx, ano) {
+  var raiz = DriveApp.getFolderById(CONFIG.PASTA_FINANCEIRO), criadas = [];
+  var pAno = subpasta_(raiz, String(ano), criadas);
+  var pref = ('0' + (mesIdx + 1)).slice(-2) + ' ', it = pAno.getFolders(), pMes = null;
+  while (it.hasNext()) { var f = it.next(); if (f.getName().indexOf(pref) === 0) { pMes = f; break; } }
+  if (!pMes) { pMes = pAno.createFolder(pref + CONFIG.MESES[mesIdx].slice(0, 3) + '_' + String(ano).slice(-2)); criadas.push(pMes.getName()); }
+  var pAt = subpasta_(pMes, '2_Atendimentos', criadas);
+  return { pasta: pAt, caminho: 'Controle Financeiro/' + ano + '/' + pMes.getName() + '/2_Atendimentos', criadas: criadas };
+}
+function subpasta_(pai, nome, criadas) { var it = pai.getFoldersByName(nome); if (it.hasNext()) return it.next(); var f = pai.createFolder(nome); criadas.push(nome); return f; }
+// Exporta a aba do mês (só valores) para a planilha "MMM AA - Recepção atendimentos (app)" na pasta de atendimentos do mês;
+// se já existir, sobrescreve (é uma cópia, a fonte continua sendo a aba). Devolve o link direto pro .xlsx.
 API.exportarMes = function (d) {
   d = d || {};
   if (usuario_().perfil !== 'gestao') return { ok: false, erros: ['Só a gestão exporta.'] };
-  var mes = String(d.mes || nomeAbaMes_(new Date())).trim(), sm = planilha_().getSheetByName(mes);
-  if (!sm) return { ok: false, erros: ['A aba "' + mes + '" não existe.'] };
+  var mes = String(d.mes || nomeAbaMes_(new Date())).trim(), sm = planilha_().getSheetByName(mes), mesIdx = CONFIG.MESES.indexOf(mes);
+  if (!sm || mesIdx < 0) return { ok: false, erros: ['A aba "' + mes + '" não existe.'] };
+  var hoje = new Date(), ano = hoje.getFullYear() - (mesIdx > hoje.getMonth() ? 1 : 0);
   var n = Math.max(sm.getLastRow(), 1), c = Math.max(sm.getLastColumn(), 1);
   var vals = sm.getRange(1, 1, n, c).getValues(), fmts = sm.getRange(1, 1, n, c).getNumberFormats();
-  var nome = 'Recepção ' + mes + ' ' + new Date().getFullYear() + ' — exportado ' + agora_();
-  var nova = SpreadsheetApp.create(nome), aba = nova.getSheets()[0];
-  aba.setName(mes);
+  var nome = mes.slice(0, 3).toUpperCase() + ' ' + String(ano).slice(-2) + ' - Recepção atendimentos (app)';
+  var destino = null, aviso = '', ss = null;
+  try {
+    destino = pastaAtendimentos_(mesIdx, ano);
+    var ex = destino.pasta.getFilesByName(nome);
+    while (ex.hasNext()) { var f = ex.next(); if (f.getMimeType() === MimeType.GOOGLE_SHEETS) { ss = SpreadsheetApp.openById(f.getId()); break; } }
+  } catch (e) { destino = null; aviso = 'Não consegui usar a pasta do Drive (' + (e && e.message || e) + '). O arquivo ficou na raiz do Meu Drive.'; }
+  if (!ss) {
+    ss = SpreadsheetApp.create(nome);
+    if (destino) { try { DriveApp.getFileById(ss.getId()).moveTo(destino.pasta); } catch (e2) { destino = null; aviso = 'Criei o arquivo, mas não consegui movê-lo pra pasta (' + (e2 && e2.message || e2) + '). Ficou na raiz do Meu Drive.'; } }
+  }
+  var aba = ss.getSheets()[0];
+  aba.clear();
+  if (aba.getName() !== mes) aba.setName(mes);
   aba.getRange(1, 1, n, c).setValues(vals).setNumberFormats(fmts);
   aba.getRange(1, 1, 1, c).setFontWeight('bold'); aba.setFrozenRows(1);
   SpreadsheetApp.flush();
-  return { ok: true, nome: nome, url: nova.getUrl(), xlsx: 'https://docs.google.com/spreadsheets/d/' + nova.getId() + '/export?format=xlsx', linhas: n - 1 };
+  return { ok: true, nome: nome, url: ss.getUrl(), xlsx: 'https://docs.google.com/spreadsheets/d/' + ss.getId() + '/export?format=xlsx', linhas: n - 1, pasta: destino ? destino.caminho : '', criadas: destino ? destino.criadas : [], aviso: aviso, atualizado: agora_() };
 };
 // Gestão: cria a aba de um mês copiando a estrutura (cabeçalho, fórmulas automáticas, validações) da aba-modelo
 API.criarAbaMes = function (d) {

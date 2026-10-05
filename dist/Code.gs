@@ -23,6 +23,9 @@ function api(nome, dados) {
   }
 }
 
+// Só para o Google reconhecer as permissões que o app usa (o código real vem da planilha e não é lido na autorização).
+function permissoes_() { DriveApp.getRootFolder(); SpreadsheetApp.getActiveSpreadsheet(); LockService.getScriptLock(); CacheService.getScriptCache(); Session.getActiveUser(); }
+
 function limparCache() {
   var c = CacheService.getScriptCache(), chaves = [];
   ['index.html', 'server.js', 'duplicatas.js'].forEach(function (a) { for (var i = 0; i < 40; i++) chaves.push('rn:' + a + ':' + i); chaves.push('rn:' + a + ':n'); });
