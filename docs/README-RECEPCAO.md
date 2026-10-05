@@ -21,7 +21,7 @@ Menu de cima: **Lista do dia · Atendimento · Novo paciente · Editar cadastro 
 3. Quem não apareceu nem avisou: clique no nome → **Não vem** → "Faltou sem aviso".
 4. Precisa imprimir a lista (A4): botão **Imprimir**.
 
-**Situações na lista**: *a confirmar* → *confirmado* → *registrado* (ou *não vem*). Os selos ao lado do nome mostram pacote (ex.: 2/4) e mensalidade (em dia / pendente / atrasada). Embaixo do nome aparece a **modalidade** do cadastro (Avulso, Pacote 4 sessões, Social, Convênio Cedplan…) e, com "⚠", uma regra de cobrança diferente da tabela. Se aparecer "⚠ sem modalidade · completar cadastro", aproveite a confirmação da véspera pra perguntar como o paciente paga e completar em Editar cadastro.
+**Situações na lista**: *a confirmar* → *confirmado* → *registrado* (ou *não vem*). Os selos ao lado do nome mostram o plano (ex.: 2/4 = duas consultas usadas de quatro) e a mensalidade (em dia / pendente / atrasada). Embaixo do nome aparece a **modalidade** do cadastro (Consulta individual, Plano de 4 consultas, Mensalidade fixa, Convênio Cedplan…) e, com "⚠", uma regra de cobrança diferente da tabela. Se aparecer "⚠ sem modalidade · completar cadastro", aproveite a confirmação da véspera pra perguntar como o paciente paga e completar em Editar cadastro.
 
 ---
 
@@ -30,8 +30,8 @@ Menu de cima: **Lista do dia · Atendimento · Novo paciente · Editar cadastro 
 1. **Paciente**: comece a digitar e escolha da lista. Se não estiver, use o link "Novo paciente" ali mesmo.
 2. Leia o **bloco de avisos**. Ele diz como esse paciente paga:
    - **Convênio**: Pago? vira "Convênio (fatura)", valor zerado. Marque se a **guia** veio assinada.
-   - **Pacote**: mostra quantas sessões já usou (ex.: "3 de 4 usadas · esta é a 4ª"). Na última, avise que o próximo é pago na chegada. Pacote encerrado ou vencido: o app oferece **Lançar pacote e receber** (grava a compra e o recebimento), **Cobrar sessão avulsa** ou **Liberar sessão extra** (precisa dizer quem liberou e por quê).
-   - **Mensalista**: diz se a mensalidade do mês está paga. A partir de novembro: vence dia 10, tolerância até 15; **do dia 16 em diante sem pagar, não atende e chama a gestão**.
+   - **Plano de consultas** (4, 6 ou 12): mostra quantas já usou (ex.: "3 de 4 usadas · esta é a 4ª"). Na última, avise que o próximo plano é pago na chegada. Plano encerrado ou vencido (4 consultas valem 2 meses, 12 valem 6): o app oferece **Lançar plano e receber**, já com o valor combinado daquele paciente (grava a compra na aba Planos e o recebimento na aba do mês), **Cobrar consulta individual** ou **Liberar sessão extra** (precisa dizer quem liberou e por quê).
+   - **Mensalidade fixa** e **valor especial**: diz se a mensalidade do mês está paga. Mensalidade fixa não tem remarcação de faltas. A partir de novembro: vence dia 10, tolerância até 15; **do dia 16 em diante sem pagar, não atende e chama a gestão**.
    - **Atenção na cobrança**: paga o que consegue, valor fixo combinado, pro bono, permuta. Siga o que está escrito. Se o paciente disser algo diferente, anote na Observação e avise a gestão.
    - **Cadastro incompleto**: sem modalidade nem convênio. Pergunte como paga e clique em **Completar cadastro**.
 3. **Profissional** e **Tipo de atendimento**. O procedimento certo (ex.: "Sessão – convênio", "Sessão – pacote 4") é escolhido sozinho a partir do cadastro; só mude se precisar ("alterar").
@@ -49,7 +49,7 @@ Se a internet falhar na hora de salvar, o rascunho fica guardado no computador. 
 Nome completo, CPF, nascimento, pagador, WhatsApp, modalidade, convênio e carteirinha, profissional de referência, primeira consulta.
 
 - O app avisa se já existe alguém parecido (nome parecido, mesmo CPF, mesma data de nascimento). Leia o aviso: se for a mesma pessoa, cancele e use o cadastro que existe; se for outra pessoa (gêmeos, homônimos), clique em **É outra pessoa, cadastrar mesmo assim**.
-- Modalidades marcadas com ✋ (Social, pacote mensal preexistente, valor especial) só com aviso da psicóloga ou da gestão no grupo **Nascente | Tratamentos**. O app pede pra você confirmar que o aviso foi dado.
+- **Modalidades**: Consulta individual (paga pela tabela a cada vez) · Consulta individual – cartão de parceria · Plano de 4, 6 ou 12 consultas (paga o plano adiantado, valor combinado por paciente) · Mensalidade fixa (R$ 200/mês, sem remarcação) · Mensal (valor especial) · AAPI JF (mensal) · Convênio · Por sessão · Pro bono · Permuta. As mensais (✋) só com aviso da psicóloga ou da gestão no grupo **Nascente | Tratamentos**. O app pede pra você confirmar que o aviso foi dado.
 - Depois de cadastrar aqui, cadastre também no ControleOdonto.
 
 ---
@@ -66,7 +66,7 @@ Use quando a psicóloga ou a gestão avisar no grupo que algo mudou: modalidade,
 
 Lista dos mensalistas com a situação do mês: **em dia · pendente · atrasada**. Dá pra buscar por nome ou pagador e filtrar. A coluna "Sessões em outubro" mostra quantas sessões o paciente já teve no mês.
 
-Pra receber uma mensalidade: **Registrar** na linha do paciente → confira valor, data, forma, quem pagou, NF. Em mês de 5 semanas, nos **pacotes mensais** aparece a pergunta da 5ª sessão (soma 1/4 do valor); na Social e nos valores especiais a 5ª já está incluída e a pergunta não aparece. Ao salvar, o app marca "Sim" na coluna do mês em Mensalistas, anota data/valor/forma ao lado e grava o recebimento na aba do mês.
+Pra receber uma mensalidade: **Registrar** na linha do paciente → confira valor, data, forma, quem pagou, NF. Em mês de 5 semanas, nos antigos **pacotes mensais** (só até o pagamento de outubro) aparece a pergunta da 5ª sessão (soma 1/4 do valor); na mensalidade fixa e nos valores especiais a 5ª já está incluída e a pergunta não aparece. A partir de novembro quem era pacote mensal passa a comprar **plano de 4 consultas** pelo Atendimento. Ao salvar, o app marca "Sim" na coluna do mês em Mensalistas, anota data/valor/forma ao lado e grava o recebimento na aba do mês.
 
 Até 31/10 vale o modelo antigo (paga o mês anterior). De novembro em diante a mensalidade é do próprio mês, vence dia 10.
 

@@ -149,7 +149,7 @@ var CONFIG = {
   TZ: 'America/Sao_Paulo',
   PASTA_FINANCEIRO: '1TVCErWCv4bn0ed66T5eZSvcATPIoxboc', // Drive: Clínica Nascente/Controle Financeiro (as exportações vão em <ano>/<MM Mês_AA>/2_Atendimentos)
   GESTAO: ['administrativo@clinicanascente.com.br'],
-  ABA: { PACIENTES: 'Pacientes', LISTAS: 'Listas', PROFISSIONAIS: 'Profissionais', PROCEDIMENTOS: 'Procedimentos', MENSALISTAS: 'Mensalistas', PACOTES: 'Pacotes', AGENDA: 'Agenda recorrente', DIA: 'Lista do dia', ALTERACOES: 'Alterações de cadastro' },
+  ABA: { PACIENTES: 'Pacientes', LISTAS: 'Listas', PROFISSIONAIS: 'Profissionais', PROCEDIMENTOS: 'Procedimentos', MENSALISTAS: 'Mensalistas', PACOTES: 'Planos', AGENDA: 'Agenda recorrente', DIA: 'Lista do dia', ALTERACOES: 'Alterações de cadastro' },
   DIAS: ['Domingo','Segunda','Terça','Quarta','Quinta','Sexta','Sábado'],
   HA: ['ID', 'Paciente', 'Profissional', 'Dia da semana', 'Hora', 'Frequência', 'Começa em', 'Termina em', 'Ativo', 'Observação', 'Registrado por (app)'],
   HD: ['ID', 'Data', 'Hora', 'Paciente', 'Profissional', 'Origem', 'Observação', 'Registrado por (app)'],
@@ -157,7 +157,7 @@ var CONFIG = {
   MESES: ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'],
   VIRADA: '2026-11-01', // a partir daqui a mensalidade é antecipada (vence dia 10, tolerância 15)
   // cabeçalhos da aba do mês (os existentes são lidos como estão; U e V são criados no fim se faltarem)
-  HM: { DATA: 'Data', HORA: 'Hora', PACIENTE: 'Paciente', PROFISSIONAL: 'Profissional', PROCEDIMENTO: 'Procedimento', OQUE: 'O que aconteceu', VALOR: 'Valor (R$)', PAGO: 'Pago?', DATA_PAG: 'Data do pagamento', FORMA: 'Forma de pagamento', QUEM: 'Quem pagou (só se foi outra pessoa)', NF: 'NF emitida?', NF_N: 'Nº da NF', GUIA: 'Guia assinada? (convênio)', OBS: 'Observação', ID: 'ID', LOG: 'Registrado por (app)', PACOTE: 'Pacote (ID)' },
+  HM: { DATA: 'Data', HORA: 'Hora', PACIENTE: 'Paciente', PROFISSIONAL: 'Profissional', PROCEDIMENTO: 'Procedimento', OQUE: 'O que aconteceu', VALOR: 'Valor (R$)', PAGO: 'Pago?', DATA_PAG: 'Data do pagamento', FORMA: 'Forma de pagamento', QUEM: 'Quem pagou (só se foi outra pessoa)', NF: 'NF emitida?', NF_N: 'Nº da NF', GUIA: 'Guia assinada? (convênio)', OBS: 'Observação', ID: 'ID', LOG: 'Registrado por (app)', PACOTE: 'Plano (ID)' },
   HP: ['ID', 'Paciente', 'Modalidade', 'Nº de sessões', 'Valor (R$)', 'Data da compra', 'Válido até', 'Pago?', 'Forma de pagamento', 'Quem pagou', 'NF emitida?', 'Nº da NF', 'Sessões usadas', 'Última sessão', 'Status', 'Registrado por (app)', 'Observação'],
   // Cabeçalhos de Pacientes (os existentes são lidos como estão; os novos são criados no fim da aba se faltarem)
   H: {
@@ -374,6 +374,7 @@ function novoId_(prefixo) {
 }
 function hoje_() { return Utilities.formatDate(new Date(), CONFIG.TZ, 'dd/MM/yyyy'); }
 function dataMais_(d, dias) { var x = new Date(d.getTime()); x.setDate(x.getDate() + dias); return x; }
+function dataMaisMeses_(d, meses) { var x = new Date(d.getTime()); x.setMonth(x.getMonth() + meses); return x; }
 function nomeAbaMes_(d) { return CONFIG.MESES[d.getMonth()]; }
 function abaMes_(d) {
   var nome = nomeAbaMes_(d), s = planilha_().getSheetByName(nome);
@@ -500,7 +501,7 @@ API.registrarAtendimento = function (d) {
     [HM.DATA, HM.DATA_PAG].forEach(function (k) { if (h[k]) s.getRange(linha, h[k]).setNumberFormat('dd/MM/yyyy'); });
     if (h[HM.VALOR]) s.getRange(linha, h[HM.VALOR]).setNumberFormat('#,##0.00');
 
-    // pacote: consome sessão (Atendido ou falta sem aviso / em cima da hora), salvo sessão extra
+    // plano: consome consulta (Atendido ou falta sem aviso / em cima da hora), salvo sessão extra
     var pk = null;
     if (d.pacoteId && !d.sessaoExtra && /^(Atendido|Faltou)/.test(oque)) {
       var sp = planilha_().getSheetByName(CONFIG.ABA.PACOTES);
@@ -534,21 +535,23 @@ API.lancarPacote = function (d) {
   var n = parseInt(d.sessoes, 10); if (!n || n < 1) erros.push('Número de sessões inválido.');
   var valor = Number(String(d.valor || '').replace(/\./g, '').replace(',', '.')); if (isNaN(valor) || valor < 0) erros.push('Valor inválido.');
   var data = parseData_(d.data) || new Date();
-  var validadeDias = parseInt(d.validadeDias, 10) || (n >= 12 ? 168 : 56); // 24 ou 8 semanas
+  // validade do plano (Roberta 05/10): 4 consultas = 2 meses, 12 consultas = 6 meses; 6 consultas = 3 meses
+  var validadeMeses = parseInt(d.validadeMeses, 10) || (n >= 12 ? 6 : (n >= 6 ? 3 : 2));
+  var validade = dataMaisMeses_(data, validadeMeses);
   if (erros.length) return { ok: false, erros: erros };
   var lock = LockService.getScriptLock(); lock.waitLock(20000);
   try {
     var pac = indicePacientes_().filter(function (p) { return p.nome === paciente; })[0];
     if (!pac) return { ok: false, erros: ['Paciente não está em Pacientes.'] };
     var sp = abaPacotes_(), hp = cabecalhos_(sp), u = usuario_(), id = novoId_('P');
-    // encerra pacote ativo anterior do mesmo paciente
+    // encerra plano ativo anterior do mesmo paciente
     if (sp.getLastRow() >= 2) {
       var vals = sp.getRange(2, 1, sp.getLastRow() - 1, sp.getLastColumn()).getValues();
       vals.forEach(function (r, i) { if (String(r[hp['Paciente'] - 1]) === paciente && String(r[hp['Status'] - 1] || 'ativo') === 'ativo') sp.getRange(i + 2, hp['Status']).setValue('encerrado'); });
     }
     var linha = proximaLinha_(sp, hp['Paciente']);
     var pares = { 'ID': id, 'Paciente': paciente, 'Modalidade': String(d.modalidade || pac.modalidade || ''), 'Nº de sessões': n, 'Valor (R$)': valor,
-      'Data da compra': data, 'Válido até': dataMais_(data, validadeDias), 'Pago?': String(d.pago || 'Sim'), 'Forma de pagamento': String(d.forma || ''),
+      'Data da compra': data, 'Válido até': validade, 'Pago?': String(d.pago || 'Sim'), 'Forma de pagamento': String(d.forma || ''),
       'Quem pagou': String(d.quemPagou || pac.pagador || paciente), 'NF emitida?': String(d.nf || ''), 'Nº da NF': String(d.nfNumero || ''),
       'Sessões usadas': 0, 'Última sessão': '', 'Status': 'ativo', 'Registrado por (app)': (u.email || 'app') + ' · ' + agora_(), 'Observação': String(d.observacao || '') };
     gravarCelulas_(sp, linha, hp, pares);
@@ -560,13 +563,13 @@ API.lancarPacote = function (d) {
     pm[HM.DATA] = data; pm[HM.HORA] = String(d.hora || ''); pm[HM.PACIENTE] = paciente; pm[HM.PROFISSIONAL] = String(d.profissional || '');
     pm[HM.PROCEDIMENTO] = String(d.procedimentoCompra || ''); pm[HM.OQUE] = 'Atendido'; pm[HM.VALOR] = valor; pm[HM.PAGO] = String(d.pago || 'Sim');
     pm[HM.DATA_PAG] = data; pm[HM.FORMA] = String(d.forma || ''); pm[HM.QUEM] = (d.quemPagou && d.quemPagou !== (pac.pagador || '') && d.quemPagou !== paciente) ? String(d.quemPagou) : '';
-    pm[HM.NF] = String(d.nf || ''); pm[HM.NF_N] = String(d.nfNumero || ''); pm[HM.OBS] = ('Compra do pacote ' + id + '. ' + String(d.observacao || '')).trim();
+    pm[HM.NF] = String(d.nf || ''); pm[HM.NF_N] = String(d.nfNumero || ''); pm[HM.OBS] = ('Compra do plano ' + id + '. ' + String(d.observacao || '')).trim();
     pm[HM.ID] = idA; pm[HM.LOG] = (u.email || 'app') + ' · ' + agora_(); pm[HM.PACOTE] = id;
     gravarCelulas_(sm, lm, hm, pm);
     [HM.DATA, HM.DATA_PAG].forEach(function (k) { if (hm[k]) sm.getRange(lm, hm[k]).setNumberFormat('dd/MM/yyyy'); });
     if (hm[HM.VALOR]) sm.getRange(lm, hm[HM.VALOR]).setNumberFormat('#,##0.00');
     SpreadsheetApp.flush();
-    return { ok: true, id: id, validade: fmtData_(dataMais_(data, validadeDias)), linhaRecebimento: lm, aba: sm.getName() };
+    return { ok: true, id: id, validade: fmtData_(validade), linhaRecebimento: lm, aba: sm.getName() };
   } finally { lock.releaseLock(); }
 };
 
@@ -915,10 +918,10 @@ API.gestaoResumo = function (d) {
   var out = {
     ok: true, mes: mes, abaExiste: m.existe, total: L.length, atendidos: atend.length,
     recebido: atend.filter(function (r) { return r.pago === 'Sim'; }).reduce(function (a, r) { return a + r.valor; }, 0),
-    pagamentoPendente: atend.filter(function (r) { return particular(r) && (r.pago === '' || r.pago === 'Não') && !/^Mensalidade|pacote|plano social|mensal|convênio|AAPI/i.test(r.procedimento) ; }),
+    pagamentoPendente: atend.filter(function (r) { return particular(r) && (r.pago === '' || r.pago === 'Não') && !/^Mensalidade|pacote|plano|mensal|convênio|AAPI/i.test(r.procedimento) ; }),
     nfPendente: atend.filter(function (r) { return r.pago === 'Sim' && r.nf !== 'Sim' && r.nf !== 'Não se aplica'; }),
     semGuia: L.filter(function (r) { return (!particular(r) || /^Convênio/i.test(r.pago)) && r.guia !== 'Sim' && /^Atendido/.test(r.oque); }),
-    faltas: L.filter(function (r) { return /sem aviso|em cima da hora/i.test(r.oque) && particular(r) && !/Pacote/i.test(r.pago); }),
+    faltas: L.filter(function (r) { return /sem aviso|em cima da hora/i.test(r.oque) && particular(r) && !/Pacote|Plano/i.test(r.pago); }),
     descontos: L.filter(function (r) { return /^Desconto:/i.test(r.obs); }),
     extras: L.filter(function (r) { return /^Sessão extra liberada/i.test(r.obs); }),
     pagadorDiferente: atend.filter(function (r) { return r.quem; }),

@@ -13,7 +13,7 @@ Perfil decidido pelo e-mail logado: `administrativo@clinicanascente.com.br` mais
 | `Pacientes` | acrescenta linha (Novo paciente); atualiza só as células alteradas no Editar cadastro; carimbo em `Registrado por (app)` |
 | aba do mês (`Outubro`, `Novembro`…) | acrescenta linha por atendimento, falta, compra de pacote e mensalidade recebida; colunas U `Registrado por (app)` e V `Pacote (ID)` no fim. **Nunca escreve nas colunas automáticas F, G, H, N** nem na linha 2 |
 | `Mensalistas` | marca "Sim" no par "MÊS — pago?" e escreve a anotação na coluna "Data" (data, valor, forma, quem, NF, "app"); uma anotação anterior que não seja data é preservada como "antes: …" |
-| `Pacotes` | um pacote por linha (compra, validade, sessões, status ativo/encerrado/vencido) |
+| `Planos` | um plano de consultas por linha (compra, valor pago, validade, consultas usadas, status ativo/encerrado/vencido); coluna `Plano (ID)` na aba do mês liga cada consulta ao plano |
 | `Agenda recorrente` | horários fixos; edição "a partir de hoje" encerra a linha antiga e cria outra |
 | `Lista do dia` | acréscimos do dia, confirmações, não vem, remarcações e **removidos** (Origem "Removido · motivo") |
 | `Alterações de cadastro` | uma linha por campo alterado no Editar cadastro (de, para, quem informou, quem gravou) |
@@ -52,9 +52,15 @@ A data está no servidor (`VIRADA: 2026-11-01`). A partir dela: mensalidade do p
 - criar a aba Novembro e as colunas NOVEMBRO em Mensalistas (pelo app);
 - o "resto de outubro" dos mensalistas do modelo antigo entra como linha separada na aba do mês, com a anotação na coluna Data.
 
-## Pacotes (regras em vigor, decisão 7.8)
+## Modalidades (decisão 05/10)
 
-Atendido e falta sem aviso consomem sessão; desmarcou com antecedência não consome até 1 por mês (a 2ª consome); faltou em cima da hora consome; cancelado pela clínica não consome. Validade: 8 semanas (pacote de 4) e 24 semanas (pacote de 12) a partir da compra. Vencido, as sessões restantes aparecem como vencidas e você decide. Sessão extra liberada: Pago? "Pacote já pago", não consome, aparece no cartão da Gestão.
+A modalidade diz **como** o paciente paga; o valor fica onde já fica: na compra do plano (aba `Planos`) ou na coluna "Valor mensal" de `Mensalistas`. Lista em `Listas!H`: Consulta individual · Consulta individual – cartão de parceria · Plano de 4 consultas · Plano de 6 consultas · Plano de 12 consultas · Mensalidade fixa · Mensal (valor especial) · AAPI JF (mensal) · Convênio · Por sessão · Pro bono · Permuta.
+
+O valor combinado de cada paciente fica em `Pacientes!N` ("Valor combinado / observação de modalidade"): **o primeiro "R$" do campo é o que o app usa** pra sugerir o valor do plano. Padrão: `Plano de 4 consultas: R$ 280 por plano (…)`, `Mensalidade fixa: R$ 200/mês, …`. Mudança de valor (ex.: os quatro que passam a R$ 250 em fev/2027) = editar esse campo e a coluna de `Mensalistas`.
+
+## Planos de consultas (regras em vigor, decisão 7.8 + 05/10)
+
+Atendido e falta sem aviso consomem consulta; desmarcou com antecedência não consome até 1 por mês (a 2ª consome); faltou em cima da hora consome; cancelado pela clínica não consome. Validade a partir da compra: **2 meses** (plano de 4), 3 meses (plano de 6) e **6 meses** (plano de 12). Vencido, as consultas restantes aparecem como vencidas e você decide. Sessão extra liberada: Pago? "Plano já pago", não consome, aparece no cartão da Gestão. Quem era "pacote mensal" paga outubro pela aba Mensalistas (modelo antigo) e, a partir de novembro, compra planos de 4 consultas pelo Atendimento; a linha deles em Mensalistas pode sair depois de outubro quitado.
 
 ## Se algo der errado
 
