@@ -60,6 +60,7 @@ Decisão de 04/10 (Roberta, depois de comparar AppSheet × Apps Script × Next.j
 | App | **Google Apps Script (web app)** vinculado à planilha, HTML/CSS/JS no `HtmlService`, pt-BR, A4 via CSS `@media print`. Código versionado neste repositório e publicado com `clasp` | roda dentro da conta Google da clínica; publicar é um clique em "Implantar"; nada pra hospedar |
 | Login | o próprio login Google do Workspace (`Session.getActiveUser()`), acesso restrito ao domínio `clinicanascente.com.br`; perfil (recepção / gestão) por lista de e-mails na aba `Listas` (coluna nova `Gestão`) | zero senha, zero tela de consentimento |
 | Dados | leitura e escrita direto na planilha com `SpreadsheetApp`, executando **como o dono do script** (`administrativo@`) pra poder gravar nas abas protegidas; `LockService` em toda gravação; cache de 60 s (`CacheService`) pra `Pacientes`, `Listas`, `Procedimentos`, `Profissionais`, invalidado a cada gravação. Gravação só por `appendRow` e `setValue` de célula localizada pelo ID da coluna T | respeita "append ou update de célula, nunca reescrever a aba"; sem service account, sem chave |
+| Identidade visual | **Manual da Marca 2026 + paleta do site:** lavanda `#F1EEF6` de fundo, roxo `#543060` em títulos e botões, lilás `#9C78A8` em rótulos, pêssego/nude só no bloco ⚠ e em toques; Poppins (títulos, rótulos, botões), Mulish (corpo), Bitter (frases). Sem azul. Cards com barra lateral colorida, como no manual | decisão da Roberta, 05/10 |
 | Resiliência | rascunho do formulário em `localStorage` + fila de gravações pendentes com retentativa; faixa vermelha "planilha indisponível — seus dados estão guardados aqui" | requisito 7 |
 | Colunas | o app localiza cada coluna **pelo cabeçalho**, nunca pela letra | uma coluna inserida no meio não corrompe dado em silêncio |
 
@@ -160,7 +161,7 @@ Cada semana termina com uma versão implantada pra você testar. Protótipo nave
 
 ## 6. O que preciso de você antes de começar
 
-- **Id da cópia da planilha** pra desenvolver e testar (eu não escrevo na real até o piloto). O script fica vinculado à cópia durante o desenvolvimento e, no piloto, é vinculado à planilha real.
+- ✅ **Cópia da planilha** criada em 05/10: "CÓPIA TESTE - Controle da Recepção 2026", id `1u6uUDpgfwP9lfBOist41JJ7zYBQtQoJzRegTsonPiyk`. O script fica vinculado à cópia durante o desenvolvimento e, no piloto, é vinculado à planilha real.
 - Autorização pra acrescentar as colunas novas (U nas abas de mês; T–Y em `Pacientes`; `Gestão` em `Listas`) e as linhas em `Listas!A6` ("Cancelado pela clínica") e `Procedimentos` ("Mensalidade – psicologia").
 - Na primeira implantação, você autoriza o script uma vez na sua conta (`administrativo@`), porque ele executa como dono.
 
@@ -168,19 +169,19 @@ Cada semana termina com uma versão implantada pra você testar. Protótipo nave
 
 ## 7. Decisões que são suas — responda e eu sigo
 
-**7.1 Aba por mês × aba única `Atendimentos`.** Recomendo **manter aba por mês**: a planilha já está montada assim (fórmulas, validações, proteções e a importação do Financeiro), a gestão e a contabilidade já conhecem, e a complexidade pro app é pequena (o botão "Criar aba de Novembro" duplica a aba). Aba única só compensaria se o Financeiro quisesse consultas que cruzam meses — e aí o "exportar o mês" resolve. **Confirma manter por mês?**
+**7.1 ✅ Decidido 05/10: aba por mês.** Aba por mês × aba única `Atendimentos`. Recomendo **manter aba por mês**: a planilha já está montada assim (fórmulas, validações, proteções e a importação do Financeiro), a gestão e a contabilidade já conhecem, e a complexidade pro app é pequena (o botão "Criar aba de Novembro" duplica a aba). Aba única só compensaria se o Financeiro quisesse consultas que cruzam meses — e aí o "exportar o mês" resolve. **Confirma manter por mês?**
 
-**7.2 Como a lista do dia entra no app.** Recomendo começar pela **opção (a)**: aba `Agenda fixa` com os horários recorrentes (paciente, profissional, dia da semana, hora) carregada uma vez pela gestão a partir do ControleOdonto, mais acréscimos do dia feitos pela recepção. O extrator do ControleOdonto (opção b) entra depois como melhoria — eu não tenho acesso ao `registro do atendimento.md` › "Como extrair do ControleOdonto" (não está no repositório nem no Drive que enxergo); se quiser que eu avalie a (b), me passa esse trecho. **Confirma (a)?**
+**7.2 ✅ Decidido 05/10: opção (a), aba `Agenda fixa`.** Como a lista do dia entra no app. Recomendo começar pela **opção (a)**: aba `Agenda fixa` com os horários recorrentes (paciente, profissional, dia da semana, hora) carregada uma vez pela gestão a partir do ControleOdonto, mais acréscimos do dia feitos pela recepção. O extrator do ControleOdonto (opção b) entra depois como melhoria — eu não tenho acesso ao `registro do atendimento.md` › "Como extrair do ControleOdonto" (não está no repositório nem no Drive que enxergo); se quiser que eu avalie a (b), me passa esse trecho. **Confirma (a)?**
 
-**7.3 Valor fechado dentro da sessão.** Por ora só a gestão altera (via 4.5); a recepção escreve na Observação e a gestão promove. Deixo um botão na tela da gestão "promover observação pro cadastro" pra encurtar o caminho. **Ok?**
+**7.3 ✅ Decidido 05/10: a própria recepção atualiza o cadastro** (modalidade, valor combinado, regra e observação de cobrança) quando a psicóloga ou a gestão avisa no grupo de WhatsApp com recepção, gestão e psicologia. A tela "Editar cadastro" fica disponível pra recepção, com os campos "quem informou" e "quando" obrigatórios, gravados no log; a gestão vê as alterações do mês numa lista de conferência. Proposta original: Por ora só a gestão altera (via 4.5); a recepção escreve na Observação e a gestão promove. Deixo um botão na tela da gestão "promover observação pro cadastro" pra encurtar o caminho. **Ok?**
 
 **7.4 Pacote R$ 280 em fev/2027.** Resolvido pela tabela `Procedimentos` editável + modalidade por paciente; nada no código. Sem decisão necessária agora.
 
 **Já decidido em 04/10 (Roberta):** `Procedimentos` como lista do campo Procedimento, valor automático editável só quando em branco, fisioterapia fora; modalidade em lista única visível à recepção com aviso nas restritas; rótulos antigos renomeados em `Pacientes!F`; botão "Aplicar desconto" disponível em todo procedimento, com motivo obrigatório e conferência pela gestão. Observação minha: a aba `Mensalistas`, coluna B, ainda usa "Pacote mensal" e "Social mensal" (40 linhas). Não mexi porque a decisão falou só de `Pacientes!F`; o app vai tratar os dois rótulos como sinônimos até você querer renomear lá também.
 
-**7.5 (nova) Regra de duplicata ampliada** com "≥ 1 sobrenome em comum" — sem ela, Isac × Isaac não avisa (nascimentos diferentes). **Aprova?**
+**7.5 ✅ Decidido 05/10: sim.** Regra de duplicata ampliada com "≥ 1 sobrenome em comum" — sem ela, Isac × Isaac não avisa (nascimentos diferentes). **Aprova?**
 
-**7.6 (nova) Quem acrescenta as linhas em `Listas` e `Procedimentos`** ("Cancelado pela clínica", "Mensalidade – psicologia"): você na planilha real, ou eu na cópia e você replica?
+**7.6 ✅ Decidido 05/10: eu acrescento** (na cópia durante o desenvolvimento; na real, no piloto). Quem acrescenta as linhas em `Listas` e `Procedimentos` ("Cancelado pela clínica", "Mensalidade – psicologia"): você na planilha real, ou eu na cópia e você replica?
 
 **7.8 Regras do contador de pacote — decidido em 05/10 (Roberta).** Atendido e falta sem aviso consomem sessão. Falta com aviso não consome até 1 por mês; a 2ª consome. Desmarcou e Cancelado pela clínica não consomem. **Validade: 8 semanas pro pacote de 4 e 24 pro de 12** (pensado pra sessão quinzenal), contadas da compra. Vencido, as sessões restantes aparecem como "vencidas" e a gestão decide. O app avisa, nunca bloqueia. **Sessão extra discricionária:** com o pacote encerrado ou vencido, a recepção pode "Liberar sessão extra" informando quem liberou (Recepção · Gestão · Psicóloga) e o motivo; a linha vai com Pago? = "Pacote já pago", a Observação recebe "Sessão extra liberada por … — motivo", não consome sessão nem cobra, e aparece na lista da gestão. Ver 7.9 pra como "falta com aviso" e "desmarcou" se encaixam.
 
@@ -194,6 +195,6 @@ Cada semana termina com uma versão implantada pra você testar. Protótipo nave
 | Faltou sem aviso | não veio e não avisou | sim | não | sim, candidata |
 | Cancelado pela clínica | profissional faltou, feriado, clínica fechou | não | sim, sem contar no limite | não |
 
-Ou seja: **"desmarcou" é o aviso em tempo; "faltou com aviso" é o aviso tarde demais.** Se concordar, troco os dois rótulos em `Listas!A` (o protótipo já mostra assim) e a regra do 7.8 fica: "desmarcou com antecedência" não consome até 1/mês; "faltou em cima da hora" consome. **Confirma?**
+Ou seja: **"desmarcou" é o aviso em tempo; "faltou com aviso" é o aviso tarde demais.** Se concordar, troco os dois rótulos em `Listas!A` (o protótipo já mostra assim) e a regra do 7.8 fica: "desmarcou com antecedência" não consome até 1/mês; "faltou em cima da hora" consome. **✅ Decidido 05/10: ok.**
 
-**7.7 (nova) Rótulos de `Listas!B` na virada.** "Mensalista (paga no mês seguinte)" é o modelo antigo. Em novembro vira "Mensalista (mensalidade do mês)"? O app lê o rótulo da planilha, então basta você trocar o texto — só preciso saber se troca, pra eu não fixar nada.
+**7.7 ✅ Decidido 05/10: sim, muda em novembro** (vai pro checklist da virada). Rótulos de `Listas!B` na virada. "Mensalista (paga no mês seguinte)" é o modelo antigo. Em novembro vira "Mensalista (mensalidade do mês)"? O app lê o rótulo da planilha, então basta você trocar o texto — só preciso saber se troca, pra eu não fixar nada.
