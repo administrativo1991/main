@@ -31,3 +31,9 @@ Nada a fazer. Em até 2 minutos a tela nova aparece sozinha (basta recarregar a 
 ## Se der algum erro
 
 Copie a mensagem que apareceu na tela (ou um print) e me mande. Nada do que você digitou se perde: o rascunho fica guardado no computador até gravar.
+
+## Endereço atual (cópia de teste, implantado em 04/10/2026)
+
+`https://script.google.com/a/macros/clinicanascente.com.br/s/AKfycbzsUF7rqLabRtUQAeahEOo4cjdGd_7lLxk1vPl9EMsdjl52lTkbaWui69Ve_pdIHRNe/exec`
+
+Não crie outra "Nova implantação": isso gera outro endereço. Para atualizar o carregador, use Implantar → Gerenciar implantações → lápis → Nova versão.

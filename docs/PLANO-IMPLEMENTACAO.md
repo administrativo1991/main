@@ -152,7 +152,7 @@ Lista com filtro em dia / vence / atrasado, valor, pagador, mês atual pago?. "R
 
 | Semana | Entrega | Critério |
 |---|---|---|
-| 05–09/10 | ✅ 05/10: carregador, servidor, tela **Novo paciente**, módulo de duplicatas com 10 grupos de testes automáticos (Isac/Isaac, Natalha/Natalia, gêmeos, Isabella/Isabelli, Agatha×3, CPF). Falta: instalar na cópia (5 min da Roberta) e testar contra a planilha | duplicatas Isac/Isaac e Natalha/Natalia testadas |
+| 05–09/10 | ✅ 05/10: carregador, servidor, tela **Novo paciente**, módulo de duplicatas com 10 grupos de testes automáticos (Isac/Isaac, Natalha/Natalia, gêmeos, Isabella/Isabelli, Agatha×3, CPF). ✅ Instalado na cópia em 04/10 às 22h09 (implantação v1); a tela abriu lendo a cópia. Falta: primeiro cadastro de teste e conferência da linha em Pacientes | duplicatas Isac/Isaac e Natalha/Natalia testadas |
 | 12–16/10 | **Atendimento** com bloco ⚠ e regras de cobrança | 6 casos do briefing: tabela, paga o que consegue, mensalidade fixa, pro bono, convênio, mensalista atrasado |
 | 19–23/10 | Lista do dia imprimível + Mensalistas | recepção registra em < 1 min |
 | 26–30/10 | Gestão, pendências, exportar mês, READMEs recepção e gestão, piloto na planilha real | gestão fecha outubro pelo app |
