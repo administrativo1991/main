@@ -490,8 +490,12 @@ API.acrescentarAoDia = function (d) {
   if (erros.length) return { ok: false, erros: erros };
   var lock = LockService.getScriptLock(); lock.waitLock(20000);
   try {
-    var s = abaComCabecalho_(CONFIG.ABA.DIA, CONFIG.HD), h = cabecalhos_(s), u = usuario_(), id = novoId_('D'), linha = proximaLinha_(s, h['Paciente']);
-    gravarCelulas_(s, linha, h, { 'ID': id, 'Data': data, 'Hora': hora, 'Paciente': paciente, 'Profissional': profissional, 'Origem': String(d.origem || 'Avulso'), 'Observação': String(d.observacao || '').trim(), 'Registrado por (app)': (u.email || 'app') + ' · ' + agora_() });
+    var s = abaComCabecalho_(CONFIG.ABA.DIA, CONFIG.HD), h = cabecalhos_(s), u = usuario_(), origem = String(d.origem || 'Avulso');
+    // clique duplo no "Agendar": a mesma pessoa, no mesmo dia, hora e profissional, não entra duas vezes
+    var chave = fmtData_(data), igual = linhasComo_(s).filter(function (r) { return r['Data'] === chave && r['Paciente'] === paciente && r['Profissional'] === profissional && horaTxt_(r['Hora']) === hora && String(r['Origem'] || '') === origem; })[0];
+    if (igual) return { ok: true, id: igual['ID'], duplicado: true };
+    var id = novoId_('D'), linha = proximaLinha_(s, h['Paciente']);
+    gravarCelulas_(s, linha, h, { 'ID': id, 'Data': data, 'Hora': hora, 'Paciente': paciente, 'Profissional': profissional, 'Origem': origem, 'Observação': String(d.observacao || '').trim(), 'Registrado por (app)': (u.email || 'app') + ' · ' + agora_() });
     if (h['Data']) s.getRange(linha, h['Data']).setNumberFormat('dd/MM/yyyy');
     if (h['Hora']) s.getRange(linha, h['Hora']).setNumberFormat('@');
     SpreadsheetApp.flush();
@@ -516,6 +520,7 @@ API.listaDoDia = function (d) {
   linhasComo_(planilha_().getSheetByName(CONFIG.ABA.DIA)).forEach(function (r) {
     if (r['Data'] !== chave || !r['Paciente']) return;
     var origem = String(r['Origem'] || 'Avulso');
+    if (/^Removido/i.test(origem)) return; // agendamento removido pela recepção (duplicado, engano): a linha fica, mas sai da lista
     if (/^Confirmado/i.test(origem)) { // confirmação da véspera: marca o item, não cria outro
       var alvoC = itens.filter(function (it) { return it.paciente === r['Paciente'] && it.profissional === r['Profissional']; })[0];
       var quem = String(r['Registrado por (app)'] || '').split(' · ');
@@ -563,6 +568,25 @@ API.remarcar = function (d) {
   if (!r1.ok) return r1;
   var r2 = API.acrescentarAoDia({ data: fmtData_(para), hora: d.horaPara || d.horaDe || '', paciente: paciente, profissional: profissional, origem: 'Remarcação de ' + fmtData_(de), observacao: d.observacao || '' });
   return r2.ok ? { ok: true, ids: [r1.id, r2.id] } : r2;
+};
+// Remover um agendamento avulso (duplicado, engano): a linha não é apagada, a Origem vira "Removido · motivo"
+API.removerDoDia = function (d) {
+  d = d || {};
+  var id = String(d.id || '').trim(); if (!id) return { ok: false, erros: ['Agendamento sem ID.'] };
+  var lock = LockService.getScriptLock(); lock.waitLock(20000);
+  try {
+    var s = planilha_().getSheetByName(CONFIG.ABA.DIA); if (!s) return { ok: false, erros: ['Aba Lista do dia não existe.'] };
+    var h = cabecalhos_(s), ids = s.getRange(2, h['ID'], Math.max(s.getLastRow() - 1, 1), 1).getValues(), linha = 0;
+    for (var i = 0; i < ids.length; i++) if (String(ids[i][0]) === id) { linha = i + 2; break; }
+    if (!linha) return { ok: false, erros: ['Agendamento não encontrado.'] };
+    var origem = String(s.getRange(linha, h['Origem']).getValue() || '');
+    if (/^Removido/i.test(origem)) return { ok: true, id: id };
+    var u = usuario_(), motivo = String(d.motivo || 'removido').trim();
+    s.getRange(linha, h['Origem']).setValue('Removido · ' + motivo);
+    if (h['Observação']) { var o = s.getRange(linha, h['Observação']); o.setValue((String(o.getValue() || '') + ' | era "' + origem + '"; removido por ' + (u.email || 'app') + ' · ' + agora_()).replace(/^ \| /, '')); }
+    SpreadsheetApp.flush();
+    return { ok: true, id: id };
+  } finally { lock.releaseLock(); }
 };
 // Confirmação da véspera: uma linha em "Lista do dia" com Origem "Confirmado" (quem confirmou fica em "Registrado por (app)")
 API.confirmar = function (d) {
@@ -626,9 +650,168 @@ API.atualizarCadastro = function (d) {
     return { ok: true, alterados: mudancas.map(function (m) { return m.campo; }), colunasCriadas: g.criadas };
   } finally { lock.releaseLock(); }
 };
+/* ---------- Mensalistas ---------- */
+// Colunas "<MÊS> … — pago?" da aba Mensalistas, na ordem da planilha
+function colunasMensalistas_(hdr) {
+  var out = [];
+  hdr.forEach(function (x, i) { if (/pago\?/i.test(x)) out.push({ nome: x, idx: i, mes: (x.toUpperCase().match(/^[A-ZÇ]+/) || [''])[0] }); });
+  return out;
+}
+function sessoesNoMes_(data) {
+  var sm = planilha_().getSheetByName(nomeAbaMes_(data)), out = {};
+  if (!sm || sm.getLastRow() < 2) return out;
+  var h = cabecalhos_(sm), HM = CONFIG.HM, vals = sm.getRange(2, 1, sm.getLastRow() - 1, sm.getLastColumn()).getValues();
+  vals.forEach(function (r) {
+    var pac = String(r[h[HM.PACIENTE] - 1] || '').trim(); if (!pac) return;
+    if (!/^Atendido/.test(String(r[h[HM.OQUE] - 1] || ''))) return;
+    if (/^Mensalidade|\(compra\)/.test(String(r[h[HM.PROCEDIMENTO] - 1] || ''))) return; // recebimentos não contam como sessão
+    out[pac] = (out[pac] || 0) + 1;
+  });
+  return out;
+}
+API.mensalistasPainel = function (d) {
+  d = d || {};
+  var s = planilha_().getSheetByName(CONFIG.ABA.MENSALISTAS);
+  if (!s || s.getLastRow() < 2) return { itens: [], colunas: [], coluna: '', modeloNovo: false };
+  var hdr = s.getRange(1, 1, 1, s.getLastColumn()).getValues()[0].map(function (x) { return String(x || '').trim(); });
+  var cols = colunasMensalistas_(hdr), ref = mensalistas_();
+  var coluna = String(d.coluna || ref.coluna || (cols.length ? cols[cols.length - 1].nome : '')).trim();
+  var c = cols.filter(function (x) { return x.nome === coluna; })[0];
+  var cObs = -1; hdr.forEach(function (x, i) { if (cObs < 0 && /^Observa/i.test(x)) cObs = i; });
+  var sess = sessoesNoMes_(new Date());
+  var vals = s.getRange(2, 1, s.getLastRow() - 1, s.getLastColumn()).getValues(), itens = [];
+  vals.forEach(function (r, i) {
+    var pac = String(r[0] || '').trim(); if (!pac) return;
+    var pagoV = c ? r[c.idx] : '', dataV = c ? r[c.idx + 1] : '';
+    itens.push({ linha: i + 2, paciente: pac, modalidade: String(r[1] || ''), valor: Number(String(r[2] || '').replace(',', '.')) || 0, pagador: String(r[3] || ''),
+      pago: String(pagoV == null ? '' : pagoV).trim(), dataPago: (dataV instanceof Date) ? fmtData_(dataV) : String(dataV == null ? '' : dataV).trim(),
+      obs: cObs >= 0 ? String(r[cObs] || '') : '', sessoes: sess[pac] || 0 });
+  });
+  return { itens: itens, colunas: cols.map(function (x) { return x.nome; }), coluna: coluna, mes: c ? c.mes : '', modeloNovo: ref.modeloNovo, abaMes: nomeAbaMes_(new Date()), hoje: hoje_() };
+};
+API.registrarMensalidade = function (d) {
+  d = d || {};
+  var erros = [];
+  var paciente = String(d.paciente || '').trim(); if (!paciente) erros.push('Escolha o paciente.');
+  var coluna = String(d.coluna || '').trim(); if (!coluna) erros.push('Escolha o mês da mensalidade.');
+  var data = parseData_(d.data); if (!data) erros.push('Data do pagamento inválida.');
+  var valor = Number(String(d.valor || '').replace(/\./g, '').replace(',', '.')); if (isNaN(valor) || valor <= 0) erros.push('Valor inválido.');
+  var forma = String(d.forma || '').trim(); if (!forma) erros.push('Informe a forma de pagamento.');
+  if (erros.length) return { ok: false, erros: erros };
+  var lock = LockService.getScriptLock(); lock.waitLock(20000);
+  try {
+    var s = aba_(CONFIG.ABA.MENSALISTAS), hdr = s.getRange(1, 1, 1, s.getLastColumn()).getValues()[0].map(function (x) { return String(x || '').trim(); });
+    var col = colunasMensalistas_(hdr).filter(function (x) { return x.nome === coluna; })[0];
+    if (!col) return { ok: false, erros: ['Coluna "' + coluna + '" não existe em Mensalistas.'] };
+    var nomes = s.getRange(2, 1, s.getLastRow() - 1, 1).getValues(), linha = 0;
+    for (var i = 0; i < nomes.length; i++) if (String(nomes[i][0] || '').trim() === paciente) { linha = i + 2; break; }
+    if (!linha) return { ok: false, erros: ['Paciente não está na aba Mensalistas.'] };
+    var u = usuario_(), carimbo = (u.email || 'app') + ' · ' + agora_();
+    var anterior = String(s.getRange(linha, col.idx + 2).getValue() || '').trim();
+    var nota = fmtData_(data) + ' — R$ ' + valor.toFixed(2).replace('.', ',') + ' ' + forma + (d.quemPagou ? ' (' + String(d.quemPagou).trim() + ')' : '') + (d.nfNumero ? ' · NF ' + String(d.nfNumero).trim() : (String(d.nf || '') === 'Sim' ? ' · NF emitida' : '')) + (d.sessaoExtra ? ' · com 5ª sessão' : '') + ' · app';
+    if (anterior && !/^\d{2}\/\d{2}/.test(anterior)) nota = nota + ' | antes: ' + anterior; // não perde a anotação da gestão
+    s.getRange(linha, col.idx + 1).setValue('Sim');
+    s.getRange(linha, col.idx + 2).setValue(nota);
+    // linha de recebimento na aba do mês do pagamento
+    var pac = indicePacientes_().filter(function (p) { return p.nome === paciente; })[0] || {};
+    var sm = abaMes_(data), gm = garantirColunas_(sm, [CONFIG.HM.LOG, CONFIG.HM.PACOTE]), hm = gm.h, HM = CONFIG.HM;
+    var lm = proximaLinha_(sm, hm[HM.PACIENTE] || 3), id = novoId_('A');
+    var proc = procedimentos_().filter(function (p) { return /^Mensalidade/i.test(p.nome); })[0];
+    var pm = {};
+    pm[HM.DATA] = data; pm[HM.HORA] = String(d.hora || ''); pm[HM.PACIENTE] = paciente; pm[HM.PROFISSIONAL] = String(d.profissional || '');
+    pm[HM.PROCEDIMENTO] = proc ? proc.nome : 'Mensalidade – psicologia'; pm[HM.OQUE] = 'Atendido'; pm[HM.VALOR] = valor; pm[HM.PAGO] = 'Sim';
+    pm[HM.DATA_PAG] = data; pm[HM.FORMA] = forma; pm[HM.QUEM] = (d.quemPagou && d.quemPagou !== (pac.pagador || '') && d.quemPagou !== paciente) ? String(d.quemPagou) : '';
+    pm[HM.NF] = String(d.nf || ''); pm[HM.NF_N] = String(d.nfNumero || '');
+    pm[HM.OBS] = ('Mensalidade ' + (col.mes ? col.mes.toLowerCase() : coluna) + (d.sessaoExtra ? ' (com 5ª sessão)' : '') + '. ' + String(d.observacao || '')).trim();
+    pm[HM.ID] = id; pm[HM.LOG] = carimbo;
+    gravarCelulas_(sm, lm, hm, pm);
+    [HM.DATA, HM.DATA_PAG].forEach(function (k) { if (hm[k]) sm.getRange(lm, hm[k]).setNumberFormat('dd/MM/yyyy'); });
+    if (hm[HM.VALOR]) sm.getRange(lm, hm[HM.VALOR]).setNumberFormat('#,##0.00');
+    SpreadsheetApp.flush();
+    return { ok: true, id: id, linha: lm, aba: sm.getName(), nota: nota };
+  } finally { lock.releaseLock(); }
+};
+// Gestão: cria o par de colunas "<MÊS> — pago?" / "Data" no fim da aba Mensalistas
+API.criarColunasMes = function (d) {
+  d = d || {};
+  if (usuario_().perfil !== 'gestao') return { ok: false, erros: ['Só a gestão cria colunas de mês.'] };
+  var mes = String(d.mes || '').trim(); if (CONFIG.MESES.indexOf(mes) < 0) return { ok: false, erros: ['Mês inválido.'] };
+  var lock = LockService.getScriptLock(); lock.waitLock(20000);
+  try {
+    var s = aba_(CONFIG.ABA.MENSALISTAS), hdr = s.getRange(1, 1, 1, s.getLastColumn()).getValues()[0].map(function (x) { return String(x || '').trim(); });
+    var nome = mes.toUpperCase() + ' — pago?';
+    if (colunasMensalistas_(hdr).some(function (c) { return c.mes === mes.toUpperCase(); })) return { ok: false, erros: ['Já existe coluna de ' + mes + ' em Mensalistas.'] };
+    var prox = s.getLastColumn() + 1;
+    if (prox + 1 > s.getMaxColumns()) s.insertColumnsAfter(s.getMaxColumns(), 2);
+    s.getRange(1, prox, 1, 2).setValues([[nome, 'Data']]).setFontWeight('bold');
+    SpreadsheetApp.flush();
+    return { ok: true, coluna: nome };
+  } finally { lock.releaseLock(); }
+};
+
+/* ---------- Gestão ---------- */
+function linhasMes_(nome) {
+  var sm = planilha_().getSheetByName(nome);
+  if (!sm || sm.getLastRow() < 2) return { existe: !!sm, linhas: [] };
+  var h = cabecalhos_(sm), HM = CONFIG.HM, vals = sm.getRange(2, 1, sm.getLastRow() - 1, sm.getLastColumn()).getValues(), out = [];
+  var g = function (r, k) { var c = h[HM[k]] || h[k]; return c ? r[c - 1] : ''; };
+  vals.forEach(function (r, i) {
+    var pac = String(g(r, 'PACIENTE') || '').trim(); if (!pac) return;
+    out.push({ linha: i + 2, data: fmtData_(g(r, 'DATA')), hora: horaTxt_(g(r, 'HORA')), paciente: pac, profissional: String(g(r, 'PROFISSIONAL') || ''), procedimento: String(g(r, 'PROCEDIMENTO') || ''),
+      convenio: String(g(r, 'Convênio (auto)') || ''), oque: String(g(r, 'OQUE') || ''), valor: Number(g(r, 'VALOR')) || 0, pago: String(g(r, 'PAGO') || '').trim(), dataPag: fmtData_(g(r, 'DATA_PAG')),
+      forma: String(g(r, 'FORMA') || ''), quem: String(g(r, 'QUEM') || ''), nf: String(g(r, 'NF') || '').trim(), nfN: String(g(r, 'NF_N') || ''), guia: String(g(r, 'GUIA') || '').trim(), obs: String(g(r, 'OBS') || ''), id: String(g(r, 'ID') || ''), log: String(g(r, 'LOG') || '') });
+  });
+  return { existe: true, linhas: out };
+}
+API.gestaoResumo = function (d) {
+  d = d || {};
+  if (usuario_().perfil !== 'gestao') return { ok: false, erros: ['Esta tela é só da gestão.'] };
+  var mes = String(d.mes || nomeAbaMes_(new Date())).trim();
+  var m = linhasMes_(mes), L = m.linhas;
+  var particular = function (r) { return !r.convenio || /^Particular$/i.test(r.convenio); };
+  var atend = L.filter(function (r) { return /^Atendido/.test(r.oque); });
+  var out = {
+    ok: true, mes: mes, abaExiste: m.existe, total: L.length, atendidos: atend.length,
+    recebido: atend.filter(function (r) { return r.pago === 'Sim'; }).reduce(function (a, r) { return a + r.valor; }, 0),
+    pagamentoPendente: atend.filter(function (r) { return particular(r) && (r.pago === '' || r.pago === 'Não') && !/^Mensalidade|pacote|plano social|mensal|convênio|AAPI/i.test(r.procedimento) ; }),
+    nfPendente: atend.filter(function (r) { return r.pago === 'Sim' && r.nf !== 'Sim' && r.nf !== 'Não se aplica'; }),
+    semGuia: L.filter(function (r) { return (!particular(r) || /^Convênio/i.test(r.pago)) && r.guia !== 'Sim' && /^Atendido/.test(r.oque); }),
+    faltas: L.filter(function (r) { return /sem aviso|em cima da hora/i.test(r.oque) && particular(r) && !/Pacote/i.test(r.pago); }),
+    descontos: L.filter(function (r) { return /^Desconto:/i.test(r.obs); }),
+    extras: L.filter(function (r) { return /^Sessão extra liberada/i.test(r.obs); }),
+    pagadorDiferente: atend.filter(function (r) { return r.quem; }),
+    alteracoes: []
+  };
+  var sl = planilha_().getSheetByName(CONFIG.ABA.ALTERACOES);
+  if (sl && sl.getLastRow() >= 2) {
+    var idx = CONFIG.MESES.indexOf(mes), mm = ('0' + (idx + 1)).slice(-2);
+    linhasComo_(sl).forEach(function (r) { var dt = String(r['Data/hora'] || ''); if (dt.slice(3, 5) === mm) out.alteracoes.push({ quando: dt, paciente: r['Paciente'], campo: r['Campo'], de: r['De'], para: r['Para'], quem: r['Quem informou'], por: r['Registrado por (app)'] }); });
+  }
+  out.mesesExistentes = CONFIG.MESES.filter(function (x) { return !!planilha_().getSheetByName(x); });
+  var sM = planilha_().getSheetByName(CONFIG.ABA.MENSALISTAS);
+  out.colunasMensalistas = sM ? colunasMensalistas_(sM.getRange(1, 1, 1, sM.getLastColumn()).getValues()[0].map(function (x) { return String(x || '').trim(); })).map(function (c) { return c.mes; }) : [];
+  return out;
+};
+// Exporta a aba do mês (só valores) para uma planilha nova no Drive da conta, com link direto pro .xlsx
+API.exportarMes = function (d) {
+  d = d || {};
+  if (usuario_().perfil !== 'gestao') return { ok: false, erros: ['Só a gestão exporta.'] };
+  var mes = String(d.mes || nomeAbaMes_(new Date())).trim(), sm = planilha_().getSheetByName(mes);
+  if (!sm) return { ok: false, erros: ['A aba "' + mes + '" não existe.'] };
+  var n = Math.max(sm.getLastRow(), 1), c = Math.max(sm.getLastColumn(), 1);
+  var vals = sm.getRange(1, 1, n, c).getValues(), fmts = sm.getRange(1, 1, n, c).getNumberFormats();
+  var nome = 'Recepção ' + mes + ' ' + new Date().getFullYear() + ' — exportado ' + agora_();
+  var nova = SpreadsheetApp.create(nome), aba = nova.getSheets()[0];
+  aba.setName(mes);
+  aba.getRange(1, 1, n, c).setValues(vals).setNumberFormats(fmts);
+  aba.getRange(1, 1, 1, c).setFontWeight('bold'); aba.setFrozenRows(1);
+  SpreadsheetApp.flush();
+  return { ok: true, nome: nome, url: nova.getUrl(), xlsx: 'https://docs.google.com/spreadsheets/d/' + nova.getId() + '/export?format=xlsx', linhas: n - 1 };
+};
 // Gestão: cria a aba de um mês copiando a estrutura (cabeçalho, fórmulas automáticas, validações) da aba-modelo
 API.criarAbaMes = function (d) {
   d = d || {};
+  if (usuario_().perfil !== 'gestao') return { ok: false, erros: ['Só a gestão cria a aba do mês.'] };
   var nome = String(d.nome || '').trim(); if (CONFIG.MESES.indexOf(nome) < 0) return { ok: false, erros: ['Nome do mês inválido.'] };
   var ss = planilha_(); if (ss.getSheetByName(nome)) return { ok: false, erros: ['A aba "' + nome + '" já existe.'] };
   var modelo = null; CONFIG.MESES.slice().reverse().forEach(function (m) { if (!modelo && ss.getSheetByName(m)) modelo = ss.getSheetByName(m); });
