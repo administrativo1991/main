@@ -22,6 +22,8 @@ Faça primeiro na **cópia de teste**. Quando aprovar, repita os mesmos passos n
 
 ## Para a recepção usar
 
+Guias de uso: `docs/README-RECEPCAO.md` (recepção) e `docs/README-GESTAO.md` (gestão).
+
 Mande o link para `atendimento@clinicanascente.com.br` e peça para salvar como atalho (no Chrome: menu ⋮ → Transmitir, salvar e compartilhar → Instalar página como app; no celular: "Adicionar à tela inicial"). Só abre logado com e-mail da clínica.
 
 ## Quando eu atualizar o app
@@ -32,7 +34,7 @@ Nada a fazer. Em até 2 minutos a tela nova aparece sozinha (basta recarregar a 
 
 Copie a mensagem que apareceu na tela (ou um print) e me mande. Nada do que você digitou se perde: o rascunho fica guardado no computador até gravar.
 
-## Endereço atual (cópia de teste, implantado em 04/10/2026; app atualizado em 05/10 com Novo paciente, Atendimento, Lista do dia e Editar cadastro)
+## Endereço atual (cópia de teste, implantado em 04/10/2026; app completo publicado em 05/10: Novo paciente, Atendimento, Lista do dia, Editar cadastro, Mensalistas e Gestão)
 
 `https://script.google.com/a/macros/clinicanascente.com.br/s/AKfycbzsUF7rqLabRtUQAeahEOo4cjdGd_7lLxk1vPl9EMsdjl52lTkbaWui69Ve_pdIHRNe/exec`
 

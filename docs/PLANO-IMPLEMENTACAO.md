@@ -81,11 +81,11 @@ Nenhum dado vive só no app. Mapa do que o app lê e escreve:
 |---|---|---|
 | `Pacientes` | A–S + U–Y (novas) | **append** linha nova (Novo paciente); **update** de O/P (pagador confirmado), F/N/R/S (só gestão), T log |
 | `Outubro`, `Novembro`… | tudo | **append** linha (registro do atendimento, mensalidade, falta); **update** de célula por ID (correção, "cancelado") |
-| `Mensalistas` | tudo | **update** do par "mês — pago?" / "Data" por paciente; **append** paciente novo mensalista |
+| `Mensalistas` | tudo | **update** do par "mês — pago?" / "Data" por paciente (anotação anterior preservada como "antes: …"); gestão acrescenta o par de colunas do mês seguinte |
 | `Procedimentos` | A–D | nada (só gestão, pela planilha) |
 | `Profissionais`, `Listas`, `Como preencher` | tudo | nada |
 | `Agenda recorrente` (**nova**, ver 7.2; criada pelo app em 05/10) | ID · paciente · profissional · dia da semana · hora · frequência (semanal/quinzenal) · começa em · termina em · ativo · observação · registrado por | **append** de horário novo; **update** da linha ao editar; mudança "a partir de hoje" encerra a antiga e acrescenta outra |
-| `Lista do dia` (**nova**, ver 7.2; criada pelo app em 05/10) | ID · data · hora · paciente · profissional · origem · observação · registrado por | **append** (acréscimo do dia, "Não vem · remarcado para…", "Remarcação de…") |
+| `Lista do dia` (**nova**, ver 7.2; criada pelo app em 05/10) | ID · data · hora · paciente · profissional · origem · observação · registrado por | **append** (acréscimo do dia, "Confirmado", "Não vem · remarcado para…", "Remarcação de…"); **update** de Origem para "Removido · motivo" quando a recepção remove um agendamento (nada é apagado) |
 | `Alterações de cadastro` (**nova**, 4.3b; criada pelo app em 05/10) | data/hora · paciente · campo · de · para · quem informou · registrado por | **append** a cada campo alterado pelo Editar cadastro |
 | `Pacotes` (**nova**, item 10) | um pacote comprado por linha, com validade e pagamento | **append** na compra; **update** de Status (ativo · encerrado · vencido) |
 
@@ -143,7 +143,9 @@ Clicando num nome a recepção escolhe: **Registrar atendimento** (abre o Atendi
 
 **Cadastro na hora de agendar e de atender** (05/10): ao escolher o paciente, o app mostra o que está no cadastro (convênio, modalidade, regra). Se não houver nada, avisa "cadastro incompleto" e oferece **Completar cadastro**, que abre a tela Editar cadastro e volta pra onde estava. Motivo: na cópia, de 528 pacientes só ~90 têm Modalidade e ~100 têm Convênio preenchidos.
 
-**+ Agendar no dia**: acrescenta um atendimento avulso naquele dia (origem: avulso, encaixe, retorno, avaliação) ou, com "Tornar recorrente", cria de uma vez o horário semanal a partir daquele dia.
+**+ Agendar no dia**: acrescenta um atendimento avulso naquele dia (origem: avulso, encaixe, retorno, avaliação) ou, com "Tornar recorrente", cria de uma vez o horário semanal a partir daquele dia. O servidor recusa um agendamento idêntico (mesma data, hora, paciente, profissional e origem) e a tela trava os botões enquanto grava, depois de um duplo clique ter duplicado a Eloise em 05/10.
+
+**Remover** (05/10, pedido da Roberta): em item agendado pelo app e ainda sem registro, a recepção pode removê-lo informando o motivo (padrão "duplicado"). A linha em `Lista do dia` recebe Origem "Removido · motivo" e a Observação guarda o que era e quem removeu; a lista deixa de mostrar o item. Nada é apagado.
 
 **Agenda recorrente** (dentro da Lista do dia): cadastro completo dos horários fixos — paciente, profissional, dia da semana, hora, frequência (semanal/quinzenal), começa em, termina em, ativo, observação — com edição. Ao mudar dia, hora ou profissional de um horário existente, o app pergunta se vale **a partir de hoje**: a linha antiga termina ontem e nasce uma nova, preservando o histórico. Pausar = Ativo "Não". Nada é apagado.
 
@@ -152,17 +154,18 @@ As duas abas são criadas pelo app na primeira gravação, com cabeçalhos próp
 ### 4.3b Editar cadastro — ✅ publicada na cópia em 05/10 (decisão 7.3)
 Recepção e gestão. Escolhe o paciente e edita: modalidade, convênio, nº da carteirinha, regra de cobrança, valor combinado, observação de cobrança, pagador habitual (atualiza também "Nome do pagador como aparece no extrato"), WhatsApp do pagador, profissional de referência. **"Quem informou" é obrigatório.** Modalidades restritas pedem a confirmação de que houve aviso no grupo. O servidor grava só as células que mudaram, acrescenta um carimbo em `Registrado por (app)` e registra cada mudança na aba **`Alterações de cadastro`** (Data/hora · Paciente · Campo · De · Para · Quem informou · Registrado por), criada na primeira gravação. Acessível pelo menu, pelo link "Editar cadastro" no Atendimento e pelo botão "Completar cadastro" nos avisos de cadastro incompleto.
 
-### 4.4 Mensalistas
+### 4.4 Mensalistas — ✅ publicada na cópia em 05/10
 **Decisão 05/10 (Roberta): a pergunta da 5ª sessão só vale para pacotes mensais (R$ 280/360, R$ 400). Na Social (R$ 200/mês) e nos valores especiais a 5ª sessão está incluída: o app não pergunta nem cobra.**
 
-Lista com filtro em dia / vence / atrasado, valor, pagador, mês atual pago?. "Registrar mensalidade": data, forma, quem pagou, NF, pergunta da 5ª sessão em mês de 5 semanas (valor somado). Grava: update do par do mês em `Mensalistas` + append de uma linha de recebimento na aba do mês (procedimento "Mensalidade – psicologia"). Competência: pagamento até dia 10 cai no mês corrente (modelo antecipado, a partir de nov); em outubro ainda vale o modelo antigo (paga setembro), e o "resto de outubro" em nov/dez entra como linha separada — tudo isso lido do cabeçalho da coluna, não do código.
+Como ficou: painel por **coluna do mês** de `Mensalistas` (seletor; abre na coluna corrente), com contadores (mensalistas · em dia · pendentes · atrasadas · total pago), filtros, busca por nome ou pagador e a coluna "Sessões em <mês>" contada na aba do mês. Situação: *em dia* (pago? = Sim), *pendente*/*atrasada* (pago? = Não ou anotação "deve"; atrasada só no modelo novo a partir do dia 16), *vence dia 10* / *venceu dia 10* (modelo novo) ou *a receber* (modelo antigo). **Registrar**: valor (vem do cadastro), data, forma, quem pagou, NF e número, profissional, observação; a pergunta da 5ª sessão (soma 1/4 do valor) aparece só em pacotes mensais, nunca na Social nem nos valores especiais. Grava: "Sim" na coluna pago? do mês, anotação na coluna Data ("dd/mm/aaaa — R$ valor forma (quem) · NF n · app", preservando uma anotação anterior como "| antes: …") e uma linha de recebimento na aba do mês com o procedimento "Mensalidade – psicologia" (O que aconteceu = Atendido, Pago? = Sim). Competência lida do cabeçalho da coluna, não do código: em outubro vale o modelo antigo (paga setembro); a partir de 01/11 (`VIRADA`) é antecipada, vence dia 10, tolerância 15.
 
-### 4.5 Gestão (só perfil gestão)
-- Editar paciente: modalidade restrita, Regra de cobrança, Observação de cobrança, pagador, convênio.
-- Pendências (lê a aba do mês e a anterior): particular atendido com Pago? vazio ou "Não" · NF não emitida com Pago? = Sim · convênio sem guia · falta sem aviso de particular (taxa a decidir, com botão "cobrar no próximo agendamento" que cria aviso no bloco ⚠ do paciente / "relevar") · **descontos aplicados no mês** (paciente, valor cheio, valor cobrado, motivo, quem registrou).
-- Criar aba do mês seguinte; criar par de colunas do mês em `Mensalistas`.
-- Exportar o mês (xlsx, mesmas colunas A–U).
-- Versão imprimível de todas as listas.
+### 4.5 Gestão (só perfil gestão) — ✅ publicada na cópia em 05/10
+Perfil pelo e-mail: `administrativo@` mais a coluna **Gestão** da aba `Listas`. Quem não é gestão vê só o aviso de acesso restrito.
+- Editar paciente: feito pela tela **Editar cadastro** (4.3b), compartilhada com a recepção, com log em `Alterações de cadastro`.
+- Pendências do mês escolhido (cartões imprimíveis, com contadores no topo): particular atendido com Pago? vazio ou "Não" · pago sem NF · convênio sem guia assinada · falta sem aviso ou em cima da hora de particular (taxa a decidir; a decisão fica na Observação da linha, sem botão por ora) · **descontos aplicados** · **sessões extras liberadas** · **pagou outra pessoa** (conferir nome na NF) · **alterações de cadastro no mês**.
+- **Criar aba de <mês seguinte>** (duplica a estrutura da aba corrente) e **Criar colunas de <mês seguinte> em Mensalistas**, ambos com confirmação em dois cliques; `criarAbaMes` passou a ser só da gestão.
+- **Exportar <mês> (.xlsx)**: o servidor cria no Drive da conta `administrativo@` uma planilha nova só com os valores da aba do mês ("Recepção <mês> <ano> — exportado <data>") e devolve o link do .xlsx e o da cópia. A cópia fica no Drive até ser apagada à mão.
+- Impressão de todas as listas.
 
 ---
 
@@ -172,8 +175,8 @@ Lista com filtro em dia / vence / atrasado, valor, pagador, mês atual pago?. "R
 |---|---|---|
 | 05–09/10 | ✅ 05/10: carregador, servidor, tela **Novo paciente**, módulo de duplicatas com 10 grupos de testes automáticos (Isac/Isaac, Natalha/Natalia, gêmeos, Isabella/Isabelli, Agatha×3, CPF). ✅ Instalado na cópia em 04/10 às 22h09 (implantação v1); a tela abriu lendo a cópia. Falta: primeiro cadastro de teste e conferência da linha em Pacientes | duplicatas Isac/Isaac e Natalha/Natalia testadas |
 | 12–16/10 | ✅ Adiantado para 05/10: **Atendimento** publicado na cópia, com bloco ⚠, regras de cobrança, procedimento derivado, desconto, pacotes (aba `Pacotes` + coluna V), sessão extra, pagador novo, gravação na aba do mês (colunas U/V criadas no fim). Testado no navegador com os 6 casos do briefing mais pacote 2/4, pacote encerrado com lançamento, falta e pediatria. Falta: teste da Roberta na cópia e conferência das linhas | 6 casos do briefing: tabela, paga o que consegue, mensalidade fixa, pro bono, convênio, mensalista atrasado |
-| 19–23/10 | ✅ Adiantado para 05/10: **Editar cadastro** publicado (recepção e gestão, log em `Alterações de cadastro`), **Confirmou** na Lista do dia, aviso de cadastro ao agendar e ao atender. ✅ **Lista do dia** publicada na cópia (visão geral em colunas + aba por profissional, imprimível, registrar/não vem/remarcar, agendar no dia, **Agenda recorrente** semanal/quinzenal com edição "a partir de hoje"). Falta: **Mensalistas** (registrar mensalidade, 5ª sessão só em pacotes mensais, filtros) e o teste da Roberta na cópia | recepção registra em < 1 min |
-| 26–30/10 | Gestão, pendências, exportar mês, READMEs recepção e gestão, piloto na planilha real | gestão fecha outubro pelo app |
+| 19–23/10 | ✅ Adiantado para 05/10: **Editar cadastro** publicado (recepção e gestão, log em `Alterações de cadastro`), **Confirmou** na Lista do dia, aviso de cadastro ao agendar e ao atender. ✅ **Lista do dia** publicada na cópia (visão geral em colunas + aba por profissional, imprimível, registrar/não vem/remarcar/**remover**, agendar no dia sem duplicar, **Agenda recorrente** semanal/quinzenal com edição "a partir de hoje"). ✅ **Mensalistas** publicada (painel por coluna do mês, registrar mensalidade, 5ª sessão só em pacotes mensais). Falta: teste da Roberta na cópia | recepção registra em < 1 min |
+| 26–30/10 | ✅ Adiantado para 05/10: **Gestão** publicada (pendências, descontos, sessões extras, alterações de cadastro, criar aba e colunas do mês, exportar xlsx) e **READMEs** da recepção e da gestão (`docs/README-RECEPCAO.md`, `docs/README-GESTAO.md`). Falta: lançamentos de teste de setembro na cópia, teste da Roberta e piloto na planilha real | gestão fecha outubro pelo app |
 | 01/11 | Virada: aba Novembro, modelo antecipado | |
 
 Cada semana termina com uma versão implantada pra você testar. Protótipo navegável das telas: https://claude.ai/artifact/LuVb9tDGaLtALBtHnfLsGz (cópia em `docs/prototipo/checkout-prototipo.html`).
@@ -226,5 +229,5 @@ Ou seja: **"desmarcou" é o aviso em tempo; "faltou com aviso" é o aviso tarde 
 ## 10. Como publicar uma atualização (nota técnica)
 
 1. Editar `app/server/*.js` ou `app/client/index.html`; `node build.js`; `node tests/duplicatas.test.js`; teste no navegador em simulação (`dist/index.html`, sem Google).
-2. Gravar os fontes na planilha de código (`arquivos`): linha 2 `duplicatas.js`, linha 3 `server.js`, linhas 4+ `index.html` em partes de até 45.000 caracteres (coluna B = nº da parte). O carregador junta as partes e guarda em cache por 90 s.
+2. `node build.js` também gera `dist/pedacos.json`: cada fonte dividido em pedaços de até 12.000 caracteres, cortados em fim de linha. Gravar na planilha de código (`arquivos`, colunas arquivo · parte · conteúdo): `duplicatas.js` (1 parte), `server.js` (5 partes) e `index.html` (11 partes), uma linha por pedaço; conferir com `=LEN()` que cada célula tem o tamanho do pedaço e apagar as fórmulas. O carregador ordena pela coluna `parte`, junta e guarda em cache por 90 s. Como um pedaço alterado desloca todos os seguintes, normalmente se regrava o arquivo inteiro.
 3. O carregador (`dist/Code.gs`) só muda em caso raro; aí a Roberta repete o passo "Implantar → Gerenciar implantações → Nova versão".
