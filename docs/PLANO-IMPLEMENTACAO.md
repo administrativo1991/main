@@ -43,7 +43,9 @@ Diferenças que mudam o desenho:
 6. **`Pacientes` (A–S) não tem campos que o formulário "Novo paciente" pede**: WhatsApp do pagador, nº da carteirinha, quem indicou, data da 1ª consulta, profissional. Proponho colunas novas **U–Y** no fim: `WhatsApp do pagador` · `Nº carteirinha` · `Quem indicou` · `Data 1ª consulta` · `Profissional de referência`. Nada existente muda de lugar.
 7. **`Mensalistas`** hoje tem pares de colunas por mês (`SETEMBRO … — pago?` / `Data`, `OUTUBRO … — pago?` / `Data`). O app localiza o par pelo nome do mês no cabeçalho e, na virada, a gestão (pelo app) cria o par do mês seguinte. Forma, quem pagou e NF da mensalidade ficam na **linha de recebimento** gravada na aba do mês (procedimento "Mensalidade – psicologia", a criar em `Procedimentos`).
 8. **Muitos cadastros não têm CPF ou nascimento** (≈ 1/3 sem CPF). A validação de duplicata tem que funcionar mesmo quando o cadastro antigo está incompleto — por isso a regra 2 abaixo compara também sobrenomes.
-9. **Isac × Isaac na planilha**: `Isac de Oliveira Souza` nasc. 07/08/2024 e `Isaac Oliveira Santos` nasc. 15/03/2022. Nascimentos **diferentes**, pagador vazio → pelas regras do briefing ao pé da letra, nenhuma delas dispararia. Proponho a regra 2 ampliada (seção 4.1). `Natalha / Natalia` aparecem como **duas pagadoras do mesmo paciente** (coluna O), então o teste "mesmo pagador" precisa comparar pagador também por fonética.
+9. **Procedimento na tela (Roberta, 05/10: a lista completa confunde).** A recepção não vê a lista de 56 procedimentos. Ela escolhe só o **Tipo de atendimento** (psicologia: Sessão · 1ª consulta (anamnese) · Aplicação de teste · Taxa de falta; pediatria: Consulta · Retorno; e assim por especialidade) e o app **deriva o procedimento** da modalidade do paciente (ex.: Pacote 4 → "Sessão de psicologia – pacote 4 sessões"), mostra o nome derivado só pra leitura e grava esse nome na coluna E. Um link "alterar procedimento" abre a lista completa pra exceção.
+10. **Contagem de sessões do pacote (Roberta, 05/10).** Aba nova **`Pacotes`**, uma linha por pacote comprado: `ID · Paciente · Modalidade · Nº de sessões · Valor · Data da compra · Válido até · Pago? · Forma · Quem pagou · NF · Nº NF · Status · Registrado por`. Na aba do mês, coluna nova **V `Pacote (ID)`** liga cada sessão ao pacote. Usadas = linhas do pacote com "Atendido" ou "Faltou sem aviso" (falta com aviso e desmarcação não consomem; ver questão 7.8). O app mostra **"2 de 4 usadas, esta é a 3ª, válido até dd/mm"** no bloco ⚠ do checkout e na lista do dia; na última avisa; com o pacote encerrado oferece **"Lançar pacote novo e receber"** (cria a linha em `Pacotes` + a linha de recebimento na aba do mês, e a sessão de hoje já conta como 1) ou "cobrar sessão avulsa". A compra do pacote precisa de linhas próprias em `Procedimentos` (ex.: "Pacote 4 sessões – psicologia (compra)" R$ 400, "Pacote 12 sessões – psicologia (compra)" R$ 960, idem nutrição, psicopedagogia e ABA). Para mensalistas (Social, 280/360, especial) o contador é por mês: "3 sessões em novembro (4 incluídas)", que também serve pra pergunta da 5ª sessão.
+11. **Isac × Isaac na planilha**: `Isac de Oliveira Souza` nasc. 07/08/2024 e `Isaac Oliveira Santos` nasc. 15/03/2022. Nascimentos **diferentes**, pagador vazio → pelas regras do briefing ao pé da letra, nenhuma delas dispararia. Proponho a regra 2 ampliada (seção 4.1). `Natalha / Natalia` aparecem como **duas pagadoras do mesmo paciente** (coluna O), então o teste "mesmo pagador" precisa comparar pagador também por fonética.
 
 ---
 
@@ -80,6 +82,7 @@ Nenhum dado vive só no app. Mapa do que o app lê e escreve:
 | `Profissionais`, `Listas`, `Como preencher` | tudo | nada |
 | `Agenda fixa` (**nova**, ver 7.2) | paciente · profissional · dia da semana · hora · ativo · início · fim | gestão/recepção pelo app |
 | `Lista do dia` (**nova**, ver 7.2) | data · hora · paciente · profissional · origem | recepção pelo app |
+| `Pacotes` (**nova**, item 10) | um pacote comprado por linha, com validade e pagamento | **append** na compra; **update** de Status (ativo · encerrado · vencido) |
 
 Regras de gravação: nunca apagar linha ("excluir" = `O que aconteceu` → "Cancelado pela clínica" + observação + log); ID na coluna T é um ULID; antes de um update, o app relê a célula T da linha pra confirmar que o ID bate (protege contra alguém ter inserido linha no meio).
 
@@ -119,6 +122,8 @@ Comportamento por regra de cobrança (`Listas!G`):
 | Convênio | 0 | Convênio (fatura) | exige Guia assinada?; procedimento "Aplicação de teste" não pergunta nada de convênio |
 
 Mensalista (modalidade Social/280/360/Mensal especial, ou regra "Mensalidade fixa"): Pago? = "Pacote já pago"; e se já é novembro e a mensalidade do mês não está paga, mostra a situação e oferece "registrar mensalidade agora" (abre 4.4).
+
+Pacote (4 ou 12 sessões): o bloco ⚠ mostra o contador e a validade; a linha gravada recebe o ID do pacote na coluna V e Pago? = "Pacote já pago"; pacote encerrado → botão "Lançar pacote novo e receber" (seção 1, item 10).
 
 Falta sem aviso de particular (psicologia): grava a linha e marca a pendência "taxa de falta a decidir" pra gestão (4.5). Não cobra nada na tela.
 
@@ -174,5 +179,7 @@ Cada semana termina com uma versão implantada pra você testar. Protótipo nave
 **7.5 (nova) Regra de duplicata ampliada** com "≥ 1 sobrenome em comum" — sem ela, Isac × Isaac não avisa (nascimentos diferentes). **Aprova?**
 
 **7.6 (nova) Quem acrescenta as linhas em `Listas` e `Procedimentos`** ("Cancelado pela clínica", "Mensalidade – psicologia"): você na planilha real, ou eu na cópia e você replica?
+
+**7.8 (nova) Regras do contador de pacote.** Proponho: Atendido e Faltou sem aviso consomem sessão; Faltou com aviso (≥ 24h) não consome até 1 por mês, a 2ª consome; Desmarcou e Cancelado pela clínica não consomem. Validade: 5 semanas pro pacote de 4 e 15 pro de 12, contadas da compra; vencido, as sessões restantes aparecem como "vencidas" e a gestão decide (relevar ou perder). O app só avisa, nunca bloqueia. **Aprova essas regras ou muda alguma?**
 
 **7.7 (nova) Rótulos de `Listas!B` na virada.** "Mensalista (paga no mês seguinte)" é o modelo antigo. Em novembro vira "Mensalista (mensalidade do mês)"? O app lê o rótulo da planilha, então basta você trocar o texto — só preciso saber se troca, pra eu não fixar nada.

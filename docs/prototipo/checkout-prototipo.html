@@ -109,7 +109,7 @@ tr.done td{color:var(--muted)}
 <div class="app">
 <nav aria-label="Telas">
   <div class="brand">Checkout <small>Clínica Nascente · recepção</small></div>
-  <button data-go="dia" aria-current="page">Lista do dia <span class="n pill warn">3</span></button>
+  <button data-go="dia" aria-current="page">Lista do dia <span class="n pill warn">5</span></button>
   <button data-go="checkout">Checkout</button>
   <button data-go="novo">Novo paciente</button>
   <button data-go="mensal">Mensalistas <span class="n pill bad">2</span></button>
@@ -129,9 +129,9 @@ tr.done td{color:var(--muted)}
     </div>
   </div>
   <div class="kpis">
-    <div class="kpi"><b>9</b><span>agendados hoje</span></div>
+    <div class="kpi"><b>11</b><span>agendados hoje</span></div>
     <div class="kpi"><b>4</b><span>checkouts feitos</span></div>
-    <div class="kpi"><b>3</b><span>pendentes de chegada</span></div>
+    <div class="kpi"><b>5</b><span>pendentes de chegada</span></div>
     <div class="kpi"><b style="color:var(--bad)">1</b><span>mensalista atrasada</span></div>
   </div>
   <div class="card">
@@ -156,12 +156,30 @@ tr.done td{color:var(--muted)}
       <label>Data e hora
         <input id="c-data" value="16/11/2026 14:00">
       </label>
-      <label class="wide">Procedimento <span class="hint">lista da aba Procedimentos, filtrada pela especialidade</span>
-        <select id="c-proc"></select>
+      <label>Tipo de atendimento
+        <select id="c-tipo"></select>
+      </label>
+      <label class="wide" style="grid-column:span 2">Procedimento <span class="hint">o app escolhe pela modalidade do paciente e grava na planilha</span>
+        <div class="readonly" id="c-proc-view">—</div>
+        <span class="hint"><a href="#" id="c-proc-alterar">alterar procedimento</a></span>
+        <select id="c-proc" hidden></select>
       </label>
     </div>
 
     <div id="c-atencao"></div>
+    <div id="c-pacotebox" class="alert note" hidden>
+      <div style="flex:1">
+        <div class="t">Lançar pacote de 4 sessões · R$ 400,00</div>
+        <p class="hint">Cria uma linha em <b>Pacotes</b> (válido até 5 semanas) e uma linha de recebimento na aba Novembro. A sessão de hoje já conta como 1 de 4.</p>
+        <div class="grid" style="margin-top:8px">
+          <label>Forma <select><option>Pix</option><option>Dinheiro</option><option>Cartão de débito</option><option>Cartão de crédito</option><option>Link de pagamento</option></select></label>
+          <label>Quem pagou <input id="c-pk-quem"></label>
+          <label>NF emitida? <select><option>Sim</option><option>Não</option></select></label>
+          <label>Nº da NF <input></label>
+        </div>
+        <div class="actions" style="margin-top:8px"><button class="btn small" id="btn-pk-salvar">Salvar pacote e recebimento</button><button class="btn secondary small" id="btn-pk-cancel">Cancelar</button></div>
+      </div>
+    </div>
 
     <div class="grid" style="margin-top:12px">
       <label>O que aconteceu
@@ -341,18 +359,29 @@ const PAC = [
  {nome:"Gabriel Costa Monteiro", nasc:"19/07/2015", mod:"Pacote mensal preexistente (R$ 280 ou R$ 360)", regra:"Tabela", obs:"", pagador:"Patrícia Costa Monteiro", conv:"Particular", esp:"Psicologia", proc:"Sessão de psicologia – pacote mensal preexistente", mensal:{st:"ok", txt:"Novembro pago em 09/11"}},
  {nome:"Helena Vasconcelos Prado", nasc:"02/02/2024", mod:"Avulso (valor da tabela)", regra:"Tabela", obs:"", pagador:"Renata Vasconcelos Prado", conv:"Particular", esp:"Pediatria", proc:"Consulta pediátrica"},
  {nome:"Isaac Modelo Santos", nasc:"15/03/2022", mod:"Por sessão", regra:"Tabela", obs:"", pagador:"Natália Modelo Santos", conv:"Particular", esp:"Psicologia", proc:"Sessão de psicologia", cpf:"111.111.111-11"},
+ {nome:"Ana Luísa Fontes Braga", nasc:"14/02/1996", mod:"Pacote 4 sessões – psicologia (R$ 400)", regra:"Tabela", obs:"", pagador:"Ana Luísa Fontes Braga", conv:"Particular", esp:"Psicologia", proc:"Sessão de psicologia – pacote 4 sessões", pacote:{n:4, usadas:2, compra:"03/11/2026", validade:"08/12/2026"}},
+ {nome:"Luana Castro Figueiredo", nasc:"30/10/1988", mod:"Pacote 4 sessões – psicologia (R$ 400)", regra:"Tabela", obs:"", pagador:"Luana Castro Figueiredo", conv:"Particular", esp:"Psicologia", proc:"Sessão de psicologia – pacote 4 sessões", pacote:{n:4, usadas:4, compra:"13/10/2026", validade:"17/11/2026"}},
  {nome:"Marcos Vinícius Tavares", nasc:"08/12/1989", mod:"Avulso com desconto – cartão de parceria", regra:"Valor fixo combinado", obs:"Sessão R$ 100 (cartão de parceria).", pagador:"Marcos Vinícius Tavares", conv:"Particular", esp:"Psicologia", proc:"Sessão de psicologia – cartão de parceria"},
 ];
 const PROC = {
  "Psicologia":[["Anamnese psicologia",140],["Sessão de psicologia",120],["Sessão de psicologia – cartão de parceria",100],["Sessão de psicologia – social (por sessão)",50],["Sessão de psicologia – pacote 4 sessões",0],["Sessão de psicologia – pacote 12 sessões",0],["Sessão de psicologia – plano social",0],["Sessão de psicologia – pacote mensal preexistente",0],["Sessão de psicologia – mensal valor especial",0],["Sessão de psicologia – convênio",0],["Taxa de falta – psicologia",120],["Aplicação de teste – avaliação neuropsicológica",0],["Avaliação neuropsicológica",null]],
  "Pediatria":[["Consulta pediátrica",200],["Consulta pediátrica – cartão de parceria ou AAPI JF",160],["Consulta pediátrica – social",120],["Retorno pediátrico (com pedido de exames, até 30 dias)",0]],
 };
+const TIPOS = {"Psicologia":["Sessão","1ª consulta (anamnese)","Aplicação de teste (avaliação)","Taxa de falta"],"Pediatria":["Consulta","Retorno (com pedido de exames, até 30 dias)"]};
+const SUFIXO = {"Avulso com desconto – cartão de parceria":" – cartão de parceria","Pacote 4 sessões – psicologia (R$ 400)":" – pacote 4 sessões","Pacote 12 sessões – psicologia (R$ 960)":" – pacote 12 sessões","Social (R$ 200/mês)":" – plano social","Pacote mensal preexistente (R$ 280 ou R$ 360)":" – pacote mensal preexistente","Mensal (valor especial)":" – mensal valor especial","Convênio":" – convênio","AAPI JF – pacote psicologia com estagiário (R$ 200/mês)":" – AAPI JF (estagiário)"};
+function derivar(esp,tipo,p){
+  if(esp==="Pediatria") return tipo.startsWith("Retorno") ? "Retorno pediátrico (com pedido de exames, até 30 dias)" : (p&&p.mod.includes("cartão")?"Consulta pediátrica – cartão de parceria ou AAPI JF":"Consulta pediátrica");
+  if(tipo.startsWith("1ª")) return "Anamnese psicologia";
+  if(tipo.startsWith("Aplicação")) return "Aplicação de teste – avaliação neuropsicológica";
+  if(tipo.startsWith("Taxa")) return "Taxa de falta – psicologia";
+  return "Sessão de psicologia"+((p&&SUFIXO[p.mod])||"");
+}
 const PROF_ESP = {"Juliana Ribeiro":"Psicologia","Giovana Grossi":"Psicologia","Dr. Victor Cunha":"Pediatria","Fernanda Dornelas":"Psicologia","Nayara Soares":"Psicologia"};
 const MODS = ["Avulso (valor da tabela)","Avulso com desconto – cartão de parceria","Pacote 4 sessões – psicologia (R$ 400)","Pacote 12 sessões – psicologia (R$ 960)","Pacote nutrição 6 consultas (R$ 600)","Pacote nutrição 12 consultas (R$ 1.100)","Pacote psicopedagogia 4 sessões (R$ 480)","Pacote ABA 4 sessões (R$ 360)","AAPI JF – pacote psicologia com estagiário (R$ 200/mês)","AAPI JF – pacote ABA (R$ 320/mês)","Convênio","Social (R$ 200/mês)","Pacote mensal preexistente (R$ 280 ou R$ 360)","Mensal (valor especial)","Por sessão","Pro bono","Permuta"];
 const MOD_RESTRITA = ["Social (R$ 200/mês)","Pacote mensal preexistente (R$ 280 ou R$ 360)","Mensal (valor especial)"];
 const DIA = [
  {prof:"Juliana Ribeiro", itens:[["08:00","Beatriz Almeida Rocha",true],["09:00","Carlos Henrique Dias",true],["10:00","Pedro Augusto Neves",true],["14:00","Sofia Ramos Teixeira",false],["15:00","Marcos Vinícius Tavares",false]]},
- {prof:"Giovana Grossi", itens:[["13:00","Theo Barreto Lima",true],["16:00","Lívia Fontes Pereira",false]]},
+ {prof:"Giovana Grossi", itens:[["11:00","Ana Luísa Fontes Braga",false],["12:00","Luana Castro Figueiredo",false],["13:00","Theo Barreto Lima",true],["16:00","Lívia Fontes Pereira",false]]},
  {prof:"Dr. Victor Cunha", itens:[["17:00","Helena Vasconcelos Prado",false],["17:30","Gabriel Costa Monteiro",false]]},
 ];
 const brl = n => n==null||n===""?"":n.toLocaleString("pt-BR",{minimumFractionDigits:2,maximumFractionDigits:2});
@@ -379,12 +408,13 @@ function renderDia(){
     const h=document.createElement("div");h.className="prof";h.textContent=g.prof+" · "+PROF_ESP[g.prof];root.appendChild(h);
     const wrap=document.createElement("div");wrap.className="tablewrap";
     const t=document.createElement("table");
-    t.innerHTML="<thead><tr><th>Hora</th><th>Paciente</th><th>⚠ Atenção na cobrança</th><th>Mensalidade</th><th>Convênio</th><th>Checkout</th></tr></thead>";
+    t.innerHTML="<thead><tr><th>Hora</th><th>Paciente</th><th>⚠ Atenção na cobrança</th><th>Pacote / mensalidade</th><th>Convênio</th><th>Checkout</th></tr></thead>";
     const tb=document.createElement("tbody");
     g.itens.forEach(([h,n,done])=>{
       const p=byName(n); const tr=document.createElement("tr"); if(done) tr.className="done";
       const at = p.regra!=="Tabela"||p.obs ? `<span class="pill warn">${p.regra}</span>` : `<span class="pill muted">—</span>`;
-      const me = p.mensal ? `<span class="pill ${p.mensal.st}">${p.mensal.st==="ok"?"em dia":"atrasada"}</span>` : "";
+      let me = p.mensal ? `<span class="pill ${p.mensal.st}">${p.mensal.st==="ok"?"em dia":"atrasada"}</span>` : "";
+      if(p.pacote){ const r=p.pacote.n-p.pacote.usadas; me = `<span class="pill ${r<=0?"bad":r===1?"warn":"ok"}">${p.pacote.usadas}/${p.pacote.n} usadas</span>` + (r<=0?` <span class="hint">lançar novo</span>`:""); }
       const st = done ? `<span class="pill ok">feito</span>` : `<button class="btn small" data-ck="${n}">Fazer checkout</button> <button class="btn secondary small" data-falta="${n}">Falta</button>`;
       tr.innerHTML=`<td>${h}</td><td><b>${n}</b></td><td>${at}</td><td>${me}</td><td>${p.conv}</td><td>${st}</td>`;
       tb.appendChild(tr);
@@ -402,8 +432,13 @@ let cur=null, baseValor=null;
 function fillProc(esp, sel){
   const s=$("#c-proc"); s.innerHTML="";
   (PROC[esp]||PROC["Psicologia"]).forEach(([n,v])=>{const o=document.createElement("option");o.value=n;o.textContent=n+(v==null?"  (valor à mão)":"  · R$ "+brl(v));o.dataset.v=v==null?"":v;s.appendChild(o);});
-  if(sel) s.value=sel;
+  const t=$("#c-tipo"); t.innerHTML=""; (TIPOS[esp]||TIPOS["Psicologia"]).forEach(x=>{const o=document.createElement("option");o.textContent=x;t.appendChild(o);});
+  if(sel) s.value=sel; else s.value=derivar(esp,t.value,cur);
+  showProc();
 }
+function showProc(){ const o=$("#c-proc").selectedOptions[0]; $("#c-proc-view").textContent = o ? o.textContent : "—"; }
+$("#c-tipo").addEventListener("change",()=>{ const esp=cur?cur.esp:PROF_ESP[$("#c-prof").value]; $("#c-proc").value=derivar(esp,$("#c-tipo").value,cur); showProc(); applyRegra(); });
+$("#c-proc-alterar").addEventListener("click",e=>{e.preventDefault(); $("#c-proc").hidden=!$("#c-proc").hidden;});
 function onPac(){
   cur=byName($("#c-pac").value); const box=$("#c-atencao"); box.innerHTML="";
   $("#c-descbox").hidden=true; $("#c-pagador-novo").hidden=true;
@@ -414,11 +449,18 @@ function onPac(){
   if(cur.regra!=="Tabela"||cur.obs){
     box.innerHTML+=`<div class="alert warn"><div style="font-size:22px;line-height:1">⚠</div><div><div class="t">Atenção na cobrança · ${cur.regra}</div><p>${cur.obs||"Siga a regra acima. Se o paciente disser algo diferente, anote na Observação e avise a gestão."}</p></div></div>`;
   }
+  if(cur.pacote){
+    const pk=cur.pacote, r=pk.n-pk.usadas;
+    if(r>0) box.innerHTML+=`<div class="alert ok"><div style="font-size:22px;line-height:1">✓</div><div><div class="t">Pacote de ${pk.n} sessões · ${pk.usadas} de ${pk.n} usadas · esta é a ${pk.usadas+1}ª</div><p>Comprado em ${pk.compra}, válido até ${pk.validade}. ${r===1?"<b>Última sessão do pacote:</b> avise que o próximo é pago na chegada.":"Faltam "+r+" depois desta."} Pago? fica como "Pacote já pago".</p></div></div>`;
+    else box.innerHTML+=`<div class="alert warn"><div style="font-size:22px;line-height:1">⚠</div><div><div class="t">Pacote encerrado · ${pk.usadas} de ${pk.n} usadas</div><p>Comprado em ${pk.compra}. Esta sessão não está paga. Lançar o pacote novo e receber agora?</p><div class="actions" style="margin-top:8px"><button class="btn small" id="btn-pacote">Lançar pacote de ${pk.n} sessões (R$ ${brl(pk.n===4?400:960)}) e receber</button><button class="btn secondary small" id="btn-avulsa">Cobrar sessão avulsa (R$ 120)</button></div></div></div>`;
+  }
   if(cur.mensal){
     const bad=cur.mensal.st==="bad";
     box.innerHTML+=`<div class="alert ${bad?"bad":"ok"}"><div style="font-size:22px;line-height:1">${bad?"⛔":"✓"}</div><div><div class="t">${bad?"Não atender — chamar a gestão":"Mensalidade em dia"}</div><p>${cur.mensal.txt}. ${bad?"Hoje é dia 16: a partir do dia 16 sem pagar, o atendimento pausa até regularizar. <a href='#mensal' data-regm='"+cur.nome+"'>Registrar mensalidade agora</a>":"Pago? fica como \"Pacote já pago\"."}</p></div></div>`;
   }
   box.querySelectorAll("[data-regm]").forEach(a=>a.addEventListener("click",e=>{e.preventDefault();go("mensal");openReg(a.dataset.regm);}));
+  const bp=$("#btn-pacote"); if(bp) bp.addEventListener("click",()=>{ $("#c-pacotebox").hidden=false; $("#c-pk-quem").value=cur.pagador||cur.nome; $("#c-pacotebox").scrollIntoView({behavior:"smooth",block:"center"}); });
+  const ba=$("#btn-avulsa"); if(ba) ba.addEventListener("click",()=>{ $("#c-proc").value="Sessão de psicologia"; showProc(); cur={...cur,pacote:null,mod:"Avulso (valor da tabela)"}; applyRegra(); toast("Sessão avulsa: R$ 120, Pago? = Sim"); });
   $("#c-quem").value=cur.pagador||cur.nome;
   $("#l-guia").hidden = cur.regra!=="Convênio";
   applyRegra();
@@ -437,7 +479,7 @@ function applyRegra(){
     default:
       if(procV===""){ v.readOnly=false; v.placeholder="preencher à mão"; h.textContent="procedimento sem valor na tabela"; }
       else { v.value=brl(Number(procV)); h.textContent="vem do procedimento (travado)"; }
-      if(cur.mensal){ pago.value="Pacote já pago"; nf.value="Não se aplica"; } else { pago.value="Sim"; nf.value="Não"; }
+      if(cur.mensal||(cur.pacote&&cur.pacote.n-cur.pacote.usadas>0)){ pago.value="Pacote já pago"; nf.value="Não se aplica"; } else { pago.value="Sim"; nf.value="Não"; }
   }
   baseValor = Number(procV)||0;
 }
@@ -448,9 +490,11 @@ function onOque(){
 }
 $("#c-pac").addEventListener("change",onPac);
 $("#c-prof").addEventListener("change",()=>{ if(!cur) fillProc(PROF_ESP[$("#c-prof").value]); });
-$("#c-proc").addEventListener("change",()=>applyRegra());
+$("#c-proc").addEventListener("change",()=>{showProc();applyRegra();});
 $("#c-oque").addEventListener("change",onOque);
 $("#c-quem").addEventListener("change",()=>{ if(cur && $("#c-quem").value.trim() && $("#c-quem").value!==(cur.pagador||cur.nome)){ $("#c-pagador-nome").textContent=$("#c-quem").value; $("#c-pagador-novo").hidden=false;} else $("#c-pagador-novo").hidden=true; });
+$("#btn-pk-cancel").addEventListener("click",()=>$("#c-pacotebox").hidden=true);
+$("#btn-pk-salvar").addEventListener("click",()=>{ if(!cur) return; cur.pacote={n:4,usadas:0,compra:"16/11/2026",validade:"21/12/2026"}; $("#c-pacotebox").hidden=true; toast("Pacote lançado em Pacotes · recebimento de R$ 400,00 gravado em Novembro"); onPac(); });
 $("#btn-desc").addEventListener("click",()=>{ $("#c-descbox").hidden=!$("#c-descbox").hidden; calcDesc(); });
 function calcDesc(){
   const raw=$("#c-desc-val").value.trim(); let fin=baseValor;
@@ -462,11 +506,11 @@ $("#c-desc-val").addEventListener("input",calcDesc);
 $("#btn-salvar").addEventListener("click",()=>{
   if(!cur) return toast("Escolha o paciente");
   if(!$("#c-descbox").hidden && $("#c-desc-val").value && !$("#c-desc-motivo").value.trim()) return toast("Desconto precisa de quem autorizou");
-  toast("Linha gravada em Novembro · ID 01JC…");
+  if(cur.pacote && cur.pacote.n-cur.pacote.usadas>0 && ["Atendido","Faltou sem aviso"].includes($("#c-oque").value)){ cur.pacote.usadas++; toast(`Gravado em Novembro · pacote ${cur.pacote.usadas}/${cur.pacote.n} usadas`); } else toast("Linha gravada em Novembro · ID 01JC…");
   const g=DIA.flatMap(x=>x.itens).find(i=>i[1]===cur.nome); if(g) g[2]=true; renderDia();
   $("#btn-limpar").click();
 });
-$("#btn-limpar").addEventListener("click",()=>{ $("#c-pac").value=""; cur=null; onPac(); $("#c-oque").value="Atendido"; $("#c-obs").value=""; $("#c-desc-val").value=""; $("#c-desc-motivo").value=""; });
+$("#btn-limpar").addEventListener("click",()=>{ $("#c-pac").value=""; cur=null; $("#c-pacotebox").hidden=true; $("#c-proc").hidden=true; onPac(); $("#c-oque").value="Atendido"; $("#c-obs").value=""; $("#c-desc-val").value=""; $("#c-desc-motivo").value=""; });
 fillProc("Psicologia");
 
 // ---------- novo paciente ----------
