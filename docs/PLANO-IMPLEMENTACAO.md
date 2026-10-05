@@ -147,7 +147,7 @@ Lista com filtro em dia / vence / atrasado, valor, pagador, mês atual pago?. "R
 | 26–30/10 | Gestão, pendências, exportar mês, READMEs recepção e gestão, piloto na planilha real | gestão fecha outubro pelo app |
 | 01/11 | Virada: aba Novembro, modelo antecipado | |
 
-Cada semana termina com uma versão implantada pra você testar. Protótipo navegável das telas: ver o artefato "Checkout — protótipo" publicado em 04/10.
+Cada semana termina com uma versão implantada pra você testar. Protótipo navegável das telas: https://claude.ai/artifact/LuVb9tDGaLtALBtHnfLsGz (cópia em `docs/prototipo/checkout-prototipo.html`).
 
 ---
 
