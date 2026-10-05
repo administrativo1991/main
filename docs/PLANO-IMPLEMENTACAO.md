@@ -49,17 +49,21 @@ Diferenças que mudam o desenho:
 
 ## 2. Stack e custo
 
+Decisão de 04/10 (Roberta, depois de comparar AppSheet × Apps Script × Next.js/Cloud Run): **Google Apps Script como web app**, dentro do Workspace da clínica.
+
 | Camada | Escolha | Por quê |
 |---|---|---|
-| App | **Next.js 15 (App Router) + TypeScript**, UI com Tailwind + shadcn/ui, pt-BR, A4 via CSS `@media print` | um só projeto, server e tela juntos; imprime direto do navegador |
-| Login | **Auth.js (NextAuth) com Google**, restrito ao domínio `clinicanascente.com.br`; perfil por lista de e-mails em variável de ambiente (`GESTAO_EMAILS`) | zero cadastro de senha; Workspace já existe |
-| Dados | **Google Sheets API v4** com **service account** editora da planilha. Leitura com cache em memória de 60 s (`Pacientes`, `Listas`, `Procedimentos`, `Profissionais`), invalidado a cada gravação. Gravação só por `values.append` (linha nova) e `values.update` de célula localizada pelo ID da coluna T | respeita "append ou update de célula, nunca reescrever a aba" |
-| Hospedagem | **Google Cloud Run** (mesmo projeto GCP da service account), domínio `checkout.clinicanascente.com.br` | fica dentro da conta Google da clínica; Vercel Hobby **proíbe uso comercial**, Vercel Pro é US$ 20/mês |
+| App | **Google Apps Script (web app)** vinculado à planilha, HTML/CSS/JS no `HtmlService`, pt-BR, A4 via CSS `@media print`. Código versionado neste repositório e publicado com `clasp` | roda dentro da conta Google da clínica; publicar é um clique em "Implantar"; nada pra hospedar |
+| Login | o próprio login Google do Workspace (`Session.getActiveUser()`), acesso restrito ao domínio `clinicanascente.com.br`; perfil (recepção / gestão) por lista de e-mails na aba `Listas` (coluna nova `Gestão`) | zero senha, zero tela de consentimento |
+| Dados | leitura e escrita direto na planilha com `SpreadsheetApp`, executando **como o dono do script** (`administrativo@`) pra poder gravar nas abas protegidas; `LockService` em toda gravação; cache de 60 s (`CacheService`) pra `Pacientes`, `Listas`, `Procedimentos`, `Profissionais`, invalidado a cada gravação. Gravação só por `appendRow` e `setValue` de célula localizada pelo ID da coluna T | respeita "append ou update de célula, nunca reescrever a aba"; sem service account, sem chave |
 | Resiliência | rascunho do formulário em `localStorage` + fila de gravações pendentes com retentativa; faixa vermelha "planilha indisponível — seus dados estão guardados aqui" | requisito 7 |
+| Colunas | o app localiza cada coluna **pelo cabeçalho**, nunca pela letra | uma coluna inserida no meio não corrompe dado em silêncio |
 
-**Custo mensal estimado:** Cloud Run neste volume (≈ 50–100 registros/dia) cabe na faixa gratuita → **R$ 0 a R$ 15/mês**; Sheets API é gratuita; domínio já é da clínica. Sem banco, sem servidor fixo. Alternativa de custo zero absoluto seria Google Apps Script (web app dentro do Workspace); descartei por tela mais lenta (1–3 s por ação) e pior de manter — mas é o plano B se Cloud Run for um obstáculo.
+**Custo mensal: R$ 0.** Apps Script é incluído no Workspace; não há servidor, domínio nem conta de faturamento. Cotas relevantes: 6 h/dia de execução por usuário e 30 execuções simultâneas — a clínica usa uma fração disso (≈ 50–100 registros/dia).
 
-Limites conhecidos: quota da Sheets API é 300 leituras/min por projeto (o cache resolve); uma gravação leva ~0,5–1 s; latência pra tela de 13" e celular é ok.
+**O preço conhecido:** cada gravação leva 1 a 3 s (o Apps Script é lento pra responder) e a tela é uma página web dentro do `script.google.com` (a URL é feia; vira um atalho na área de trabalho e no celular). Pra registrar um atendimento em menos de 1 minuto, cabe com folga.
+
+Descartados: **AppSheet** (não faz a validação fonética de duplicata e imprime mal) e **Next.js em Cloud Run** (app melhor, mas a clínica herdaria projeto GCP, service account, OAuth e dependências pra manter; Vercel Hobby proíbe uso comercial). O plano das telas e do modelo de dados (seções 3 e 4) não depende da stack.
 
 ---
 
@@ -137,21 +141,21 @@ Lista com filtro em dia / vence / atrasado, valor, pagador, mês atual pago?. "R
 
 | Semana | Entrega | Critério |
 |---|---|---|
-| 05–09/10 | Projeto, login, leitura da planilha, **Novo paciente** completo contra a **cópia** | duplicatas Isac/Isaac e Natalha/Natalia testadas |
+| 05–09/10 | Projeto Apps Script + clasp, login, leitura da planilha, **Novo paciente** completo contra a **cópia** | duplicatas Isac/Isaac e Natalha/Natalia testadas |
 | 12–16/10 | **Checkout** com bloco ⚠ e regras de cobrança | 6 casos do briefing: tabela, paga o que consegue, mensalidade fixa, pro bono, convênio, mensalista atrasado |
 | 19–23/10 | Lista do dia imprimível + Mensalistas | recepção registra em < 1 min |
 | 26–30/10 | Gestão, pendências, exportar mês, READMEs recepção e gestão, piloto na planilha real | gestão fecha outubro pelo app |
 | 01/11 | Virada: aba Novembro, modelo antecipado | |
 
-Cada semana termina com uma versão publicada pra você testar.
+Cada semana termina com uma versão implantada pra você testar. Protótipo navegável das telas: ver o artefato "Checkout — protótipo" publicado em 04/10.
 
 ---
 
 ## 6. O que preciso de você antes de começar
 
-- **Id da cópia da planilha** pra desenvolver e testar (eu não escrevo na real até o piloto).
-- Projeto no Google Cloud (ou eu crio em `administrativo@`): ativar Sheets API, criar service account, compartilhar a cópia com ela como editora, criar credencial OAuth do login. Faço com você em 20 min por chamada, ou você me dá acesso.
-- Autorização pra acrescentar as colunas novas (U nas abas de mês; T–Y em `Pacientes`) e as linhas em `Listas!A6` ("Cancelado pela clínica") e `Procedimentos` ("Mensalidade – psicologia").
+- **Id da cópia da planilha** pra desenvolver e testar (eu não escrevo na real até o piloto). O script fica vinculado à cópia durante o desenvolvimento e, no piloto, é vinculado à planilha real.
+- Autorização pra acrescentar as colunas novas (U nas abas de mês; T–Y em `Pacientes`; `Gestão` em `Listas`) e as linhas em `Listas!A6` ("Cancelado pela clínica") e `Procedimentos` ("Mensalidade – psicologia").
+- Na primeira implantação, você autoriza o script uma vez na sua conta (`administrativo@`), porque ele executa como dono.
 
 ---
 
