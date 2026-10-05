@@ -148,7 +148,10 @@
 var CONFIG = {
   TZ: 'America/Sao_Paulo',
   GESTAO: ['administrativo@clinicanascente.com.br'],
-  ABA: { PACIENTES: 'Pacientes', LISTAS: 'Listas', PROFISSIONAIS: 'Profissionais', PROCEDIMENTOS: 'Procedimentos', MENSALISTAS: 'Mensalistas', PACOTES: 'Pacotes' },
+  ABA: { PACIENTES: 'Pacientes', LISTAS: 'Listas', PROFISSIONAIS: 'Profissionais', PROCEDIMENTOS: 'Procedimentos', MENSALISTAS: 'Mensalistas', PACOTES: 'Pacotes', AGENDA: 'Agenda recorrente', DIA: 'Lista do dia' },
+  DIAS: ['Domingo','Segunda','Terça','Quarta','Quinta','Sexta','Sábado'],
+  HA: ['ID', 'Paciente', 'Profissional', 'Dia da semana', 'Hora', 'Frequência', 'Começa em', 'Termina em', 'Ativo', 'Observação', 'Registrado por (app)'],
+  HD: ['ID', 'Data', 'Hora', 'Paciente', 'Profissional', 'Origem', 'Observação', 'Registrado por (app)'],
   MESES: ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'],
   VIRADA: '2026-11-01', // a partir daqui a mensalidade é antecipada (vence dia 10, tolerância 15)
   // cabeçalhos da aba do mês (os existentes são lidos como estão; U e V são criados no fim se faltarem)
@@ -562,6 +565,159 @@ API.lancarPacote = function (d) {
     if (hm[HM.VALOR]) sm.getRange(lm, hm[HM.VALOR]).setNumberFormat('#,##0.00');
     SpreadsheetApp.flush();
     return { ok: true, id: id, validade: fmtData_(dataMais_(data, validadeDias)), linhaRecebimento: lm, aba: sm.getName() };
+  } finally { lock.releaseLock(); }
+};
+
+/* ---------- Lista do dia / Agenda fixa ---------- */
+function abaComCabecalho_(nome, cab) {
+  var ss = planilha_(), s = ss.getSheetByName(nome);
+  if (!s) { s = ss.insertSheet(nome); s.getRange(1, 1, 1, cab.length).setValues([cab]).setFontWeight('bold'); s.setFrozenRows(1); }
+  return s;
+}
+function linhasComo_(s) {
+  if (!s || s.getLastRow() < 2) return [];
+  var h = cabecalhos_(s), vals = s.getRange(2, 1, s.getLastRow() - 1, s.getLastColumn()).getValues(), out = [];
+  vals.forEach(function (r, i) { var o = { _linha: i + 2 }; Object.keys(h).forEach(function (k) { var v = r[h[k] - 1]; o[k] = (v instanceof Date) ? fmtData_(v) : (v == null ? '' : v); }); out.push(o); });
+  return out;
+}
+function horaTxt_(v) {
+  if (v instanceof Date && !isNaN(v)) return Utilities.formatDate(v, CONFIG.TZ, 'HH:mm');
+  var t = String(v == null ? '' : v).trim(); var m = t.match(/^(\d{1,2})[:h](\d{2})/); return m ? ('0' + m[1]).slice(-2) + ':' + m[2] : t;
+}
+API.agendaFixa = function () {
+  return linhasComo_(planilha_().getSheetByName(CONFIG.ABA.AGENDA)).filter(function (r) { return r['Paciente']; }).map(function (r) { r['Hora'] = horaTxt_(r['Hora']); return r; });
+};
+API.salvarAgendaFixa = function (d) {
+  d = d || {};
+  var erros = [];
+  var paciente = String(d.paciente || '').trim(); if (!paciente) erros.push('Escolha o paciente.');
+  var profissional = String(d.profissional || '').trim(); if (!profissional) erros.push('Escolha o profissional.');
+  var dia = String(d.diaSemana || '').trim(); if (CONFIG.DIAS.indexOf(dia) < 0) erros.push('Dia da semana inválido.');
+  var hora = horaTxt_(d.hora); if (!/^\d{2}:\d{2}$/.test(hora)) erros.push('Hora inválida (hh:mm).');
+  var comeca = d.comecaEm ? parseData_(d.comecaEm) : null; if (d.comecaEm && !comeca) erros.push('Data "começa em" inválida.');
+  var termina = d.terminaEm ? parseData_(d.terminaEm) : null; if (d.terminaEm && !termina) erros.push('Data "termina em" inválida.');
+  if (erros.length) return { ok: false, erros: erros };
+  var lock = LockService.getScriptLock(); lock.waitLock(20000);
+  try {
+    if (!indicePacientes_().some(function (p) { return p.nome === paciente; })) return { ok: false, erros: ['Paciente não está em Pacientes.'] };
+    var s = abaComCabecalho_(CONFIG.ABA.AGENDA, CONFIG.HA), h = cabecalhos_(s), u = usuario_(), id = String(d.id || '').trim(), linha = 0;
+    if (id) { var ids = s.getRange(2, h['ID'], Math.max(s.getLastRow() - 1, 1), 1).getValues(); for (var i = 0; i < ids.length; i++) if (String(ids[i][0]) === id) { linha = i + 2; break; } }
+    if (linha && d.encerrarAnterior) { // mudança "a partir de hoje": a linha antiga termina ontem e nasce uma nova
+      var ontem = new Date(); ontem.setDate(ontem.getDate() - 1);
+      if (h['Termina em']) s.getRange(linha, h['Termina em']).setValue(ontem).setNumberFormat('dd/MM/yyyy');
+      if (h['Registrado por (app)']) s.getRange(linha, h['Registrado por (app)']).setValue((u.email || 'app') + ' · ' + agora_() + ' · encerrado por troca de horário');
+      linha = 0; if (!comeca) comeca = new Date();
+    }
+    if (!linha) { id = novoId_('F'); linha = proximaLinha_(s, h['Paciente']); }
+    var freq = /quinzen/i.test(String(d.frequencia || '')) ? 'Quinzenal' : 'Semanal';
+    if (freq === 'Quinzenal' && !comeca) comeca = new Date(); // a quinzena conta a partir de "começa em"
+    var pares = { 'ID': id, 'Paciente': paciente, 'Profissional': profissional, 'Dia da semana': dia, 'Hora': hora, 'Frequência': freq, 'Começa em': comeca || '', 'Termina em': termina || '',
+      'Ativo': d.ativo === false || d.ativo === 'Não' ? 'Não' : 'Sim', 'Observação': String(d.observacao || '').trim(), 'Registrado por (app)': (u.email || 'app') + ' · ' + agora_() };
+    gravarCelulas_(s, linha, h, pares);
+    ['Começa em', 'Termina em'].forEach(function (k) { if (h[k]) s.getRange(linha, h[k]).setNumberFormat('dd/MM/yyyy'); });
+    if (h['Hora']) s.getRange(linha, h['Hora']).setNumberFormat('@');
+    SpreadsheetApp.flush();
+    return { ok: true, id: id, linha: linha };
+  } finally { lock.releaseLock(); }
+};
+API.acrescentarAoDia = function (d) {
+  d = d || {};
+  var erros = [];
+  var data = parseData_(d.data); if (!data) erros.push('Data inválida.');
+  var hora = horaTxt_(d.hora); if (hora && !/^\d{2}:\d{2}$/.test(hora)) erros.push('Hora inválida (hh:mm).');
+  var paciente = String(d.paciente || '').trim(); if (!paciente) erros.push('Escolha o paciente.');
+  var profissional = String(d.profissional || '').trim(); if (!profissional) erros.push('Escolha o profissional.');
+  if (erros.length) return { ok: false, erros: erros };
+  var lock = LockService.getScriptLock(); lock.waitLock(20000);
+  try {
+    var s = abaComCabecalho_(CONFIG.ABA.DIA, CONFIG.HD), h = cabecalhos_(s), u = usuario_(), id = novoId_('D'), linha = proximaLinha_(s, h['Paciente']);
+    gravarCelulas_(s, linha, h, { 'ID': id, 'Data': data, 'Hora': hora, 'Paciente': paciente, 'Profissional': profissional, 'Origem': String(d.origem || 'Avulso'), 'Observação': String(d.observacao || '').trim(), 'Registrado por (app)': (u.email || 'app') + ' · ' + agora_() });
+    if (h['Data']) s.getRange(linha, h['Data']).setNumberFormat('dd/MM/yyyy');
+    if (h['Hora']) s.getRange(linha, h['Hora']).setNumberFormat('@');
+    SpreadsheetApp.flush();
+    return { ok: true, id: id };
+  } finally { lock.releaseLock(); }
+};
+// Monta o dia: agenda fixa do dia da semana (vigente) + acréscimos do dia + o que já foi registrado na aba do mês
+API.listaDoDia = function (d) {
+  d = d || {};
+  var data = parseData_(d.data) || new Date();
+  var chave = fmtData_(data), diaSemana = CONFIG.DIAS[data.getDay()];
+  var itens = [], vistos = {};
+  API.agendaFixa().forEach(function (r) {
+    if (r['Dia da semana'] !== diaSemana || String(r['Ativo'] || 'Sim') === 'Não') return;
+    var c = r['Começa em'] ? parseData_(r['Começa em']) : null, t = r['Termina em'] ? parseData_(r['Termina em']) : null;
+    if ((c && data < c) || (t && data > t)) return;
+    if (/quinzen/i.test(String(r['Frequência'] || '')) && c) { // quinzenal: só nas semanas pares contadas a partir de "começa em"
+      var semanas = Math.round((data - c) / (7 * 24 * 3600 * 1000)); if (semanas % 2 !== 0) return;
+    }
+    itens.push({ hora: r['Hora'], paciente: r['Paciente'], profissional: r['Profissional'], origem: /quinzen/i.test(String(r['Frequência'] || '')) ? 'Quinzenal' : 'Semanal', agendaId: r['ID'], obs: r['Observação'] || '' });
+  });
+  linhasComo_(planilha_().getSheetByName(CONFIG.ABA.DIA)).forEach(function (r) {
+    if (r['Data'] !== chave || !r['Paciente']) return;
+    var origem = String(r['Origem'] || 'Avulso');
+    if (/^Não vem/i.test(origem)) { // ausência avisada / remarcação: marca o item fixo, não cria outro
+      var alvo = itens.filter(function (it) { return it.paciente === r['Paciente'] && it.profissional === r['Profissional']; })[0];
+      if (alvo) { alvo.naoVem = origem; alvo.obs = (alvo.obs ? alvo.obs + ' · ' : '') + (r['Observação'] || ''); }
+      else itens.push({ hora: horaTxt_(r['Hora']), paciente: r['Paciente'], profissional: r['Profissional'], origem: 'Semanal', naoVem: origem, listaId: r['ID'], obs: r['Observação'] || '' });
+      return;
+    }
+    itens.push({ hora: horaTxt_(r['Hora']), paciente: r['Paciente'], profissional: r['Profissional'], origem: origem, listaId: r['ID'], obs: r['Observação'] || '' });
+  });
+  // registros do dia na aba do mês
+  var reg = {}, sm = planilha_().getSheetByName(nomeAbaMes_(data));
+  if (sm && sm.getLastRow() >= 2) {
+    var h = cabecalhos_(sm), HM = CONFIG.HM, vals = sm.getRange(2, 1, sm.getLastRow() - 1, sm.getLastColumn()).getValues();
+    vals.forEach(function (r) {
+      var dt = r[h[HM.DATA] - 1]; if (fmtData_(dt) !== chave) return;
+      var pac = String(r[h[HM.PACIENTE] - 1] || '').trim(); if (!pac) return;
+      var k = pac + '|' + String(r[h[HM.PROFISSIONAL] - 1] || '').trim();
+      reg[k] = { oque: String(r[h[HM.OQUE] - 1] || ''), id: h[HM.ID] ? String(r[h[HM.ID] - 1] || '') : '', procedimento: String(r[h[HM.PROCEDIMENTO] - 1] || ''), hora: horaTxt_(r[h[HM.HORA] - 1]) };
+      if (!reg[pac]) reg[pac] = reg[k];
+    });
+  }
+  itens.forEach(function (it) { it.registro = reg[it.paciente + '|' + it.profissional] || null; });
+  // registrados hoje que não estavam na lista (encaixes feitos direto no Atendimento)
+  Object.keys(reg).forEach(function (k) {
+    if (k.indexOf('|') < 0) return; var pac = k.split('|')[0], prof = k.split('|')[1];
+    if (!itens.some(function (it) { return it.paciente === pac && it.profissional === prof; })) itens.push({ hora: reg[k].hora || '', paciente: pac, profissional: prof, origem: 'Registrado', registro: reg[k] });
+  });
+  itens.sort(function (a, b) { return (a.profissional + a.hora).localeCompare(b.profissional + b.hora); });
+  return { data: chave, diaSemana: diaSemana, itens: itens, abaMes: nomeAbaMes_(data), abaMesExiste: !!sm };
+};
+// Remarcar uma sessão: ausência no dia original + acréscimo no novo dia (o horário fixo não muda)
+API.remarcar = function (d) {
+  d = d || {};
+  var de = parseData_(d.de), para = parseData_(d.para);
+  if (!de || !para) return { ok: false, erros: ['Datas inválidas.'] };
+  var paciente = String(d.paciente || '').trim(), profissional = String(d.profissional || '').trim();
+  if (!paciente || !profissional) return { ok: false, erros: ['Paciente e profissional são obrigatórios.'] };
+  var r1 = API.acrescentarAoDia({ data: fmtData_(de), hora: d.horaDe || '', paciente: paciente, profissional: profissional, origem: 'Não vem · remarcado para ' + fmtData_(para), observacao: d.observacao || '' });
+  if (!r1.ok) return r1;
+  var r2 = API.acrescentarAoDia({ data: fmtData_(para), hora: d.horaPara || d.horaDe || '', paciente: paciente, profissional: profissional, origem: 'Remarcação de ' + fmtData_(de), observacao: d.observacao || '' });
+  return r2.ok ? { ok: true, ids: [r1.id, r2.id] } : r2;
+};
+// Gestão: cria a aba de um mês copiando a estrutura (cabeçalho, fórmulas automáticas, validações) da aba-modelo
+API.criarAbaMes = function (d) {
+  d = d || {};
+  var nome = String(d.nome || '').trim(); if (CONFIG.MESES.indexOf(nome) < 0) return { ok: false, erros: ['Nome do mês inválido.'] };
+  var ss = planilha_(); if (ss.getSheetByName(nome)) return { ok: false, erros: ['A aba "' + nome + '" já existe.'] };
+  var modelo = null; CONFIG.MESES.slice().reverse().forEach(function (m) { if (!modelo && ss.getSheetByName(m)) modelo = ss.getSheetByName(m); });
+  if (!modelo) return { ok: false, erros: ['Não achei nenhuma aba de mês pra servir de modelo.'] };
+  var lock = LockService.getScriptLock(); lock.waitLock(20000);
+  try {
+    var nova = modelo.copyTo(ss).setName(nome);
+    var h = cabecalhos_(nova), max = nova.getMaxRows();
+    // limpa os dados, preservando as colunas automáticas (fórmulas em F:H e N)
+    var auto = {}; ['Convênio (auto)', 'Modalidade (auto)', '⚠ Atenção na cobrança (auto)', 'Pagador habitual (auto)'].forEach(function (k) { if (h[k]) auto[h[k]] = true; });
+    var ini = 0; for (var c = 1; c <= nova.getLastColumn() + 1; c++) {
+      var ehAuto = auto[c] || c > nova.getLastColumn();
+      if (!ehAuto && !ini) ini = c;
+      if (ehAuto && ini) { nova.getRange(2, ini, max - 1, c - ini).clearContent(); ini = 0; }
+    }
+    ss.setActiveSheet(nova); ss.moveActiveSheet(CONFIG.MESES.indexOf(nome) < CONFIG.MESES.indexOf(modelo.getName()) ? modelo.getIndex() : modelo.getIndex() + 1);
+    SpreadsheetApp.flush();
+    return { ok: true, aba: nome, modelo: modelo.getName() };
   } finally { lock.releaseLock(); }
 };
 

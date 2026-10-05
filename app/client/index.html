@@ -87,6 +87,33 @@ input.erro{border-color:var(--bad);outline-color:var(--bad)}
 .pill.bad{background:var(--bad-bg);color:var(--bad)}
 label.inline{flex-direction:row;align-items:center;gap:8px;font-family:var(--font-body);font-size:14px;color:var(--fg);font-weight:400}
 label.inline input{width:auto}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px}
+.chip{font-family:var(--font-head);font-size:13px;font-weight:500;border:1px solid var(--chip);background:var(--chip);color:var(--fg);border-radius:999px;padding:6px 14px;cursor:pointer}
+.chip[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--accent-fg)}
+.cols{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));align-items:start}
+.col{background:var(--card);border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow);overflow:hidden}
+.col h3{font-family:var(--font-head);font-weight:600;font-size:14px;color:var(--roxo);margin:0;padding:12px 14px;background:var(--card2);border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;gap:8px}
+.col h3 small{font-weight:500;color:var(--muted);font-size:12px}
+.col .row{display:grid;grid-template-columns:44px 1fr auto;gap:8px;align-items:center;padding:9px 14px;border-bottom:1px solid var(--line);cursor:pointer}
+.col .row:last-child{border-bottom:0}
+.col .row:hover{background:var(--bg)}
+.col .row .h{font-variant-numeric:tabular-nums;color:var(--muted);font-size:13px}
+.col .row .n{font-weight:700;font-size:14px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.col .row .n small{display:block;font-weight:400;color:var(--muted);font-size:12px;white-space:normal}
+.col .row.done .n{color:var(--muted);font-weight:600}
+.col .row.fora .n{text-decoration:line-through;color:var(--muted)}
+.tablewrap{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:14px;font-variant-numeric:tabular-nums}
+th{text-align:left;font-family:var(--font-head);font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;font-weight:600;color:var(--lilas);padding:8px 10px;border-bottom:1px solid var(--line)}
+td{padding:10px;border-bottom:1px solid var(--line);vertical-align:top}
+tr.done td{color:var(--muted)}
+.kpis{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));margin-bottom:16px}
+.kpi{background:var(--card2);border-radius:14px;padding:12px 16px;border-left:4px solid var(--lilas)}
+.kpi b{font-family:var(--font-head);font-weight:600;font-size:24px;display:block;color:var(--roxo)}
+.kpi span{font-size:13px;color:var(--muted)}
+.topbar{display:flex;flex-wrap:wrap;gap:10px;justify-content:space-between;align-items:flex-start;margin-bottom:16px}
+.prof{font-family:var(--font-head);font-weight:600;font-size:15px;color:var(--roxo);margin:0 0 6px}
+@media print{ nav,.banner,.toast,.actions,.chips,.btn,.no-print{display:none!important} .app{display:block} main{padding:0} body{background:#fff;font-size:12px} .card,.col{box-shadow:none;border:1px solid #bbb;break-inside:avoid} .cols{grid-template-columns:repeat(2,1fr)} h1{font-size:18px} }
 @media (max-width:760px){
   .app{grid-template-columns:1fr}
   nav{position:fixed;bottom:0;left:0;right:0;top:auto;height:auto;flex-direction:row;padding:6px 6px calc(6px + env(safe-area-inset-bottom,0px));overflow-x:auto;z-index:5;background:#3F234A}
@@ -104,7 +131,7 @@ label.inline input{width:auto}
 <div class="app">
 <nav aria-label="Telas">
   <div class="brand"><span class="eyebrow">Clínica</span><span class="logo">nascente</span><small>Recepção · atendimentos</small></div>
-  <button data-go="dia">Lista do dia <span class="breve">em breve</span></button>
+  <button data-go="dia">Lista do dia</button>
   <button data-go="atendimento">Atendimento</button>
   <button data-go="novo" aria-current="page">Novo paciente</button>
   <button data-go="mensal">Mensalistas <span class="breve">em breve</span></button>
@@ -148,6 +175,70 @@ label.inline input{width:auto}
     </form>
   </div>
   <div id="n-sucesso"></div>
+</section>
+
+<section class="screen" id="s-dia" hidden>
+  <div class="topbar">
+    <div><h1 id="d-titulo">Lista do dia</h1><p class="sub">Agenda recorrente do dia + agendamentos avulsos + o que já foi registrado. Clique numa linha para ver os botões.</p></div>
+    <div class="actions no-print" style="margin:0">
+      <input id="d-data" inputmode="numeric" maxlength="10" style="width:120px">
+      <button class="btn secondary small" type="button" id="d-hoje">Hoje</button>
+      <button class="btn secondary small" type="button" id="d-add">+ Agendar no dia</button>
+      <button class="btn secondary small" type="button" id="d-rec">Agenda recorrente</button>
+      <button class="btn secondary small" type="button" id="d-print">Imprimir</button>
+    </div>
+  </div>
+  <div id="d-carregando" class="carregando">Carregando…</div>
+  <div id="d-addbox" class="alert note" hidden><div style="flex:1">
+    <div class="t">Agendar paciente no dia</div>
+    <div class="grid" style="margin-top:8px">
+      <label class="dupla">Paciente<input id="d-add-pac" list="dl-pacientes" autocomplete="off"></label>
+      <label>Profissional<select id="d-add-prof"></select></label>
+      <label>Hora<input id="d-add-hora" placeholder="hh:mm" maxlength="5"></label>
+      <label>Tipo<select id="d-add-origem"><option>Avulso</option><option>Primeira consulta</option><option>Retorno</option><option>Encaixe</option><option>Reposição</option></select></label>
+      <label class="dupla">Observação<input id="d-add-obs"></label>
+    </div>
+    <div class="actions" style="margin-top:8px"><button class="btn small" type="button" id="d-add-ok">Agendar</button><button class="btn secondary small" type="button" id="d-add-rec">Tornar recorrente (toda semana)</button><button class="btn secondary small" type="button" id="d-add-cancel">Cancelar</button></div>
+  </div></div>
+  <div id="d-recbox" class="card" hidden style="margin-bottom:12px">
+    <div class="topbar" style="margin-bottom:8px"><h2 style="font-family:var(--font-head);font-weight:600;font-size:16px;margin:0">Agenda recorrente</h2><button class="btn secondary small" type="button" id="d-rec-fechar">Fechar</button></div>
+    <div class="grid">
+      <label class="dupla">Paciente<input id="r-pac" list="dl-pacientes" autocomplete="off"></label>
+      <label>Profissional<select id="r-prof"></select></label>
+      <label>Dia da semana<select id="r-dia"><option>Segunda</option><option>Terça</option><option>Quarta</option><option>Quinta</option><option>Sexta</option><option>Sábado</option><option>Domingo</option></select></label>
+      <label>Hora<input id="r-hora" placeholder="hh:mm" maxlength="5"></label>
+      <label>Frequência<select id="r-freq"><option>Semanal</option><option>Quinzenal</option></select></label>
+      <label>Começa em<input id="r-ini" placeholder="dd/mm/aaaa" maxlength="10"></label>
+      <label>Termina em<input id="r-fim" placeholder="dd/mm/aaaa (vazio = sem fim)" maxlength="10"></label>
+      <label>Ativo<select id="r-ativo"><option>Sim</option><option>Não</option></select></label>
+      <label class="dupla">Observação<input id="r-obs"></label>
+    </div>
+    <div class="actions"><button class="btn small" type="button" id="r-salvar">Salvar recorrência</button><button class="btn secondary small" type="button" id="r-novo">Nova</button><span class="hint" id="r-hint">Nova recorrência.</span></div>
+    <div class="tablewrap" style="margin-top:12px"><table><thead><tr><th>Paciente</th><th>Profissional</th><th>Dia</th><th>Hora</th><th>Freq.</th><th>Vigência</th><th>Ativo</th><th></th></tr></thead><tbody id="r-lista"></tbody></table></div>
+  </div>
+  <div id="d-acao" class="alert note no-print" hidden><div style="flex:1">
+    <div class="t" id="d-acao-t"></div>
+    <div class="actions" style="margin-top:8px">
+      <button class="btn small" type="button" id="d-ac-reg">Registrar atendimento</button>
+      <button class="btn secondary small" type="button" id="d-ac-naovem">Não vem hoje</button>
+      <button class="btn secondary small" type="button" id="d-ac-remarcar">Remarcar</button>
+      <button class="btn secondary small" type="button" id="d-ac-fechar">Fechar</button>
+    </div>
+    <div id="d-naovem" class="grid" hidden style="margin-top:8px">
+      <label>Motivo<select id="d-nv-motivo"></select></label>
+      <label class="dupla">Observação<input id="d-nv-obs"></label>
+      <div class="actions" style="margin:0;align-self:end"><button class="btn small" type="button" id="d-nv-ok">Gravar</button></div>
+    </div>
+    <div id="d-remarcar" class="grid" hidden style="margin-top:8px">
+      <label>Nova data<input id="d-rm-data" placeholder="dd/mm/aaaa" maxlength="10"></label>
+      <label>Nova hora<input id="d-rm-hora" placeholder="hh:mm" maxlength="5"></label>
+      <label class="dupla">Observação<input id="d-rm-obs"></label>
+      <div class="actions" style="margin:0;align-self:end"><button class="btn small" type="button" id="d-rm-ok">Remarcar</button></div>
+    </div>
+  </div></div>
+  <div class="kpis" id="d-kpis" hidden></div>
+  <div class="chips no-print" id="d-tabs" role="tablist"></div>
+  <div id="d-list"></div>
 </section>
 
 <section class="screen" id="s-atend" hidden>
@@ -255,6 +346,14 @@ function call(nome, dados){
     }).withFailureHandler(function(err){ rej(new Error((err&&err.message)||String(err))); }).api(nome, dados||{});
   });
 }
+var mockReg=[], mockDia=[];
+var mockAgenda=[ {ID:'F-1',Paciente:'Beatriz Almeida Rocha',Profissional:'Juliana Ribeiro','Dia da semana':'Segunda',Hora:'08:00','Frequência':'Semanal','Começa em':'01/09/2026','Termina em':'',Ativo:'Sim','Observação':''},
+  {ID:'F-2',Paciente:'Carlos Henrique Dias',Profissional:'Juliana Ribeiro','Dia da semana':'Segunda',Hora:'09:00','Frequência':'Quinzenal','Começa em':'07/09/2026','Termina em':'',Ativo:'Sim','Observação':''},
+  {ID:'F-3',Paciente:'Pedro Augusto Neves',Profissional:'Juliana Ribeiro','Dia da semana':'Segunda',Hora:'10:00','Frequência':'Semanal','Começa em':'','Termina em':'',Ativo:'Sim','Observação':''},
+  {ID:'F-4',Paciente:'Sofia Ramos Teixeira',Profissional:'Giovana Grossi','Dia da semana':'Segunda',Hora:'14:00','Frequência':'Semanal','Começa em':'','Termina em':'',Ativo:'Sim','Observação':''},
+  {ID:'F-5',Paciente:'Ana Luísa Fontes Braga',Profissional:'Giovana Grossi','Dia da semana':'Segunda',Hora:'11:00','Frequência':'Semanal','Começa em':'','Termina em':'',Ativo:'Sim','Observação':''},
+  {ID:'F-6',Paciente:'Theo Barreto Lima',Profissional:'Giovana Grossi','Dia da semana':'Segunda',Hora:'13:00','Frequência':'Semanal','Começa em':'','Termina em':'',Ativo:'Sim','Observação':''},
+  {ID:'F-7',Paciente:'Helena Vasconcelos Prado',Profissional:'Dr. Victor Cunha','Dia da semana':'Segunda',Hora:'17:00','Frequência':'Semanal','Começa em':'','Termina em':'',Ativo:'Sim','Observação':''} ];
 var mockBase = [
   {linha:2,nome:"Isaac Modelo Santos",cpf:"529.982.247-25",nasc:"15/03/2022",pagador:"Natália Modelo Santos",modalidade:"Por sessão",convenio:"Particular",ativo:"Sim"},
   {linha:3,nome:"Isac Modelo de Souza",cpf:"111.444.777-35",nasc:"07/08/2024",pagador:"",modalidade:"",convenio:"",ativo:"Sim"},
@@ -282,7 +381,15 @@ function mock(nome, d){
         {linha:9,nome:'Luana Castro Figueiredo',nasc:'30/10/1988',modalidade:'Pacote 4 sessões – psicologia (R$ 400)',regra:'Tabela',obsCobranca:'',pagador:'Luana Castro Figueiredo',convenio:'Particular',valorCombinado:''},
         {linha:10,nome:'Helena Vasconcelos Prado',nasc:'02/02/2024',modalidade:'Avulso (valor da tabela)',regra:'',obsCobranca:'',pagador:'Renata Vasconcelos Prado',convenio:'Particular',valorCombinado:''},
         {linha:11,nome:'Marcos Vinícius Tavares',nasc:'08/12/1989',modalidade:'Avulso (valor da tabela)',regra:'Valor fixo combinado',obsCobranca:'Sessão R$ 100 combinado com a Juliana.',pagador:'Marcos Vinícius Tavares',convenio:'Particular',valorCombinado:'Sessão R$ 100'} ] });
-    if(nome==='registrarAtendimento') return res({ok:true,id:'A-sim-1',linha:42,aba:'Novembro',pacote:d.pacoteId&&!d.sessaoExtra?{usadas:3,n:4}:null});
+    if(nome==='registrarAtendimento'){ mockReg.push({paciente:d.paciente,profissional:d.profissional,oque:d.oque,hora:d.hora,id:'A-sim-'+(mockReg.length+1)}); return res({ok:true,id:'A-sim-'+mockReg.length,linha:41+mockReg.length,aba:'Novembro',pacote:d.pacoteId&&!d.sessaoExtra?{usadas:3,n:4}:null}); }
+    if(nome==='listaDoDia'){ var itens=mockAgenda.map(function(a){ return {hora:a['Hora'],paciente:a['Paciente'],profissional:a['Profissional'],origem:a['Frequência'],agendaId:a['ID'],obs:''}; }).concat(mockDia.filter(function(x){return x.data===d.data;}).map(function(x){ return {hora:x.hora,paciente:x.paciente,profissional:x.profissional,origem:x.origem,listaId:x.id}; }));
+      itens.forEach(function(it){ var r=mockReg.filter(function(x){return x.paciente===it.paciente&&x.profissional===it.profissional;})[0]; it.registro=r||null; var nv=mockDia.filter(function(x){return x.data===d.data&&/^Não vem/.test(x.origem)&&x.paciente===it.paciente;})[0]; if(nv) it.naoVem=nv.origem; });
+      itens=itens.filter(function(it){ return !/^Não vem/.test(it.origem); });
+      return res({data:d.data,diaSemana:'Segunda',itens:itens,abaMes:'Novembro',abaMesExiste:true}); }
+    if(nome==='agendaFixa') return res(mockAgenda);
+    if(nome==='salvarAgendaFixa'){ var id=d.id||('F-'+(mockAgenda.length+1)); var ex=mockAgenda.filter(function(a){return a.ID===id;})[0]; var row={ID:id,Paciente:d.paciente,Profissional:d.profissional,'Dia da semana':d.diaSemana,Hora:d.hora,'Frequência':d.frequencia||'Semanal','Começa em':d.comecaEm||'','Termina em':d.terminaEm||'',Ativo:d.ativo===false?'Não':'Sim','Observação':d.observacao||''}; if(ex) Object.assign(ex,row); else mockAgenda.push(row); return res({ok:true,id:id}); }
+    if(nome==='acrescentarAoDia'){ var nid='D-'+(mockDia.length+1); mockDia.push({id:nid,data:d.data,hora:d.hora,paciente:d.paciente,profissional:d.profissional,origem:d.origem||'Avulso'}); return res({ok:true,id:nid}); }
+    if(nome==='remarcar'){ mockDia.push({id:'D-x',data:d.de,hora:d.horaDe,paciente:d.paciente,profissional:d.profissional,origem:'Não vem · remarcado para '+d.para}); mockDia.push({id:'D-y',data:d.para,hora:d.horaPara||d.horaDe,paciente:d.paciente,profissional:d.profissional,origem:'Remarcação de '+d.de}); return res({ok:true}); }
     if(nome==='lancarPacote') return res({ok:true,id:'P-novo',validade:'11/01/2027',linhaRecebimento:43,aba:'Novembro'});
     if(nome==='criarPaciente'){
       var dup = Duplicatas.verificar(d, mockBase);
@@ -297,12 +404,13 @@ function mock(nome, d){
 
 /* ---------- navegação ---------- */
 var TIT = {dia:'Lista do dia', atendimento:'Registrar atendimento', mensal:'Mensalistas', gestao:'Gestão'};
+var TELAS={novo:'s-novo',atendimento:'s-atend',dia:'s-dia'};
 function go(id){
-  $("#s-novo").hidden = id!=='novo';
-  $("#s-atend").hidden = id!=='atendimento';
-  $("#s-breve").hidden = (id==='novo'||id==='atendimento');
-  if(id!=='novo'&&id!=='atendimento') $("#breve-titulo").textContent = TIT[id]||'';
+  Object.keys(TELAS).forEach(function(k){ $("#"+TELAS[k]).hidden = id!==k; });
+  $("#s-breve").hidden = !!TELAS[id];
+  if(!TELAS[id]) $("#breve-titulo").textContent = TIT[id]||'';
   if(id==='atendimento') iniciarAtend();
+  if(id==='dia') iniciarDia();
   document.querySelectorAll("nav button").forEach(function(b){ if(b.dataset.go===id) b.setAttribute("aria-current","page"); else b.removeAttribute("aria-current"); });
   window.scrollTo(0,0);
 }
@@ -696,6 +804,134 @@ $("#a-limpar").addEventListener('click',function(){ limparAt(true); });
 $("#a-novo").addEventListener('click',function(e){ e.preventDefault(); voltarParaAtend=true; go('novo'); });
 CAMPOS_AT.forEach(function(id){ $("#"+id).addEventListener('input',salvarRascunhoAt); $("#"+id).addEventListener('change',salvarRascunhoAt); });
 var voltarParaAtend=false;
+
+/* ================= LISTA DO DIA ================= */
+var DIA=null, diaTab='geral', diaSel=null, recEdit=null, AGENDA=[];
+var DIAS_PT=['Domingo','Segunda','Terça','Quarta','Quinta','Sexta','Sábado'];
+function dataObj(s){ var m=(s||'').match(/^(\d{2})\/(\d{2})\/(\d{4})$/); return m?new Date(+m[3],+m[2]-1,+m[1]):null; }
+function iniciarDia(){
+  if(!$("#d-data").value) $("#d-data").value=hojeStr();
+  if(!AT){ var t=setInterval(function(){ if(AT){ clearInterval(t); iniciarDia(); } },300); return; }
+  if(!$("#d-add-prof").options.length){ preencherSelect($("#d-add-prof"), BOOT.profissionais); preencherSelect($("#r-prof"), BOOT.profissionais); preencherSelect($("#d-nv-motivo"), (BOOT.listas.oque||[]).filter(function(x){ return !/^Atendido/.test(x); })); }
+  carregarDia();
+}
+function carregarDia(){
+  var data=$("#d-data").value; if(!dataValida(data) && !dataObj(data)) return;
+  $("#d-carregando").hidden=false; $("#d-acao").hidden=true; diaSel=null;
+  call('listaDoDia',{data:data}).then(function(r){
+    DIA=r; $("#d-carregando").hidden=true;
+    var dt=dataObj(r.data); $("#d-titulo").textContent='Lista do dia · '+(dt?DIAS_PT[dt.getDay()].toLowerCase()+', ':'')+r.data;
+    renderDia();
+  }).catch(function(e){ $("#d-carregando").textContent='Não consegui carregar a lista: '+e.message; });
+}
+function pacInfo(nome){ return (AT&&AT.pacientes.filter(function(p){return p.nome===nome;})[0])||null; }
+function pillsDe(nome){
+  var p=pacInfo(nome); if(!p) return '';
+  var out='';
+  if(ehPacote(p)){ var pk=AT.pacotes[nome]; if(pk&&pk.status==='ativo'){ var rr=pk.n-pk.usadas; out+='<span class="pill '+(rr<=0?'bad':rr===1?'warn':'ok')+'">'+pk.usadas+'/'+pk.n+'</span> '; } else out+='<span class="pill bad">sem pacote</span> '; }
+  if(ehMensal(p)){ var m=AT.mensalistas[nome], info=AT.mensalistasInfo||{}, dia=new Date().getDate(); if(m&&/^sim/i.test(m.pago)) out+='<span class="pill ok">mensal ok</span> '; else if(info.modeloNovo&&dia>=16) out+='<span class="pill bad">mensal atrasada</span> '; else out+='<span class="pill warn">mensal pendente</span> '; }
+  return out;
+}
+function atencaoDe(nome){ var p=pacInfo(nome); if(!p) return ''; if(p.regra&&!/^Tabela$/i.test(p.regra)) return '⚠ '+p.regra; if(p.convenio&&p.convenio!=='Particular') return p.convenio; return ''; }
+function statusDe(it){
+  if(it.registro){ var oq=it.registro.oque; return /^Atendido/.test(oq)?'<span class="pill ok">registrado</span>':'<span class="pill muted">'+esc(oq.split(' (')[0])+'</span>'; }
+  if(it.naoVem) return '<span class="pill muted">'+esc(it.naoVem.replace('Não vem · ',''))+'</span>';
+  return '<span class="pill warn">pendente</span>';
+}
+function renderDia(){
+  var r=DIA, grupos={}; r.itens.forEach(function(it){ (grupos[it.profissional]=grupos[it.profissional]||[]).push(it); });
+  var profs=Object.keys(grupos).sort();
+  var tot=r.itens.length, feitos=r.itens.filter(function(i){return i.registro;}).length, fora=r.itens.filter(function(i){return i.naoVem&&!i.registro;}).length;
+  $("#d-kpis").hidden=false; $("#d-kpis").innerHTML='<div class="kpi"><b>'+tot+'</b><span>na lista</span></div><div class="kpi"><b>'+feitos+'</b><span>registrados</span></div><div class="kpi"><b>'+(tot-feitos-fora)+'</b><span>pendentes</span></div><div class="kpi"><b>'+fora+'</b><span>não vêm</span></div>'+(r.abaMesExiste?'':'<div class="kpi"><b style="color:var(--bad)">!</b><span>aba '+esc(r.abaMes)+' não existe</span></div>');
+  var tabs=$("#d-tabs"); tabs.innerHTML='';
+  [['geral','Visão geral']].concat(profs.map(function(p){ return [p, p.replace(/^Dra?\. /,'').split(' ')[0]+' · '+grupos[p].filter(function(i){return !i.registro&&!i.naoVem;}).length]; })).forEach(function(x){ var c=document.createElement('button'); c.className='chip'; c.type='button'; c.setAttribute('aria-pressed',String(diaTab===x[0])); c.textContent=x[1]; c.addEventListener('click',function(){ diaTab=x[0]; renderDia(); }); tabs.appendChild(c); });
+  if(diaTab!=='geral' && !grupos[diaTab]) diaTab='geral';
+  var root=$("#d-list"); root.innerHTML='';
+  if(!r.itens.length){ root.innerHTML='<div class="breve-box">Ninguém na lista deste dia. Use "+ Agendar no dia" ou cadastre horários em "Agenda recorrente".</div>'; return; }
+  if(diaTab==='geral'){
+    var cols=document.createElement('div'); cols.className='cols';
+    profs.forEach(function(p){
+      var g=grupos[p], pend=g.filter(function(i){return !i.registro&&!i.naoVem;}).length;
+      var col=document.createElement('div'); col.className='col'; col.innerHTML='<h3>'+esc(p)+'<small>'+g.length+' · '+pend+' pendente'+(pend===1?'':'s')+'</small></h3>';
+      g.forEach(function(it){ var row=document.createElement('div'); row.className='row'+(it.registro?' done':'')+(it.naoVem&&!it.registro?' fora':''); var at=atencaoDe(it.paciente); row.innerHTML='<span class="h">'+esc(it.hora||'—')+'</span><span class="n">'+esc(it.paciente)+(at?'<small>'+esc(at)+'</small>':'')+(it.origem&&!/Semanal|Quinzenal/.test(it.origem)?'<small>'+esc(it.origem)+'</small>':'')+'</span><span>'+pillsDe(it.paciente)+statusDe(it)+'</span>'; row.addEventListener('click',function(){ selecionarItem(it); }); col.appendChild(row); });
+      cols.appendChild(col);
+    });
+    root.appendChild(cols); return;
+  }
+  var g=grupos[diaTab]; var card=document.createElement('div'); card.className='card';
+  card.innerHTML='<div class="prof">'+esc(diaTab)+'</div><div class="tablewrap"><table><thead><tr><th>Hora</th><th>Paciente</th><th>Atenção</th><th>Pacote / mensalidade</th><th>Origem</th><th>Situação</th></tr></thead><tbody>'+g.map(function(it,i){ return '<tr data-i="'+i+'" class="'+(it.registro?'done':'')+'" style="cursor:pointer"><td>'+esc(it.hora||'—')+'</td><td><b>'+esc(it.paciente)+'</b></td><td>'+esc(atencaoDe(it.paciente))+'</td><td>'+pillsDe(it.paciente)+'</td><td>'+esc(it.origem||'')+'</td><td>'+statusDe(it)+'</td></tr>'; }).join('')+'</tbody></table></div>';
+  card.querySelectorAll('tr[data-i]').forEach(function(tr){ tr.addEventListener('click',function(){ selecionarItem(g[+tr.dataset.i]); }); });
+  root.appendChild(card);
+}
+function selecionarItem(it){
+  diaSel=it; $("#d-acao").hidden=false; $("#d-naovem").hidden=true; $("#d-remarcar").hidden=true;
+  $("#d-acao-t").textContent=it.paciente+' · '+it.profissional+(it.hora?' · '+it.hora:'')+(it.registro?' · já registrado: '+it.registro.oque:'');
+  $("#d-ac-reg").textContent = it.registro ? 'Registrar outro atendimento' : 'Registrar atendimento';
+  $("#d-acao").scrollIntoView({behavior:'smooth',block:'center'});
+}
+$("#d-ac-fechar").addEventListener('click',function(){ $("#d-acao").hidden=true; });
+$("#d-ac-reg").addEventListener('click',function(){ if(!diaSel) return; go('atendimento'); var it=diaSel; var fill=function(){ $("#a-pac").value=it.paciente; $("#a-prof").value=it.profissional; $("#a-data").value=DIA.data; if(it.hora) $("#a-hora").value=it.hora; onPacAt(true); fillTipos(); aplicarTipo(); }; if(AT&&!$("#f-atend").hidden) fill(); else { var t=setInterval(function(){ if(AT&&!$("#f-atend").hidden){ clearInterval(t); fill(); } },200); } });
+$("#d-ac-naovem").addEventListener('click',function(){ $("#d-naovem").hidden=!$("#d-naovem").hidden; $("#d-remarcar").hidden=true; });
+$("#d-ac-remarcar").addEventListener('click',function(){ $("#d-remarcar").hidden=!$("#d-remarcar").hidden; $("#d-naovem").hidden=true; });
+$("#d-nv-ok").addEventListener('click',function(){
+  if(!diaSel) return; var it=diaSel, p=pacInfo(it.paciente), esps=espsDoProf(it.profissional), base=tiposDe(esps)[0];
+  var d={ paciente:it.paciente, profissional:it.profissional, data:DIA.data, hora:it.hora||'', procedimento: base?derivarProc(base.nome,p||{}):'', oque:$("#d-nv-motivo").value, pago:'', valor:'', forma:'', dataPagamento:'', quemPagou:'', nf:'Não se aplica', nfNumero:'', guia:'', observacao:$("#d-nv-obs").value.trim(), pacoteId:'', sessaoExtra:false, tornarPagadorHabitual:false };
+  var pk=p&&AT.pacotes[p.nome]; if(p&&ehPacote(p)&&pk&&pk.status==='ativo'&&/sem aviso|em cima da hora/.test(d.oque)) d.pacoteId=pk.id;
+  $("#d-nv-ok").disabled=true;
+  call('registrarAtendimento', d).then(function(r){ if(!r.ok) return toast((r.erros||['Não gravou']).join(' ')); toast('Gravado: '+d.oque); $("#d-nv-obs").value=''; carregarDia(); }).catch(function(e){ toast('Erro: '+e.message); }).finally(function(){ $("#d-nv-ok").disabled=false; });
+});
+$("#d-rm-ok").addEventListener('click',function(){
+  if(!diaSel) return; var para=$("#d-rm-data").value; if(!dataObj(para)) return toast('Informe a nova data (dd/mm/aaaa)');
+  var d={ de:DIA.data, para:para, horaDe:diaSel.hora||'', horaPara:$("#d-rm-hora").value||diaSel.hora||'', paciente:diaSel.paciente, profissional:diaSel.profissional, observacao:$("#d-rm-obs").value.trim() };
+  $("#d-rm-ok").disabled=true;
+  call('remarcar', d).then(function(r){ if(!r.ok) return toast((r.erros||['Não gravou']).join(' ')); toast('Remarcado para '+para); $("#d-rm-data").value=''; $("#d-rm-hora").value=''; $("#d-rm-obs").value=''; carregarDia(); }).catch(function(e){ toast('Erro: '+e.message); }).finally(function(){ $("#d-rm-ok").disabled=false; });
+});
+$("#d-rm-data").addEventListener('input',function(){ this.value=mascaraData(this.value); });
+$("#d-rm-hora").addEventListener('input',function(){ var v=this.value.replace(/\D/g,'').slice(0,4); this.value=v.length>2?v.slice(0,2)+':'+v.slice(2):v; });
+$("#d-hoje").addEventListener('click',function(){ $("#d-data").value=hojeStr(); carregarDia(); });
+$("#d-data").addEventListener('input',function(){ this.value=mascaraData(this.value); });
+$("#d-data").addEventListener('change',function(){ if(dataObj(this.value)) carregarDia(); });
+$("#d-print").addEventListener('click',function(){ window.print(); });
+$("#d-add").addEventListener('click',function(){ $("#d-addbox").hidden=!$("#d-addbox").hidden; $("#d-recbox").hidden=true; });
+$("#d-add-cancel").addEventListener('click',function(){ $("#d-addbox").hidden=true; });
+$("#d-add-hora").addEventListener('input',function(){ var v=this.value.replace(/\D/g,'').slice(0,4); this.value=v.length>2?v.slice(0,2)+':'+v.slice(2):v; });
+function addDia(recorrente){
+  var pac=$("#d-add-pac").value.trim(), prof=$("#d-add-prof").value, hora=$("#d-add-hora").value;
+  if(!pacInfo(pac)) return toast('Escolha um paciente da lista');
+  var fn = recorrente ? call('salvarAgendaFixa',{paciente:pac,profissional:prof,diaSemana:DIAS_PT[dataObj(DIA.data).getDay()],hora:hora,frequencia:'Semanal',comecaEm:DIA.data,ativo:true,observacao:$("#d-add-obs").value.trim()}) : call('acrescentarAoDia',{data:DIA.data,hora:hora,paciente:pac,profissional:prof,origem:$("#d-add-origem").value,observacao:$("#d-add-obs").value.trim()});
+  fn.then(function(r){ if(!r.ok) return toast((r.erros||['Não gravou']).join(' ')); toast(recorrente?'Recorrência criada':'Agendado no dia'); $("#d-add-pac").value=''; $("#d-add-hora").value=''; $("#d-add-obs").value=''; $("#d-addbox").hidden=true; carregarDia(); }).catch(function(e){ toast('Erro: '+e.message); });
+}
+$("#d-add-ok").addEventListener('click',function(){ addDia(false); });
+$("#d-add-rec").addEventListener('click',function(){ addDia(true); });
+/* agenda recorrente */
+function carregarRec(){ call('agendaFixa').then(function(l){ AGENDA=l; renderRec(); }); }
+function renderRec(){
+  var tb=$("#r-lista"); tb.innerHTML='';
+  AGENDA.slice().sort(function(a,b){ return (DIAS_PT.indexOf(a['Dia da semana'])*10000+(a['Hora']||'').replace(':','')*1)-(DIAS_PT.indexOf(b['Dia da semana'])*10000+(b['Hora']||'').replace(':','')*1); }).forEach(function(a){
+    var tr=document.createElement('tr'); tr.innerHTML='<td><b>'+esc(a['Paciente'])+'</b></td><td>'+esc(a['Profissional'])+'</td><td>'+esc(a['Dia da semana'])+'</td><td>'+esc(a['Hora'])+'</td><td>'+esc(a['Frequência']||'Semanal')+'</td><td>'+esc((a['Começa em']||'…')+' → '+(a['Termina em']||'…'))+'</td><td>'+(String(a['Ativo'])==='Não'?'<span class="pill muted">pausado</span>':'<span class="pill ok">ativo</span>')+'</td><td><button class="btn secondary small" type="button">Editar</button></td>';
+    tr.querySelector('button').addEventListener('click',function(){ recEdit=a; $("#r-pac").value=a['Paciente']; $("#r-prof").value=a['Profissional']; $("#r-dia").value=a['Dia da semana']; $("#r-hora").value=a['Hora']; $("#r-freq").value=a['Frequência']||'Semanal'; $("#r-ini").value=a['Começa em']||''; $("#r-fim").value=a['Termina em']||''; $("#r-ativo").value=String(a['Ativo'])==='Não'?'Não':'Sim'; $("#r-obs").value=a['Observação']||''; $("#r-hint").textContent='Editando '+a['Paciente']+'. Mudou dia, hora ou profissional? Ao salvar, o app pergunta se vale a partir de hoje.'; $("#d-recbox").scrollIntoView({behavior:'smooth',block:'start'}); });
+    tb.appendChild(tr);
+  });
+}
+function limparRec(){ recEdit=null; ['r-pac','r-hora','r-ini','r-fim','r-obs'].forEach(function(id){ $("#"+id).value=''; }); $("#r-freq").value='Semanal'; $("#r-ativo").value='Sim'; $("#r-hint").textContent='Nova recorrência.'; }
+$("#d-rec").addEventListener('click',function(){ $("#d-recbox").hidden=!$("#d-recbox").hidden; $("#d-addbox").hidden=true; if(!$("#d-recbox").hidden) carregarRec(); });
+$("#d-rec-fechar").addEventListener('click',function(){ $("#d-recbox").hidden=true; });
+$("#r-novo").addEventListener('click',limparRec);
+$("#r-hora").addEventListener('input',function(){ var v=this.value.replace(/\D/g,'').slice(0,4); this.value=v.length>2?v.slice(0,2)+':'+v.slice(2):v; });
+$("#r-ini").addEventListener('input',function(){ this.value=mascaraData(this.value); });
+$("#r-fim").addEventListener('input',function(){ this.value=mascaraData(this.value); });
+$("#r-salvar").addEventListener('click',function(){
+  var pac=$("#r-pac").value.trim(); if(!pacInfo(pac)) return toast('Escolha um paciente da lista');
+  var d={ id:recEdit?recEdit.ID:'', paciente:pac, profissional:$("#r-prof").value, diaSemana:$("#r-dia").value, hora:$("#r-hora").value, frequencia:$("#r-freq").value, comecaEm:$("#r-ini").value, terminaEm:$("#r-fim").value, ativo:$("#r-ativo").value==='Sim', observacao:$("#r-obs").value.trim() };
+  if(recEdit && (recEdit['Dia da semana']!==d.diaSemana || recEdit['Hora']!==d.hora || recEdit['Profissional']!==d.profissional)){
+    if(!$("#r-apartir")){ $("#r-hint").innerHTML='Dia, hora ou profissional mudou. <label class="inline" style="display:inline-flex"><input type="checkbox" id="r-apartir" checked> vale a partir de hoje (encerra a antiga e guarda o histórico)</label> <button class="btn small" type="button" id="r-confirma">Confirmar</button>'; $("#r-confirma").addEventListener('click',function(){ d.encerrarAnterior=$("#r-apartir").checked; salvarRec(d); }); return; }
+    d.encerrarAnterior=$("#r-apartir").checked;
+  }
+  salvarRec(d);
+});
+function salvarRec(d){ $("#r-salvar").disabled=true; call('salvarAgendaFixa', d).then(function(r){ if(!r.ok) return toast((r.erros||['Não gravou']).join(' ')); toast('Recorrência salva'); limparRec(); carregarRec(); carregarDia(); }).catch(function(e){ toast('Erro: '+e.message); }).finally(function(){ $("#r-salvar").disabled=false; }); }
+// ao limpar o atendimento, fecha a lista completa de procedimentos
+var _limparAtOrig=limparAt; limparAt=function(a){ _limparAtOrig(a); $("#a-proc").hidden=true; };
 
 carregar();
 })();
