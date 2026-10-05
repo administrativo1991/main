@@ -84,8 +84,8 @@ Nenhum dado vive só no app. Mapa do que o app lê e escreve:
 | `Mensalistas` | tudo | **update** do par "mês — pago?" / "Data" por paciente; **append** paciente novo mensalista |
 | `Procedimentos` | A–D | nada (só gestão, pela planilha) |
 | `Profissionais`, `Listas`, `Como preencher` | tudo | nada |
-| `Agenda fixa` (**nova**, ver 7.2) | paciente · profissional · dia da semana · hora · ativo · início · fim | gestão/recepção pelo app |
-| `Lista do dia` (**nova**, ver 7.2) | data · hora · paciente · profissional · origem | recepção pelo app |
+| `Agenda recorrente` (**nova**, ver 7.2; criada pelo app em 05/10) | ID · paciente · profissional · dia da semana · hora · frequência (semanal/quinzenal) · começa em · termina em · ativo · observação · registrado por | **append** de horário novo; **update** da linha ao editar; mudança "a partir de hoje" encerra a antiga e acrescenta outra |
+| `Lista do dia` (**nova**, ver 7.2; criada pelo app em 05/10) | ID · data · hora · paciente · profissional · origem · observação · registrado por | **append** (acréscimo do dia, "Não vem · remarcado para…", "Remarcação de…") |
 | `Pacotes` (**nova**, item 10) | um pacote comprado por linha, com validade e pagamento | **append** na compra; **update** de Status (ativo · encerrado · vencido) |
 
 Regras de gravação: nunca apagar linha ("excluir" = `O que aconteceu` → "Cancelado pela clínica" + observação + log); ID na coluna T é um ULID; antes de um update, o app relê a célula T da linha pra confirmar que o ID bate (protege contra alguém ter inserido linha no meio).
@@ -131,8 +131,18 @@ Pacote (4 ou 12 sessões): o bloco ⚠ mostra o contador e a validade; a linha g
 
 Falta sem aviso de particular (psicologia): grava a linha e marca a pendência "taxa de falta a decidir" pra gestão (4.5). Não cobra nada na tela.
 
-### 4.3 Lista do dia (imprimível A4)
-Por profissional e hora: paciente · ⚠ atenção · situação mensalista · convênio · status do registro do atendimento (feito / pendente, verificando se há linha na aba do mês com o mesmo paciente+data). Sem CPF na impressão. Monta a partir de `Agenda fixa` (recorrentes do dia da semana) + acréscimos do dia (`Lista do dia`). Botão "Marcar falta" direto da lista → grava linha com "Faltou sem aviso/com aviso". Ver questão 7.2.
+### 4.3 Lista do dia (imprimível A4) — ✅ publicada na cópia em 05/10
+Duas camadas: **"Visão geral"** com os profissionais em colunas lado a lado (hora · paciente · ⚠ atenção · selos de pacote/mensalidade · situação) e **uma aba por profissional** em tabela. Contadores no topo (na lista · registrados · pendentes · não vêm). Sem CPF. Botão **Imprimir** (A4, só a lista).
+
+Monta o dia a partir de três fontes: a aba **`Agenda recorrente`** (horários semanais ou quinzenais, vigentes entre "Começa em" e "Termina em"), a aba **`Lista do dia`** (acréscimos daquele dia e ausências avisadas) e a **aba do mês** (quem já foi registrado; encaixes feitos direto no Atendimento também aparecem).
+
+Clicando num nome a recepção escolhe: **Registrar atendimento** (abre o Atendimento já preenchido com paciente, profissional, data e hora) · **Não vem** (grava a linha na aba do mês com o motivo — desmarcou com antecedência, faltou em cima da hora, faltou sem aviso, cancelado pela clínica — e consome a sessão do pacote só nos casos que consomem, ver 7.8) · **Remarcar** (o item do dia vira "Não vem · remarcado para dd/mm" e a nova data recebe "Remarcação de dd/mm", sem mexer na recorrência).
+
+**+ Agendar no dia**: acrescenta um atendimento avulso naquele dia (origem: avulso, encaixe, retorno, avaliação) ou, com "Tornar recorrente", cria de uma vez o horário semanal a partir daquele dia.
+
+**Agenda recorrente** (dentro da Lista do dia): cadastro completo dos horários fixos — paciente, profissional, dia da semana, hora, frequência (semanal/quinzenal), começa em, termina em, ativo, observação — com edição. Ao mudar dia, hora ou profissional de um horário existente, o app pergunta se vale **a partir de hoje**: a linha antiga termina ontem e nasce uma nova, preservando o histórico. Pausar = Ativo "Não". Nada é apagado.
+
+As duas abas são criadas pelo app na primeira gravação, com cabeçalhos próprios; o servidor só acrescenta linhas e atualiza células específicas.
 
 ### 4.4 Mensalistas
 **Decisão 05/10 (Roberta): a pergunta da 5ª sessão só vale para pacotes mensais (R$ 280/360, R$ 400). Na Social (R$ 200/mês) e nos valores especiais a 5ª sessão está incluída: o app não pergunta nem cobra.**
@@ -154,7 +164,7 @@ Lista com filtro em dia / vence / atrasado, valor, pagador, mês atual pago?. "R
 |---|---|---|
 | 05–09/10 | ✅ 05/10: carregador, servidor, tela **Novo paciente**, módulo de duplicatas com 10 grupos de testes automáticos (Isac/Isaac, Natalha/Natalia, gêmeos, Isabella/Isabelli, Agatha×3, CPF). ✅ Instalado na cópia em 04/10 às 22h09 (implantação v1); a tela abriu lendo a cópia. Falta: primeiro cadastro de teste e conferência da linha em Pacientes | duplicatas Isac/Isaac e Natalha/Natalia testadas |
 | 12–16/10 | ✅ Adiantado para 05/10: **Atendimento** publicado na cópia, com bloco ⚠, regras de cobrança, procedimento derivado, desconto, pacotes (aba `Pacotes` + coluna V), sessão extra, pagador novo, gravação na aba do mês (colunas U/V criadas no fim). Testado no navegador com os 6 casos do briefing mais pacote 2/4, pacote encerrado com lançamento, falta e pediatria. Falta: teste da Roberta na cópia e conferência das linhas | 6 casos do briefing: tabela, paga o que consegue, mensalidade fixa, pro bono, convênio, mensalista atrasado |
-| 19–23/10 | Lista do dia imprimível + Mensalistas | recepção registra em < 1 min |
+| 19–23/10 | ✅ Adiantado para 05/10: **Lista do dia** publicada na cópia (visão geral em colunas + aba por profissional, imprimível, registrar/não vem/remarcar, agendar no dia, **Agenda recorrente** semanal/quinzenal com edição "a partir de hoje"). Falta: **Mensalistas** (registrar mensalidade, 5ª sessão só em pacotes mensais, filtros) e o teste da Roberta na cópia | recepção registra em < 1 min |
 | 26–30/10 | Gestão, pendências, exportar mês, READMEs recepção e gestão, piloto na planilha real | gestão fecha outubro pelo app |
 | 01/11 | Virada: aba Novembro, modelo antecipado | |
 
@@ -174,7 +184,7 @@ Cada semana termina com uma versão implantada pra você testar. Protótipo nave
 
 **7.1 ✅ Decidido 05/10: aba por mês.** Aba por mês × aba única `Atendimentos`. Recomendo **manter aba por mês**: a planilha já está montada assim (fórmulas, validações, proteções e a importação do Financeiro), a gestão e a contabilidade já conhecem, e a complexidade pro app é pequena (o botão "Criar aba de Novembro" duplica a aba). Aba única só compensaria se o Financeiro quisesse consultas que cruzam meses — e aí o "exportar o mês" resolve. **Confirma manter por mês?**
 
-**7.2 ✅ Decidido 05/10: opção (a), aba `Agenda fixa`.** Como a lista do dia entra no app. Recomendo começar pela **opção (a)**: aba `Agenda fixa` com os horários recorrentes (paciente, profissional, dia da semana, hora) carregada uma vez pela gestão a partir do ControleOdonto, mais acréscimos do dia feitos pela recepção. O extrator do ControleOdonto (opção b) entra depois como melhoria — eu não tenho acesso ao `registro do atendimento.md` › "Como extrair do ControleOdonto" (não está no repositório nem no Drive que enxergo); se quiser que eu avalie a (b), me passa esse trecho. **Confirma (a)?**
+**7.2 ✅ Decidido 05/10: opção (a), aba `Agenda recorrente` (nome escolhido pela Roberta; antes "Agenda fixa").** Como a lista do dia entra no app. Recomendo começar pela **opção (a)**: aba `Agenda fixa` com os horários recorrentes (paciente, profissional, dia da semana, hora) carregada uma vez pela gestão a partir do ControleOdonto, mais acréscimos do dia feitos pela recepção. O extrator do ControleOdonto (opção b) entra depois como melhoria — eu não tenho acesso ao `registro do atendimento.md` › "Como extrair do ControleOdonto" (não está no repositório nem no Drive que enxergo); se quiser que eu avalie a (b), me passa esse trecho. **Confirma (a)?**
 
 **7.3 ✅ Decidido 05/10: a própria recepção atualiza o cadastro** (modalidade, valor combinado, regra e observação de cobrança) quando a psicóloga ou a gestão avisa no grupo de WhatsApp com recepção, gestão e psicologia. A tela "Editar cadastro" fica disponível pra recepção, com os campos "quem informou" e "quando" obrigatórios, gravados no log; a gestão vê as alterações do mês numa lista de conferência. Proposta original: Por ora só a gestão altera (via 4.5); a recepção escreve na Observação e a gestão promove. Deixo um botão na tela da gestão "promover observação pro cadastro" pra encurtar o caminho. **Ok?**
 

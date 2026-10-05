@@ -32,7 +32,7 @@ Nada a fazer. Em até 2 minutos a tela nova aparece sozinha (basta recarregar a 
 
 Copie a mensagem que apareceu na tela (ou um print) e me mande. Nada do que você digitou se perde: o rascunho fica guardado no computador até gravar.
 
-## Endereço atual (cópia de teste, implantado em 04/10/2026)
+## Endereço atual (cópia de teste, implantado em 04/10/2026; app atualizado em 05/10 com Novo paciente, Atendimento e Lista do dia)
 
 `https://script.google.com/a/macros/clinicanascente.com.br/s/AKfycbzsUF7rqLabRtUQAeahEOo4cjdGd_7lLxk1vPl9EMsdjl52lTkbaWui69Ve_pdIHRNe/exec`
 
