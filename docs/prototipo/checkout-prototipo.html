@@ -320,7 +320,7 @@ body.nav-roxo nav button[aria-current="page"]{background:#F1EEF6;color:#543060}
   </div>
   <div class="card" id="m-reg" hidden style="margin-top:12px">
     <h2 style="font-family:var(--font-head);font-weight:600;font-size:16px;margin:0 0 10px">Registrar mensalidade · <span id="m-reg-nome"></span></h2>
-    <div class="alert note"><div><div class="t">Novembro tem 5 semanas</div><p>Vai querer a 5ª sessão? Se sim, o valor da sessão é somado à mensalidade.</p>
+    <div class="alert note" id="m-5a-box"><div><div class="t">Novembro tem 5 semanas</div><p>Vai querer a 5ª sessão? Se sim, o valor da sessão é somado à mensalidade. (Só pacotes mensais; na Social e no valor especial a 5ª já está incluída.)</p>
       <div class="actions" style="margin-top:8px"><button class="chip" aria-pressed="false" id="m-5a">Sim, 5ª sessão (+ R$ 70)</button></div></div></div>
     <div class="grid">
       <label>Data do pagamento <input value="16/11/2026"></label>
@@ -626,7 +626,7 @@ function renderMen(f){
   });
   tb.querySelectorAll("[data-reg]").forEach(b=>b.addEventListener("click",()=>openReg(b.dataset.reg)));
 }
-function openReg(n){ const m=MEN.find(x=>x[0]===n); if(!m) return; $("#m-reg").hidden=false; $("#m-reg-nome").textContent=n; $("#m-valor").value=brl(m[2]); $("#m-quem").value=m[3]; $("#m-5a").setAttribute("aria-pressed","false"); $("#m-reg").scrollIntoView({behavior:"smooth",block:"start"}); }
+function openReg(n){ const m=MEN.find(x=>x[0]===n); if(!m) return; $("#m-reg").hidden=false; $("#m-5a-box").hidden=!/^Pacote/.test(m[1]); $("#m-reg-nome").textContent=n; $("#m-valor").value=brl(m[2]); $("#m-quem").value=m[3]; $("#m-5a").setAttribute("aria-pressed","false"); $("#m-reg").scrollIntoView({behavior:"smooth",block:"start"}); }
 document.querySelectorAll(".chip[data-f]").forEach(c=>c.addEventListener("click",()=>{document.querySelectorAll(".chip[data-f]").forEach(x=>x.setAttribute("aria-pressed","false"));c.setAttribute("aria-pressed","true");renderMen(c.dataset.f);}));
 $("#m-5a").addEventListener("click",()=>{ const on=$("#m-5a").getAttribute("aria-pressed")!=="true"; $("#m-5a").setAttribute("aria-pressed",String(on)); const m=MEN.find(x=>x[0]===$("#m-reg-nome").textContent); $("#m-valor").value=brl(m[2]+(on?70:0)); });
 $("#m-salvar").addEventListener("click",()=>{ const m=MEN.find(x=>x[0]===$("#m-reg-nome").textContent); if(m){m[4]="ok";m[5]="Pago em 16/11 · Pix";} const p=byName(m[0]); if(p&&p.mensal){p.mensal={st:"ok",txt:"Novembro pago em 16/11"};} $("#m-reg").hidden=true; renderMen("todos"); renderDia(); toast("Mensalidade registrada · linha de recebimento gravada em Novembro"); });
