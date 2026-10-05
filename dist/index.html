@@ -1092,7 +1092,9 @@ function pillsDe(nome){
   if(ehMensal(p)){ var m=AT.mensalistas[nome], info=AT.mensalistasInfo||{}, dia=new Date().getDate(); if(m&&/^sim/i.test(m.pago)) out+='<span class="pill ok">mensal ok</span> '; else if(info.modeloNovo&&dia>=16) out+='<span class="pill bad">mensal atrasada</span> '; else out+='<span class="pill warn">mensal pendente</span> '; }
   return out;
 }
-function atencaoDe(nome){ var p=pacInfo(nome); if(!p) return ''; if(p.regra&&!/^Tabela$/i.test(p.regra)) return '⚠ '+p.regra; if(p.convenio&&p.convenio!=='Particular') return p.convenio; return ''; }
+// modalidade curta (sem o valor entre parênteses) + convênio + ⚠ regra; cadastro vazio vira aviso pra completar na véspera
+function modCurta(m){ return String(m||'').replace(/\s*\([^)]*\)/g,'').replace(/\s+/g,' ').trim(); }
+function atencaoDe(nome){ var p=pacInfo(nome); if(!p) return ''; var conv=p.convenio&&p.convenio!=='Particular', partes=[]; var m=modCurta(p.modalidade); if(m&&!(conv&&/^Conv[êe]nio$/i.test(m))) partes.push(m); if(conv) partes.push('Convênio '+p.convenio); if(p.regra&&!/^Tabela$/i.test(p.regra)&&p.regra!==p.modalidade&&!(conv&&/^Conv[êe]nio$/i.test(p.regra))&&!(/^Mensalidade fixa/.test(p.regra)&&ehMensal(p))) partes.push('⚠ '+modCurta(p.regra)); if(!partes.length) return (p.modalidade||p.regra)?'':'⚠ sem modalidade · completar cadastro'; return partes.join(' · '); }
 function statusDe(it){
   if(it.registro){ var oq=it.registro.oque; return /^Atendido/.test(oq)?'<span class="pill ok">registrado</span>':'<span class="pill muted">'+esc(oq.split(' (')[0])+'</span>'; }
   if(it.naoVem) return '<span class="pill muted">'+esc(it.naoVem.replace('Não vem · ',''))+'</span>';
@@ -1120,7 +1122,7 @@ function renderDia(){
     root.appendChild(cols); return;
   }
   var g=grupos[diaTab]; var card=document.createElement('div'); card.className='card';
-  card.innerHTML='<div class="prof">'+esc(diaTab)+'</div><div class="tablewrap"><table><thead><tr><th>Hora</th><th>Paciente</th><th>Atenção</th><th>Pacote / mensalidade</th><th>Origem</th><th>Situação</th></tr></thead><tbody>'+g.map(function(it,i){ return '<tr data-i="'+i+'" class="'+(it.registro?'done':'')+'" style="cursor:pointer"><td>'+esc(it.hora||'—')+'</td><td><b>'+esc(it.paciente)+'</b></td><td>'+esc(atencaoDe(it.paciente))+'</td><td>'+pillsDe(it.paciente)+'</td><td>'+esc(it.origem||'')+'</td><td>'+statusDe(it)+'</td></tr>'; }).join('')+'</tbody></table></div>';
+  card.innerHTML='<div class="prof">'+esc(diaTab)+'</div><div class="tablewrap"><table><thead><tr><th>Hora</th><th>Paciente</th><th>Modalidade / atenção</th><th>Pacote / mensalidade</th><th>Origem</th><th>Situação</th></tr></thead><tbody>'+g.map(function(it,i){ return '<tr data-i="'+i+'" class="'+(it.registro?'done':'')+'" style="cursor:pointer"><td>'+esc(it.hora||'—')+'</td><td><b>'+esc(it.paciente)+'</b></td><td>'+esc(atencaoDe(it.paciente))+'</td><td>'+pillsDe(it.paciente)+'</td><td>'+esc(it.origem||'')+'</td><td>'+statusDe(it)+'</td></tr>'; }).join('')+'</tbody></table></div>';
   card.querySelectorAll('tr[data-i]').forEach(function(tr){ tr.addEventListener('click',function(){ selecionarItem(g[+tr.dataset.i]); }); });
   root.appendChild(card);
 }
@@ -1160,7 +1162,7 @@ $("#d-ant").addEventListener('click',function(){ mudarDia(-1); });
 $("#d-prox").addEventListener('click',function(){ mudarDia(1); });
 $("#d-data").addEventListener('change',function(){ if(dataObj(diaEscolhido())) carregarDia(); });
 // ao escolher o paciente, mostra o que está no cadastro (convênio, modalidade, regra)
-function infoPaciente(nome){ var p=pacInfo(nome); if(!p) return nome.trim()?'Não está em Pacientes. Cadastre antes em "Novo paciente".':''; var conv=p.convenio&&p.convenio!=='Particular'; if(!p.modalidade&&!p.regra&&!conv) return '⚠ Cadastro incompleto: sem modalidade nem convênio. Confira como paga e avise a gestão.'; var partes=[]; if(conv) partes.push('Convênio '+p.convenio); else if(p.convenio) partes.push('Particular'); if(p.modalidade && !(conv&&/^Conv[êe]nio$/i.test(p.modalidade))) partes.push(p.modalidade); if(p.regra&&!/^Tabela$/i.test(p.regra)&&p.regra!==p.modalidade&&!(conv&&/^Conv[êe]nio$/i.test(p.regra))) partes.push('⚠ '+p.regra); return 'Cadastro: '+partes.join(' · '); }
+function infoPaciente(nome){ var p=pacInfo(nome); if(!p) return nome.trim()?'Não está em Pacientes. Cadastre antes em "Novo paciente".':''; var conv=p.convenio&&p.convenio!=='Particular'; if(!p.modalidade&&!p.regra&&!conv) return '⚠ Cadastro incompleto: sem modalidade nem convênio. Confira como paga e avise a gestão.'; var partes=[]; if(conv) partes.push('Convênio '+p.convenio); else if(p.convenio) partes.push('Particular'); if(p.modalidade && !(conv&&/^Conv[êe]nio$/i.test(p.modalidade))) partes.push(p.modalidade); if(p.regra&&!/^Tabela$/i.test(p.regra)&&p.regra!==p.modalidade&&!(conv&&/^Conv[êe]nio$/i.test(p.regra))&&!(/^Mensalidade fixa/.test(p.regra)&&ehMensal(p))) partes.push('⚠ '+modCurta(p.regra)); return 'Cadastro: '+partes.join(' · '); }
 function mostrarInfo(el, nome, voltar){ var p=pacInfo(nome); el.innerHTML=esc(infoPaciente(nome))+(p&&voltar?' <a href="#">'+(cadastroIncompleto(p)?'Completar cadastro':'editar cadastro')+'</a>':''); var a=el.querySelector('a'); if(a) a.addEventListener('click',function(e){ e.preventDefault(); abrirCadastro(nome, voltar); }); }
 function voltarAgendar(nome){ go('dia'); $("#d-addbox").hidden=false; $("#d-add-pac").value=nome; mostrarInfo($("#d-add-pac-info"), nome, voltarAgendar); }
 function voltarRec(nome){ go('dia'); $("#d-recbox").hidden=false; carregarRec(); $("#r-pac").value=nome; mostrarInfo($("#r-pac-info"), nome, voltarRec); }

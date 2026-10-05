@@ -21,7 +21,7 @@ Menu de cima: **Lista do dia · Atendimento · Novo paciente · Editar cadastro 
 3. Quem não apareceu nem avisou: clique no nome → **Não vem** → "Faltou sem aviso".
 4. Precisa imprimir a lista (A4): botão **Imprimir**.
 
-**Situações na lista**: *a confirmar* → *confirmado* → *registrado* (ou *não vem*). Os selos ao lado do nome mostram pacote (ex.: 2/4) e mensalidade (em dia / pendente / atrasada). "⚠" ao lado do nome = regra de cobrança diferente da tabela; o nome do convênio aparece quando o paciente é de convênio.
+**Situações na lista**: *a confirmar* → *confirmado* → *registrado* (ou *não vem*). Os selos ao lado do nome mostram pacote (ex.: 2/4) e mensalidade (em dia / pendente / atrasada). Embaixo do nome aparece a **modalidade** do cadastro (Avulso, Pacote 4 sessões, Social, Convênio Cedplan…) e, com "⚠", uma regra de cobrança diferente da tabela. Se aparecer "⚠ sem modalidade · completar cadastro", aproveite a confirmação da véspera pra perguntar como o paciente paga e completar em Editar cadastro.
 
 ---
 

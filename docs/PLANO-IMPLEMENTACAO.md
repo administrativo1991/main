@@ -143,6 +143,8 @@ Clicando num nome a recepção escolhe: **Registrar atendimento** (abre o Atendi
 
 **Cadastro na hora de agendar e de atender** (05/10): ao escolher o paciente, o app mostra o que está no cadastro (convênio, modalidade, regra). Se não houver nada, avisa "cadastro incompleto" e oferece **Completar cadastro**, que abre a tela Editar cadastro e volta pra onde estava. Motivo: na cópia, de 528 pacientes só ~90 têm Modalidade e ~100 têm Convênio preenchidos.
 
+**Modalidade na lista** (05/10, pedido da Roberta): embaixo de cada nome aparece a modalidade do cadastro em forma curta (sem o valor entre parênteses), o convênio e o ⚠ da regra de cobrança; cadastro sem nada vira "⚠ sem modalidade · completar cadastro", pra recepção resolver na confirmação da véspera. A coluna da tabela por profissional passou a se chamar "Modalidade / atenção".
+
 **+ Agendar no dia**: acrescenta um atendimento avulso naquele dia (origem: avulso, encaixe, retorno, avaliação) ou, com "Tornar recorrente", cria de uma vez o horário semanal a partir daquele dia. O servidor recusa um agendamento idêntico (mesma data, hora, paciente, profissional e origem) e a tela trava os botões enquanto grava, depois de um duplo clique ter duplicado a Eloise em 05/10.
 
 **Remover** (05/10, pedido da Roberta): em item agendado pelo app e ainda sem registro, a recepção pode removê-lo informando o motivo (padrão "duplicado"). A linha em `Lista do dia` recebe Origem "Removido · motivo" e a Observação guarda o que era e quem removeu; a lista deixa de mostrar o item. Nada é apagado.
