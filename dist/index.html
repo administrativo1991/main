@@ -94,11 +94,12 @@ label.inline input{width:auto}
 .col{background:var(--card);border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow);overflow:hidden}
 .col h3{font-family:var(--font-head);font-weight:600;font-size:14px;color:var(--roxo);margin:0;padding:12px 14px;background:var(--card2);border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;gap:8px}
 .col h3 small{font-weight:500;color:var(--muted);font-size:12px}
-.col .row{display:grid;grid-template-columns:44px 1fr auto;gap:8px;align-items:center;padding:9px 14px;border-bottom:1px solid var(--line);cursor:pointer}
+.col .row{display:grid;grid-template-columns:44px minmax(0,1fr);gap:8px;align-items:start;padding:9px 14px;border-bottom:1px solid var(--line);cursor:pointer}
+.col .row .pills{display:flex;flex-wrap:wrap;gap:4px;margin-top:3px}
 .col .row:last-child{border-bottom:0}
 .col .row:hover{background:var(--bg)}
 .col .row .h{font-variant-numeric:tabular-nums;color:var(--muted);font-size:13px}
-.col .row .n{font-weight:700;font-size:14px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.col .row .n{font-weight:700;font-size:14px;min-width:0}
 .col .row .n small{display:block;font-weight:400;color:var(--muted);font-size:12px;white-space:normal}
 .col .row.done .n{color:var(--muted);font-weight:600}
 .col .row.fora .n{text-decoration:line-through;color:var(--muted)}
@@ -979,7 +980,7 @@ function statusDe(it){
   return '<span class="pill warn">pendente</span>';
 }
 function renderDia(){
-  var r=DIA, grupos={}; r.itens.forEach(function(it){ (grupos[it.profissional]=grupos[it.profissional]||[]).push(it); });
+  var r=DIA, grupos={}; r.itens.slice().sort(function(a,b){ return (a.hora||'99').localeCompare(b.hora||'99'); }).forEach(function(it){ (grupos[it.profissional]=grupos[it.profissional]||[]).push(it); });
   var profs=Object.keys(grupos).sort();
   var tot=r.itens.length, feitos=r.itens.filter(function(i){return i.registro;}).length, fora=r.itens.filter(function(i){return i.naoVem&&!i.registro;}).length;
   $("#d-kpis").hidden=false; $("#d-kpis").innerHTML='<div class="kpi"><b>'+tot+'</b><span>na lista</span></div><div class="kpi"><b>'+feitos+'</b><span>registrados</span></div><div class="kpi"><b>'+(tot-feitos-fora)+'</b><span>pendentes</span></div><div class="kpi"><b>'+fora+'</b><span>não vêm</span></div>'+(r.abaMesExiste?'':'<div class="kpi"><b style="color:var(--bad)">!</b><span>aba '+esc(r.abaMes)+' não existe</span></div>');
@@ -993,7 +994,7 @@ function renderDia(){
     profs.forEach(function(p){
       var g=grupos[p], pend=g.filter(function(i){return !i.registro&&!i.naoVem;}).length;
       var col=document.createElement('div'); col.className='col'; col.innerHTML='<h3>'+esc(p)+'<small>'+g.length+' · '+pend+' pendente'+(pend===1?'':'s')+'</small></h3>';
-      g.forEach(function(it){ var row=document.createElement('div'); row.className='row'+(it.registro?' done':'')+(it.naoVem&&!it.registro?' fora':''); var at=atencaoDe(it.paciente); row.innerHTML='<span class="h">'+esc(it.hora||'—')+'</span><span class="n">'+esc(it.paciente)+(at?'<small>'+esc(at)+'</small>':'')+(it.origem&&!/Semanal|Quinzenal/.test(it.origem)?'<small>'+esc(it.origem)+'</small>':'')+'</span><span>'+pillsDe(it.paciente)+statusDe(it)+'</span>'; row.addEventListener('click',function(){ selecionarItem(it); }); col.appendChild(row); });
+      g.forEach(function(it){ var row=document.createElement('div'); row.className='row'+(it.registro?' done':'')+(it.naoVem&&!it.registro?' fora':''); var at=atencaoDe(it.paciente); row.innerHTML='<span class="h">'+esc(it.hora||'—')+'</span><span class="n">'+esc(it.paciente)+(at?'<small>'+esc(at)+'</small>':'')+(it.origem&&!/Semanal|Quinzenal/.test(it.origem)?'<small>'+esc(it.origem)+'</small>':'')+'<span class="pills">'+pillsDe(it.paciente)+statusDe(it)+'</span></span>'; row.addEventListener('click',function(){ selecionarItem(it); }); col.appendChild(row); });
       cols.appendChild(col);
     });
     root.appendChild(cols); return;
