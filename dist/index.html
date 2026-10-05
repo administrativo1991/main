@@ -322,6 +322,7 @@ function mock(nome, d){
   return new Promise(function(res){ setTimeout(function(){
     if(nome==='bootstrap') return res({usuario:{email:'simulacao@local',perfil:'gestao'},planilha:'(simulação, sem planilha)',hora:'',
       listas:{modalidades:["Avulso (valor da tabela)","Avulso com desconto – cartão de parceria","Pacote 4 sessões – psicologia (R$ 400)","Pacote 12 sessões – psicologia (R$ 960)","Pacote nutrição 6 consultas (R$ 600)","Pacote nutrição 12 consultas (R$ 1.100)","Pacote psicopedagogia 4 sessões (R$ 480)","Pacote ABA 4 sessões (R$ 360)","AAPI JF – pacote psicologia com estagiário (R$ 200/mês)","AAPI JF – pacote ABA (R$ 320/mês)","Convênio","Social (R$ 200/mês)","Pacote mensal preexistente (R$ 280 ou R$ 360)","Mensal (valor especial)","Por sessão","Pro bono","Permuta"],
+      modalidadesEsp:[],
       convenios:["Particular","Cedplan","Sabin Sinai","Unafisco","AAPI JF","Plan Minas","PLASC","AMIL","ASSEFAZ","FUSEX","IPSM","Sulamérica","18 de Julho","Aeronáutica"]},
       profissionais:[{nome:"Juliana Ribeiro",especialidade:"Psicologia"},{nome:"Dr. Victor Cunha",especialidade:"Pediatria"}], pacientes: mockBase});
     if(nome==='criarPaciente'){
@@ -411,17 +412,20 @@ function onModalidade(){
 }
 
 /* ---------- carregar ---------- */
+var ESP_POR_MOD={};
 function grupoModalidade(m){
+  if(ESP_POR_MOD[m]) return ESP_POR_MOD[m];
   var x=m.toLowerCase();
   if(x.indexOf('nutri')>=0) return 'Nutrição';
   if(x.indexOf('psicopedagog')>=0) return 'Psicopedagogia';
   if(x.indexOf('aba')>=0) return 'Terapia ABA';
   if(x.indexOf('psicolog')>=0||/^social/.test(x)||x.indexOf('mensal')>=0) return 'Psicologia';
-  return 'Geral (todas as especialidades)';
+  return 'Qualquer especialidade';
 }
 function preencherModalidades(){
   var sel=$("#n-mod"), atual=sel.value, esp=($("#n-prof").selectedOptions[0]||{}).dataset||{};
-  var ordem=['Geral (todas as especialidades)','Psicologia','Nutrição','Psicopedagogia','Terapia ABA'];
+  ESP_POR_MOD={}; (BOOT.listas.modalidadesEsp||[]).forEach(function(x){ if(x.esp) ESP_POR_MOD[x.nome]=x.esp; });
+  var ordem=['Qualquer especialidade','Psicologia','Pediatria','Clínica médica','Ginecologia e obstetrícia','Nutrição','Psicopedagogia','Terapia ABA','Psicanálise'];
   var pref=esp.esp||''; if(pref){ ordem=ordem.filter(function(g){ return g!==pref; }); ordem.splice(1,0,pref); }
   var grupos={}; BOOT.listas.modalidades.forEach(function(m){ var g=grupoModalidade(m); (grupos[g]=grupos[g]||[]).push(m); });
   sel.innerHTML='';
@@ -444,7 +448,7 @@ function carregar(){
     $("#nome-planilha").textContent='"'+b.planilha+'"';
     preencherSelect($("#n-conv"), b.listas.convenios);
     preencherSelect($("#n-prof"), b.profissionais, '—');
-    Array.prototype.forEach.call($("#n-prof").options,function(o){ var pr=b.profissionais.filter(function(x){return x.nome===o.value;})[0]; if(pr){ var e=pr.especialidade.toLowerCase(); o.dataset.esp = e.indexOf('nutri')>=0?'Nutrição':e.indexOf('psicopedagog')>=0?'Psicopedagogia':e.indexOf('aba')>=0?'Terapia ABA':e.indexOf('psic')>=0?'Psicologia':''; } });
+    Array.prototype.forEach.call($("#n-prof").options,function(o){ var pr=b.profissionais.filter(function(x){return x.nome===o.value;})[0]; if(pr){ var e=pr.especialidade.toLowerCase(); o.dataset.esp = e.indexOf('nutri')>=0?'Nutrição':e.indexOf('psicopedagog')>=0?'Psicopedagogia':e.indexOf('aba')>=0?'Terapia ABA':e.indexOf('psicologia')>=0?'Psicologia':e.indexOf('psican')>=0?'Psicanálise':e.indexOf('pediatr')>=0?'Pediatria':e.indexOf('gineco')>=0?'Ginecologia e obstetrícia':e.indexOf('cl')>=0?'Clínica médica':''; } });
     preencherModalidades();
     var dl=$("#dl-pagadores"); dl.innerHTML=''; var vistos={};
     b.pacientes.forEach(function(p){ String(p.pagador||'').split(/\s*\/\s*/).forEach(function(n){ n=n.trim(); if(n&&!vistos[n]){ vistos[n]=1; var o=document.createElement('option'); o.value=n; dl.appendChild(o);} }); });

@@ -160,7 +160,7 @@ var CONFIG = {
     LOG: 'Registrado por (app)', WHATS: 'WhatsApp do pagador', CARTEIRINHA: 'Nº da carteirinha',
     INDICACAO: 'Quem indicou', PRIMEIRA: 'Data da 1ª consulta', PROF_REF: 'Profissional de referência'
   },
-  LISTAS: { OQUE: 'O que aconteceu', PAGO: 'Pago?', FORMA: 'Forma de pagamento', CONVENIO: 'Convênio', REGRA: 'Regra de cobrança', MODALIDADE: 'Modalidade', GESTAO: 'Gestão' }
+  LISTAS: { OQUE: 'O que aconteceu', PAGO: 'Pago?', FORMA: 'Forma de pagamento', CONVENIO: 'Convênio', REGRA: 'Regra de cobrança', MODALIDADE: 'Modalidade', MODALIDADE_ESP: 'Especialidade (modalidade)', GESTAO: 'Gestão' }
 };
 var COLS_NOVAS_PACIENTES = ['LOG', 'WHATS', 'CARTEIRINHA', 'INDICACAO', 'PRIMEIRA', 'PROF_REF'];
 
@@ -206,6 +206,18 @@ function colunaLista_(cabecalho) {
   var n = s.getLastRow();
   if (n < 2) return [];
   return s.getRange(2, c, n - 1, 1).getValues().map(function (r) { return String(r[0] || '').trim(); }).filter(Boolean);
+}
+// Modalidades com a especialidade da coluna ao lado (Listas, "Especialidade (modalidade)"); vazio = o app agrupa pelo nome
+function modalidadesComEsp_() {
+  var s = aba_(CONFIG.ABA.LISTAS), h = cabecalhos_(s), c = h[CONFIG.LISTAS.MODALIDADE], ce = h[CONFIG.LISTAS.MODALIDADE_ESP];
+  if (!c) return [];
+  var n = s.getLastRow();
+  if (n < 2) return [];
+  var mods = s.getRange(2, c, n - 1, 1).getValues();
+  var esps = ce ? s.getRange(2, ce, n - 1, 1).getValues() : [];
+  var out = [];
+  mods.forEach(function (r, i) { var m = String(r[0] || '').trim(); if (m) out.push({ nome: m, esp: ce ? String((esps[i] || [''])[0] || '').trim() : '' }); });
+  return out;
 }
 function garantirColunasPacientes_() {
   var s = aba_(CONFIG.ABA.PACIENTES), h = cabecalhos_(s), prox = s.getLastColumn() + 1, criadas = [];
@@ -264,6 +276,7 @@ API.bootstrap = function () {
     hora: agora_(),
     listas: {
       modalidades: colunaLista_(CONFIG.LISTAS.MODALIDADE),
+      modalidadesEsp: modalidadesComEsp_(),
       convenios: colunaLista_(CONFIG.LISTAS.CONVENIO),
       regras: colunaLista_(CONFIG.LISTAS.REGRA),
       oque: colunaLista_(CONFIG.LISTAS.OQUE),
@@ -335,6 +348,7 @@ API.criarPaciente = function (d) {
     put('LOG', (u.email || 'app') + ' · ' + agora_() + (d.confirmouDuplicata ? ' · confirmou que não é duplicata' : ''));
     s.appendRow(linha);
     var novaLinha = s.getLastRow();
+    ['NASC', 'PRIMEIRA'].forEach(function (k) { var c = h[H[k]]; if (c) s.getRange(novaLinha, c).setNumberFormat('dd/MM/yyyy'); });
     SpreadsheetApp.flush();
     return { ok: true, linha: novaLinha, nome: nome, colunasCriadas: g.criadas };
   } finally {
