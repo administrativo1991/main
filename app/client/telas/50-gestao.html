@@ -30,6 +30,14 @@
         <h2 style="font-size:15px">Virada do mês</h2>
         <ol class="virada" id="g-virada"></ol>
       </div>
+      <div class="card compacto" id="g-lemb">
+        <h2 style="font-size:15px">Lembrete pra recepção</h2>
+        <div id="g-lemb-atual" class="muted" style="font-size:13px"></div>
+        <label class="campo">Novo lembrete<textarea id="g-lemb-txt" rows="2" placeholder="ex.: hoje a Dra. Luciana atende só até 16h"></textarea></label>
+        <label class="campo">Vale até <span class="leg">(opcional, dd/mm/aaaa: depois dessa data o lembrete some sozinho)</span><input id="g-lemb-ate" inputmode="numeric" maxlength="10" placeholder="sem prazo"></label>
+        <div class="acoes"><button type="button" class="btn" id="g-lemb-salvar">Publicar na tela Hoje</button><button type="button" class="btn ter" id="g-lemb-encerrar" hidden>Encerrar o atual</button></div>
+        <details id="g-lemb-hist" hidden><summary class="muted" style="cursor:pointer;font-size:13px">Lembretes anteriores</summary><ul id="g-lemb-lista" style="margin:6px 0 0;padding-left:18px;font-size:13px;color:var(--tx2)"></ul></details>
+      </div>
       <div class="card compacto">
         <h2 style="font-size:15px">Só a gestão edita</h2>
         <button type="button" class="atalho" id="g-atalho-regras">Regras e observações de cobrança <span class="cont" id="g-regras-n"></span></button>

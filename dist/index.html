@@ -474,7 +474,7 @@ button.kpi[aria-pressed="true"] span,.kpi.roxo span{color:#fff;opacity:.9}
       <button type="button" class="btn ter roxo" id="fd-fechar">Fechar o dia</button>
       <span class="muted" id="fd-status"></span>
     </div>
-    <div class="card pessego" id="d-lembrete" hidden><strong>Lembrete</strong><span id="d-lembrete-txt"></span></div>
+    <div class="card pessego" id="d-lembrete" hidden><strong>Lembrete da gestão</strong><span id="d-lembrete-txt"></span><small id="d-lembrete-meta" style="opacity:.75"></small></div>
   </aside>
 </section>
 
@@ -787,6 +787,14 @@ button.kpi[aria-pressed="true"] span,.kpi.roxo span{color:#fff;opacity:.9}
         <h2 style="font-size:15px">Virada do mês</h2>
         <ol class="virada" id="g-virada"></ol>
       </div>
+      <div class="card compacto" id="g-lemb">
+        <h2 style="font-size:15px">Lembrete pra recepção</h2>
+        <div id="g-lemb-atual" class="muted" style="font-size:13px"></div>
+        <label class="campo">Novo lembrete<textarea id="g-lemb-txt" rows="2" placeholder="ex.: hoje a Dra. Luciana atende só até 16h"></textarea></label>
+        <label class="campo">Vale até <span class="leg">(opcional, dd/mm/aaaa: depois dessa data o lembrete some sozinho)</span><input id="g-lemb-ate" inputmode="numeric" maxlength="10" placeholder="sem prazo"></label>
+        <div class="acoes"><button type="button" class="btn" id="g-lemb-salvar">Publicar na tela Hoje</button><button type="button" class="btn ter" id="g-lemb-encerrar" hidden>Encerrar o atual</button></div>
+        <details id="g-lemb-hist" hidden><summary class="muted" style="cursor:pointer;font-size:13px">Lembretes anteriores</summary><ul id="g-lemb-lista" style="margin:6px 0 0;padding-left:18px;font-size:13px;color:var(--tx2)"></ul></details>
+      </div>
       <div class="card compacto">
         <h2 style="font-size:15px">Só a gestão edita</h2>
         <button type="button" class="atalho" id="g-atalho-regras">Regras e observações de cobrança <span class="cont" id="g-regras-n"></span></button>
@@ -1002,6 +1010,7 @@ function call(nome, dados) {
 }
 /*__MOCK_INICIO__*/ // simulação local (dist/index.html); o build tira este bloco da versão publicada
 var mockReg = [], mockDia = [];
+var mockLemb = [{ linha: 2, data: '03/10/2026 18:10', texto: 'Semana que vem a Dra. Luciana não atende na quinta.', validoAte: '03/10/2026', quem: 'simulacao@local' }, { linha: 3, data: hojeStr() + ' 08:00', texto: 'Hoje a Dra. Luciana atende só até 16h: remarcar quem está de 16h30 em diante.', validoAte: '', quem: 'simulacao@local' }];
 var mockAgenda = [{ ID: 'F-1', Paciente: 'Beatriz Almeida Rocha', Profissional: 'Juliana Ribeiro', 'Dia da semana': 'Segunda', Hora: '08:00', 'Frequência': 'Semanal', 'Começa em': '01/09/2026', 'Termina em': '', Ativo: 'Sim', 'Observação': '' },
   { ID: 'F-2', Paciente: 'Carlos Henrique Dias', Profissional: 'Juliana Ribeiro', 'Dia da semana': 'Segunda', Hora: '09:00', 'Frequência': 'Quinzenal', 'Começa em': '07/09/2026', 'Termina em': '', Ativo: 'Sim', 'Observação': '' },
   { ID: 'F-3', Paciente: 'Pedro Augusto Neves', Profissional: 'Juliana Ribeiro', 'Dia da semana': 'Segunda', Hora: '10:00', 'Frequência': 'Semanal', 'Começa em': '', 'Termina em': '', Ativo: 'Sim', 'Observação': '' },
@@ -1028,6 +1037,7 @@ var mockPacientes = [{ linha: 2, nome: 'Beatriz Almeida Rocha', nasc: '03/05/199
 function mock(nome, d) {
   return new Promise(function (res) { setTimeout(function () {
     if (nome === 'bootstrap') return res({ usuario: { email: 'simulacao@local', perfil: 'gestao' }, planilha: '(simulação, sem planilha)', hora: '',
+      lembrete: mockLemb[mockLemb.length - 1], lembretes: mockLemb.slice(-5).reverse(),
       listas: { oque: ["Atendido", "Desmarcou com antecedência (≥ 24h)", "Faltou avisando em cima da hora (< 24h)", "Faltou sem aviso", "Cancelado pela clínica"], pago: ["Sim", "Não", "Convênio (fatura)", "Mensalista (paga no mês seguinte)", "Plano já pago", "Não se aplica (pro bono / permuta)"], formas: ["Pix", "Dinheiro", "Cartão de débito", "Cartão de crédito", "Link de pagamento"], modalidades: ["Consulta individual", "Consulta individual – cartão de parceria", "Plano de 4 consultas", "Plano de 6 consultas", "Plano de 12 consultas", "Mensalidade fixa", "Mensal (valor especial)", "AAPI JF (mensal)", "Convênio", "Por sessão", "Pro bono", "Permuta"],
         modalidadesEsp: [], regras: ["Tabela", "Paga o que consegue", "Valor fixo combinado", "Mensalidade fixa (independe do nº de sessões)", "Pro bono", "Permuta", "Convênio"],
         convenios: ["Particular", "Cedplan", "Sabin Sinai", "Unafisco", "AAPI JF", "Plan Minas", "PLASC", "AMIL", "ASSEFAZ", "FUSEX", "IPSM", "Sulamérica", "18 de Julho", "Aeronáutica"] },
@@ -1038,6 +1048,7 @@ function mock(nome, d) {
       pacotes: { 'Ana Luísa Fontes Braga': { id: 'P-1', n: 4, usadas: 2, compra: '03/11/2026', validade: '29/12/2026', status: 'ativo' }, 'Luana Castro Figueiredo': { id: 'P-2', n: 4, usadas: 4, compra: '13/10/2026', validade: '08/12/2026', status: 'encerrado' } },
       mensalistas: { 'Sofia Ramos Teixeira': { modalidade: 'Mensalidade fixa', valor: 200, pagador: 'Associação Boa Esperança', mes: 'NOVEMBRO', pago: '', dataPago: '' }, 'Theo Barreto Lima': { modalidade: 'Mensal (valor especial)', valor: 150, pagador: 'Daniela Barreto Lima', mes: 'NOVEMBRO', pago: 'Sim', dataPago: '06/11/2026' } },
       pacientes: mockPacientes });
+    if (nome === 'salvarLembrete') { var nl = { linha: mockLemb.length + 2, data: hojeStr() + ' ' + agoraHora(), texto: d.encerrar ? '' : d.texto, validoAte: d.encerrar ? '' : (d.validoAte || ''), quem: 'simulacao@local' }; mockLemb.push(nl); return res({ ok: true, linha: nl.linha, lembrete: nl.texto ? nl : null, lembretes: mockLemb.slice(-5).reverse() }); }
     if (nome === 'registrarAtendimento') { mockReg.push({ paciente: d.paciente, profissional: d.profissional, oque: d.oque, hora: d.hora, data: d.data, procedimento: d.procedimento, id: 'A-sim-' + (mockReg.length + 1) }); return res({ ok: true, id: 'A-sim-' + mockReg.length, linha: 41 + mockReg.length, aba: MESES_PT[new Date().getMonth()], pacote: d.pacoteId && !d.sessaoExtra ? { usadas: 3, n: 4 } : null }); }
     if (nome === 'listaDoDia') {
       var itens = mockAgenda.map(function (a) { return { hora: a['Hora'], paciente: a['Paciente'], profissional: a['Profissional'], origem: a['Frequência'], agendaId: a['ID'], obs: '' }; }).concat(mockDia.filter(function (x) { return x.data === d.data && !/^Não vem|^Confirmado|^Removido/.test(x.origem); }).map(function (x) { return { hora: x.hora, paciente: x.paciente, profissional: x.profissional, origem: x.origem, listaId: x.id }; }));
@@ -1238,10 +1249,17 @@ INICIAR.hoje = function () {
   if (!$("#d-data").value) $("#d-data").value = dataParaISO(new Date());
   quandoAT(function () {
     if (!$("#d-add-prof").options.length) { preencherSelect($("#d-add-prof"), BOOT.profissionais); preencherSelect($("#r-prof"), BOOT.profissionais); }
-    if (BOOT.lembrete) { $("#d-lembrete").hidden = false; $("#d-lembrete-txt").textContent = BOOT.lembrete; }
+    mostrarLembrete();
     carregarDia();
   });
 };
+// card pêssego da lateral: o lembrete ativo que a gestão escreveu (aba Lembretes)
+function mostrarLembrete() {
+  var l = BOOT && BOOT.lembrete, tem = !!(l && l.texto);
+  $("#d-lembrete").hidden = !tem; if (!tem) return;
+  $("#d-lembrete-txt").textContent = l.texto;
+  $("#d-lembrete-meta").textContent = 'Gestão · ' + String(l.data || '').slice(0, 5) + (l.validoAte ? ' · vale até ' + l.validoAte : '');
+}
 function carregarDia() {
   var data = diaEscolhido(); if (!dataObj(data)) return;
   $("#d-carregando").hidden = false; fecharPainel();
@@ -2020,6 +2038,7 @@ INICIAR.gestao = function () {
   if (!ehGestao()) { $("#g-carregando").hidden = true; $("#g-bloqueio").hidden = false; return; }
   if (!$("#g-mes").options.length) { MESES_PT.forEach(function (m) { var o = document.createElement('option'); o.value = m; o.textContent = m; $("#g-mes").appendChild(o); }); $("#g-mes").value = MESES_PT[new Date().getMonth()]; }
   $("#g-nav").hidden = false; $("#g-atualizar").hidden = false; $("#g-planilha").textContent = BOOT.planilha || 'Controle da Recepção 2026';
+  renderLembrete();
   carregarGestao();
 };
 function carregarGestao() {
@@ -2082,6 +2101,33 @@ $("#g-atualizar").addEventListener('click', carregarGestao);
 $("#g-mes").addEventListener('change', carregarGestao);
 $("#g-atalho-regras").addEventListener('click', function () { go('pacientes', { editar: '', voltar: 'gestao' }); setModo('editar'); });
 $("#g-export").addEventListener('click', function () { var b = this; b.disabled = true; $("#g-export-hint").textContent = 'Gerando…'; call('exportarMes', { mes: GES.mes }).then(function (r) { if (!r.ok) { $("#g-export-hint").textContent = ''; return toast((r.erros || ['Não exportou']).join(' ')); } $("#g-export-hint").innerHTML = '<a href="' + r.xlsx + '" target="_blank" rel="noopener">Baixar ' + esc(GES.mes) + '.xlsx</a> · <a href="' + r.url + '" target="_blank" rel="noopener">abrir no Drive</a> (' + r.linhas + ' linhas)' + (r.pasta ? ' · salvo como <b>' + esc(r.nome) + '</b> em ' + esc(r.pasta) + (r.criadas && r.criadas.length ? ' (pasta criada: ' + esc(r.criadas.join('/')) + ')' : '') : '') + (r.aviso ? '<br><span style="color:var(--vm-tx)">' + esc(r.aviso) + '</span>' : ''); if (r.aviso) toast(r.aviso); }).catch(function (e) { toast('Erro: ' + e.message); }).finally(function () { b.disabled = false; }); });
+/* lembrete pra recepção: aba Lembretes, só acrescenta linha; o ativo é o último; os anteriores ficam como histórico */
+function renderLembrete() {
+  var l = BOOT.lembrete, hist = BOOT.lembretes || [], tem = !!(l && l.texto);
+  $("#g-lemb-atual").innerHTML = tem
+    ? '<div class="faixa nota" style="display:block"><strong>No ar:</strong> ' + esc(l.texto) + '<div class="muted">' + esc(String(l.data || '').slice(0, 16)) + (l.validoAte ? ' · vale até ' + esc(l.validoAte) : ' · sem prazo') + '</div></div>'
+    : 'Nenhum lembrete no ar. O que você escrever aqui aparece no card "Lembrete da gestão" da tela Hoje. Um lembrete novo substitui o anterior; os antigos ficam guardados na aba Lembretes.';
+  $("#g-lemb-encerrar").hidden = !tem;
+  var ant = hist.filter(function (h) { return h.texto && !(tem && h.linha === l.linha); });
+  $("#g-lemb-hist").hidden = !ant.length;
+  $("#g-lemb-lista").innerHTML = ant.map(function (h) { return '<li>' + esc(String(h.data || '').slice(0, 10)) + ' — ' + esc(h.texto) + (h.validoAte ? ' <span class="muted">(até ' + esc(h.validoAte) + ')</span>' : '') + '</li>'; }).join('');
+}
+function salvarLembrete(encerrar) {
+  var d = { texto: encerrar ? '' : $("#g-lemb-txt").value.trim(), validoAte: encerrar ? '' : $("#g-lemb-ate").value.trim(), encerrar: !!encerrar };
+  if (!encerrar && !d.texto) return toast('Escreva o lembrete');
+  if (d.validoAte && !dataObj(d.validoAte)) return toast('"Vale até" inválido: use dd/mm/aaaa');
+  $("#g-lemb-salvar").disabled = true; $("#g-lemb-encerrar").disabled = true;
+  call('salvarLembrete', d).then(function (r) {
+    if (!r.ok) return toast((r.erros || ['Não gravou']).join(' '));
+    BOOT.lembrete = r.lembrete; if (r.lembretes) BOOT.lembretes = r.lembretes;
+    $("#g-lemb-txt").value = ''; $("#g-lemb-ate").value = '';
+    renderLembrete(); mostrarLembrete();
+    toast(encerrar ? 'Lembrete encerrado' : 'Lembrete publicado: já aparece na tela Hoje');
+  }).catch(function (e) { toast('Erro: ' + e.message); }).finally(function () { $("#g-lemb-salvar").disabled = false; $("#g-lemb-encerrar").disabled = false; });
+}
+$("#g-lemb-salvar").addEventListener('click', function () { salvarLembrete(false); });
+$("#g-lemb-encerrar").addEventListener('click', function () { salvarLembrete(true); });
+$("#g-lemb-ate").addEventListener('input', function () { this.value = mascaraData(this.value); });
 
 /* ===== 90-boot.js ===== */
 /* ================= arranque ================= */

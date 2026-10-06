@@ -5,6 +5,7 @@ INICIAR.gestao = function () {
   if (!ehGestao()) { $("#g-carregando").hidden = true; $("#g-bloqueio").hidden = false; return; }
   if (!$("#g-mes").options.length) { MESES_PT.forEach(function (m) { var o = document.createElement('option'); o.value = m; o.textContent = m; $("#g-mes").appendChild(o); }); $("#g-mes").value = MESES_PT[new Date().getMonth()]; }
   $("#g-nav").hidden = false; $("#g-atualizar").hidden = false; $("#g-planilha").textContent = BOOT.planilha || 'Controle da Recepção 2026';
+  renderLembrete();
   carregarGestao();
 };
 function carregarGestao() {
@@ -67,3 +68,30 @@ $("#g-atualizar").addEventListener('click', carregarGestao);
 $("#g-mes").addEventListener('change', carregarGestao);
 $("#g-atalho-regras").addEventListener('click', function () { go('pacientes', { editar: '', voltar: 'gestao' }); setModo('editar'); });
 $("#g-export").addEventListener('click', function () { var b = this; b.disabled = true; $("#g-export-hint").textContent = 'Gerando…'; call('exportarMes', { mes: GES.mes }).then(function (r) { if (!r.ok) { $("#g-export-hint").textContent = ''; return toast((r.erros || ['Não exportou']).join(' ')); } $("#g-export-hint").innerHTML = '<a href="' + r.xlsx + '" target="_blank" rel="noopener">Baixar ' + esc(GES.mes) + '.xlsx</a> · <a href="' + r.url + '" target="_blank" rel="noopener">abrir no Drive</a> (' + r.linhas + ' linhas)' + (r.pasta ? ' · salvo como <b>' + esc(r.nome) + '</b> em ' + esc(r.pasta) + (r.criadas && r.criadas.length ? ' (pasta criada: ' + esc(r.criadas.join('/')) + ')' : '') : '') + (r.aviso ? '<br><span style="color:var(--vm-tx)">' + esc(r.aviso) + '</span>' : ''); if (r.aviso) toast(r.aviso); }).catch(function (e) { toast('Erro: ' + e.message); }).finally(function () { b.disabled = false; }); });
+/* lembrete pra recepção: aba Lembretes, só acrescenta linha; o ativo é o último; os anteriores ficam como histórico */
+function renderLembrete() {
+  var l = BOOT.lembrete, hist = BOOT.lembretes || [], tem = !!(l && l.texto);
+  $("#g-lemb-atual").innerHTML = tem
+    ? '<div class="faixa nota" style="display:block"><strong>No ar:</strong> ' + esc(l.texto) + '<div class="muted">' + esc(String(l.data || '').slice(0, 16)) + (l.validoAte ? ' · vale até ' + esc(l.validoAte) : ' · sem prazo') + '</div></div>'
+    : 'Nenhum lembrete no ar. O que você escrever aqui aparece no card "Lembrete da gestão" da tela Hoje. Um lembrete novo substitui o anterior; os antigos ficam guardados na aba Lembretes.';
+  $("#g-lemb-encerrar").hidden = !tem;
+  var ant = hist.filter(function (h) { return h.texto && !(tem && h.linha === l.linha); });
+  $("#g-lemb-hist").hidden = !ant.length;
+  $("#g-lemb-lista").innerHTML = ant.map(function (h) { return '<li>' + esc(String(h.data || '').slice(0, 10)) + ' — ' + esc(h.texto) + (h.validoAte ? ' <span class="muted">(até ' + esc(h.validoAte) + ')</span>' : '') + '</li>'; }).join('');
+}
+function salvarLembrete(encerrar) {
+  var d = { texto: encerrar ? '' : $("#g-lemb-txt").value.trim(), validoAte: encerrar ? '' : $("#g-lemb-ate").value.trim(), encerrar: !!encerrar };
+  if (!encerrar && !d.texto) return toast('Escreva o lembrete');
+  if (d.validoAte && !dataObj(d.validoAte)) return toast('"Vale até" inválido: use dd/mm/aaaa');
+  $("#g-lemb-salvar").disabled = true; $("#g-lemb-encerrar").disabled = true;
+  call('salvarLembrete', d).then(function (r) {
+    if (!r.ok) return toast((r.erros || ['Não gravou']).join(' '));
+    BOOT.lembrete = r.lembrete; if (r.lembretes) BOOT.lembretes = r.lembretes;
+    $("#g-lemb-txt").value = ''; $("#g-lemb-ate").value = '';
+    renderLembrete(); mostrarLembrete();
+    toast(encerrar ? 'Lembrete encerrado' : 'Lembrete publicado: já aparece na tela Hoje');
+  }).catch(function (e) { toast('Erro: ' + e.message); }).finally(function () { $("#g-lemb-salvar").disabled = false; $("#g-lemb-encerrar").disabled = false; });
+}
+$("#g-lemb-salvar").addEventListener('click', function () { salvarLembrete(false); });
+$("#g-lemb-encerrar").addEventListener('click', function () { salvarLembrete(true); });
+$("#g-lemb-ate").addEventListener('input', function () { this.value = mascaraData(this.value); });

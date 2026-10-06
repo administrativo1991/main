@@ -23,16 +23,17 @@ Preços só em abas editáveis (Procedimentos, Pacientes, Mensalistas), nunca no
 |---|---|
 | Código-fonte | servidor `app/server/server.js` + `app/server/duplicatas.js`; tela `app/client/` (`styles.css`, `layout.html`, `telas/*.html`, `js/*.js`, `assets/*.svg`; ver `docs/NOVA-INTERFACE.md`); carregador `app/loader/Code.gs` |
 | Build | `node build.js` → `dist/index.html` (simulação), `dist/index.publicado.html`, `dist/pedacos.json` + `dist/pedacos/index-N.json` (pedaços ≤ 12.000 caracteres) e `dist/Code.gs` (teste) + `dist/Code.real.gs` (real) |
-| Código publicado | planilha "Recepção Nascente — código do app (não mexer)" (id `1qM7tX5neTU1kAa4JBpk1xiZQmcJOk325hx873XIRPYo`), aba `arquivos` = versão de teste lida pela CÓPIA TESTE; aba `arquivos_real` = versão em uso na planilha real (criada em 06/10 como cópia de `arquivos`). Nas duas: linhas 2–23 (duplicatas 2, server 3–7, index 8–23). Publicar sempre em `arquivos` primeiro; promover copiando A1:C23 para `arquivos_real` |
+| Código publicado | planilha "Recepção Nascente — código do app (não mexer)" (id `1qM7tX5neTU1kAa4JBpk1xiZQmcJOk325hx873XIRPYo`), aba `arquivos` = versão de teste lida pela CÓPIA TESTE; aba `arquivos_real` = versão em uso na planilha real (criada em 06/10 como cópia de `arquivos`). Em `arquivos` (desde 06/10 à noite): linhas 2–24 (duplicatas 2, server 3–8, index 9–24); `arquivos_real` ainda tem a versão da tarde (linhas 2–23, sem o Lembrete). Publicar sempre em `arquivos` primeiro; promover copiando A1:C24 para `arquivos_real` (limpar o que sobrar abaixo) |
 | Como publicar | `docs/PLANO-IMPLEMENTACAO.md`, seção 10 |
 | Manuais | `docs/README-RECEPCAO.md`, `docs/README-GESTAO.md`, `docs/COMO-INSTALAR.md` |
 | Testes de tela | Playwright, arquivos `*-test.js` no scratchpad (não versionados); `node tests/duplicatas.test.js` |
 
-Última publicação: 06/10/2026 — index.html novo (16 pedaços, linhas 8–23 da aba arquivos), LEN e soma de controle conferidos pedaço a pedaço contra dist/pedacos/; duplicatas.js e server.js (linhas 2–7) não mudaram. Aponta pra CÓPIA TESTE.
+Última publicação: 06/10/2026 (noite) — Lembrete da gestão: server.js (6 pedaços, linhas 3–8) e index.html (16 pedaços, linhas 9–24) em `arquivos`, LEN e soma de controle conferidos nos 23 pedaços. Só na versão de teste (CÓPIA TESTE); `arquivos_real` segue com a versão da tarde.
 Git: branch `claude/lucid-einstein-gd6x5l`, tudo commitado e enviado.
 
 ## Feito e publicado
 
+- **Lembrete da gestão (06/10, noite)**: aba `Lembretes` na planilha (só acrescenta linha); a gestão escreve e encerra na tela Gestão; a tela Hoje mostra o último lembrete com texto e dentro do prazo. Publicado só na versão de teste (`arquivos`).
 - **Nova interface (06/10, mockups da Roberta)**: telas Hoje, Registrar atendimento, Pacientes (novo + editar), Mensalistas e Gestão com o visual aprovado; mesmo HTML no computador e no celular (barra inferior ≤ 480 px); impressão sem CPF. Servidor e regras intactos. Detalhes, decisões e limites em `docs/NOVA-INTERFACE.md`.
 
 - Novo paciente (com checagem de duplicata), Registrar atendimento, Lista do dia (com modalidade

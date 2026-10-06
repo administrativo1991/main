@@ -149,11 +149,12 @@ var CONFIG = {
   TZ: 'America/Sao_Paulo',
   PASTA_FINANCEIRO: '1TVCErWCv4bn0ed66T5eZSvcATPIoxboc', // Drive: Clínica Nascente/Controle Financeiro (as exportações vão em <ano>/<MM Mês_AA>/2_Atendimentos)
   GESTAO: ['administrativo@clinicanascente.com.br'],
-  ABA: { PACIENTES: 'Pacientes', LISTAS: 'Listas', PROFISSIONAIS: 'Profissionais', PROCEDIMENTOS: 'Procedimentos', MENSALISTAS: 'Mensalistas', PACOTES: 'Planos', AGENDA: 'Agenda recorrente', DIA: 'Lista do dia', ALTERACOES: 'Alterações de cadastro' },
+  ABA: { PACIENTES: 'Pacientes', LISTAS: 'Listas', PROFISSIONAIS: 'Profissionais', PROCEDIMENTOS: 'Procedimentos', MENSALISTAS: 'Mensalistas', PACOTES: 'Planos', AGENDA: 'Agenda recorrente', DIA: 'Lista do dia', ALTERACOES: 'Alterações de cadastro', LEMBRETES: 'Lembretes' },
   DIAS: ['Domingo','Segunda','Terça','Quarta','Quinta','Sexta','Sábado'],
   HA: ['ID', 'Paciente', 'Profissional', 'Dia da semana', 'Hora', 'Frequência', 'Começa em', 'Termina em', 'Ativo', 'Observação', 'Registrado por (app)'],
   HD: ['ID', 'Data', 'Hora', 'Paciente', 'Profissional', 'Origem', 'Observação', 'Registrado por (app)'],
   HC: ['Data/hora', 'Paciente', 'Campo', 'De', 'Para', 'Quem informou', 'Registrado por (app)'],
+  HL: ['Data/hora', 'Lembrete', 'Válido até', 'Quem escreveu', 'Registrado por (app)'],
   MESES: ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'],
   VIRADA: '2026-11-01', // a partir daqui a mensalidade é antecipada (vence dia 10, tolerância 15)
   // cabeçalhos da aba do mês (os existentes são lidos como estão; U e V são criados no fim se faltarem)
@@ -284,6 +285,8 @@ API.bootstrap = function () {
     usuario: usuario_(),
     planilha: planilha_().getName(),
     hora: agora_(),
+    lembrete: lembreteAtivo_(),
+    lembretes: lembretes_().slice(-5).reverse(),
     listas: {
       modalidades: colunaLista_(CONFIG.LISTAS.MODALIDADE),
       modalidadesEsp: modalidadesComEsp_(),
@@ -570,6 +573,36 @@ API.lancarPacote = function (d) {
     if (hm[HM.VALOR]) sm.getRange(lm, hm[HM.VALOR]).setNumberFormat('#,##0.00');
     SpreadsheetApp.flush();
     return { ok: true, id: id, validade: fmtData_(validade), linhaRecebimento: lm, aba: sm.getName() };
+  } finally { lock.releaseLock(); }
+};
+
+/* ---------- Lembrete pra recepção (aba Lembretes: só acrescenta linha; vale o último; os antigos ficam como histórico) ---------- */
+function lembretes_() {
+  var s = planilha_().getSheetByName(CONFIG.ABA.LEMBRETES);
+  return linhasComo_(s).filter(function (r) { return String(r['Data/hora'] || '').trim(); }).map(function (r) {
+    return { linha: r._linha, data: String(r['Data/hora'] || ''), texto: String(r['Lembrete'] || '').trim(), validoAte: fmtData_(r['Válido até']), quem: String(r['Quem escreveu'] || '') };
+  });
+}
+// o lembrete ativo é a última linha, se tiver texto e não tiver vencido ("Válido até" em branco = sem prazo)
+function lembreteAtivo_() {
+  var l = lembretes_(); if (!l.length) return null;
+  var u = l[l.length - 1]; if (!u.texto) return null;
+  if (u.validoAte) { var d = parseData_(u.validoAte); if (d && Utilities.formatDate(d, CONFIG.TZ, 'yyyy-MM-dd') < Utilities.formatDate(new Date(), CONFIG.TZ, 'yyyy-MM-dd')) return null; }
+  return u;
+}
+// Gestão escreve (ou encerra) o lembrete: sempre uma linha nova; encerrar = linha com texto em branco
+API.salvarLembrete = function (d) {
+  var u = usuario_();
+  if (u.perfil !== 'gestao') return { ok: false, erros: ['Só a gestão escreve o lembrete.'] };
+  var texto = String(d.texto || '').trim(), ate = String(d.validoAte || '').trim(), encerrar = !!d.encerrar;
+  if (!texto && !encerrar) return { ok: false, erros: ['Escreva o lembrete.'] };
+  if (ate && !parseData_(ate)) return { ok: false, erros: ['"Válido até" inválido: use dd/mm/aaaa.'] };
+  var lock = LockService.getScriptLock(); lock.waitLock(20000);
+  try {
+    var s = abaComCabecalho_(CONFIG.ABA.LEMBRETES, CONFIG.HL), h = cabecalhos_(s), linha = proximaLinha_(s, h['Data/hora']);
+    gravarCelulas_(s, linha, h, { 'Data/hora': agora_(), 'Lembrete': encerrar ? '' : texto, 'Válido até': encerrar ? '' : ate, 'Quem escreveu': u.email || 'gestão', 'Registrado por (app)': (u.email || 'app') + ' · ' + agora_() });
+    SpreadsheetApp.flush();
+    return { ok: true, linha: linha, lembrete: lembreteAtivo_(), lembretes: lembretes_().slice(-5).reverse() };
   } finally { lock.releaseLock(); }
 };
 

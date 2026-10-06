@@ -33,6 +33,8 @@ Escolha o mês no topo. Cartões, todos imprimíveis:
 - **Pagou outra pessoa**: linhas com "Quem pagou" preenchido, pra conferir o nome na NF.
 - **Alterações de cadastro no mês**: tudo o que a recepção mudou em cadastros, com quem informou.
 
+**Lembrete pra recepção** (cartão à direita): escreva o aviso do dia ou da semana ("a Dra. Luciana atende só até 16h", "feriado dia 12, não agendar") e, se quiser, até quando vale. Ele aparece no card pêssego "Lembrete da gestão" da tela Hoje, pra recepção. Um lembrete novo substitui o anterior; **Encerrar o atual** tira do ar sem escrever outro. Nada é apagado: cada lembrete vira uma linha na aba `Lembretes`, e os anteriores ficam em "Lembretes anteriores".
+
 Botões:
 - **Criar aba de <mês seguinte>**: duplica a estrutura da aba corrente (cabeçalho, fórmulas automáticas, validações) sem os dados. Pede dois cliques. Faça na última semana do mês.
 - **Criar colunas de <mês seguinte> em Mensalistas**: acrescenta o par "MÊS — pago?" e "Data" no fim. Dois cliques.

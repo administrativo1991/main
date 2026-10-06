@@ -44,6 +44,7 @@ function call(nome, dados) {
 }
 /*__MOCK_INICIO__*/ // simulação local (dist/index.html); o build tira este bloco da versão publicada
 var mockReg = [], mockDia = [];
+var mockLemb = [{ linha: 2, data: '03/10/2026 18:10', texto: 'Semana que vem a Dra. Luciana não atende na quinta.', validoAte: '03/10/2026', quem: 'simulacao@local' }, { linha: 3, data: hojeStr() + ' 08:00', texto: 'Hoje a Dra. Luciana atende só até 16h: remarcar quem está de 16h30 em diante.', validoAte: '', quem: 'simulacao@local' }];
 var mockAgenda = [{ ID: 'F-1', Paciente: 'Beatriz Almeida Rocha', Profissional: 'Juliana Ribeiro', 'Dia da semana': 'Segunda', Hora: '08:00', 'Frequência': 'Semanal', 'Começa em': '01/09/2026', 'Termina em': '', Ativo: 'Sim', 'Observação': '' },
   { ID: 'F-2', Paciente: 'Carlos Henrique Dias', Profissional: 'Juliana Ribeiro', 'Dia da semana': 'Segunda', Hora: '09:00', 'Frequência': 'Quinzenal', 'Começa em': '07/09/2026', 'Termina em': '', Ativo: 'Sim', 'Observação': '' },
   { ID: 'F-3', Paciente: 'Pedro Augusto Neves', Profissional: 'Juliana Ribeiro', 'Dia da semana': 'Segunda', Hora: '10:00', 'Frequência': 'Semanal', 'Começa em': '', 'Termina em': '', Ativo: 'Sim', 'Observação': '' },
@@ -70,6 +71,7 @@ var mockPacientes = [{ linha: 2, nome: 'Beatriz Almeida Rocha', nasc: '03/05/199
 function mock(nome, d) {
   return new Promise(function (res) { setTimeout(function () {
     if (nome === 'bootstrap') return res({ usuario: { email: 'simulacao@local', perfil: 'gestao' }, planilha: '(simulação, sem planilha)', hora: '',
+      lembrete: mockLemb[mockLemb.length - 1], lembretes: mockLemb.slice(-5).reverse(),
       listas: { oque: ["Atendido", "Desmarcou com antecedência (≥ 24h)", "Faltou avisando em cima da hora (< 24h)", "Faltou sem aviso", "Cancelado pela clínica"], pago: ["Sim", "Não", "Convênio (fatura)", "Mensalista (paga no mês seguinte)", "Plano já pago", "Não se aplica (pro bono / permuta)"], formas: ["Pix", "Dinheiro", "Cartão de débito", "Cartão de crédito", "Link de pagamento"], modalidades: ["Consulta individual", "Consulta individual – cartão de parceria", "Plano de 4 consultas", "Plano de 6 consultas", "Plano de 12 consultas", "Mensalidade fixa", "Mensal (valor especial)", "AAPI JF (mensal)", "Convênio", "Por sessão", "Pro bono", "Permuta"],
         modalidadesEsp: [], regras: ["Tabela", "Paga o que consegue", "Valor fixo combinado", "Mensalidade fixa (independe do nº de sessões)", "Pro bono", "Permuta", "Convênio"],
         convenios: ["Particular", "Cedplan", "Sabin Sinai", "Unafisco", "AAPI JF", "Plan Minas", "PLASC", "AMIL", "ASSEFAZ", "FUSEX", "IPSM", "Sulamérica", "18 de Julho", "Aeronáutica"] },
@@ -80,6 +82,7 @@ function mock(nome, d) {
       pacotes: { 'Ana Luísa Fontes Braga': { id: 'P-1', n: 4, usadas: 2, compra: '03/11/2026', validade: '29/12/2026', status: 'ativo' }, 'Luana Castro Figueiredo': { id: 'P-2', n: 4, usadas: 4, compra: '13/10/2026', validade: '08/12/2026', status: 'encerrado' } },
       mensalistas: { 'Sofia Ramos Teixeira': { modalidade: 'Mensalidade fixa', valor: 200, pagador: 'Associação Boa Esperança', mes: 'NOVEMBRO', pago: '', dataPago: '' }, 'Theo Barreto Lima': { modalidade: 'Mensal (valor especial)', valor: 150, pagador: 'Daniela Barreto Lima', mes: 'NOVEMBRO', pago: 'Sim', dataPago: '06/11/2026' } },
       pacientes: mockPacientes });
+    if (nome === 'salvarLembrete') { var nl = { linha: mockLemb.length + 2, data: hojeStr() + ' ' + agoraHora(), texto: d.encerrar ? '' : d.texto, validoAte: d.encerrar ? '' : (d.validoAte || ''), quem: 'simulacao@local' }; mockLemb.push(nl); return res({ ok: true, linha: nl.linha, lembrete: nl.texto ? nl : null, lembretes: mockLemb.slice(-5).reverse() }); }
     if (nome === 'registrarAtendimento') { mockReg.push({ paciente: d.paciente, profissional: d.profissional, oque: d.oque, hora: d.hora, data: d.data, procedimento: d.procedimento, id: 'A-sim-' + (mockReg.length + 1) }); return res({ ok: true, id: 'A-sim-' + mockReg.length, linha: 41 + mockReg.length, aba: MESES_PT[new Date().getMonth()], pacote: d.pacoteId && !d.sessaoExtra ? { usadas: 3, n: 4 } : null }); }
     if (nome === 'listaDoDia') {
       var itens = mockAgenda.map(function (a) { return { hora: a['Hora'], paciente: a['Paciente'], profissional: a['Profissional'], origem: a['Frequência'], agendaId: a['ID'], obs: '' }; }).concat(mockDia.filter(function (x) { return x.data === d.data && !/^Não vem|^Confirmado|^Removido/.test(x.origem); }).map(function (x) { return { hora: x.hora, paciente: x.paciente, profissional: x.profissional, origem: x.origem, listaId: x.id }; }));

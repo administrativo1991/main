@@ -19,10 +19,17 @@ INICIAR.hoje = function () {
   if (!$("#d-data").value) $("#d-data").value = dataParaISO(new Date());
   quandoAT(function () {
     if (!$("#d-add-prof").options.length) { preencherSelect($("#d-add-prof"), BOOT.profissionais); preencherSelect($("#r-prof"), BOOT.profissionais); }
-    if (BOOT.lembrete) { $("#d-lembrete").hidden = false; $("#d-lembrete-txt").textContent = BOOT.lembrete; }
+    mostrarLembrete();
     carregarDia();
   });
 };
+// card pêssego da lateral: o lembrete ativo que a gestão escreveu (aba Lembretes)
+function mostrarLembrete() {
+  var l = BOOT && BOOT.lembrete, tem = !!(l && l.texto);
+  $("#d-lembrete").hidden = !tem; if (!tem) return;
+  $("#d-lembrete-txt").textContent = l.texto;
+  $("#d-lembrete-meta").textContent = 'Gestão · ' + String(l.data || '').slice(0, 5) + (l.validoAte ? ' · vale até ' + l.validoAte : '');
+}
 function carregarDia() {
   var data = diaEscolhido(); if (!dataObj(data)) return;
   $("#d-carregando").hidden = false; fecharPainel();
