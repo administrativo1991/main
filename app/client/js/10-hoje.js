@@ -1,9 +1,10 @@
 /* ================= HOJE (lista do dia) ================= */
-var DIA = null, diaFiltro = 'todos', diaProf = '', AGENDA = [], recEdit = null, painelAberto = null, resumoMes = {};
+var DIA = null, diaFiltro = 'todos', diaProf = '', diaBusca = '', AGENDA = [], recEdit = null, resumoMes = {}, selecionado = null, formAberto = null;
 function diaEscolhido() { return isoParaBR($("#d-data").value); }
 function chaveItem(it) { return it.paciente + '|' + it.profissional; }
 function chegadas() { return store('rn-chegou:' + diaEscolhido()) || {}; }
 function marcarChegou(it, on) { var c = chegadas(); if (on) c[chaveItem(it)] = agoraHora(); else delete c[chaveItem(it)]; store('rn-chegou:' + diaEscolhido(), c); }
+// situações possíveis de uma linha (não existe "Em atendimento"): o registro é feito inteiro na chegada
 function statusItem(it) {
   if (it.registro) return /^Atendido/.test(it.registro.oque) ? 'atendido' : 'falta';
   if (it.naoVem) return 'naovem';
@@ -14,6 +15,10 @@ function statusItem(it) {
 function profCurto(n) { var m = String(n || '').match(/^(Dra?\.)\s+(\S+)/); return m ? m[1] + ' ' + m[2] : String(n || '').split(' ')[0]; }
 function tituloDia(dt) { return DIAS_PT[dt.getDay()] + ', ' + dt.getDate() + ' de ' + MESES_PT[dt.getMonth()].toLowerCase(); }
 function tituloDiaCurto(dt) { return DIAS_PT[dt.getDay()].slice(0, 3) + ', ' + dt.getDate() + ' ' + MESES_PT[dt.getMonth()].slice(0, 3).toLowerCase(); }
+function semAcento(s) { return String(s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, ''); }
+// o que vai na coluna "Profissional · modalidade" e no painel
+function modalidadeCurta(p) { if (!p) return 'não está em Pacientes'; if (ehConvenio(p)) return 'Convênio ' + p.convenio; if (p.modalidade) return modCurta(p.modalidade); return 'sem modalidade'; }
+function idadeCurta(p) { if (!p || !p.nasc) return ''; var i = idade(p.nasc); if (!i) return ''; var n = parseInt(i, 10); return n >= 18 ? 'adulto' : i; }
 
 INICIAR.hoje = function () {
   if (!$("#d-data").value) $("#d-data").value = dataParaISO(new Date());
@@ -23,7 +28,7 @@ INICIAR.hoje = function () {
     carregarDia();
   });
 };
-// card pêssego da lateral: o lembrete ativo que a gestão escreveu (aba Lembretes)
+// faixa pêssego: o lembrete ativo que a gestão escreveu (aba Lembretes)
 function mostrarLembrete() {
   var l = BOOT && BOOT.lembrete, tem = !!(l && l.texto);
   $("#d-lembrete").hidden = !tem; if (!tem) return;
@@ -34,61 +39,92 @@ function carregarDia() {
   var data = diaEscolhido(); if (!dataObj(data)) return;
   $("#d-carregando").hidden = false; fecharPainel();
   var dt = dataObj(data), hoje = data === hojeStr();
-  $("#d-titulo").textContent = tituloDia(dt); $("#d-pill-hoje").hidden = !hoje; $("#d-ir-hoje").hidden = hoje;
+  $("#d-titulo").textContent = tituloDia(dt);
+  $("#d-titulo-print").textContent = 'Lista do dia · ' + tituloDia(dt) + ' · ' + data;
+  $("#d-ir-hoje").disabled = hoje;
   $("#titulo-cel").textContent = tituloDiaCurto(dt);
   call('listaDoDia', { data: data }).then(function (r) {
     if (r.data !== diaEscolhido()) return; // mudou de dia enquanto carregava
     DIA = r; $("#d-carregando").hidden = true;
     $("#d-aviso-aba").hidden = r.abaMesExiste; if (!r.abaMesExiste) $("#d-aviso-aba").textContent = 'A aba "' + r.abaMes + '" ainda não existe na planilha. Peça à gestão para criar em Gestão → Virada do mês.';
+    preencherProfs();
     renderDia(); lerFimDia();
     if (ehGestao()) resumoGestaoDia();
   }).catch(function (e) { $("#d-carregando").textContent = 'Não consegui carregar a lista: ' + e.message; });
 }
+function preencherProfs() {
+  var sel = $("#d-prof"), profs = []; DIA.itens.forEach(function (i) { if (profs.indexOf(i.profissional) < 0) profs.push(i.profissional); }); profs.sort();
+  sel.innerHTML = '<option value="">Todas as profissionais</option>';
+  profs.forEach(function (p) { var o = document.createElement('option'); o.value = p; o.textContent = profCurto(p); sel.appendChild(o); });
+  if (profs.indexOf(diaProf) < 0) diaProf = ''; sel.value = diaProf;
+}
 function itensFiltrados() {
   var itens = DIA.itens.slice().sort(function (a, b) { return (a.hora || '99').localeCompare(b.hora || '99') || a.paciente.localeCompare(b.paciente); });
   if (diaProf) itens = itens.filter(function (i) { return i.profissional === diaProf; });
+  if (diaBusca) { var q = semAcento(diaBusca); itens = itens.filter(function (i) { var p = pacInfo(i.paciente); return semAcento(i.paciente).indexOf(q) >= 0 || (p && semAcento(p.pagador).indexOf(q) >= 0); }); }
   return itens;
 }
+function contagem(itens) {
+  var cont = { todos: itens.length, aguardando: 0, chegou: 0, registrados: 0, naovem: 0, aconfirmar: 0, atendido: 0, falta: 0 };
+  itens.forEach(function (it) { var s = statusItem(it); cont[s]++; if (s === 'atendido' || s === 'falta') cont.registrados++; });
+  return cont;
+}
+function passaFiltro(it) {
+  var s = statusItem(it);
+  if (diaFiltro === 'todos') return true;
+  if (diaFiltro === 'registrados') return s === 'atendido' || s === 'falta';
+  if (diaFiltro === 'aguardando') return s === 'aguardando' || s === 'aconfirmar';
+  return s === diaFiltro;
+}
 function renderDia() {
-  var r = DIA, todos = itensFiltrados(), cont = { todos: todos.length, aguardando: 0, chegou: 0, registrados: 0, aconfirmar: 0, naovem: 0 };
-  todos.forEach(function (it) { var s = statusItem(it); if (s === 'atendido' || s === 'falta') cont.registrados++; else cont[s]++; });
+  var r = DIA, todos = itensFiltrados(), cont = contagem(todos);
+  // tiles-filtro com contagem (clicáveis); "aguardando" soma os "a confirmar"
   var f = $("#d-filtros"); f.innerHTML = '';
-  [['todos', 'Todos'], ['aguardando', 'Aguardando'], ['chegou', 'Chegou'], ['registrados', 'Registrados'], ['aconfirmar', 'A confirmar'], ['naovem', 'Não vem']].forEach(function (x) {
-    var b = el('<button type="button" class="filtro" aria-pressed="' + (diaFiltro === x[0]) + '">' + x[1] + ' <span>· ' + cont[x[0]] + '</span></button>');
-    b.addEventListener('click', function () { diaFiltro = x[0]; renderDia(); }); f.appendChild(b);
+  [['todos', 'na lista', cont.todos, 'roxo'], ['aguardando', 'aguardando', cont.aguardando + cont.aconfirmar, 'cinza'], ['chegou', 'chegou', cont.chegou, 'roxo'], ['registrados', 'registrados', cont.registrados, 'verde'], ['naovem', 'não vem', cont.naovem, 'vermelho']].forEach(function (x) {
+    var b = el('<button type="button" class="tile ' + x[3] + '" aria-pressed="' + (diaFiltro === x[0]) + '"><b>' + x[2] + '</b><span>' + x[1] + '</span></button>');
+    b.addEventListener('click', function () { diaFiltro = diaFiltro === x[0] ? 'todos' : x[0]; renderDia(); }); f.appendChild(b);
   });
-  f.appendChild(el('<span class="esp"></span>'));
-  var profs = []; r.itens.forEach(function (i) { if (profs.indexOf(i.profissional) < 0) profs.push(i.profissional); }); profs.sort();
-  var lab = el('<label>Profissional <select id="d-prof"><option value="">Todos</option></select></label>');
-  profs.forEach(function (p) { var o = document.createElement('option'); o.value = p; o.textContent = profCurto(p); lab.querySelector('select').appendChild(o); });
-  lab.querySelector('select').value = diaProf; lab.querySelector('select').addEventListener('change', function () { diaProf = this.value; renderDia(); }); f.appendChild(lab);
-
-  var root = $("#d-list"); root.innerHTML = '';
-  var lista = todos.filter(function (it) { var s = statusItem(it); return diaFiltro === 'todos' || (diaFiltro === 'registrados' ? (s === 'atendido' || s === 'falta') : s === diaFiltro); });
-  if (!r.itens.length) { root.innerHTML = '<div class="vazio">Ninguém na lista deste dia. Use <b>Encaixe no dia</b> ou cadastre os horários fixos em <b>Agenda recorrente</b>.</div>'; }
-  else if (!lista.length) root.innerHTML = '<div class="vazio">Ninguém neste filtro.</div>';
-  lista.forEach(function (it) { root.appendChild(linhaDia(it)); });
   renderResumo(cont);
+  // tabela
+  var tb = $("#d-list"); tb.innerHTML = '';
+  var lista = todos.filter(passaFiltro);
+  if (!r.itens.length) tb.innerHTML = '<tr class="vazia"><td colspan="6">Ninguém na lista deste dia. Use <b>Encaixe no dia</b> ou cadastre os horários fixos em <b>Agenda recorrente</b>.</td></tr>';
+  else if (!lista.length) tb.innerHTML = '<tr class="vazia"><td colspan="6">Ninguém ' + (diaBusca ? 'com “' + esc(diaBusca) + '”' : 'neste filtro') + '.</td></tr>';
+  lista.forEach(function (it) { tb.appendChild(linhaDia(it)); });
+  $("#d-rodape-n").textContent = lista.length === r.itens.length ? r.itens.length + ' na lista' : 'Mostrando ' + lista.length + ' de ' + r.itens.length;
+  renderPend(todos);
+  renderPainel();
+}
+function pillSituacao(it, s) {
+  return { atendido: '<span class="pill verde">' + ic('check', 14, 3) + 'Atendido</span>', falta: '<span class="pill cinza">' + esc((it.registro && it.registro.oque || '').split(' (')[0]) + '</span>', naovem: '<span class="pill vermelha">Não vem</span>', chegou: '<span class="pill lilas">Chegou ' + esc(chegadas()[chaveItem(it)] || '') + '</span>', aguardando: '<span class="pill cinza">Aguardando</span>', aconfirmar: '<span class="pill amarela">A confirmar</span>' }[s];
+}
+// um único botão por linha, decidido pela situação
+function botaoAcao(it, s) {
+  return { atendido: '<button type="button" class="btn link" data-ac="ver">Ver registro</button>', falta: '<button type="button" class="btn link" data-ac="ver">Ver registro</button>', naovem: '<button type="button" class="btn ter mini" data-ac="remarcar">Remarcar</button>', chegou: '<button type="button" class="btn mini" data-ac="registrar">Registrar atendimento</button>', aguardando: '<button type="button" class="btn sec mini" data-ac="chegou">Chegou</button>', aconfirmar: '<button type="button" class="btn ter mini" data-ac="confirmou">Confirmou</button>' }[s];
+}
+function cobrancaHtml(it, p) {
+  var html = tagsDe(p).map(function (t) { return tagHtml(t, true); }).join('');
+  if (it.naoVem) html += '<span class="tag p cinza">' + esc(it.naoVem.replace('Não vem · ', '')) + '</span>';
+  return html || '<span class="muted">—</span>';
 }
 function linhaDia(it) {
-  var s = statusItem(it), p = pacInfo(it.paciente), tags = tagsDe(p);
-  var sub = [profCurto(it.profissional)];
-  if (p) { if (ehConvenio(p)) sub.push('Convênio ' + p.convenio); else if (p.modalidade) sub.push(p.modalidade); }
-  else sub.push('não está em Pacientes');
-  if (it.origem && !/Semanal|Quinzenal/.test(it.origem)) sub.push(it.origem);
-  var pill = { atendido: '<span class="pill verde">' + ic('check', 14, 3) + 'Atendido</span>', falta: '<span class="pill cinza">' + esc((it.registro && it.registro.oque || '').split(' (')[0]) + '</span>', naovem: '<span class="pill vermelha">Não vem</span>', chegou: '<span class="pill lilas">Chegou ' + esc(chegadas()[chaveItem(it)] || '') + '</span>', aguardando: '<span class="pill cinza">Aguardando</span>', aconfirmar: '<span class="pill amarela">A confirmar</span>' }[s];
-  var acao = { atendido: '<button type="button" class="btn link" data-ac="ver">Ver registro</button>', falta: '<button type="button" class="btn link" data-ac="ver">Ver registro</button>', naovem: '<button type="button" class="btn ter" data-ac="remarcar">Remarcar</button>', chegou: '<button type="button" class="btn" data-ac="registrar">Registrar atendimento ' + ic('seta', 16) + '</button>', aguardando: '<button type="button" class="btn sec" data-ac="chegou">Chegou</button>', aconfirmar: '<button type="button" class="btn ter" data-ac="confirmou">Confirmou</button>' }[s];
-  var art = el('<article class="linha' + (s === 'chegou' ? ' destaque' : '') + (s === 'atendido' || s === 'falta' ? ' apagada' : '') + (s === 'naovem' ? ' fora' : '') + '">' +
-    '<div class="hora">' + esc(it.hora || '—') + '</div>' +
-    '<div class="quem"><div class="nome">' + esc(it.paciente) + '</div><div class="sub">' + esc(sub.join(' · ')) + '</div></div>' +
-    '<div class="tags">' + tags.map(function (t) { return tagHtml(t); }).join('') + (it.naoVem ? '<span class="tag cinza">' + esc(it.naoVem.replace('Não vem · ', '')) + '</span>' : '') + '</div>' +
-    pill + '<div class="acao">' + acao + '<div class="mais no-print"><button type="button" class="btn icone p" aria-label="Mais ações" aria-haspopup="menu">' + ic('pontos', 18, 2) + '</button></div></div></article>');
-  $$('[data-ac]', art).forEach(function (b) { b.addEventListener('click', function () { acaoDia(b.dataset.ac, it, art); }); });
-  $('.mais button', art).addEventListener('click', function (e) { e.stopPropagation(); menuMais(it, art, this); });
-  return art;
+  var s = statusItem(it), p = pacInfo(it.paciente), k = chaveItem(it);
+  var sub1 = [], id = idadeCurta(p); if (id) sub1.push(id); if (!p) sub1.push('não está em Pacientes'); if (it.origem && !/Semanal|Quinzenal|Registrado/.test(it.origem)) sub1.push(it.origem);
+  var tr = el('<tr class="' + (s === 'chegou' ? 'chegou' : '') + (s === 'atendido' || s === 'falta' ? ' apagada' : '') + (s === 'naovem' ? ' fora' : '') + (selecionado === k ? ' sel' : '') + '" tabindex="0" data-k="' + esc(k) + '">' +
+    '<td class="td-hora">' + esc(it.hora || '—') + '</td>' +
+    '<td class="td-quem"><div class="nome">' + esc(it.paciente) + '</div><div class="sub">' + esc(sub1.join(' · ')) + '<span class="so-cel">' + (sub1.length ? ' · ' : '') + esc(profCurto(it.profissional)) + ' · ' + esc(modalidadeCurta(p)) + '</span></div></td>' +
+    '<td class="td-prof"><div>' + esc(profCurto(it.profissional)) + '</div><div class="sub">' + esc(modalidadeCurta(p)) + '</div></td>' +
+    '<td class="td-cob"><div class="tags">' + cobrancaHtml(it, p) + '</div></td>' +
+    '<td class="td-sit">' + pillSituacao(it, s) + '</td>' +
+    '<td class="td-acao no-print">' + botaoAcao(it, s) + '<div class="mais"><button type="button" class="btn icone p" aria-label="Mais ações" aria-haspopup="menu">' + ic('pontos', 18, 2) + '</button></div></td></tr>');
+  $$('[data-ac]', tr).forEach(function (b) { b.addEventListener('click', function (e) { e.stopPropagation(); acaoDia(b.dataset.ac, it); }); });
+  $('.mais button', tr).addEventListener('click', function (e) { e.stopPropagation(); menuMais(it, this); });
+  tr.addEventListener('click', function (e) { if (e.target.closest('button')) return; selecionar(it); });
+  tr.addEventListener('keydown', function (e) { if (e.key === 'Enter' && !e.target.closest('button')) selecionar(it); });
+  return tr;
 }
-function menuMais(it, art, btn) {
-  var existe = $('.mais-menu', art); $$('.mais-menu').forEach(function (m) { m.remove(); }); if (existe) return;
+function menuMais(it, btn) {
+  var existe = btn.parentNode.querySelector('.mais-menu'); $$('.mais-menu').forEach(function (m) { m.remove(); }); if (existe) return;
   var s = statusItem(it), op = [];
   if (s === 'aguardando' || s === 'aconfirmar') op.push(['chegou', 'Chegou agora']);
   if (s === 'chegou') op.push(['deschegou', 'Desfazer “chegou”']);
@@ -98,28 +134,69 @@ function menuMais(it, art, btn) {
   if (it.listaId && !it.registro) op.push(['remover', 'Remover da lista', 'perigo']);
   op.push(['cadastro', 'Ver cadastro']);
   var m = el('<div class="mais-menu" role="menu">' + op.map(function (o) { return '<button type="button" role="menuitem" data-ac="' + o[0] + '" class="' + (o[2] || '') + '">' + o[1] + '</button>'; }).join('') + '</div>');
-  $$('button', m).forEach(function (b) { b.addEventListener('click', function (e) { e.stopPropagation(); m.remove(); acaoDia(b.dataset.ac, it, art); }); });
+  $$('button', m).forEach(function (b) { b.addEventListener('click', function (e) { e.stopPropagation(); m.remove(); acaoDia(b.dataset.ac, it); }); });
   btn.parentNode.appendChild(m);
 }
-function acaoDia(ac, it, art) {
+function acaoDia(ac, it) {
   if (ac === 'chegou') { marcarChegou(it, true); renderDia(); toast(it.paciente + ' chegou · ' + agoraHora()); return; }
   if (ac === 'deschegou') { marcarChegou(it, false); renderDia(); return; }
   if (ac === 'confirmou') { call('confirmar', { data: DIA.data, hora: it.hora || '', paciente: it.paciente, profissional: it.profissional }).then(function (r) { if (!r.ok) return toast((r.erros || ['Não gravou']).join(' ')); toast('Confirmado: ' + it.paciente); carregarDia(); }).catch(function (e) { toast('Erro: ' + e.message); }); return; }
   if (ac === 'registrar') { go('registrar', { paciente: it.paciente, profissional: it.profissional, data: DIA.data, hora: it.hora || '' }); return; }
   if (ac === 'cadastro') { go('pacientes', { editar: it.paciente, voltar: 'hoje' }); return; }
-  if (ac === 'ver') { var d = $('.detalhe', art); if (d) { d.remove(); return; } var r = it.registro; art.appendChild(el('<div class="detalhe">Registrado: <b>' + esc(r.oque) + '</b>' + (r.procedimento ? ' · ' + esc(r.procedimento) : '') + (r.hora ? ' · ' + esc(r.hora) : '') + (r.id ? ' · ID ' + esc(r.id) : '') + ' · aba ' + esc(DIA.abaMes) + '</div>')); return; }
-  abrirPainel(it, ac, art);
+  if (ac === 'ver') { selecionar(it); return; }
+  selecionar(it, ac); // naovem · remarcar · remover: formulário dentro do painel do paciente
 }
-function fecharPainel() { if (painelAberto) { painelAberto.remove(); painelAberto = null; } }
-function abrirPainel(it, tipo, art) {
-  fecharPainel();
-  var titulo = { naovem: 'Não vem hoje', remarcar: 'Remarcar', remover: 'Remover da lista' }[tipo], html;
-  if (tipo === 'naovem') html = '<div class="grid"><label class="campo">Motivo<select id="d-nv-motivo"></select></label><label class="campo c2">Observação<input id="d-nv-obs"></label></div><div class="acoes"><button type="button" class="btn" id="d-nv-ok">Gravar</button><span class="muted">Grava a falta na aba do mês, sem cobrança nesta linha.</span></div>';
-  else if (tipo === 'remarcar') html = '<div class="grid"><label class="campo">Nova data<input id="d-rm-data" placeholder="dd/mm/aaaa" maxlength="10" inputmode="numeric"></label><label class="campo">Nova hora<input id="d-rm-hora" placeholder="hh:mm" maxlength="5" inputmode="numeric" value="' + esc(it.hora || '') + '"></label><label class="campo">Observação<input id="d-rm-obs"></label></div><div class="acoes"><button type="button" class="btn" id="d-rm-ok">Remarcar</button><span class="muted">Hoje fica como “não vem · remarcado”; o novo dia ganha a linha.</span></div>';
-  else html = '<div class="grid"><label class="campo c2">Motivo da remoção <span class="leg">só agendamentos avulsos; horário fixo se pausa na Agenda recorrente</span><input id="d-rem-motivo" value="duplicado"></label></div><div class="acoes"><button type="button" class="btn vermelho" id="d-rem-ok">Remover da lista</button></div>';
-  var pn = el('<div class="painel"><div class="cab"><h2>' + titulo + ' · ' + esc(it.paciente) + '</h2><span class="muted">' + esc(profCurto(it.profissional)) + (it.hora ? ' · ' + esc(it.hora) : '') + '</span><span class="esp"></span><button type="button" class="btn icone p" aria-label="Fechar">' + ic('fechar', 16) + '</button></div>' + html + '</div>');
-  $('.cab button', pn).addEventListener('click', fecharPainel);
-  art.parentNode.insertBefore(pn, art.nextSibling); painelAberto = pn;
+/* ---------- painel do paciente (coluna da direita; folha de baixo no celular) ---------- */
+function itemSelecionado() { if (!DIA || !selecionado) return null; return DIA.itens.filter(function (i) { return chaveItem(i) === selecionado; })[0] || null; }
+function selecionar(it, form) {
+  var mesmo = selecionado === chaveItem(it);
+  selecionado = chaveItem(it); formAberto = form || (mesmo ? formAberto : null);
+  $$('#d-list tr').forEach(function (tr) { tr.classList.remove('sel'); });
+  renderPainel();
+  if (form) { var fEl = $("#pp-form"); if (fEl.firstChild) fEl.firstChild.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
+}
+function fecharPainel() { selecionado = null; formAberto = null; if (DIA) renderPainel(); }
+function renderPainel() {
+  var it = itemSelecionado(), aside = $("#d-painel");
+  $("#pp-vazio").hidden = !!it; $("#pp-pac").hidden = !it; aside.classList.toggle('aberto', !!it);
+  if (!it) { selecionado = null; return; }
+  var p = pacInfo(it.paciente), s = statusItem(it), reg = !!it.registro;
+  $$('#d-list tr').forEach(function (tr) { tr.classList.toggle('sel', tr.dataset.k === selecionado); });
+  $("#pp-av").textContent = it.paciente.charAt(0).toUpperCase();
+  $("#pp-nome").textContent = it.paciente;
+  var sub = []; if (p && p.nasc) { var i = idade(p.nasc); if (i) sub.push(i); sub.push('nasc. ' + p.nasc); } if (p && p.pagador && p.pagador !== p.nome) sub.push('pagador: ' + p.pagador); if (!p) sub.push('não está em Pacientes');
+  $("#pp-sub").textContent = sub.join(' · ');
+  var tipo = it.origem && !/Semanal|Quinzenal|Registrado/.test(it.origem) ? it.origem : 'sessão';
+  $("#pp-dl").innerHTML = '<div><dt>Hoje</dt><dd>' + esc((it.hora || '—') + ' · ' + tipo) + '</dd></div><div><dt>Profissional</dt><dd>' + esc(it.profissional) + '</dd></div><div><dt>Modalidade</dt><dd>' + esc(p && p.modalidade ? modCurta(p.modalidade) : (p ? 'sem modalidade' : '—')) + '</dd></div><div><dt>Convênio</dt><dd>' + esc(p ? (p.convenio || 'Particular') : '—') + '</dd></div>';
+  var avisoHtml = '';
+  if (p && (regraRelevante(p) || p.obsCobranca) && !ehProBono(p) && !ehConvenio(p) && !ehMensal(p)) avisoHtml = aviso('laranja', 'Atenção na cobrança · ' + esc(modCurta(p.regra || 'ver observação')), esc(p.obsCobranca || ''));
+  else if (p && cadastroIncompleto(p)) avisoHtml = aviso('laranja', 'Cadastro incompleto', 'Sem modalidade nem convênio. Confira como paga antes de registrar.');
+  else if (p && ehProBono(p) && p.obsCobranca) avisoHtml = aviso('lilas', /permuta/i.test(p.regra + p.modalidade) ? 'Permuta' : 'Pro bono', esc(p.obsCobranca));
+  $("#pp-aviso").innerHTML = avisoHtml;
+  // etiquetas de cobrança (as mesmas da tabela), menos a laranja quando o bloco acima já a explica
+  var tags = tagsDe(p).filter(function (t) { return !(t.cor === 'laranja' && avisoHtml); });
+  $("#pp-tags").innerHTML = tags.map(function (t) { return tagHtml(t); }).join(''); $("#pp-tags").hidden = !tags.length;
+  var r = it.registro;
+  $("#pp-registro").innerHTML = r ? '<div class="faixa cinza"><b>Registrado hoje:</b> ' + esc(r.oque) + (r.procedimento ? ' · ' + esc(r.procedimento) : '') + (r.hora ? ' · ' + esc(r.hora) : '') + (r.id ? ' · ID ' + esc(r.id) : '') + ' · aba ' + esc(DIA.abaMes) + '</div>' : '';
+  // 4 botões de situação; o atual fica marcado
+  $("#pp-sit-box").hidden = reg;
+  var ch = chegadas()[chaveItem(it)];
+  var bts = [['confirmou', 'Confirmou', !!it.confirmado, it.naoVem || !!it.confirmado], [ch ? 'deschegou' : 'chegou', ch ? 'Chegou ' + ch : 'Chegou', !!ch, !!it.naoVem], ['naovem', 'Não vem hoje', s === 'naovem', s === 'naovem'], ['remarcar', 'Remarcar', formAberto === 'remarcar', false]];
+  $("#pp-sit").innerHTML = bts.map(function (b) { return '<button type="button" data-ac="' + b[0] + '" aria-pressed="' + b[2] + '"' + (b[3] ? ' disabled' : '') + '>' + esc(b[1]) + '</button>'; }).join('');
+  $$('button', $("#pp-sit")).forEach(function (b) { b.addEventListener('click', function () { if (b.dataset.ac === 'naovem' || b.dataset.ac === 'remarcar') { formAberto = formAberto === b.dataset.ac ? null : b.dataset.ac; renderPainel(); } else acaoDia(b.dataset.ac, it); }); });
+  $("#pp-registrar").innerHTML = (reg ? 'Registrar outro atendimento ' : 'Registrar atendimento ') + ic('seta', 18);
+  $("#pp-registrar-leg").hidden = reg;
+  $("#pp-remover").hidden = !(it.listaId && !it.registro);
+  renderForm(it);
+}
+function renderForm(it) {
+  var box = $("#pp-form"); box.innerHTML = ''; if (!formAberto) return;
+  var tipo = formAberto, html;
+  if (tipo === 'naovem') html = '<h3>Não vem hoje</h3><div class="grid g1"><label class="campo">Motivo<select id="d-nv-motivo"></select></label><label class="campo">Observação<input id="d-nv-obs"></label></div><div class="acoes"><button type="button" class="btn" id="d-nv-ok">Gravar</button><button type="button" class="btn ter" data-fechar>Cancelar</button></div><span class="muted">Grava a falta na aba do mês, sem cobrança nesta linha.</span>';
+  else if (tipo === 'remarcar') html = '<h3>Remarcar</h3><div class="grid g2"><label class="campo">Nova data<input id="d-rm-data" placeholder="dd/mm/aaaa" maxlength="10" inputmode="numeric"></label><label class="campo">Nova hora<input id="d-rm-hora" placeholder="hh:mm" maxlength="5" inputmode="numeric" value="' + esc(it.hora || '') + '"></label><label class="campo c2">Observação<input id="d-rm-obs"></label></div><div class="acoes"><button type="button" class="btn" id="d-rm-ok">Remarcar</button><button type="button" class="btn ter" data-fechar>Cancelar</button></div><span class="muted">Hoje fica como “não vem · remarcado”; o novo dia ganha a linha.</span>';
+  else html = '<h3>Remover da lista</h3><div class="grid g1"><label class="campo">Motivo da remoção <span class="leg">só agendamentos avulsos; horário fixo se pausa na Agenda recorrente</span><input id="d-rem-motivo" value="duplicado"></label></div><div class="acoes"><button type="button" class="btn vermelho" id="d-rem-ok">Remover da lista</button><button type="button" class="btn ter" data-fechar>Cancelar</button></div>';
+  var pn = el('<div class="pp-formbox">' + html + '</div>'); box.appendChild(pn);
+  $('[data-fechar]', pn).addEventListener('click', function () { formAberto = null; renderPainel(); });
   if (tipo === 'naovem') {
     preencherSelect($("#d-nv-motivo", pn), (BOOT.listas.oque || []).filter(function (x) { return !/^Atendido/.test(x); }));
     $("#d-nv-ok", pn).addEventListener('click', function () {
@@ -145,24 +222,67 @@ function abrirPainel(it, tipo, art) {
       call('removerDoDia', { id: it.listaId, motivo: $("#d-rem-motivo", pn).value.trim() || 'removido' }).then(function (r) { if (!r.ok) return toast((r.erros || ['Não removeu']).join(' ')); toast('Removido da lista: ' + it.paciente); carregarDia(); }).catch(function (e) { toast('Erro: ' + e.message); });
     });
   }
-  pn.scrollIntoView({ behavior: 'smooth', block: 'center' });
 }
-/* resumo lateral */
+$("#pp-fechar").addEventListener('click', fecharPainel);
+$("#pp-registrar").addEventListener('click', function () { var it = itemSelecionado(); if (it) acaoDia('registrar', it); });
+$("#pp-cadastro").addEventListener('click', function () { var it = itemSelecionado(); if (it) acaoDia('cadastro', it); });
+$("#pp-remover").addEventListener('click', function () { var it = itemSelecionado(); if (it) selecionar(it, 'remover'); });
+/* ---------- tiles de resumo e resumo do painel ---------- */
+function doDia(l, dia) { return (l || []).filter(function (x) { return x.data === dia; }); }
 function renderResumo(cont) {
-  var tot = DIA.itens.length, reg = DIA.itens.filter(function (i) { return i.registro; }).length;
-  var g = resumoMes[DIA.abaMes], dia = DIA.data, html = '';
-  html += '<div><b>' + reg + '<small>/' + tot + '</small></b><span>registrados</span></div>';
-  html += '<div><b>' + cont.chegou + '</b><span>na recepção</span></div>';
-  if (ehGestao() && g) {
-    // o servidor devolve só as listas de pendência do mês; aqui filtramos pelo dia escolhido
-    var doDia = function (l) { return (l || []).filter(function (x) { return x.data === dia; }); };
-    html += '<div class="' + (doDia(g.nfPendente).length ? 'atencao' : '') + '"><b>' + doDia(g.nfPendente).length + '</b><span>NF pendente</span></div>';
-    html += '<div class="' + (doDia(g.semGuia).length ? 'atencao' : '') + '"><b>' + doDia(g.semGuia).length + '</b><span>guia a emitir</span></div>';
+  var tot = DIA.itens.length, reg = DIA.itens.filter(function (i) { return i.registro; }).length, dia = DIA.data, g = resumoMes[DIA.abaMes];
+  // resumo do painel (sem paciente selecionado)
+  $("#pp-resumo").innerHTML = '<div><b>' + reg + '<small>/' + tot + '</small></b><span>registrados</span></div><div><b>' + cont.chegou + '</b><span>na recepção</span></div><div><b>' + (cont.aguardando + cont.aconfirmar) + '</b><span>aguardando</span></div><div class="' + (cont.naovem ? 'atencao' : '') + '"><b>' + cont.naovem + '</b><span>não vêm</span></div>';
+  // tiles: a gestão vê os valores do dia (do gestaoResumo do mês, filtrado pelo dia); a recepção vê contagens que saem do cadastro
+  var tiles = [];
+  if (ehGestao()) {
+    if (g) {
+      var aRec = doDia(g.pagamentoPendente, dia).reduce(function (a, x) { return a + (Number(x.valor) || 0); }, 0);
+      tiles.push(['R$ ' + brl(g.recebido).replace(',00', ''), 'recebido no mês', 'verde', 'gestao']);
+      tiles.push(['R$ ' + brl(aRec).replace(',00', ''), 'a receber hoje (particular)', aRec ? 'amarelo' : 'cinza', 'gestao']);
+      tiles.push([doDia(g.nfPendente, dia).length, 'NF pendente hoje', doDia(g.nfPendente, dia).length ? 'laranja' : 'cinza', 'gestao']);
+      tiles.push([doDia(g.semGuia, dia).length, 'guia a emitir hoje', doDia(g.semGuia, dia).length ? 'amarelo' : 'cinza', 'gestao']);
+    } else tiles.push(['…', 'carregando o resumo do mês', 'cinza']);
   } else {
-    html += '<div><b>' + cont.aguardando + '</b><span>aguardando</span></div>';
-    html += '<div class="' + (cont.naovem ? 'atencao' : '') + '"><b>' + cont.naovem + '</b><span>não vêm</span></div>';
+    var ps = DIA.itens.map(function (i) { return pacInfo(i.paciente); });
+    var mensAberto = ps.filter(function (p) { return p && ehMensal(p) && /amarela|vermelha/.test(situacaoMensal(p)[0]); }).length;
+    var conv = ps.filter(function (p) { return p && ehConvenio(p); }).length;
+    var atencao = ps.filter(function (p) { return p && (regraRelevante(p) || (p.obsCobranca && !ehMensal(p) && !ehConvenio(p) && !ehProBono(p))); }).length;
+    var incompl = DIA.itens.filter(function (i) { var p = pacInfo(i.paciente); return !p || cadastroIncompleto(p); }).length;
+    tiles.push([mensAberto, 'mensalista com mês em aberto', mensAberto ? 'amarelo' : 'cinza', 'mensalistas']);
+    tiles.push([conv, 'convênio hoje · guia por sessão', 'lilas']);
+    tiles.push([atencao, 'atenção na cobrança', atencao ? 'laranja' : 'cinza']);
+    tiles.push([incompl, 'cadastro a completar', incompl ? 'laranja' : 'cinza', 'pacientes']);
   }
-  $("#d-resumo").innerHTML = html;
+  var box = $("#d-resumo"); box.innerHTML = '';
+  tiles.forEach(function (t) {
+    var b = el('<' + (t[3] ? 'button type="button"' : 'div') + ' class="tile info ' + t[2] + '"><b>' + esc(String(t[0])) + '</b><span>' + esc(t[1]) + '</span></' + (t[3] ? 'button' : 'div') + '>');
+    if (t[3]) b.addEventListener('click', function () { go(t[3]); });
+    box.appendChild(b);
+  });
+}
+/* ---------- pendências de hoje (linhas clicáveis) ---------- */
+function renderPend(itens) {
+  var dia = DIA.data, g = resumoMes[DIA.abaMes], out = [];
+  var mens = itens.filter(function (i) { var p = pacInfo(i.paciente); return p && ehMensal(p) && /amarela|vermelha/.test(situacaoMensal(p)[0]); });
+  if (mens.length) out.push(['amarela', mens.length, 'mensalista' + (mens.length > 1 ? 's' : '') + ' de hoje com mês em aberto · ' + mens.map(function (i) { return primeiroNome(i.paciente); }).join(', '), 'mensalistas']);
+  var incompl = itens.filter(function (i) { var p = pacInfo(i.paciente); return p && cadastroIncompleto(p); });
+  if (incompl.length) out.push(['laranja', incompl.length, 'cadastro sem modalidade · ' + incompl.map(function (i) { return primeiroNome(i.paciente); }).join(', '), 'pacientes', incompl[0].paciente]);
+  var fora = itens.filter(function (i) { return !pacInfo(i.paciente); });
+  if (fora.length) out.push(['laranja', fora.length, 'não está em Pacientes · ' + fora.map(function (i) { return primeiroNome(i.paciente); }).join(', '), 'pacientes']);
+  if (ehGestao() && g) {
+    var sg = doDia(g.semGuia, dia); if (sg.length) out.push(['amarela', sg.length, 'guia a emitir hoje · ' + sg.map(function (x) { return primeiroNome(x.paciente) + (x.hora ? ' ' + x.hora : ''); }).join(', '), 'gestao']);
+    var ontem = dataObj(dia); ontem.setDate(ontem.getDate() - 1); var dOntem = ('0' + ontem.getDate()).slice(-2) + '/' + ('0' + (ontem.getMonth() + 1)).slice(-2) + '/' + ontem.getFullYear();
+    var nf = (g.nfPendente || []).filter(function (x) { return x.data === dia || x.data === dOntem; }); if (nf.length) out.push(['laranja', nf.length, 'NF a emitir (hoje e ontem) · ' + nf.map(function (x) { return primeiroNome(x.paciente) + (x.valor ? ' R$ ' + brl(x.valor).replace(',00', '') : ''); }).join(', '), 'gestao']);
+    var pp = doDia(g.pagamentoPendente, dia); if (pp.length) out.push(['amarela', pp.length, 'particular sem “Pago?” hoje · ' + pp.map(function (x) { return primeiroNome(x.paciente); }).join(', '), 'gestao']);
+  }
+  var box = $("#d-pend"); box.innerHTML = '';
+  if (!out.length) { box.innerHTML = '<div class="muted">Nada pendente por enquanto.</div>'; return; }
+  out.forEach(function (o) {
+    var b = el('<button type="button" class="pend-linha ' + o[0] + '"><b>' + o[1] + '</b><span>' + esc(o[2]) + '</span>' + ic('direita', 16, 2.4) + '</button>');
+    b.addEventListener('click', function () { go(o[3], o[3] === 'pacientes' && o[4] ? { editar: o[4], voltar: 'hoje' } : undefined); });
+    box.appendChild(b);
+  });
 }
 function invalidarResumo() { resumoMes = {}; }
 function resumoGestaoDia() {
@@ -178,13 +298,16 @@ $("#fd-fechar").addEventListener('click', function () {
   if (pend) toast(pend + ' paciente(s) ainda em “Aguardando” ou “Chegou”. Registre ou marque “não vem” antes de fechar.');
   else { gravarFimDia(true); toast('Dia fechado. Bom descanso.'); }
 });
-/* navegação de data */
+/* navegação de data, filtros, busca, impressão */
 function mudarDia(n) { var dt = dataObj(diaEscolhido()) || new Date(); dt.setDate(dt.getDate() + n); $("#d-data").value = dataParaISO(dt); carregarDia(); }
 $("#d-ant").addEventListener('click', function () { mudarDia(-1); });
 $("#d-prox").addEventListener('click', function () { mudarDia(1); });
 $("#d-ir-hoje").addEventListener('click', function () { $("#d-data").value = dataParaISO(new Date()); carregarDia(); });
 $("#d-cal").addEventListener('click', function () { var i = $("#d-data"); if (i.showPicker) { try { i.showPicker(); return; } catch (e) { } } i.classList.remove('sr'); i.focus(); });
 $("#d-data").addEventListener('change', function () { this.classList.add('sr'); if (dataObj(diaEscolhido())) carregarDia(); });
+$("#d-prof").addEventListener('change', function () { diaProf = this.value; if (DIA) renderDia(); });
+$("#d-busca").addEventListener('input', function () { diaBusca = this.value.trim(); if (DIA) renderDia(); });
+$("#d-print").addEventListener('click', function () { window.print(); });
 /* encaixe no dia */
 function infoPaciente(nome) { var p = pacInfo(nome); if (!p) return nome.trim() ? 'Não está em Pacientes. Cadastre antes em "Pacientes".' : ''; if (cadastroIncompleto(p)) return 'Cadastro incompleto: sem modalidade nem convênio. Confira como paga.'; var partes = []; if (ehConvenio(p)) partes.push('Convênio ' + p.convenio); else if (p.convenio) partes.push('Particular'); if (p.modalidade && !(ehConvenio(p) && /^Conv[êe]nio$/i.test(p.modalidade))) partes.push(p.modalidade); if (regraRelevante(p)) partes.push(modCurta(p.regra)); return 'Cadastro: ' + partes.join(' · '); }
 function mostrarInfo(elHint, nome) { var p = pacInfo(nome); elHint.innerHTML = esc(infoPaciente(nome)) + (p ? ' <a href="#">' + (cadastroIncompleto(p) ? 'Completar cadastro' : 'editar cadastro') + '</a>' : ''); var a = elHint.querySelector('a'); if (a) a.addEventListener('click', function (e) { e.preventDefault(); go('pacientes', { editar: nome, voltar: 'hoje' }); }); }
@@ -201,7 +324,7 @@ function addDia(recorrente) {
 }
 $("#d-add-ok").addEventListener('click', function () { addDia(false); });
 $("#d-add-rec").addEventListener('click', function () { addDia(true); });
-/* agenda recorrente */
+/* agenda recorrente (link discreto no rodapé da tabela) */
 function carregarRec() { return call('agendaFixa').then(function (l) { AGENDA = l; renderRec(); return l; }); }
 function renderRec() {
   var tb = $("#r-lista"); tb.innerHTML = '';
@@ -212,7 +335,7 @@ function renderRec() {
   });
 }
 function limparRec() { recEdit = null; ['r-pac', 'r-hora', 'r-ini', 'r-fim', 'r-obs'].forEach(function (id) { $("#" + id).value = ''; }); $("#r-pac-info").textContent = ''; $("#r-freq").value = 'Semanal'; $("#r-ativo").value = 'Sim'; $("#r-hint").textContent = 'Nova recorrência.'; }
-$("#d-rec").addEventListener('click', function () { $("#d-recbox").hidden = !$("#d-recbox").hidden; $("#d-addbox").hidden = true; if (!$("#d-recbox").hidden) carregarRec(); });
+$("#d-rec").addEventListener('click', function () { $("#d-recbox").hidden = !$("#d-recbox").hidden; $("#d-addbox").hidden = true; if (!$("#d-recbox").hidden) { carregarRec(); $("#d-recbox").scrollIntoView({ behavior: 'smooth', block: 'start' }); } });
 $("#d-rec-fechar").addEventListener('click', function () { $("#d-recbox").hidden = true; });
 $("#r-novo").addEventListener('click', limparRec);
 $("#r-pac").addEventListener('input', function () { mostrarInfo($("#r-pac-info"), this.value); });

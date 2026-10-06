@@ -1,23 +1,30 @@
-<section class="tela" id="s-hoje">
+<section class="tela hoje" id="s-hoje">
   <div class="principal">
-    <div class="titulo">
-      <div class="acoes" style="gap:4px">
-        <button type="button" class="btn icone" id="d-ant" aria-label="Dia anterior"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg></button>
-        <button type="button" class="btn icone" id="d-prox" aria-label="Próximo dia"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button>
+    <div class="toolbar no-print">
+      <div class="databox">
+        <button type="button" class="btn icone p" id="d-ant" aria-label="Dia anterior"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg></button>
+        <button type="button" class="datatxt" id="d-cal" title="Escolher a data"><span id="d-titulo">Hoje</span></button>
+        <button type="button" class="btn icone p" id="d-prox" aria-label="Próximo dia"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button>
       </div>
-      <h1 id="d-titulo">Hoje</h1>
-      <span class="pill lilas" id="d-pill-hoje" hidden>hoje</span>
-      <button type="button" class="btn ter roxo so-pc" id="d-ir-hoje" hidden>ir para hoje</button>
-      <button type="button" class="btn icone p" id="d-cal" aria-label="Escolher a data" title="Escolher a data"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg></button>
       <input type="date" id="d-data" class="sr" aria-label="Data da lista" tabindex="-1">
-      <div class="esp"></div>
-      <button type="button" class="btn ter roxo" id="d-add"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg> Encaixe no dia</button>
-      <button type="button" class="btn ter" id="d-rec">Agenda recorrente</button>
+      <button type="button" class="btn ter roxo" id="d-ir-hoje">Hoje</button>
+      <select id="d-prof" aria-label="Profissional" class="auto"><option value="">Todas as profissionais</option></select>
+      <div class="campo-wrap busca">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+        <input type="search" id="d-busca" placeholder="Buscar paciente (nome ou pagador)" aria-label="Buscar paciente" autocomplete="off">
+      </div>
+      <button type="button" class="btn ter so-pc" id="d-print"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9V3h12v6"/><rect x="3" y="9" width="18" height="9" rx="2"/><path d="M6 14h12v7H6z"/></svg> Imprimir</button>
+      <button type="button" class="btn" id="d-add"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg> Encaixe no dia</button>
+    </div>
+    <h1 class="so-print" id="d-titulo-print">Lista do dia</h1>
+
+    <div class="tiles no-print">
+      <div class="tiles-filtro" id="d-filtros" role="group" aria-label="Filtrar por situação"></div>
+      <div class="tiles-resumo" id="d-resumo" role="group" aria-label="Resumo do dia"></div>
     </div>
 
-    <div class="filtros" id="d-filtros" role="group" aria-label="Filtrar por situação"></div>
-
     <div id="d-aviso-aba" class="faixa amarela" hidden></div>
+    <div class="faixa pessego lembrete" id="d-lembrete" hidden><div class="corpo"><div class="t">Lembrete da gestão</div><span id="d-lembrete-txt"></span><small id="d-lembrete-meta"></small></div></div>
 
     <div id="d-addbox" class="painel" hidden>
       <div class="cab"><h2>Encaixe no dia</h2><span class="muted">paciente sem horário fixo: retorno, avaliação, reposição</span><span class="esp"></span><button type="button" class="btn icone p" id="d-add-cancel" aria-label="Fechar"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
@@ -49,23 +56,57 @@
     </div>
 
     <div id="d-carregando" class="carregando">Carregando a lista…</div>
-    <div class="lista" id="d-list"></div>
+    <div class="tabela-card dia-card">
+      <div class="tabela-wrap">
+        <table class="dia">
+          <thead><tr><th class="th-hora">Hora</th><th>Paciente</th><th class="th-prof">Profissional · modalidade</th><th>Cobrança</th><th>Situação</th><th class="th-acao no-print"></th></tr></thead>
+          <tbody id="d-list"></tbody>
+        </table>
+      </div>
+      <div class="tabela-rodape no-print"><span id="d-rodape-n"></span><span class="esp"></span><button type="button" class="link-discreto" id="d-rec">Agenda recorrente (horários fixos)</button></div>
+    </div>
+
+    <div class="dois no-print">
+      <section class="card compacto" id="d-pend-card">
+        <h2>Pendências de hoje</h2>
+        <div class="pend-lista" id="d-pend"></div>
+      </section>
+      <section class="card compacto fim-dia">
+        <h2>Fim do dia</h2>
+        <label class="check"><input type="checkbox" id="fd-1"> Ninguém ficou em “Aguardando”</label>
+        <label class="check"><input type="checkbox" id="fd-2"> Um registro por paciente que chegou</label>
+        <label class="check"><input type="checkbox" id="fd-3"> NFs de quem pagou hoje emitidas</label>
+        <label class="check"><input type="checkbox" id="fd-4"> Dinheiro da gaveta = livro caixa</label>
+        <div class="acoes"><button type="button" class="btn ter roxo" id="fd-fechar">Fechar o dia</button><span class="muted" id="fd-status"></span></div>
+      </section>
+    </div>
   </div>
 
-  <aside class="lateral">
-    <div class="card roxo">
-      <h2>Resumo de hoje</h2>
-      <div class="resumo-num" id="d-resumo"></div>
+  <aside class="painel-pac no-print" id="d-painel" aria-label="Paciente selecionado">
+    <div id="pp-vazio">
+      <h2>Resumo do dia</h2>
+      <div class="resumo-num" id="pp-resumo"></div>
+      <p class="dica">Clique numa linha da lista pra ver o paciente, marcar a situação e registrar o atendimento.</p>
     </div>
-    <div class="card compacto fim-dia">
-      <h2 style="font-size:15px">Fim do dia</h2>
-      <label class="check"><input type="checkbox" id="fd-1"> Nenhum paciente ficou em “Aguardando”</label>
-      <label class="check"><input type="checkbox" id="fd-2"> Um registro para cada paciente que chegou</label>
-      <label class="check"><input type="checkbox" id="fd-3"> NFs de quem pagou hoje emitidas</label>
-      <label class="check"><input type="checkbox" id="fd-4"> Dinheiro da gaveta = livro caixa</label>
-      <button type="button" class="btn ter roxo" id="fd-fechar">Fechar o dia</button>
-      <span class="muted" id="fd-status"></span>
+    <div id="pp-pac" hidden>
+      <div class="pp-cab">
+        <span class="pp-av" id="pp-av">A</span>
+        <div class="pp-quem"><div class="pp-nome" id="pp-nome"></div><div class="muted" id="pp-sub"></div></div>
+        <button type="button" class="btn icone p" id="pp-fechar" aria-label="Fechar"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+      </div>
+      <dl class="pp-dl" id="pp-dl"></dl>
+      <div class="tags" id="pp-tags"></div>
+      <div id="pp-aviso"></div>
+      <div id="pp-registro"></div>
+      <div class="pp-sit" id="pp-sit-box">
+        <div class="eyebrow p">Situação</div>
+        <div class="pp-botoes" id="pp-sit" role="group" aria-label="Situação"></div>
+      </div>
+      <div id="pp-form"></div>
+      <button type="button" class="btn grande pp-registrar" id="pp-registrar">Registrar atendimento <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
+      <div class="muted centro" id="pp-registrar-leg">abre já preenchido: paciente, profissional, hora, procedimento, pagador</div>
+      <div class="esp"></div>
+      <div class="pp-links"><button type="button" class="btn link" id="pp-cadastro">Ver cadastro</button><span class="sep">·</span><button type="button" class="btn link perigo" id="pp-remover">Remover da lista</button></div>
     </div>
-    <div class="card pessego" id="d-lembrete" hidden><strong>Lembrete da gestão</strong><span id="d-lembrete-txt"></span><small id="d-lembrete-meta" style="opacity:.75"></small></div>
   </aside>
 </section>

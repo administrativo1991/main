@@ -1,6 +1,6 @@
 # Estado atual do app — retomar daqui
 
-Atualizado em 06/10/2026 (noite, nova interface). Leia este arquivo primeiro ao abrir um chat novo.
+Atualizado em 06/10/2026 (noite, tela Hoje revisada). Leia este arquivo primeiro ao abrir um chat novo.
 
 ## O que é
 
@@ -25,17 +25,18 @@ Preços só em abas editáveis (Procedimentos, Pacientes, Mensalistas), nunca no
 |---|---|
 | Código-fonte | servidor `app/server/server.js` + `app/server/duplicatas.js`; tela `app/client/` (`styles.css`, `layout.html`, `telas/*.html`, `js/*.js`, `assets/*.svg`; ver `docs/NOVA-INTERFACE.md`); carregador `app/loader/Code.gs` |
 | Build | `node build.js` → `dist/index.html` (simulação), `dist/index.publicado.html`, `dist/pedacos.json` + `dist/pedacos/index-N.json` (pedaços ≤ 12.000 caracteres) e `dist/Code.gs` (teste) + `dist/Code.real.gs` (real) |
-| Código publicado | planilha "Recepção Nascente — código do app (não mexer)" (id `1qM7tX5neTU1kAa4JBpk1xiZQmcJOk325hx873XIRPYo`), aba `arquivos` = versão de teste lida pela CÓPIA TESTE; aba `arquivos_real` = versão em uso na planilha real (criada em 06/10 como cópia de `arquivos`). Desde 06/10 à noite as duas abas têm a mesma versão: linhas 2–24 (duplicatas 2, server 3–8, index 9–24). Publicar sempre em `arquivos` primeiro; depois da aprovação, promover copiando A1:C30 (só valores) para `arquivos_real` |
+| Código publicado | planilha "Recepção Nascente — código do app (não mexer)" (id `1qM7tX5neTU1kAa4JBpk1xiZQmcJOk325hx873XIRPYo`), aba `arquivos` = versão de teste lida pela CÓPIA TESTE (linhas 2–27: duplicatas 2, server 3–8, index 9–27); aba `arquivos_real` = versão em uso na planilha real (linhas 2–24, versão aprovada em 06/10 à noite, anterior à tela Hoje revisada). Publicar sempre em `arquivos` primeiro; depois da aprovação, promover copiando A1:C30 (só valores) para `arquivos_real` |
 | Como publicar | `docs/PLANO-IMPLEMENTACAO.md`, seção 10 |
 | Manuais | `docs/README-RECEPCAO.md`, `docs/README-GESTAO.md`, `docs/COMO-INSTALAR.md` |
 | Testes de tela | Playwright, arquivos `*-test.js` no scratchpad (não versionados); `node tests/duplicatas.test.js` |
 
-Última publicação: 06/10/2026 (noite, 2ª) — correção da guia de convênio (a caixa "Guia assinada antes da sessão" começa desmarcada e zera a cada paciente; antes vinha marcada por padrão): index.html pedaços 4, 10, 11, 12 e 13 (linhas 13 e 19–22) regravados em `arquivos`, LEN e soma de controle conferidos. Antes dela, na mesma noite: Lembrete da gestão — server.js (6 pedaços, linhas 3–8) e index.html (16 pedaços, linhas 9–24). Versão aprovada pela gestão em 06/10 à noite e promovida para `arquivos_real` na mesma noite (23 pedaços conferidos contra o build).
+Última publicação: 06/10/2026 (noite, 3ª) — **tela Hoje revisada + menu lateral** (nota revisada da Roberta): index.html em 19 pedaços (linhas 9–27 de `arquivos`, todos conferidos contra o build; server e duplicatas não mudaram). Só na versão de teste, aguardando a Roberta olhar; `arquivos_real` segue na versão anterior. Antes dela: correção da guia de convênio (a caixa "Guia assinada antes da sessão" começa desmarcada e zera a cada paciente; antes vinha marcada por padrão): index.html pedaços 4, 10, 11, 12 e 13 (linhas 13 e 19–22) regravados em `arquivos`, LEN e soma de controle conferidos. Antes dela, na mesma noite: Lembrete da gestão — server.js (6 pedaços, linhas 3–8) e index.html (16 pedaços, linhas 9–24). Versão aprovada pela gestão em 06/10 à noite e promovida para `arquivos_real` na mesma noite (23 pedaços conferidos contra o build).
 Git: branch `claude/lucid-einstein-gd6x5l`, tudo commitado e enviado.
 
 ## Feito e publicado
 
 - **Lembrete da gestão (06/10, noite)**: aba `Lembretes` na planilha (só acrescenta linha); a gestão escreve e encerra na tela Gestão; a tela Hoje mostra o último lembrete com texto e dentro do prazo. Publicado só na versão de teste (`arquivos`).
+- **Tela Hoje revisada (06/10, noite)**: menu lateral de 220 px em todas as telas; Hoje em tabela (hora · paciente · profissional/modalidade · cobrança · situação · 1 ação + ⋯), tiles-filtro com contagem, tiles de resumo, busca por nome/pagador, painel do paciente à direita (folha no celular), "Pendências de hoje" e "Fim do dia" abaixo da tabela. Só na versão de teste. Próximas, nesta ordem: Registrar → Pacientes → Mensalistas → Gestão. Ver `docs/NOVA-INTERFACE.md`, seção "Revisão 06/10".
 - **Nova interface (06/10, mockups da Roberta)**: telas Hoje, Registrar atendimento, Pacientes (novo + editar), Mensalistas e Gestão com o visual aprovado; mesmo HTML no computador e no celular (barra inferior ≤ 480 px); impressão sem CPF. Servidor e regras intactos. Detalhes, decisões e limites em `docs/NOVA-INTERFACE.md`.
 
 - Novo paciente (com checagem de duplicata), Registrar atendimento, Lista do dia (com modalidade

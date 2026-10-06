@@ -34,29 +34,33 @@ button{font-family:inherit;cursor:pointer}
 input,select,textarea{font-family:inherit}
 h1,h2,h3{font-family:var(--fh);font-weight:600;margin:0;color:var(--tx);letter-spacing:-0.01em}
 h1{font-size:26px}h2{font-size:16px}
-.app{min-height:100vh;display:flex;flex-direction:column}
 .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
-/* ---------- cabeçalho ---------- */
-.top{background:var(--sup);border-bottom:1px solid var(--borda);display:flex;flex-wrap:wrap;align-items:center;gap:8px 24px;padding:10px 32px}
-.top .logo{display:flex;align-items:center;color:var(--roxo);text-decoration:none}
-.logo-h{height:40px;width:auto;display:block}
-.simbolo{height:32px;width:auto;display:none}
-.menu{display:flex;flex-wrap:wrap;gap:4px;flex:1 1 320px}
-.menu button{border:0;background:transparent;text-decoration:none;font-family:var(--fh);font-weight:500;font-size:14px;padding:10px 14px;border-radius:10px;color:var(--tx2);min-height:44px}
-.menu button:hover{background:var(--bg)}
-.menu button[aria-current="page"]{background:var(--bg);color:var(--roxo);font-weight:600}
-.menu button:focus-visible,.btn:focus-visible,.filtro:focus-visible{outline:2px solid var(--roxo);outline-offset:2px}
-.top-r{display:flex;align-items:center;gap:12px;flex-wrap:nowrap}
-.chip-user{display:flex;align-items:center;gap:10px;padding:6px 12px 6px 6px;border-radius:999px;background:var(--bg);font-size:13px;color:var(--tx2);max-width:260px;white-space:nowrap}
+/* ---------- menu lateral (220 px) + cabeçalho do celular ---------- */
+.app{min-height:100vh;display:flex;align-items:stretch}
+.lado{flex:0 0 220px;background:var(--sup);border-right:1px solid var(--borda);display:flex;flex-direction:column;gap:6px;padding:22px 14px;position:sticky;top:0;height:100vh;overflow:auto;z-index:5}
+.lado .logo{display:flex;align-items:center;color:var(--roxo);text-decoration:none;margin:0 6px 22px}
+.logo-h{height:38px;width:auto;display:block}
+.simbolo{height:30px;width:auto;display:block}
+.lado>button[data-go]{border:0;background:transparent;display:flex;align-items:center;gap:12px;padding:11px 14px;border-radius:12px;color:var(--tx2);font-family:var(--fh);font-weight:500;font-size:14px;min-height:44px;text-align:left}
+.lado>button[data-go]:hover{background:var(--bg)}
+.lado>button[data-go][aria-current="page"]{background:var(--bg);color:var(--roxo);font-weight:600}
+.lado>button[data-go] svg{flex:none}
+.lado .imprimir{justify-content:flex-start;margin-bottom:6px;white-space:normal;text-align:left;font-size:13px;line-height:1.25;padding:8px 12px}
+.lado>button:focus-visible,.btn:focus-visible,.tile:focus-visible,.filtro:focus-visible{outline:2px solid var(--roxo);outline-offset:2px}
+.chip-user{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:12px;background:var(--bg);font-size:13px;color:var(--tx2);line-height:1.2}
 .chip-user.gestao{background:var(--lilas)}
-.chip-user .av{width:30px;height:30px;border-radius:999px;background:var(--roxo);color:#fff;display:flex;align-items:center;justify-content:center;font-family:var(--fh);font-weight:600;font-size:13px;flex:none}
-.chip-user strong{color:var(--tx)}
-.chip-user .mail{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:block}
+.av{width:32px;height:32px;border-radius:999px;background:var(--roxo);color:#fff;display:flex;align-items:center;justify-content:center;font-family:var(--fh);font-weight:600;font-size:13px;flex:none}
+.chip-user strong{color:var(--tx);display:block}
+.chip-user .mail{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.conteudo{flex:1;min-width:0;display:flex;flex-direction:column}
+.top-cel{display:none}
 .banner{background:var(--vm-bg);color:var(--vm-tx);border-bottom:1px solid var(--vm-b);font-weight:600;font-size:13px;padding:8px 16px;text-align:center}
 /* ---------- conteúdo ---------- */
 main{flex:1;display:flex;flex-direction:column;min-width:0}
 .tela{display:flex;flex-wrap:wrap;gap:24px;align-items:flex-start;max-width:1216px;width:100%;margin:0 auto;padding:28px 32px 48px}
 .tela.coluna{flex-direction:column;flex-wrap:nowrap;gap:20px}
+.tela.hoje{max-width:none;padding:0;gap:0;align-items:stretch;flex:1;flex-wrap:nowrap}
+.tela.hoje>.principal{padding:24px 28px 40px;gap:18px}
 .principal{flex:999 1 560px;min-width:0;display:flex;flex-direction:column;gap:16px}
 .lateral{flex:1 1 280px;max-width:320px;display:flex;flex-direction:column;gap:16px}
 .lateral.larga{max-width:340px}
@@ -186,28 +190,118 @@ input.erro{border-color:var(--lar-b);border-width:2px}
 .cardmod.trancado{background:var(--bg);border:1px solid var(--borda);cursor:default;gap:6px}
 .cardmod.trancado .nome{font-weight:700}
 .cardmod.desab{opacity:.55;cursor:not-allowed}
-/* ---------- lista do dia ---------- */
-.linha{display:flex;flex-wrap:wrap;align-items:center;gap:12px 18px;background:var(--sup);border:1px solid var(--borda);border-radius:14px;padding:14px 18px;position:relative}
-.linha .hora{width:56px;font-family:var(--fh);font-weight:600;font-size:18px;color:var(--tx)}
-.linha .quem{flex:1 1 170px;min-width:0}
-.linha .quem .nome{font-weight:700;font-size:16px}
-.linha .quem .sub{font-size:13px;color:var(--tx3)}
-.linha .tags{flex:1 1 150px;display:flex;flex-wrap:wrap;gap:6px}
-.linha .acao{display:flex;align-items:center;gap:8px;margin-left:auto}
-.linha.destaque{border:2px solid var(--roxo);box-shadow:var(--sombra);padding:13px 17px}
-.linha.apagada{opacity:.75}
-.linha.fora .nome{text-decoration:line-through;color:var(--tx3)}
-.linha.fora .hora{color:var(--tx3)}
-.linha .detalhe{flex-basis:100%;font-size:13px;color:var(--tx3);border-top:1px solid var(--borda-leve);padding-top:10px}
+/* ---------- Hoje: barra de ferramentas, tiles, tabela do dia, painel do paciente ---------- */
+.toolbar{display:flex;flex-wrap:wrap;align-items:center;gap:12px}
+.databox{display:flex;align-items:center;gap:4px;background:var(--sup);border:1px solid var(--borda-in);border-radius:12px;padding:4px}
+.databox .btn.icone{border:0}
+.datatxt{border:0;background:transparent;font-family:var(--fh);font-weight:600;font-size:17px;color:var(--tx);padding:0 10px;min-height:38px;border-radius:9px}
+.datatxt:hover{background:var(--bg)}
+.toolbar select.auto{width:auto;font-weight:600;font-size:14px;border-radius:12px;padding:11px 14px}
+.toolbar .busca{flex:1 1 220px;border-radius:12px}
+.toolbar .btn{border-radius:12px}
+.so-print{display:none}
+.tiles{display:flex;flex-wrap:wrap;gap:12px;align-items:stretch}
+.tiles-filtro{flex:1 1 520px;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px}
+.tiles-resumo{flex:1 1 440px;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+.tile{text-align:left;background:var(--sup);border:1px solid var(--borda);border-radius:14px;padding:14px 16px;display:flex;flex-direction:column;gap:2px;color:var(--tx);font:inherit;text-decoration:none}
+.tile b{font-family:var(--fh);font-weight:600;font-size:24px;line-height:1.1;color:var(--tx3)}
+.tile span{font-size:12px;color:var(--tx2)}
+.tile.roxo b{color:var(--roxo)}.tile.verde b{color:var(--vd-tx)}.tile.vermelho b{color:var(--vm-tx)}.tile.amarelo b{color:var(--am-tx)}.tile.laranja b{color:var(--lar-tx)}.tile.lilas b{color:var(--roxo)}
+.tile.info b{font-size:20px}
+button.tile{cursor:pointer}
+button.tile:hover{background:#FBF9FC}
+button.tile[aria-pressed="true"]{border:2px solid var(--roxo);padding:13px 15px;color:var(--roxo)}
+button.tile[aria-pressed="true"] b{color:var(--roxo)}
+.faixa.lembrete{gap:4px;padding:14px 20px}
+.faixa.lembrete .corpo{gap:2px}
+.faixa.pessego{background:var(--pessego);border:0;color:var(--pessego-tx);font-size:13px;line-height:1.5}
+.faixa.pessego .t{color:var(--roxo-h)}
+.faixa.pessego small{opacity:.75}
+table.dia{min-width:0}
+table.dia th{padding:12px 10px;font-size:11px}
+table.dia th.th-hora{width:70px}
+table.dia td{padding:12px 8px}
+table.dia .td-sit,table.dia .td-acao{white-space:nowrap}
+table.dia .td-hora{font-family:var(--fh);font-weight:600;font-size:15px;width:70px}
+table.dia .td-quem .nome{font-weight:700}
+table.dia .sub{font-size:12px;color:var(--tx3)}
+table.dia .td-cob .tags{display:flex;flex-wrap:wrap;gap:4px;max-width:260px}
+table.dia .td-cob .tag{white-space:normal;text-align:left}
+table.dia .td-quem{min-width:150px}
+table.dia .td-acao{text-align:right;white-space:nowrap}
+table.dia .td-acao .mais{display:inline-block;vertical-align:middle;margin-left:6px}
+table.dia .td-acao .btn.icone.p{width:32px;height:32px;min-height:32px;border-radius:8px;color:var(--tx3)}
+table.dia .td-acao .btn.mini{min-height:34px;padding:7px 14px;font-size:13px;border-radius:10px}
+table.dia .btn.sec.mini{border-width:1px;border-color:var(--lilas-med)}
+table.dia tbody tr{cursor:pointer}
+table.dia tbody tr:hover td{background:#FBF9FC}
+table.dia tr.sel td{background:#F8F5FA}
+table.dia tr.sel td:first-child{box-shadow:inset 4px 0 0 var(--lilas-b)}
+table.dia tr.chegou td{background:#F8F5FA}
+table.dia tr.chegou td:first-child{box-shadow:inset 4px 0 0 var(--roxo)}
+table.dia tr.apagada td{opacity:.7}
+table.dia tr.fora td{opacity:.7}
+table.dia tr.fora .nome,table.dia tr.fora .td-hora{text-decoration:line-through;color:var(--tx3)}
+table.dia tr.fora .td-sit,table.dia tr.fora .td-acao{text-decoration:none}
+table.dia tr.vazia td{color:var(--tx3);font-size:14px;padding:22px 18px;cursor:default}
+table.dia tr.vazia:hover td{background:none}
+.so-cel{display:none}
+.link-discreto{border:0;background:none;color:var(--tx3);font-size:13px;padding:0;text-decoration:underline dotted;cursor:pointer;font-family:inherit}
+.link-discreto:hover{color:var(--roxo)}
+.dois{display:flex;flex-wrap:wrap;gap:14px}
+.dois .card{flex:1 1 320px;gap:8px;padding:16px 18px}
+.dois .card h2{font-size:14px}
+.pend-lista{display:flex;flex-direction:column;gap:6px}
+.pend-linha{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:10px;border:0;background:var(--bg);color:inherit;font:inherit;text-align:left;cursor:pointer;width:100%}
+.pend-linha b{font-weight:700;color:var(--roxo);min-width:14px}
+.pend-linha span{flex:1;font-size:13px}
+.pend-linha svg{color:var(--tx3);flex:none}
+.pend-linha.amarela{background:var(--am-bg)}.pend-linha.amarela b{color:var(--am-tx)}
+.pend-linha.laranja{background:var(--lar-bg)}.pend-linha.laranja b{color:var(--lar-tx)}
+.pend-linha.lilas{background:var(--lilas)}
+.pend-linha:hover{filter:brightness(.97)}
+.fim-dia .check{font-size:13px}
 .mais{position:relative}
-.mais-menu{position:absolute;right:0;top:calc(100% + 6px);background:var(--sup);border:1px solid var(--borda);border-radius:12px;box-shadow:var(--sombra-forte);padding:6px;min-width:220px;z-index:6;display:flex;flex-direction:column}
+.mais-menu{position:absolute;right:0;top:calc(100% + 6px);background:var(--sup);border:1px solid var(--borda);border-radius:12px;box-shadow:var(--sombra-forte);padding:6px;min-width:220px;z-index:6;display:flex;flex-direction:column;text-align:left}
 .mais-menu button{border:0;background:none;text-align:left;padding:10px 12px;border-radius:8px;font-size:14px;font-weight:600;color:var(--tx2);min-height:40px}
 .mais-menu button:hover{background:var(--bg);color:var(--roxo)}
 .mais-menu button.perigo{color:var(--vm-tx)}
-.lista{display:flex;flex-direction:column;gap:10px}
 .painel{background:var(--sup);border:2px solid var(--roxo);border-radius:16px;padding:20px 22px;display:flex;flex-direction:column;gap:14px;box-shadow:var(--sombra-forte)}
 .painel .cab{display:flex;flex-wrap:wrap;align-items:center;gap:10px}
-.fim-dia .check{font-size:14px}
+/* painel do paciente: coluna branca à direita (360 px); no celular vira folha que sobe de baixo */
+.painel-pac{flex:0 1 360px;min-width:300px;background:var(--sup);border-left:1px solid var(--borda);padding:24px 22px;display:flex;flex-direction:column;gap:18px;position:sticky;top:0;max-height:100vh;overflow:auto}
+.painel-pac>div{display:flex;flex-direction:column;gap:16px;flex:1}
+.painel-pac h2{font-size:15px}
+.painel-pac .dica{line-height:1.5}
+.painel-pac .resumo-num b{color:var(--roxo)}
+.painel-pac .resumo-num .atencao b{color:var(--vm-tx)}
+.pp-cab{display:flex;align-items:flex-start;gap:12px}
+.pp-av{width:46px;height:46px;border-radius:999px;background:var(--lilas);color:var(--roxo);display:flex;align-items:center;justify-content:center;font-family:var(--fh);font-weight:600;font-size:17px;flex:none}
+.pp-quem{flex:1;min-width:0}
+.pp-nome{font-family:var(--fh);font-weight:600;font-size:19px;line-height:1.2}
+.pp-dl{margin:0;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px 12px;font-size:13px}
+.pp-dl dt{color:var(--tx3)}
+.pp-dl dd{margin:0;font-weight:700}
+.painel-pac .tags{display:flex;flex-wrap:wrap;gap:6px}
+.painel-pac .faixa{padding:12px 14px;font-size:13px;gap:10px}
+.painel-pac .faixa .t{font-size:14px}
+.painel-pac .faixa svg{width:22px;height:22px}
+.eyebrow.p{font-size:11px}
+.pp-sit{display:flex;flex-direction:column;gap:8px}
+.pp-botoes{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.pp-botoes button{border:1px solid var(--borda-in);border-radius:10px;padding:10px;background:var(--sup);color:var(--tx2);font-size:13px;font-weight:600;min-height:44px}
+.pp-botoes button:hover{background:var(--bg)}
+.pp-botoes button[aria-pressed="true"]{border:0;background:var(--roxo);color:#fff;font-weight:700}
+.pp-botoes button:disabled{opacity:.45;cursor:not-allowed}
+.pp-registrar{border-radius:12px;padding:14px;font-size:15px;width:100%}
+.centro{text-align:center;margin-top:-10px;font-size:12px}
+.pp-formbox{border:2px solid var(--roxo);border-radius:14px;padding:14px;display:flex;flex-direction:column;gap:12px;box-shadow:var(--sombra)}
+.pp-formbox h3{font-size:15px}
+.grid.g1{grid-template-columns:1fr}
+.pp-links{display:flex;align-items:center;gap:6px;font-size:13px;font-weight:700}
+.pp-links .btn.link{padding:6px 4px;min-height:36px}
+.pp-links .btn.link.perigo{color:var(--vm-tx)}
+.pp-links .sep{color:var(--borda-in)}
 /* ---------- tabelas ---------- */
 .tabela-card{background:var(--sup);border:1px solid var(--borda);border-radius:16px;overflow:hidden}
 .tabela-wrap{overflow-x:auto}
@@ -265,13 +359,14 @@ button.kpi[aria-pressed="true"] span,.kpi.roxo span{color:#fff;opacity:.9}
 /* ---------- impressão ---------- */
 @media print{
 @page{size:A4 portrait;margin:14mm}
-.top,.tabbar,.toast,.banner,.btn,.filtros,.lateral,.rodape,.acoes,.mais,.painel,.no-print,.cpf,.menu-dia,.tabela-rodape{display:none!important}
+.lado,.top-cel,.tabbar,.toast,.banner,.btn,.filtros,.lateral,.rodape,.acoes,.mais,.painel,.painel-pac,.toolbar,.tiles,.dois,.no-print,.cpf,.menu-dia,.tabela-rodape,.td-acao,.th-acao{display:none!important}
+.so-print{display:block}
+.tela.hoje>.principal{padding:0}
+table.dia tr.chegou td,table.dia tr.sel td{background:#fff;box-shadow:none}
+table.dia td{opacity:1!important}
 body{background:#fff;font-size:12px;color:#000}
 main{padding:0;max-width:none}
-.card,.linha,.tabela-card,.kpi,.pend{box-shadow:none;border:1px solid #bbb;break-inside:avoid;background:#fff}
-.linha{padding:6px 10px;gap:8px 14px}
-.linha .hora{font-size:14px}
-.linha .quem .nome{font-size:13px}
+.card,.tabela-card,.kpi,.pend{box-shadow:none;border:1px solid #bbb;break-inside:avoid;background:#fff}
 table{min-width:0}
 th,td{border:1px solid #bbb;padding:5px 8px}
 thead tr{background:#eee;color:#000}
@@ -279,53 +374,90 @@ thead tr{background:#eee;color:#000}
 h1{font-size:18px}
 }
 /* ---------- telas estreitas ---------- */
+@media (max-width:1400px){
+table.dia .td-prof,table.dia .th-prof{display:none}
+.so-cel{display:inline}
+}
 @media (max-width:900px){
 .grid,.grid.g4,.grid.g5{grid-template-columns:repeat(2,minmax(0,1fr))}
 .c3{grid-column:1/-1}
 .cartoes{grid-template-columns:repeat(2,minmax(0,1fr))}
 .kpis{grid-template-columns:repeat(3,minmax(0,1fr))}
 .lateral,.lateral.larga{max-width:none;flex-basis:100%}
+.tela.hoje{flex-wrap:wrap}
+.painel-pac{flex-basis:100%;min-width:0;border-left:0;border-top:1px solid var(--borda);position:static;max-height:none}
+.tiles-filtro{grid-template-columns:repeat(3,minmax(0,1fr))}
+.tiles-resumo{grid-template-columns:repeat(2,minmax(0,1fr))}
 }
 @media (max-width:480px){
 :root{--tabbar:calc(66px + env(safe-area-inset-bottom,0px))}
-.top{padding:10px 16px;gap:8px 12px}
-.menu,.chip-user .mail,.top .so-pc{display:none}
-.logo-h{display:none}.simbolo{display:block}
-.chip-user{padding:0;background:none}
-.chip-user .txt{display:none}
+.lado{display:none}
+.top-cel{display:flex;align-items:center;gap:10px;padding:10px 16px;background:var(--sup);border-bottom:1px solid var(--borda);position:sticky;top:0;z-index:5}
+.top-cel .logo{display:flex;color:var(--roxo)}
+.top-cel .titulo-cel{flex:1;text-align:center;font-family:var(--fh);font-weight:600;font-size:15px}
+.top-cel .av{width:30px;height:30px}
+.so-pc{display:none!important}
 .tela{padding:14px 16px calc(24px + var(--tabbar))}
+.tela.hoje>.principal{padding:14px 16px calc(24px + var(--tabbar));gap:12px}
 h1{font-size:20px}
 .grid,.grid.g2,.grid.g4,.grid.g5{grid-template-columns:1fr}
 .c2,.c3{grid-column:auto}
 .cartoes{grid-template-columns:1fr}
 .kpis{grid-template-columns:repeat(2,minmax(0,1fr))}
 .card{padding:14px}
-.linha{padding:12px 14px;gap:10px 12px}
-.linha .hora{width:46px;font-size:15px}
-.linha .quem .nome{font-size:15px}
-.linha .tags{flex-basis:100%}
-.linha .acao{flex-basis:100%}
-.linha .acao .btn:not(.icone){flex:1}
-.filtros{flex-wrap:nowrap;overflow-x:auto;padding-bottom:2px;-webkit-overflow-scrolling:touch}
-.filtro{flex:none;padding:7px 12px;font-size:13px;min-height:36px}
-.filtros .esp{display:none}
+.toolbar{gap:8px}
+.databox{flex:1}
+.datatxt{flex:1;font-size:15px;padding:0 4px}
+.toolbar select.auto{flex:1 1 40%}
+.toolbar .busca{flex:1 1 100%}
+.toolbar #d-add{flex:1 1 100%}
+.tiles{gap:8px}
+.tiles-filtro{display:flex;overflow-x:auto;gap:8px;padding-bottom:2px;-webkit-overflow-scrolling:touch;flex-basis:100%}
+.tiles-filtro .tile{flex:none;flex-direction:row;align-items:center;gap:6px;padding:7px 12px;border-radius:999px;min-height:36px}
+.tiles-filtro .tile b{font-size:14px}
+.tiles-resumo{grid-template-columns:repeat(2,minmax(0,1fr))}
+.tile{padding:10px 12px}
+.tile b{font-size:18px}
+.dia-card{background:none;border:0;overflow:visible}
+.dia-card .tabela-wrap{overflow:visible}
+table.dia{min-width:0;display:block}
+table.dia thead{display:none}
+table.dia tbody{display:flex;flex-direction:column;gap:10px}
+table.dia tbody tr{display:grid;grid-template-columns:52px 1fr auto;grid-template-areas:"hora quem sit" "cob cob cob" "acao acao acao";align-items:center;gap:6px 10px;background:var(--sup);border:1px solid var(--borda);border-radius:14px;padding:12px 14px}
+table.dia tbody tr.vazia{display:block}
+table.dia td{display:block;padding:0;border:0;background:none!important;box-shadow:none!important}
+table.dia .td-hora{grid-area:hora;width:auto}
+table.dia .td-quem{grid-area:quem;min-width:0}
+table.dia .td-quem .nome{font-size:15px}
+table.dia .td-prof{display:none}
+.so-cel{display:inline}
+table.dia .td-cob{grid-area:cob}
+table.dia .td-cob .tags:empty{display:none}
+table.dia .td-sit{grid-area:sit}
+table.dia .td-acao{grid-area:acao;display:flex;align-items:center;gap:8px;text-align:left}
+table.dia .td-acao .btn:not(.icone){flex:1;min-height:44px}
+table.dia .td-acao .mais{margin-left:auto}
+table.dia tr.chegou{border:2px solid var(--roxo);box-shadow:var(--sombra)}
+table.dia tr.sel{border-color:var(--lilas-b)}
+table.dia tr.apagada,table.dia tr.fora{opacity:.75}
+.tabela-rodape{padding:8px 4px;border:0}
+.painel-pac{display:none;position:fixed;left:0;right:0;bottom:var(--tabbar);top:auto;max-height:82vh;border-left:0;border-top:1px solid var(--borda);border-radius:16px 16px 0 0;box-shadow:0 -12px 32px rgba(84,48,96,.18);padding:18px 16px 24px;z-index:8;min-width:0}
+.painel-pac.aberto{display:flex}
 .rodape{padding:12px 16px}
 .rodape .nota{display:none}
 .rodape .btn{flex:1}
 .tabbar{display:grid;position:fixed;left:0;right:0;bottom:0;background:var(--sup);border-top:1px solid var(--borda);grid-template-columns:repeat(4,minmax(0,1fr));padding:8px 8px calc(8px + env(safe-area-inset-bottom,0px));z-index:7}
 .tabbar button{border:0;background:none;display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px 4px;border-radius:12px;color:var(--tx3);font-size:11px;font-weight:600;min-height:50px}
 .tabbar button[aria-current="page"]{color:var(--roxo);font-weight:700}
-.top .titulo-cel{display:flex;align-items:center;gap:6px;flex:1;justify-content:center}
 table{min-width:600px}
 }
-@media (min-width:481px){ .top .titulo-cel{display:none} }
 @media (prefers-reduced-motion:reduce){ .toast{transition:none} }
 </style>
 </head>
 <body>
 <div class="banner" id="banner" hidden></div>
 <div class="app">
-<header class="top">
+<nav class="lado" aria-label="Principal">
 <a class="logo" href="#" id="logo-link" aria-label="Recepção Nascente — Hoje"><svg xmlns="http://www.w3.org/2000/svg" viewBox="234 423 2133 354" class="logo-h" role="img" aria-label="Clínica Nascente" focusable="false">
 <defs>
 <clipPath id="clip_1">
@@ -355,7 +487,25 @@ table{min-width:600px}
 <path transform="matrix(8.29226,0,0,-8.29226,234,776.23959)" d="M234.1113 21.15833H241.81729C241.62229 23.08533 239.7283 23.8363 238.06229 23.8363 236.46231 23.8363 234.4383 23.11731 234.1113 21.15833M228.6583 19.13434C228.6583 23.96631 232.28229 28.01532 238.0953 28.01532 243.22129 28.01532 247.1073 24.84833 247.1073 18.87231 247.1073 18.64429 247.1073 18.3833 247.07431 18.1543H234.0463C234.1113 16.61932 235.8753 14.88928 239.07431 14.88928 240.7073 14.88928 242.24231 15.47632 243.7113 16.71729 244.1683 16.26031 246.0293 13.94232 246.4863 13.51733 244.23429 11.13434 241.3273 10.3833 238.5853 10.3833 232.3153 10.3833 228.6583 14.30133 228.6583 19.13434Z" fill="currentColor"/>
 </g>
 </g>
-</svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="505 625 990 750" class="simbolo" role="img" aria-label="Clínica Nascente" focusable="false">
+</svg></a>
+<button type="button" data-go="hoje" aria-current="page"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>Hoje</button>
+<button type="button" data-go="registrar"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>Registrar</button>
+<button type="button" data-go="pacientes"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0116 0"/></svg>Pacientes</button>
+<button type="button" data-go="mensalistas"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="6" width="18" height="12" rx="2"/><path d="M3 10h18"/></svg>Mensalistas</button>
+<button type="button" data-go="gestao" id="menu-gestao" hidden><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 19V10M10 19V5M16 19v-8M22 19H2"/></svg>Gestão</button>
+<span class="esp"></span>
+<button type="button" class="btn ter imprimir" id="btn-print" hidden>
+<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9V3h12v6"/><rect x="3" y="9" width="18" height="9" rx="2"/><path d="M6 14h12v7H6z"/></svg>
+<span id="btn-print-txt">Imprimir</span>
+</button>
+<div class="chip-user" id="chip-user" title="">
+<span class="av" id="chip-av">R</span>
+<span class="txt"><strong id="chip-nome">Recepção</strong><span class="mail" id="chip-mail"></span></span>
+</div>
+</nav>
+<div class="conteudo">
+<header class="top-cel">
+<a class="logo" href="#" id="logo-link-cel" aria-label="Recepção Nascente — Hoje"><svg xmlns="http://www.w3.org/2000/svg" viewBox="505 625 990 750" class="simbolo" role="img" aria-label="Clínica Nascente" focusable="false">
 <defs>
 <clipPath id="sclip_1">
 <path transform="matrix(4.80391,0,0,-4.80391,-1068.1763,2015.2678)" d="M316.02906 121.982318H545.00906V300.70133H316.02906Z"/>
@@ -371,43 +521,34 @@ table{min-width:600px}
 </g>
 </svg></a>
 <div class="titulo-cel" id="titulo-cel"></div>
-<nav class="menu" aria-label="Principal">
-<button type="button" data-go="hoje" aria-current="page">Hoje</button>
-<button type="button" data-go="registrar">Registrar</button>
-<button type="button" data-go="pacientes">Pacientes</button>
-<button type="button" data-go="mensalistas">Mensalistas</button>
-<button type="button" data-go="gestao" id="menu-gestao" hidden>Gestão</button>
-</nav>
-<div class="top-r">
-<button type="button" class="btn ter so-pc" id="btn-print" hidden>
-<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9V3h12v6"/><rect x="3" y="9" width="18" height="9" rx="2"/><path d="M6 14h12v7H6z"/></svg>
-<span id="btn-print-txt">Imprimir</span>
-</button>
-<div class="chip-user" id="chip-user" title="">
-<span class="av" id="chip-av">R</span>
-<span class="txt"><strong id="chip-nome">Recepção</strong> <span class="mail" id="chip-mail"></span></span>
-</div>
-</div>
+<span class="av" id="chip-av-cel">R</span>
 </header>
 <main id="main">
-<section class="tela" id="s-hoje">
+<section class="tela hoje" id="s-hoje">
 <div class="principal">
-<div class="titulo">
-<div class="acoes" style="gap:4px">
-<button type="button" class="btn icone" id="d-ant" aria-label="Dia anterior"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg></button>
-<button type="button" class="btn icone" id="d-prox" aria-label="Próximo dia"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button>
+<div class="toolbar no-print">
+<div class="databox">
+<button type="button" class="btn icone p" id="d-ant" aria-label="Dia anterior"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg></button>
+<button type="button" class="datatxt" id="d-cal" title="Escolher a data"><span id="d-titulo">Hoje</span></button>
+<button type="button" class="btn icone p" id="d-prox" aria-label="Próximo dia"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button>
 </div>
-<h1 id="d-titulo">Hoje</h1>
-<span class="pill lilas" id="d-pill-hoje" hidden>hoje</span>
-<button type="button" class="btn ter roxo so-pc" id="d-ir-hoje" hidden>ir para hoje</button>
-<button type="button" class="btn icone p" id="d-cal" aria-label="Escolher a data" title="Escolher a data"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg></button>
 <input type="date" id="d-data" class="sr" aria-label="Data da lista" tabindex="-1">
-<div class="esp"></div>
-<button type="button" class="btn ter roxo" id="d-add"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg> Encaixe no dia</button>
-<button type="button" class="btn ter" id="d-rec">Agenda recorrente</button>
+<button type="button" class="btn ter roxo" id="d-ir-hoje">Hoje</button>
+<select id="d-prof" aria-label="Profissional" class="auto"><option value="">Todas as profissionais</option></select>
+<div class="campo-wrap busca">
+<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+<input type="search" id="d-busca" placeholder="Buscar paciente (nome ou pagador)" aria-label="Buscar paciente" autocomplete="off">
 </div>
-<div class="filtros" id="d-filtros" role="group" aria-label="Filtrar por situação"></div>
+<button type="button" class="btn ter so-pc" id="d-print"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9V3h12v6"/><rect x="3" y="9" width="18" height="9" rx="2"/><path d="M6 14h12v7H6z"/></svg> Imprimir</button>
+<button type="button" class="btn" id="d-add"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg> Encaixe no dia</button>
+</div>
+<h1 class="so-print" id="d-titulo-print">Lista do dia</h1>
+<div class="tiles no-print">
+<div class="tiles-filtro" id="d-filtros" role="group" aria-label="Filtrar por situação"></div>
+<div class="tiles-resumo" id="d-resumo" role="group" aria-label="Resumo do dia"></div>
+</div>
 <div id="d-aviso-aba" class="faixa amarela" hidden></div>
+<div class="faixa pessego lembrete" id="d-lembrete" hidden><div class="corpo"><div class="t">Lembrete da gestão</div><span id="d-lembrete-txt"></span><small id="d-lembrete-meta"></small></div></div>
 <div id="d-addbox" class="painel" hidden>
 <div class="cab"><h2>Encaixe no dia</h2><span class="muted">paciente sem horário fixo: retorno, avaliação, reposição</span><span class="esp"></span><button type="button" class="btn icone p" id="d-add-cancel" aria-label="Fechar"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
 <div class="grid g4">
@@ -436,23 +577,56 @@ table{min-width:600px}
 <div class="tabela-card"><div class="tabela-wrap"><table><thead><tr><th>Paciente</th><th>Profissional</th><th>Dia</th><th>Hora</th><th>Freq.</th><th>Vigência</th><th>Ativo</th><th></th></tr></thead><tbody id="r-lista"></tbody></table></div></div>
 </div>
 <div id="d-carregando" class="carregando">Carregando a lista…</div>
-<div class="lista" id="d-list"></div>
+<div class="tabela-card dia-card">
+<div class="tabela-wrap">
+<table class="dia">
+<thead><tr><th class="th-hora">Hora</th><th>Paciente</th><th class="th-prof">Profissional · modalidade</th><th>Cobrança</th><th>Situação</th><th class="th-acao no-print"></th></tr></thead>
+<tbody id="d-list"></tbody>
+</table>
 </div>
-<aside class="lateral">
-<div class="card roxo">
-<h2>Resumo de hoje</h2>
-<div class="resumo-num" id="d-resumo"></div>
+<div class="tabela-rodape no-print"><span id="d-rodape-n"></span><span class="esp"></span><button type="button" class="link-discreto" id="d-rec">Agenda recorrente (horários fixos)</button></div>
 </div>
-<div class="card compacto fim-dia">
-<h2 style="font-size:15px">Fim do dia</h2>
-<label class="check"><input type="checkbox" id="fd-1"> Nenhum paciente ficou em “Aguardando”</label>
-<label class="check"><input type="checkbox" id="fd-2"> Um registro para cada paciente que chegou</label>
+<div class="dois no-print">
+<section class="card compacto" id="d-pend-card">
+<h2>Pendências de hoje</h2>
+<div class="pend-lista" id="d-pend"></div>
+</section>
+<section class="card compacto fim-dia">
+<h2>Fim do dia</h2>
+<label class="check"><input type="checkbox" id="fd-1"> Ninguém ficou em “Aguardando”</label>
+<label class="check"><input type="checkbox" id="fd-2"> Um registro por paciente que chegou</label>
 <label class="check"><input type="checkbox" id="fd-3"> NFs de quem pagou hoje emitidas</label>
 <label class="check"><input type="checkbox" id="fd-4"> Dinheiro da gaveta = livro caixa</label>
-<button type="button" class="btn ter roxo" id="fd-fechar">Fechar o dia</button>
-<span class="muted" id="fd-status"></span>
+<div class="acoes"><button type="button" class="btn ter roxo" id="fd-fechar">Fechar o dia</button><span class="muted" id="fd-status"></span></div>
+</section>
 </div>
-<div class="card pessego" id="d-lembrete" hidden><strong>Lembrete da gestão</strong><span id="d-lembrete-txt"></span><small id="d-lembrete-meta" style="opacity:.75"></small></div>
+</div>
+<aside class="painel-pac no-print" id="d-painel" aria-label="Paciente selecionado">
+<div id="pp-vazio">
+<h2>Resumo do dia</h2>
+<div class="resumo-num" id="pp-resumo"></div>
+<p class="dica">Clique numa linha da lista pra ver o paciente, marcar a situação e registrar o atendimento.</p>
+</div>
+<div id="pp-pac" hidden>
+<div class="pp-cab">
+<span class="pp-av" id="pp-av">A</span>
+<div class="pp-quem"><div class="pp-nome" id="pp-nome"></div><div class="muted" id="pp-sub"></div></div>
+<button type="button" class="btn icone p" id="pp-fechar" aria-label="Fechar"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+</div>
+<dl class="pp-dl" id="pp-dl"></dl>
+<div class="tags" id="pp-tags"></div>
+<div id="pp-aviso"></div>
+<div id="pp-registro"></div>
+<div class="pp-sit" id="pp-sit-box">
+<div class="eyebrow p">Situação</div>
+<div class="pp-botoes" id="pp-sit" role="group" aria-label="Situação"></div>
+</div>
+<div id="pp-form"></div>
+<button type="button" class="btn grande pp-registrar" id="pp-registrar">Registrar atendimento <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
+<div class="muted centro" id="pp-registrar-leg">abre já preenchido: paciente, profissional, hora, procedimento, pagador</div>
+<div class="esp"></div>
+<div class="pp-links"><button type="button" class="btn link" id="pp-cadastro">Ver cadastro</button><span class="sep">·</span><button type="button" class="btn link perigo" id="pp-remover">Remover da lista</button></div>
+</div>
 </aside>
 </section>
 <section class="tela" id="s-registrar" hidden>
@@ -761,6 +935,7 @@ table{min-width:600px}
 </div>
 </section>
 </main>
+</div>
 <nav class="tabbar" aria-label="Principal (celular)">
 <button type="button" data-go="hoje" aria-current="page"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>Hoje</button>
 <button type="button" data-go="registrar"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>Registrar</button>
@@ -922,7 +1097,7 @@ Object.keys(TELAS).forEach(function (k) { $("#" + TELAS[k]).hidden = id !== k; }
 $("#a-rodape").hidden = id !== 'registrar' || !AT;
 $("#p-rodape").hidden = id !== 'pacientes' || !BOOT;
 $$("[data-go]").forEach(function (b) { if (b.dataset.go === id) b.setAttribute("aria-current", "page"); else b.removeAttribute("aria-current"); });
-var imp = { hoje: 'Imprimir', mensalistas: 'Imprimir lista de cobrança', gestao: 'Imprimir pendências' }[id];
+var imp = { mensalistas: 'Imprimir lista de cobrança', gestao: 'Imprimir pendências' }[id]; // Hoje tem o Imprimir na própria barra
 $("#btn-print").hidden = !imp; if (imp) $("#btn-print-txt").textContent = imp;
 $("#titulo-cel").textContent = TITULOS[id];
 document.title = TITULOS[id] + ' · Recepção Nascente';
@@ -930,7 +1105,7 @@ if (INICIAR[id]) INICIAR[id](extra);
 window.scrollTo(0, 0);
 }
 $$("[data-go]").forEach(function (b) { b.addEventListener("click", function (e) { e.preventDefault(); go(b.dataset.go); }); });
-$("#logo-link").addEventListener('click', function (e) { e.preventDefault(); go('hoje'); });
+$$("#logo-link, #logo-link-cel").forEach(function (a) { a.addEventListener('click', function (e) { e.preventDefault(); go('hoje'); }); });
 $("#btn-print").addEventListener('click', function () { window.print(); });
 document.addEventListener('click', function (e) { if (!e.target.closest('.mais')) $$('.mais-menu').forEach(function (m) { m.remove(); }); });
 /* ---------- carga inicial ---------- */
@@ -940,8 +1115,8 @@ function carregar() {
 call('bootstrap').then(function (b) {
 BOOT = b;
 var email = b.usuario.email || '';
-$("#chip-nome").textContent = quemSou(); $("#chip-av").textContent = quemSou().charAt(0);
-$("#chip-mail").textContent = '· ' + (ehGestao() ? 'gestão' : 'recepção') + (MOCK ? ' · simulação' : '');
+$("#chip-nome").textContent = quemSou(); $("#chip-av").textContent = quemSou().charAt(0); $("#chip-av-cel").textContent = quemSou().charAt(0);
+$("#chip-mail").textContent = (ehGestao() ? 'gestão' : 'recepção') + (MOCK ? ' · simulação' : '');
 $("#chip-user").title = (email || '') + ' · perfil ' + (ehGestao() ? 'gestão' : 'recepção');
 if (ehGestao()) { $("#chip-user").classList.add('gestao'); $("#menu-gestao").hidden = false; }
 var dl = $("#dl-pagadores"); dl.innerHTML = ''; var vistos = {};
@@ -962,11 +1137,12 @@ setTimeout(carregar, 15000);
 }
 /* ===== 10-hoje.js ===== */
 /* ================= HOJE (lista do dia) ================= */
-var DIA = null, diaFiltro = 'todos', diaProf = '', AGENDA = [], recEdit = null, painelAberto = null, resumoMes = {};
+var DIA = null, diaFiltro = 'todos', diaProf = '', diaBusca = '', AGENDA = [], recEdit = null, resumoMes = {}, selecionado = null, formAberto = null;
 function diaEscolhido() { return isoParaBR($("#d-data").value); }
 function chaveItem(it) { return it.paciente + '|' + it.profissional; }
 function chegadas() { return store('rn-chegou:' + diaEscolhido()) || {}; }
 function marcarChegou(it, on) { var c = chegadas(); if (on) c[chaveItem(it)] = agoraHora(); else delete c[chaveItem(it)]; store('rn-chegou:' + diaEscolhido(), c); }
+// situações possíveis de uma linha (não existe "Em atendimento"): o registro é feito inteiro na chegada
 function statusItem(it) {
 if (it.registro) return /^Atendido/.test(it.registro.oque) ? 'atendido' : 'falta';
 if (it.naoVem) return 'naovem';
@@ -977,6 +1153,10 @@ return 'aconfirmar';
 function profCurto(n) { var m = String(n || '').match(/^(Dra?\.)\s+(\S+)/); return m ? m[1] + ' ' + m[2] : String(n || '').split(' ')[0]; }
 function tituloDia(dt) { return DIAS_PT[dt.getDay()] + ', ' + dt.getDate() + ' de ' + MESES_PT[dt.getMonth()].toLowerCase(); }
 function tituloDiaCurto(dt) { return DIAS_PT[dt.getDay()].slice(0, 3) + ', ' + dt.getDate() + ' ' + MESES_PT[dt.getMonth()].slice(0, 3).toLowerCase(); }
+function semAcento(s) { return String(s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, ''); }
+// o que vai na coluna "Profissional · modalidade" e no painel
+function modalidadeCurta(p) { if (!p) return 'não está em Pacientes'; if (ehConvenio(p)) return 'Convênio ' + p.convenio; if (p.modalidade) return modCurta(p.modalidade); return 'sem modalidade'; }
+function idadeCurta(p) { if (!p || !p.nasc) return ''; var i = idade(p.nasc); if (!i) return ''; var n = parseInt(i, 10); return n >= 18 ? 'adulto' : i; }
 INICIAR.hoje = function () {
 if (!$("#d-data").value) $("#d-data").value = dataParaISO(new Date());
 quandoAT(function () {
@@ -985,7 +1165,7 @@ mostrarLembrete();
 carregarDia();
 });
 };
-// card pêssego da lateral: o lembrete ativo que a gestão escreveu (aba Lembretes)
+// faixa pêssego: o lembrete ativo que a gestão escreveu (aba Lembretes)
 function mostrarLembrete() {
 var l = BOOT && BOOT.lembrete, tem = !!(l && l.texto);
 $("#d-lembrete").hidden = !tem; if (!tem) return;
@@ -996,60 +1176,92 @@ function carregarDia() {
 var data = diaEscolhido(); if (!dataObj(data)) return;
 $("#d-carregando").hidden = false; fecharPainel();
 var dt = dataObj(data), hoje = data === hojeStr();
-$("#d-titulo").textContent = tituloDia(dt); $("#d-pill-hoje").hidden = !hoje; $("#d-ir-hoje").hidden = hoje;
+$("#d-titulo").textContent = tituloDia(dt);
+$("#d-titulo-print").textContent = 'Lista do dia · ' + tituloDia(dt) + ' · ' + data;
+$("#d-ir-hoje").disabled = hoje;
 $("#titulo-cel").textContent = tituloDiaCurto(dt);
 call('listaDoDia', { data: data }).then(function (r) {
 if (r.data !== diaEscolhido()) return; // mudou de dia enquanto carregava
 DIA = r; $("#d-carregando").hidden = true;
 $("#d-aviso-aba").hidden = r.abaMesExiste; if (!r.abaMesExiste) $("#d-aviso-aba").textContent = 'A aba "' + r.abaMes + '" ainda não existe na planilha. Peça à gestão para criar em Gestão → Virada do mês.';
+preencherProfs();
 renderDia(); lerFimDia();
 if (ehGestao()) resumoGestaoDia();
 }).catch(function (e) { $("#d-carregando").textContent = 'Não consegui carregar a lista: ' + e.message; });
 }
+function preencherProfs() {
+var sel = $("#d-prof"), profs = []; DIA.itens.forEach(function (i) { if (profs.indexOf(i.profissional) < 0) profs.push(i.profissional); }); profs.sort();
+sel.innerHTML = '<option value="">Todas as profissionais</option>';
+profs.forEach(function (p) { var o = document.createElement('option'); o.value = p; o.textContent = profCurto(p); sel.appendChild(o); });
+if (profs.indexOf(diaProf) < 0) diaProf = ''; sel.value = diaProf;
+}
 function itensFiltrados() {
 var itens = DIA.itens.slice().sort(function (a, b) { return (a.hora || '99').localeCompare(b.hora || '99') || a.paciente.localeCompare(b.paciente); });
 if (diaProf) itens = itens.filter(function (i) { return i.profissional === diaProf; });
+if (diaBusca) { var q = semAcento(diaBusca); itens = itens.filter(function (i) { var p = pacInfo(i.paciente); return semAcento(i.paciente).indexOf(q) >= 0 || (p && semAcento(p.pagador).indexOf(q) >= 0); }); }
 return itens;
 }
+function contagem(itens) {
+var cont = { todos: itens.length, aguardando: 0, chegou: 0, registrados: 0, naovem: 0, aconfirmar: 0, atendido: 0, falta: 0 };
+itens.forEach(function (it) { var s = statusItem(it); cont[s]++; if (s === 'atendido' || s === 'falta') cont.registrados++; });
+return cont;
+}
+function passaFiltro(it) {
+var s = statusItem(it);
+if (diaFiltro === 'todos') return true;
+if (diaFiltro === 'registrados') return s === 'atendido' || s === 'falta';
+if (diaFiltro === 'aguardando') return s === 'aguardando' || s === 'aconfirmar';
+return s === diaFiltro;
+}
 function renderDia() {
-var r = DIA, todos = itensFiltrados(), cont = { todos: todos.length, aguardando: 0, chegou: 0, registrados: 0, aconfirmar: 0, naovem: 0 };
-todos.forEach(function (it) { var s = statusItem(it); if (s === 'atendido' || s === 'falta') cont.registrados++; else cont[s]++; });
+var r = DIA, todos = itensFiltrados(), cont = contagem(todos);
+// tiles-filtro com contagem (clicáveis); "aguardando" soma os "a confirmar"
 var f = $("#d-filtros"); f.innerHTML = '';
-[['todos', 'Todos'], ['aguardando', 'Aguardando'], ['chegou', 'Chegou'], ['registrados', 'Registrados'], ['aconfirmar', 'A confirmar'], ['naovem', 'Não vem']].forEach(function (x) {
-var b = el('<button type="button" class="filtro" aria-pressed="' + (diaFiltro === x[0]) + '">' + x[1] + ' <span>· ' + cont[x[0]] + '</span></button>');
-b.addEventListener('click', function () { diaFiltro = x[0]; renderDia(); }); f.appendChild(b);
+[['todos', 'na lista', cont.todos, 'roxo'], ['aguardando', 'aguardando', cont.aguardando + cont.aconfirmar, 'cinza'], ['chegou', 'chegou', cont.chegou, 'roxo'], ['registrados', 'registrados', cont.registrados, 'verde'], ['naovem', 'não vem', cont.naovem, 'vermelho']].forEach(function (x) {
+var b = el('<button type="button" class="tile ' + x[3] + '" aria-pressed="' + (diaFiltro === x[0]) + '"><b>' + x[2] + '</b><span>' + x[1] + '</span></button>');
+b.addEventListener('click', function () { diaFiltro = diaFiltro === x[0] ? 'todos' : x[0]; renderDia(); }); f.appendChild(b);
 });
-f.appendChild(el('<span class="esp"></span>'));
-var profs = []; r.itens.forEach(function (i) { if (profs.indexOf(i.profissional) < 0) profs.push(i.profissional); }); profs.sort();
-var lab = el('<label>Profissional <select id="d-prof"><option value="">Todos</option></select></label>');
-profs.forEach(function (p) { var o = document.createElement('option'); o.value = p; o.textContent = profCurto(p); lab.querySelector('select').appendChild(o); });
-lab.querySelector('select').value = diaProf; lab.querySelector('select').addEventListener('change', function () { diaProf = this.value; renderDia(); }); f.appendChild(lab);
-var root = $("#d-list"); root.innerHTML = '';
-var lista = todos.filter(function (it) { var s = statusItem(it); return diaFiltro === 'todos' || (diaFiltro === 'registrados' ? (s === 'atendido' || s === 'falta') : s === diaFiltro); });
-if (!r.itens.length) { root.innerHTML = '<div class="vazio">Ninguém na lista deste dia. Use <b>Encaixe no dia</b> ou cadastre os horários fixos em <b>Agenda recorrente</b>.</div>'; }
-else if (!lista.length) root.innerHTML = '<div class="vazio">Ninguém neste filtro.</div>';
-lista.forEach(function (it) { root.appendChild(linhaDia(it)); });
 renderResumo(cont);
+// tabela
+var tb = $("#d-list"); tb.innerHTML = '';
+var lista = todos.filter(passaFiltro);
+if (!r.itens.length) tb.innerHTML = '<tr class="vazia"><td colspan="6">Ninguém na lista deste dia. Use <b>Encaixe no dia</b> ou cadastre os horários fixos em <b>Agenda recorrente</b>.</td></tr>';
+else if (!lista.length) tb.innerHTML = '<tr class="vazia"><td colspan="6">Ninguém ' + (diaBusca ? 'com “' + esc(diaBusca) + '”' : 'neste filtro') + '.</td></tr>';
+lista.forEach(function (it) { tb.appendChild(linhaDia(it)); });
+$("#d-rodape-n").textContent = lista.length === r.itens.length ? r.itens.length + ' na lista' : 'Mostrando ' + lista.length + ' de ' + r.itens.length;
+renderPend(todos);
+renderPainel();
+}
+function pillSituacao(it, s) {
+return { atendido: '<span class="pill verde">' + ic('check', 14, 3) + 'Atendido</span>', falta: '<span class="pill cinza">' + esc((it.registro && it.registro.oque || '').split(' (')[0]) + '</span>', naovem: '<span class="pill vermelha">Não vem</span>', chegou: '<span class="pill lilas">Chegou ' + esc(chegadas()[chaveItem(it)] || '') + '</span>', aguardando: '<span class="pill cinza">Aguardando</span>', aconfirmar: '<span class="pill amarela">A confirmar</span>' }[s];
+}
+// um único botão por linha, decidido pela situação
+function botaoAcao(it, s) {
+return { atendido: '<button type="button" class="btn link" data-ac="ver">Ver registro</button>', falta: '<button type="button" class="btn link" data-ac="ver">Ver registro</button>', naovem: '<button type="button" class="btn ter mini" data-ac="remarcar">Remarcar</button>', chegou: '<button type="button" class="btn mini" data-ac="registrar">Registrar atendimento</button>', aguardando: '<button type="button" class="btn sec mini" data-ac="chegou">Chegou</button>', aconfirmar: '<button type="button" class="btn ter mini" data-ac="confirmou">Confirmou</button>' }[s];
+}
+function cobrancaHtml(it, p) {
+var html = tagsDe(p).map(function (t) { return tagHtml(t, true); }).join('');
+if (it.naoVem) html += '<span class="tag p cinza">' + esc(it.naoVem.replace('Não vem · ', '')) + '</span>';
+return html || '<span class="muted">—</span>';
 }
 function linhaDia(it) {
-var s = statusItem(it), p = pacInfo(it.paciente), tags = tagsDe(p);
-var sub = [profCurto(it.profissional)];
-if (p) { if (ehConvenio(p)) sub.push('Convênio ' + p.convenio); else if (p.modalidade) sub.push(p.modalidade); }
-else sub.push('não está em Pacientes');
-if (it.origem && !/Semanal|Quinzenal/.test(it.origem)) sub.push(it.origem);
-var pill = { atendido: '<span class="pill verde">' + ic('check', 14, 3) + 'Atendido</span>', falta: '<span class="pill cinza">' + esc((it.registro && it.registro.oque || '').split(' (')[0]) + '</span>', naovem: '<span class="pill vermelha">Não vem</span>', chegou: '<span class="pill lilas">Chegou ' + esc(chegadas()[chaveItem(it)] || '') + '</span>', aguardando: '<span class="pill cinza">Aguardando</span>', aconfirmar: '<span class="pill amarela">A confirmar</span>' }[s];
-var acao = { atendido: '<button type="button" class="btn link" data-ac="ver">Ver registro</button>', falta: '<button type="button" class="btn link" data-ac="ver">Ver registro</button>', naovem: '<button type="button" class="btn ter" data-ac="remarcar">Remarcar</button>', chegou: '<button type="button" class="btn" data-ac="registrar">Registrar atendimento ' + ic('seta', 16) + '</button>', aguardando: '<button type="button" class="btn sec" data-ac="chegou">Chegou</button>', aconfirmar: '<button type="button" class="btn ter" data-ac="confirmou">Confirmou</button>' }[s];
-var art = el('<article class="linha' + (s === 'chegou' ? ' destaque' : '') + (s === 'atendido' || s === 'falta' ? ' apagada' : '') + (s === 'naovem' ? ' fora' : '') + '">' +
-'<div class="hora">' + esc(it.hora || '—') + '</div>' +
-'<div class="quem"><div class="nome">' + esc(it.paciente) + '</div><div class="sub">' + esc(sub.join(' · ')) + '</div></div>' +
-'<div class="tags">' + tags.map(function (t) { return tagHtml(t); }).join('') + (it.naoVem ? '<span class="tag cinza">' + esc(it.naoVem.replace('Não vem · ', '')) + '</span>' : '') + '</div>' +
-pill + '<div class="acao">' + acao + '<div class="mais no-print"><button type="button" class="btn icone p" aria-label="Mais ações" aria-haspopup="menu">' + ic('pontos', 18, 2) + '</button></div></div></article>');
-$$('[data-ac]', art).forEach(function (b) { b.addEventListener('click', function () { acaoDia(b.dataset.ac, it, art); }); });
-$('.mais button', art).addEventListener('click', function (e) { e.stopPropagation(); menuMais(it, art, this); });
-return art;
+var s = statusItem(it), p = pacInfo(it.paciente), k = chaveItem(it);
+var sub1 = [], id = idadeCurta(p); if (id) sub1.push(id); if (!p) sub1.push('não está em Pacientes'); if (it.origem && !/Semanal|Quinzenal|Registrado/.test(it.origem)) sub1.push(it.origem);
+var tr = el('<tr class="' + (s === 'chegou' ? 'chegou' : '') + (s === 'atendido' || s === 'falta' ? ' apagada' : '') + (s === 'naovem' ? ' fora' : '') + (selecionado === k ? ' sel' : '') + '" tabindex="0" data-k="' + esc(k) + '">' +
+'<td class="td-hora">' + esc(it.hora || '—') + '</td>' +
+'<td class="td-quem"><div class="nome">' + esc(it.paciente) + '</div><div class="sub">' + esc(sub1.join(' · ')) + '<span class="so-cel">' + (sub1.length ? ' · ' : '') + esc(profCurto(it.profissional)) + ' · ' + esc(modalidadeCurta(p)) + '</span></div></td>' +
+'<td class="td-prof"><div>' + esc(profCurto(it.profissional)) + '</div><div class="sub">' + esc(modalidadeCurta(p)) + '</div></td>' +
+'<td class="td-cob"><div class="tags">' + cobrancaHtml(it, p) + '</div></td>' +
+'<td class="td-sit">' + pillSituacao(it, s) + '</td>' +
+'<td class="td-acao no-print">' + botaoAcao(it, s) + '<div class="mais"><button type="button" class="btn icone p" aria-label="Mais ações" aria-haspopup="menu">' + ic('pontos', 18, 2) + '</button></div></td></tr>');
+$$('[data-ac]', tr).forEach(function (b) { b.addEventListener('click', function (e) { e.stopPropagation(); acaoDia(b.dataset.ac, it); }); });
+$('.mais button', tr).addEventListener('click', function (e) { e.stopPropagation(); menuMais(it, this); });
+tr.addEventListener('click', function (e) { if (e.target.closest('button')) return; selecionar(it); });
+tr.addEventListener('keydown', function (e) { if (e.key === 'Enter' && !e.target.closest('button')) selecionar(it); });
+return tr;
 }
-function menuMais(it, art, btn) {
-var existe = $('.mais-menu', art); $$('.mais-menu').forEach(function (m) { m.remove(); }); if (existe) return;
+function menuMais(it, btn) {
+var existe = btn.parentNode.querySelector('.mais-menu'); $$('.mais-menu').forEach(function (m) { m.remove(); }); if (existe) return;
 var s = statusItem(it), op = [];
 if (s === 'aguardando' || s === 'aconfirmar') op.push(['chegou', 'Chegou agora']);
 if (s === 'chegou') op.push(['deschegou', 'Desfazer “chegou”']);
@@ -1059,28 +1271,69 @@ if (s !== 'atendido' && s !== 'falta' && s !== 'naovem') { op.push(['naovem', 'N
 if (it.listaId && !it.registro) op.push(['remover', 'Remover da lista', 'perigo']);
 op.push(['cadastro', 'Ver cadastro']);
 var m = el('<div class="mais-menu" role="menu">' + op.map(function (o) { return '<button type="button" role="menuitem" data-ac="' + o[0] + '" class="' + (o[2] || '') + '">' + o[1] + '</button>'; }).join('') + '</div>');
-$$('button', m).forEach(function (b) { b.addEventListener('click', function (e) { e.stopPropagation(); m.remove(); acaoDia(b.dataset.ac, it, art); }); });
+$$('button', m).forEach(function (b) { b.addEventListener('click', function (e) { e.stopPropagation(); m.remove(); acaoDia(b.dataset.ac, it); }); });
 btn.parentNode.appendChild(m);
 }
-function acaoDia(ac, it, art) {
+function acaoDia(ac, it) {
 if (ac === 'chegou') { marcarChegou(it, true); renderDia(); toast(it.paciente + ' chegou · ' + agoraHora()); return; }
 if (ac === 'deschegou') { marcarChegou(it, false); renderDia(); return; }
 if (ac === 'confirmou') { call('confirmar', { data: DIA.data, hora: it.hora || '', paciente: it.paciente, profissional: it.profissional }).then(function (r) { if (!r.ok) return toast((r.erros || ['Não gravou']).join(' ')); toast('Confirmado: ' + it.paciente); carregarDia(); }).catch(function (e) { toast('Erro: ' + e.message); }); return; }
 if (ac === 'registrar') { go('registrar', { paciente: it.paciente, profissional: it.profissional, data: DIA.data, hora: it.hora || '' }); return; }
 if (ac === 'cadastro') { go('pacientes', { editar: it.paciente, voltar: 'hoje' }); return; }
-if (ac === 'ver') { var d = $('.detalhe', art); if (d) { d.remove(); return; } var r = it.registro; art.appendChild(el('<div class="detalhe">Registrado: <b>' + esc(r.oque) + '</b>' + (r.procedimento ? ' · ' + esc(r.procedimento) : '') + (r.hora ? ' · ' + esc(r.hora) : '') + (r.id ? ' · ID ' + esc(r.id) : '') + ' · aba ' + esc(DIA.abaMes) + '</div>')); return; }
-abrirPainel(it, ac, art);
+if (ac === 'ver') { selecionar(it); return; }
+selecionar(it, ac); // naovem · remarcar · remover: formulário dentro do painel do paciente
 }
-function fecharPainel() { if (painelAberto) { painelAberto.remove(); painelAberto = null; } }
-function abrirPainel(it, tipo, art) {
-fecharPainel();
-var titulo = { naovem: 'Não vem hoje', remarcar: 'Remarcar', remover: 'Remover da lista' }[tipo], html;
-if (tipo === 'naovem') html = '<div class="grid"><label class="campo">Motivo<select id="d-nv-motivo"></select></label><label class="campo c2">Observação<input id="d-nv-obs"></label></div><div class="acoes"><button type="button" class="btn" id="d-nv-ok">Gravar</button><span class="muted">Grava a falta na aba do mês, sem cobrança nesta linha.</span></div>';
-else if (tipo === 'remarcar') html = '<div class="grid"><label class="campo">Nova data<input id="d-rm-data" placeholder="dd/mm/aaaa" maxlength="10" inputmode="numeric"></label><label class="campo">Nova hora<input id="d-rm-hora" placeholder="hh:mm" maxlength="5" inputmode="numeric" value="' + esc(it.hora || '') + '"></label><label class="campo">Observação<input id="d-rm-obs"></label></div><div class="acoes"><button type="button" class="btn" id="d-rm-ok">Remarcar</button><span class="muted">Hoje fica como “não vem · remarcado”; o novo dia ganha a linha.</span></div>';
-else html = '<div class="grid"><label class="campo c2">Motivo da remoção <span class="leg">só agendamentos avulsos; horário fixo se pausa na Agenda recorrente</span><input id="d-rem-motivo" value="duplicado"></label></div><div class="acoes"><button type="button" class="btn vermelho" id="d-rem-ok">Remover da lista</button></div>';
-var pn = el('<div class="painel"><div class="cab"><h2>' + titulo + ' · ' + esc(it.paciente) + '</h2><span class="muted">' + esc(profCurto(it.profissional)) + (it.hora ? ' · ' + esc(it.hora) : '') + '</span><span class="esp"></span><button type="button" class="btn icone p" aria-label="Fechar">' + ic('fechar', 16) + '</button></div>' + html + '</div>');
-$('.cab button', pn).addEventListener('click', fecharPainel);
-art.parentNode.insertBefore(pn, art.nextSibling); painelAberto = pn;
+/* ---------- painel do paciente (coluna da direita; folha de baixo no celular) ---------- */
+function itemSelecionado() { if (!DIA || !selecionado) return null; return DIA.itens.filter(function (i) { return chaveItem(i) === selecionado; })[0] || null; }
+function selecionar(it, form) {
+var mesmo = selecionado === chaveItem(it);
+selecionado = chaveItem(it); formAberto = form || (mesmo ? formAberto : null);
+$$('#d-list tr').forEach(function (tr) { tr.classList.remove('sel'); });
+renderPainel();
+if (form) { var fEl = $("#pp-form"); if (fEl.firstChild) fEl.firstChild.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
+}
+function fecharPainel() { selecionado = null; formAberto = null; if (DIA) renderPainel(); }
+function renderPainel() {
+var it = itemSelecionado(), aside = $("#d-painel");
+$("#pp-vazio").hidden = !!it; $("#pp-pac").hidden = !it; aside.classList.toggle('aberto', !!it);
+if (!it) { selecionado = null; return; }
+var p = pacInfo(it.paciente), s = statusItem(it), reg = !!it.registro;
+$$('#d-list tr').forEach(function (tr) { tr.classList.toggle('sel', tr.dataset.k === selecionado); });
+$("#pp-av").textContent = it.paciente.charAt(0).toUpperCase();
+$("#pp-nome").textContent = it.paciente;
+var sub = []; if (p && p.nasc) { var i = idade(p.nasc); if (i) sub.push(i); sub.push('nasc. ' + p.nasc); } if (p && p.pagador && p.pagador !== p.nome) sub.push('pagador: ' + p.pagador); if (!p) sub.push('não está em Pacientes');
+$("#pp-sub").textContent = sub.join(' · ');
+var tipo = it.origem && !/Semanal|Quinzenal|Registrado/.test(it.origem) ? it.origem : 'sessão';
+$("#pp-dl").innerHTML = '<div><dt>Hoje</dt><dd>' + esc((it.hora || '—') + ' · ' + tipo) + '</dd></div><div><dt>Profissional</dt><dd>' + esc(it.profissional) + '</dd></div><div><dt>Modalidade</dt><dd>' + esc(p && p.modalidade ? modCurta(p.modalidade) : (p ? 'sem modalidade' : '—')) + '</dd></div><div><dt>Convênio</dt><dd>' + esc(p ? (p.convenio || 'Particular') : '—') + '</dd></div>';
+var avisoHtml = '';
+if (p && (regraRelevante(p) || p.obsCobranca) && !ehProBono(p) && !ehConvenio(p) && !ehMensal(p)) avisoHtml = aviso('laranja', 'Atenção na cobrança · ' + esc(modCurta(p.regra || 'ver observação')), esc(p.obsCobranca || ''));
+else if (p && cadastroIncompleto(p)) avisoHtml = aviso('laranja', 'Cadastro incompleto', 'Sem modalidade nem convênio. Confira como paga antes de registrar.');
+else if (p && ehProBono(p) && p.obsCobranca) avisoHtml = aviso('lilas', /permuta/i.test(p.regra + p.modalidade) ? 'Permuta' : 'Pro bono', esc(p.obsCobranca));
+$("#pp-aviso").innerHTML = avisoHtml;
+// etiquetas de cobrança (as mesmas da tabela), menos a laranja quando o bloco acima já a explica
+var tags = tagsDe(p).filter(function (t) { return !(t.cor === 'laranja' && avisoHtml); });
+$("#pp-tags").innerHTML = tags.map(function (t) { return tagHtml(t); }).join(''); $("#pp-tags").hidden = !tags.length;
+var r = it.registro;
+$("#pp-registro").innerHTML = r ? '<div class="faixa cinza"><b>Registrado hoje:</b> ' + esc(r.oque) + (r.procedimento ? ' · ' + esc(r.procedimento) : '') + (r.hora ? ' · ' + esc(r.hora) : '') + (r.id ? ' · ID ' + esc(r.id) : '') + ' · aba ' + esc(DIA.abaMes) + '</div>' : '';
+// 4 botões de situação; o atual fica marcado
+$("#pp-sit-box").hidden = reg;
+var ch = chegadas()[chaveItem(it)];
+var bts = [['confirmou', 'Confirmou', !!it.confirmado, it.naoVem || !!it.confirmado], [ch ? 'deschegou' : 'chegou', ch ? 'Chegou ' + ch : 'Chegou', !!ch, !!it.naoVem], ['naovem', 'Não vem hoje', s === 'naovem', s === 'naovem'], ['remarcar', 'Remarcar', formAberto === 'remarcar', false]];
+$("#pp-sit").innerHTML = bts.map(function (b) { return '<button type="button" data-ac="' + b[0] + '" aria-pressed="' + b[2] + '"' + (b[3] ? ' disabled' : '') + '>' + esc(b[1]) + '</button>'; }).join('');
+$$('button', $("#pp-sit")).forEach(function (b) { b.addEventListener('click', function () { if (b.dataset.ac === 'naovem' || b.dataset.ac === 'remarcar') { formAberto = formAberto === b.dataset.ac ? null : b.dataset.ac; renderPainel(); } else acaoDia(b.dataset.ac, it); }); });
+$("#pp-registrar").innerHTML = (reg ? 'Registrar outro atendimento ' : 'Registrar atendimento ') + ic('seta', 18);
+$("#pp-registrar-leg").hidden = reg;
+$("#pp-remover").hidden = !(it.listaId && !it.registro);
+renderForm(it);
+}
+function renderForm(it) {
+var box = $("#pp-form"); box.innerHTML = ''; if (!formAberto) return;
+var tipo = formAberto, html;
+if (tipo === 'naovem') html = '<h3>Não vem hoje</h3><div class="grid g1"><label class="campo">Motivo<select id="d-nv-motivo"></select></label><label class="campo">Observação<input id="d-nv-obs"></label></div><div class="acoes"><button type="button" class="btn" id="d-nv-ok">Gravar</button><button type="button" class="btn ter" data-fechar>Cancelar</button></div><span class="muted">Grava a falta na aba do mês, sem cobrança nesta linha.</span>';
+else if (tipo === 'remarcar') html = '<h3>Remarcar</h3><div class="grid g2"><label class="campo">Nova data<input id="d-rm-data" placeholder="dd/mm/aaaa" maxlength="10" inputmode="numeric"></label><label class="campo">Nova hora<input id="d-rm-hora" placeholder="hh:mm" maxlength="5" inputmode="numeric" value="' + esc(it.hora || '') + '"></label><label class="campo c2">Observação<input id="d-rm-obs"></label></div><div class="acoes"><button type="button" class="btn" id="d-rm-ok">Remarcar</button><button type="button" class="btn ter" data-fechar>Cancelar</button></div><span class="muted">Hoje fica como “não vem · remarcado”; o novo dia ganha a linha.</span>';
+else html = '<h3>Remover da lista</h3><div class="grid g1"><label class="campo">Motivo da remoção <span class="leg">só agendamentos avulsos; horário fixo se pausa na Agenda recorrente</span><input id="d-rem-motivo" value="duplicado"></label></div><div class="acoes"><button type="button" class="btn vermelho" id="d-rem-ok">Remover da lista</button><button type="button" class="btn ter" data-fechar>Cancelar</button></div>';
+var pn = el('<div class="pp-formbox">' + html + '</div>'); box.appendChild(pn);
+$('[data-fechar]', pn).addEventListener('click', function () { formAberto = null; renderPainel(); });
 if (tipo === 'naovem') {
 preencherSelect($("#d-nv-motivo", pn), (BOOT.listas.oque || []).filter(function (x) { return !/^Atendido/.test(x); }));
 $("#d-nv-ok", pn).addEventListener('click', function () {
@@ -1106,24 +1359,67 @@ this.disabled = true;
 call('removerDoDia', { id: it.listaId, motivo: $("#d-rem-motivo", pn).value.trim() || 'removido' }).then(function (r) { if (!r.ok) return toast((r.erros || ['Não removeu']).join(' ')); toast('Removido da lista: ' + it.paciente); carregarDia(); }).catch(function (e) { toast('Erro: ' + e.message); });
 });
 }
-pn.scrollIntoView({ behavior: 'smooth', block: 'center' });
 }
-/* resumo lateral */
+$("#pp-fechar").addEventListener('click', fecharPainel);
+$("#pp-registrar").addEventListener('click', function () { var it = itemSelecionado(); if (it) acaoDia('registrar', it); });
+$("#pp-cadastro").addEventListener('click', function () { var it = itemSelecionado(); if (it) acaoDia('cadastro', it); });
+$("#pp-remover").addEventListener('click', function () { var it = itemSelecionado(); if (it) selecionar(it, 'remover'); });
+/* ---------- tiles de resumo e resumo do painel ---------- */
+function doDia(l, dia) { return (l || []).filter(function (x) { return x.data === dia; }); }
 function renderResumo(cont) {
-var tot = DIA.itens.length, reg = DIA.itens.filter(function (i) { return i.registro; }).length;
-var g = resumoMes[DIA.abaMes], dia = DIA.data, html = '';
-html += '<div><b>' + reg + '<small>/' + tot + '</small></b><span>registrados</span></div>';
-html += '<div><b>' + cont.chegou + '</b><span>na recepção</span></div>';
-if (ehGestao() && g) {
-// o servidor devolve só as listas de pendência do mês; aqui filtramos pelo dia escolhido
-var doDia = function (l) { return (l || []).filter(function (x) { return x.data === dia; }); };
-html += '<div class="' + (doDia(g.nfPendente).length ? 'atencao' : '') + '"><b>' + doDia(g.nfPendente).length + '</b><span>NF pendente</span></div>';
-html += '<div class="' + (doDia(g.semGuia).length ? 'atencao' : '') + '"><b>' + doDia(g.semGuia).length + '</b><span>guia a emitir</span></div>';
+var tot = DIA.itens.length, reg = DIA.itens.filter(function (i) { return i.registro; }).length, dia = DIA.data, g = resumoMes[DIA.abaMes];
+// resumo do painel (sem paciente selecionado)
+$("#pp-resumo").innerHTML = '<div><b>' + reg + '<small>/' + tot + '</small></b><span>registrados</span></div><div><b>' + cont.chegou + '</b><span>na recepção</span></div><div><b>' + (cont.aguardando + cont.aconfirmar) + '</b><span>aguardando</span></div><div class="' + (cont.naovem ? 'atencao' : '') + '"><b>' + cont.naovem + '</b><span>não vêm</span></div>';
+// tiles: a gestão vê os valores do dia (do gestaoResumo do mês, filtrado pelo dia); a recepção vê contagens que saem do cadastro
+var tiles = [];
+if (ehGestao()) {
+if (g) {
+var aRec = doDia(g.pagamentoPendente, dia).reduce(function (a, x) { return a + (Number(x.valor) || 0); }, 0);
+tiles.push(['R$ ' + brl(g.recebido).replace(',00', ''), 'recebido no mês', 'verde', 'gestao']);
+tiles.push(['R$ ' + brl(aRec).replace(',00', ''), 'a receber hoje (particular)', aRec ? 'amarelo' : 'cinza', 'gestao']);
+tiles.push([doDia(g.nfPendente, dia).length, 'NF pendente hoje', doDia(g.nfPendente, dia).length ? 'laranja' : 'cinza', 'gestao']);
+tiles.push([doDia(g.semGuia, dia).length, 'guia a emitir hoje', doDia(g.semGuia, dia).length ? 'amarelo' : 'cinza', 'gestao']);
+} else tiles.push(['…', 'carregando o resumo do mês', 'cinza']);
 } else {
-html += '<div><b>' + cont.aguardando + '</b><span>aguardando</span></div>';
-html += '<div class="' + (cont.naovem ? 'atencao' : '') + '"><b>' + cont.naovem + '</b><span>não vêm</span></div>';
+var ps = DIA.itens.map(function (i) { return pacInfo(i.paciente); });
+var mensAberto = ps.filter(function (p) { return p && ehMensal(p) && /amarela|vermelha/.test(situacaoMensal(p)[0]); }).length;
+var conv = ps.filter(function (p) { return p && ehConvenio(p); }).length;
+var atencao = ps.filter(function (p) { return p && (regraRelevante(p) || (p.obsCobranca && !ehMensal(p) && !ehConvenio(p) && !ehProBono(p))); }).length;
+var incompl = DIA.itens.filter(function (i) { var p = pacInfo(i.paciente); return !p || cadastroIncompleto(p); }).length;
+tiles.push([mensAberto, 'mensalista com mês em aberto', mensAberto ? 'amarelo' : 'cinza', 'mensalistas']);
+tiles.push([conv, 'convênio hoje · guia por sessão', 'lilas']);
+tiles.push([atencao, 'atenção na cobrança', atencao ? 'laranja' : 'cinza']);
+tiles.push([incompl, 'cadastro a completar', incompl ? 'laranja' : 'cinza', 'pacientes']);
 }
-$("#d-resumo").innerHTML = html;
+var box = $("#d-resumo"); box.innerHTML = '';
+tiles.forEach(function (t) {
+var b = el('<' + (t[3] ? 'button type="button"' : 'div') + ' class="tile info ' + t[2] + '"><b>' + esc(String(t[0])) + '</b><span>' + esc(t[1]) + '</span></' + (t[3] ? 'button' : 'div') + '>');
+if (t[3]) b.addEventListener('click', function () { go(t[3]); });
+box.appendChild(b);
+});
+}
+/* ---------- pendências de hoje (linhas clicáveis) ---------- */
+function renderPend(itens) {
+var dia = DIA.data, g = resumoMes[DIA.abaMes], out = [];
+var mens = itens.filter(function (i) { var p = pacInfo(i.paciente); return p && ehMensal(p) && /amarela|vermelha/.test(situacaoMensal(p)[0]); });
+if (mens.length) out.push(['amarela', mens.length, 'mensalista' + (mens.length > 1 ? 's' : '') + ' de hoje com mês em aberto · ' + mens.map(function (i) { return primeiroNome(i.paciente); }).join(', '), 'mensalistas']);
+var incompl = itens.filter(function (i) { var p = pacInfo(i.paciente); return p && cadastroIncompleto(p); });
+if (incompl.length) out.push(['laranja', incompl.length, 'cadastro sem modalidade · ' + incompl.map(function (i) { return primeiroNome(i.paciente); }).join(', '), 'pacientes', incompl[0].paciente]);
+var fora = itens.filter(function (i) { return !pacInfo(i.paciente); });
+if (fora.length) out.push(['laranja', fora.length, 'não está em Pacientes · ' + fora.map(function (i) { return primeiroNome(i.paciente); }).join(', '), 'pacientes']);
+if (ehGestao() && g) {
+var sg = doDia(g.semGuia, dia); if (sg.length) out.push(['amarela', sg.length, 'guia a emitir hoje · ' + sg.map(function (x) { return primeiroNome(x.paciente) + (x.hora ? ' ' + x.hora : ''); }).join(', '), 'gestao']);
+var ontem = dataObj(dia); ontem.setDate(ontem.getDate() - 1); var dOntem = ('0' + ontem.getDate()).slice(-2) + '/' + ('0' + (ontem.getMonth() + 1)).slice(-2) + '/' + ontem.getFullYear();
+var nf = (g.nfPendente || []).filter(function (x) { return x.data === dia || x.data === dOntem; }); if (nf.length) out.push(['laranja', nf.length, 'NF a emitir (hoje e ontem) · ' + nf.map(function (x) { return primeiroNome(x.paciente) + (x.valor ? ' R$ ' + brl(x.valor).replace(',00', '') : ''); }).join(', '), 'gestao']);
+var pp = doDia(g.pagamentoPendente, dia); if (pp.length) out.push(['amarela', pp.length, 'particular sem “Pago?” hoje · ' + pp.map(function (x) { return primeiroNome(x.paciente); }).join(', '), 'gestao']);
+}
+var box = $("#d-pend"); box.innerHTML = '';
+if (!out.length) { box.innerHTML = '<div class="muted">Nada pendente por enquanto.</div>'; return; }
+out.forEach(function (o) {
+var b = el('<button type="button" class="pend-linha ' + o[0] + '"><b>' + o[1] + '</b><span>' + esc(o[2]) + '</span>' + ic('direita', 16, 2.4) + '</button>');
+b.addEventListener('click', function () { go(o[3], o[3] === 'pacientes' && o[4] ? { editar: o[4], voltar: 'hoje' } : undefined); });
+box.appendChild(b);
+});
 }
 function invalidarResumo() { resumoMes = {}; }
 function resumoGestaoDia() {
@@ -1139,13 +1435,16 @@ if (!DIA) return; var pend = DIA.itens.filter(function (i) { var s = statusItem(
 if (pend) toast(pend + ' paciente(s) ainda em “Aguardando” ou “Chegou”. Registre ou marque “não vem” antes de fechar.');
 else { gravarFimDia(true); toast('Dia fechado. Bom descanso.'); }
 });
-/* navegação de data */
+/* navegação de data, filtros, busca, impressão */
 function mudarDia(n) { var dt = dataObj(diaEscolhido()) || new Date(); dt.setDate(dt.getDate() + n); $("#d-data").value = dataParaISO(dt); carregarDia(); }
 $("#d-ant").addEventListener('click', function () { mudarDia(-1); });
 $("#d-prox").addEventListener('click', function () { mudarDia(1); });
 $("#d-ir-hoje").addEventListener('click', function () { $("#d-data").value = dataParaISO(new Date()); carregarDia(); });
 $("#d-cal").addEventListener('click', function () { var i = $("#d-data"); if (i.showPicker) { try { i.showPicker(); return; } catch (e) { } } i.classList.remove('sr'); i.focus(); });
 $("#d-data").addEventListener('change', function () { this.classList.add('sr'); if (dataObj(diaEscolhido())) carregarDia(); });
+$("#d-prof").addEventListener('change', function () { diaProf = this.value; if (DIA) renderDia(); });
+$("#d-busca").addEventListener('input', function () { diaBusca = this.value.trim(); if (DIA) renderDia(); });
+$("#d-print").addEventListener('click', function () { window.print(); });
 /* encaixe no dia */
 function infoPaciente(nome) { var p = pacInfo(nome); if (!p) return nome.trim() ? 'Não está em Pacientes. Cadastre antes em "Pacientes".' : ''; if (cadastroIncompleto(p)) return 'Cadastro incompleto: sem modalidade nem convênio. Confira como paga.'; var partes = []; if (ehConvenio(p)) partes.push('Convênio ' + p.convenio); else if (p.convenio) partes.push('Particular'); if (p.modalidade && !(ehConvenio(p) && /^Conv[êe]nio$/i.test(p.modalidade))) partes.push(p.modalidade); if (regraRelevante(p)) partes.push(modCurta(p.regra)); return 'Cadastro: ' + partes.join(' · '); }
 function mostrarInfo(elHint, nome) { var p = pacInfo(nome); elHint.innerHTML = esc(infoPaciente(nome)) + (p ? ' <a href="#">' + (cadastroIncompleto(p) ? 'Completar cadastro' : 'editar cadastro') + '</a>' : ''); var a = elHint.querySelector('a'); if (a) a.addEventListener('click', function (e) { e.preventDefault(); go('pacientes', { editar: nome, voltar: 'hoje' }); }); }
@@ -1162,7 +1461,7 @@ fn.then(function (r) { if (!r.ok) return toast((r.erros || ['Não gravou']).join
 }
 $("#d-add-ok").addEventListener('click', function () { addDia(false); });
 $("#d-add-rec").addEventListener('click', function () { addDia(true); });
-/* agenda recorrente */
+/* agenda recorrente (link discreto no rodapé da tabela) */
 function carregarRec() { return call('agendaFixa').then(function (l) { AGENDA = l; renderRec(); return l; }); }
 function renderRec() {
 var tb = $("#r-lista"); tb.innerHTML = '';
@@ -1173,7 +1472,7 @@ tb.appendChild(tr);
 });
 }
 function limparRec() { recEdit = null; ['r-pac', 'r-hora', 'r-ini', 'r-fim', 'r-obs'].forEach(function (id) { $("#" + id).value = ''; }); $("#r-pac-info").textContent = ''; $("#r-freq").value = 'Semanal'; $("#r-ativo").value = 'Sim'; $("#r-hint").textContent = 'Nova recorrência.'; }
-$("#d-rec").addEventListener('click', function () { $("#d-recbox").hidden = !$("#d-recbox").hidden; $("#d-addbox").hidden = true; if (!$("#d-recbox").hidden) carregarRec(); });
+$("#d-rec").addEventListener('click', function () { $("#d-recbox").hidden = !$("#d-recbox").hidden; $("#d-addbox").hidden = true; if (!$("#d-recbox").hidden) { carregarRec(); $("#d-recbox").scrollIntoView({ behavior: 'smooth', block: 'start' }); } });
 $("#d-rec-fechar").addEventListener('click', function () { $("#d-recbox").hidden = true; });
 $("#r-novo").addEventListener('click', limparRec);
 $("#r-pac").addEventListener('input', function () { mostrarInfo($("#r-pac-info"), this.value); });
