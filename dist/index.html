@@ -253,6 +253,7 @@ table.dia tr.fora .td-sit,table.dia tr.fora .td-acao{text-decoration:none}
 table.dia tr.vazia td{color:var(--tx3);font-size:14px;padding:22px 18px;cursor:default}
 table.dia tr.vazia:hover td{background:none}
 .so-cel{display:none}
+.so-tel{display:none}
 .link-discreto{border:0;background:none;color:var(--tx3);font-size:13px;padding:0;text-decoration:underline dotted;cursor:pointer;font-family:inherit}
 .link-discreto:hover{color:var(--roxo)}
 .dois{display:flex;flex-wrap:wrap;gap:14px}
@@ -465,6 +466,26 @@ button.kpi[aria-pressed="true"] span,.kpi.roxo span{color:#fff;opacity:.9}
   .tabbar button{border:0;background:none;display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px 4px;border-radius:12px;color:var(--tx3);font-size:11px;font-weight:600;min-height:50px}
   .tabbar button[aria-current="page"]{color:var(--roxo);font-weight:700}
   table{min-width:600px}
+  /* Mensalistas no celular: cada linha vira um card (igual à lista do dia) */
+  .so-tel{display:inline}
+  .mens-card{background:none;border:0;overflow:visible}
+  .mens-card .tabela-wrap{overflow:visible}
+  table.mens{min-width:0;display:block}
+  table.mens thead{display:none}
+  table.mens tbody{display:flex;flex-direction:column;gap:10px}
+  table.mens tbody tr{display:grid;grid-template-columns:1fr auto;grid-template-areas:"quem valor" "plano plano" "pag pag" "mes quinta" "acao acao";align-items:center;gap:6px 10px;background:var(--sup);border:1px solid var(--borda);border-radius:14px;padding:12px 14px}
+  table.mens tbody tr.atrasada{background:var(--vm-linha);border-color:var(--vm-b)}
+  table.mens td{display:block;padding:0;border:0;background:none!important}
+  table.mens .td-quem{grid-area:quem;min-width:0}
+  table.mens .td-quem .nome{font-size:15px}
+  table.mens .td-valor{grid-area:valor;font-size:16px}
+  table.mens .td-plano{grid-area:plano;font-size:13px;color:var(--tx2)}
+  table.mens .td-pag{grid-area:pag;font-size:13px}
+  table.mens .td-mes{grid-area:mes}
+  table.mens .td-quinta{grid-area:quinta;text-align:right}
+  table.mens .td-acao{grid-area:acao;text-align:left!important;margin-top:4px}
+  table.mens .td-acao .btn:not(.link){width:100%;min-height:44px}
+  table.mens .td-acao .btn.link{padding-left:0}
 }
 @media (prefers-reduced-motion:reduce){ .toast{transition:none} }
 
@@ -2295,14 +2316,14 @@ function renderMensal() {
   var lista = itens.filter(function (it) { var kk = it._s[0] === 'verde' ? 'ok' : it._s[0] === 'vermelha' ? 'atr' : 'pend'; return (menFiltro === 'todos' || menFiltro === kk) && (!q || it.paciente.toLowerCase().indexOf(q) >= 0 || (it.pagador || '').toLowerCase().indexOf(q) >= 0); });
   var root = $("#m-list"); root.innerHTML = '';
   if (!lista.length) { root.innerHTML = '<div class="vazio">Ninguém neste filtro.</div>'; return; }
-  var card = el('<div class="tabela-card"><div class="tabela-wrap"><table><thead><tr><th>Paciente</th><th>Plano</th><th>Pagador</th><th class="num">Valor</th><th>' + esc(tituloCol(r.coluna)) + '</th><th>5ª semana</th><th></th></tr></thead><tbody></tbody></table></div><div class="tabela-rodape"><span>Mostrando ' + lista.length + ' de ' + itens.length + '</span><span>Pagamento antes do dia 10 = mês anterior (competência)</span><span>NF do mensalista: uma por mês, quando paga</span></div></div>');
+  var card = el('<div class="tabela-card mens-card"><div class="tabela-wrap"><table class="mens"><thead><tr><th>Paciente</th><th>Plano</th><th>Pagador</th><th class="num">Valor</th><th>' + esc(tituloCol(r.coluna)) + '</th><th>5ª semana</th><th></th></tr></thead><tbody></tbody></table></div><div class="tabela-rodape"><span>Mostrando ' + lista.length + ' de ' + itens.length + '</span><span>Pagamento antes do dia 10 = mês anterior (competência)</span><span>NF do mensalista: uma por mês, quando paga</span></div></div>');
   var tb = $('tbody', card);
   lista.forEach(function (it) {
     var pm = ehPacoteMensal(it), fixa = /mensalidade fixa/i.test(it.modalidade), antigo = /só até|preexistente|\b280\b/i.test(it.modalidade);
     var plano = esc(it.modalidade.split('·')[0].trim()) + (fixa ? ' <span class="tag p laranja">' + ic('alerta', 11, 2.5) + 'sem proporcional</span>' : '') + (antigo ? ' <span class="muted" style="font-size:11px">(antigo, até jan/27)</span>' : '');
     var quinta = pm ? '<label class="check" style="display:inline-flex;font-size:13px"><input type="checkbox" data-extra' + (it._extra ? ' checked' : '') + '> quer · + R$ ' + brl(Math.round(it.valor / 4)) + '</label>' : '<span class="muted">—' + (fixa ? ' (incluída)' : '') + '</span>';
     var acao = it._s[0] === 'verde' ? '<button type="button" class="btn link" data-ver>Ver</button>' : it._s[0] === 'vermelha' ? '<button type="button" class="btn vermelho" data-reg>Chamar a gestão</button>' : '<button type="button" class="btn" data-reg>Registrar pagamento</button>';
-    var tr = el('<tr class="' + (it._s[0] === 'vermelha' ? 'atrasada' : '') + '"><td><div style="font-weight:700">' + esc(it.paciente) + '</div><div class="sub">' + esc(horarioDe(it.paciente) || (it.sessoes ? it.sessoes + ' sessões no mês' : '')) + '</div></td><td>' + plano + '</td><td>' + esc(it.pagador || '—') + '</td><td class="num" style="font-weight:700">R$ ' + brl(it.valor) + '</td><td>' + pillMes(it) + (it.sessoes >= 5 ? ' <span class="tag p amarela">5ª sessão</span>' : '') + '</td><td>' + quinta + '</td><td style="text-align:right">' + acao + '</td></tr>');
+    var tr = el('<tr class="' + (it._s[0] === 'vermelha' ? 'atrasada' : '') + '"><td class="td-quem"><div class="nome" style="font-weight:700">' + esc(it.paciente) + '</div><div class="sub">' + esc(horarioDe(it.paciente) || (it.sessoes ? it.sessoes + ' sessões no mês' : '')) + '</div></td><td class="td-plano">' + plano + '</td><td class="td-pag"><span class="so-tel muted">Pagador: </span>' + esc(it.pagador || '—') + '</td><td class="num td-valor" style="font-weight:700">R$ ' + brl(it.valor) + '</td><td class="td-mes">' + pillMes(it) + (it.sessoes >= 5 ? ' <span class="tag p amarela">5ª sessão</span>' : '') + '</td><td class="td-quinta">' + quinta + '</td><td class="td-acao" style="text-align:right">' + acao + '</td></tr>');
     var cb = $('[data-extra]', tr); if (cb) cb.addEventListener('change', function () { it._extra = this.checked; });
     var bv = $('[data-ver]', tr); if (bv) bv.addEventListener('click', function () { toast(it.dataPago || 'Sem anotação'); });
     var br = $('[data-reg]', tr); if (br) br.addEventListener('click', function () { abrirMen(it); });

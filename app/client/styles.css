@@ -244,6 +244,7 @@ table.dia tr.fora .td-sit,table.dia tr.fora .td-acao{text-decoration:none}
 table.dia tr.vazia td{color:var(--tx3);font-size:14px;padding:22px 18px;cursor:default}
 table.dia tr.vazia:hover td{background:none}
 .so-cel{display:none}
+.so-tel{display:none}
 .link-discreto{border:0;background:none;color:var(--tx3);font-size:13px;padding:0;text-decoration:underline dotted;cursor:pointer;font-family:inherit}
 .link-discreto:hover{color:var(--roxo)}
 .dois{display:flex;flex-wrap:wrap;gap:14px}
@@ -456,5 +457,25 @@ button.kpi[aria-pressed="true"] span,.kpi.roxo span{color:#fff;opacity:.9}
   .tabbar button{border:0;background:none;display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px 4px;border-radius:12px;color:var(--tx3);font-size:11px;font-weight:600;min-height:50px}
   .tabbar button[aria-current="page"]{color:var(--roxo);font-weight:700}
   table{min-width:600px}
+  /* Mensalistas no celular: cada linha vira um card (igual à lista do dia) */
+  .so-tel{display:inline}
+  .mens-card{background:none;border:0;overflow:visible}
+  .mens-card .tabela-wrap{overflow:visible}
+  table.mens{min-width:0;display:block}
+  table.mens thead{display:none}
+  table.mens tbody{display:flex;flex-direction:column;gap:10px}
+  table.mens tbody tr{display:grid;grid-template-columns:1fr auto;grid-template-areas:"quem valor" "plano plano" "pag pag" "mes quinta" "acao acao";align-items:center;gap:6px 10px;background:var(--sup);border:1px solid var(--borda);border-radius:14px;padding:12px 14px}
+  table.mens tbody tr.atrasada{background:var(--vm-linha);border-color:var(--vm-b)}
+  table.mens td{display:block;padding:0;border:0;background:none!important}
+  table.mens .td-quem{grid-area:quem;min-width:0}
+  table.mens .td-quem .nome{font-size:15px}
+  table.mens .td-valor{grid-area:valor;font-size:16px}
+  table.mens .td-plano{grid-area:plano;font-size:13px;color:var(--tx2)}
+  table.mens .td-pag{grid-area:pag;font-size:13px}
+  table.mens .td-mes{grid-area:mes}
+  table.mens .td-quinta{grid-area:quinta;text-align:right}
+  table.mens .td-acao{grid-area:acao;text-align:left!important;margin-top:4px}
+  table.mens .td-acao .btn:not(.link){width:100%;min-height:44px}
+  table.mens .td-acao .btn.link{padding-left:0}
 }
 @media (prefers-reduced-motion:reduce){ .toast{transition:none} }
