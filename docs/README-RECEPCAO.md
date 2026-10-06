@@ -4,30 +4,30 @@ O app é uma página web ligada à planilha "Controle da Recepção 2026". Tudo 
 
 Abra pelo link que a gestão passou (só funciona logado com o e-mail da clínica). No celular, "Adicionar à tela inicial"; no Chrome, "Instalar página como app".
 
-Menu de cima: **Lista do dia · Atendimento · Novo paciente · Editar cadastro · Mensalistas · Gestão** (Gestão abre só pra gestão).
+Menu de cima: **Hoje · Registrar · Pacientes · Mensalistas · Gestão** (Gestão abre só pra gestão). No celular o menu vira a barra de baixo, com Hoje, Registrar, Pacientes e Mensalistas. O chip no canto mostra o perfil (recepção ou gestão); quem gravou fica sempre registrado na planilha pelo e-mail logado.
 
 ---
 
 ## 1. Rotina do dia
 
 **Véspera (fim da tarde)**
-1. Lista do dia → seta **›** (ou escolha a data no calendário) pra ver amanhã.
-2. Confirme com cada paciente. Clique no nome → **Confirmou**. O contador "a confirmar" vai zerando.
-3. Quem avisou que não vem: clique no nome → **Não vem** → motivo (desmarcou com antecedência / faltou em cima da hora / cancelado pela clínica).
+1. Hoje → seta **›** (ou o botão do calendário) pra ver amanhã.
+2. Confirme com cada paciente. Na linha dele, botão **Confirmou**. O filtro "A confirmar" vai zerando e a linha passa a **Aguardando**.
+3. Quem avisou que não vem: botão **⋯** da linha → **Não vem hoje** → motivo (desmarcou com antecedência / faltou em cima da hora / cancelado pela clínica).
 
 **No dia**
-1. Lista do dia (abre em hoje). Paciente chegou → clique no nome → **Registrar atendimento**: o Atendimento abre preenchido com paciente, profissional, data e hora. Confira o bloco de avisos, ajuste o que precisar e **Salvar atendimento**.
-2. Paciente sem horário (encaixe, retorno, avaliação): **+ Agendar no dia**, escolha o paciente, profissional, hora e origem. Se for toda semana, marque **Tornar recorrente**.
-3. Quem não apareceu nem avisou: clique no nome → **Não vem** → "Faltou sem aviso".
+1. Hoje (abre no dia de hoje). Paciente chegou → botão **Chegou** na linha (ela fica destacada em roxo) → **Registrar atendimento**: a tela Registrar abre preenchida com paciente, profissional, data e hora. Confira os avisos, o passo 2 (o que aconteceu) e o passo 3 (cobrança), e **Salvar atendimento** (volta pra Hoje) ou **Salvar e registrar outro**. O "Chegou" é uma marcação deste computador, pra organizar a fila; o que vai pra planilha é o registro do atendimento.
+2. Paciente sem horário (encaixe, retorno, avaliação): **+ Encaixe no dia**, escolha o paciente, profissional, hora e tipo. Se for toda semana, **Tornar recorrente**.
+3. Quem não apareceu nem avisou: **⋯** → **Não vem hoje** → "Faltou sem aviso". Remarcar e Remover da lista também ficam no **⋯**.
 4. Precisa imprimir a lista (A4): botão **Imprimir**.
 
-**Situações na lista**: *a confirmar* → *confirmado* → *registrado* (ou *não vem*). Os selos ao lado do nome mostram o plano (ex.: 2/4 = duas consultas usadas de quatro) e a mensalidade (em dia / pendente / atrasada). Embaixo do nome aparece a **modalidade** do cadastro (Consulta individual, Plano de 4 consultas, Mensalidade fixa, Convênio Cedplan…) e, com "⚠", uma regra de cobrança diferente da tabela. Se aparecer "⚠ sem modalidade · completar cadastro", aproveite a confirmação da véspera pra perguntar como o paciente paga e completar em Editar cadastro.
+**Situações na lista**: *A confirmar* → *Aguardando* → *Chegou* → *Atendido* (ou *Não vem*). As etiquetas coloridas seguem as cores da planilha: laranja = atenção na cobrança (paga o que consegue, valor combinado, cadastro sem modalidade), lilás = pro bono/permuta/convênio, amarelo = pendência (mensalidade em aberto), verde = ok (mês pago, plano em dia), vermelho = atrasado ou não vem. Embaixo do nome aparece profissional e **modalidade** do cadastro. Se aparecer "sem modalidade · completar cadastro", aproveite a confirmação da véspera pra perguntar como o paciente paga e completar em Pacientes → Buscar / editar cadastro. No fim do expediente, a caixa **Fim do dia** (à direita) é um checklist deste computador; **Fechar o dia** só deixa fechar sem ninguém em Aguardando/Chegou.
 
 ---
 
-## 2. Atendimento (registrar uma sessão ou consulta)
+## 2. Registrar atendimento (uma sessão ou consulta)
 
-1. **Paciente**: comece a digitar e escolha da lista. Se não estiver, use o link "Novo paciente" ali mesmo.
+1. **Passo 1 · Quem**: paciente (comece a digitar e escolha da lista; se não estiver, "+ Novo paciente" ali mesmo), profissional, data, hora e tipo. O cartão à direita mostra o cadastro do paciente e, embaixo, **Vai ser gravado**: exatamente a linha que vai pra planilha, atualizada enquanto você preenche.
 2. Leia o **bloco de avisos**. Ele diz como esse paciente paga:
    - **Convênio**: Pago? vira "Convênio (fatura)", valor zerado. Marque se a **guia** veio assinada.
    - **Plano de consultas** (4, 6 ou 12): mostra quantas já usou (ex.: "3 de 4 usadas · esta é a 4ª"). Na última, avise que o próximo plano é pago na chegada. Plano encerrado ou vencido (4 consultas valem 2 meses, 12 valem 6): o app oferece **Lançar plano e receber**, já com o valor combinado daquele paciente (grava a compra na aba Planos e o recebimento na aba do mês), **Cobrar consulta individual** ou **Liberar sessão extra** (precisa dizer quem liberou e por quê).
@@ -44,7 +44,7 @@ Se a internet falhar na hora de salvar, o rascunho fica guardado no computador. 
 
 ---
 
-## 3. Novo paciente
+## 3. Pacientes → Novo paciente
 
 Nome completo, CPF, nascimento, pagador, WhatsApp, modalidade, convênio e carteirinha, profissional de referência, primeira consulta.
 
@@ -54,7 +54,7 @@ Nome completo, CPF, nascimento, pagador, WhatsApp, modalidade, convênio e carte
 
 ---
 
-## 4. Editar cadastro
+## 4. Pacientes → Buscar / editar cadastro
 
 Use quando a psicóloga ou a gestão avisar no grupo que algo mudou: modalidade, convênio, carteirinha, regra de cobrança, valor combinado, observação de cobrança, pagador habitual, WhatsApp, profissional de referência.
 
@@ -66,7 +66,7 @@ Use quando a psicóloga ou a gestão avisar no grupo que algo mudou: modalidade,
 
 Lista dos mensalistas com a situação do mês: **em dia · pendente · atrasada**. Dá pra buscar por nome ou pagador e filtrar. A coluna "Sessões em outubro" mostra quantas sessões o paciente já teve no mês.
 
-Pra receber uma mensalidade: **Registrar** na linha do paciente → confira valor, data, forma, quem pagou, NF. Em mês de 5 semanas, nos antigos **pacotes mensais** (só até o pagamento de outubro) aparece a pergunta da 5ª sessão (soma 1/4 do valor); na mensalidade fixa e nos valores especiais a 5ª já está incluída e a pergunta não aparece. A partir de novembro quem era pacote mensal passa a comprar **plano de 4 consultas** pelo Atendimento. Ao salvar, o app marca "Sim" na coluna do mês em Mensalistas, anota data/valor/forma ao lado e grava o recebimento na aba do mês.
+Pra receber uma mensalidade: **Registrar pagamento** na linha do paciente (abre um painel em cima da lista) → confira valor, data, forma, quem pagou, NF. Em mês de 5 semanas, nos antigos **pacotes mensais** (só até o pagamento de outubro) aparece a pergunta da 5ª sessão (soma 1/4 do valor); na mensalidade fixa e nos valores especiais a 5ª já está incluída e a pergunta não aparece. A partir de novembro quem era pacote mensal passa a comprar **plano de 4 consultas** pelo Atendimento. Ao salvar, o app marca "Sim" na coluna do mês em Mensalistas, anota data/valor/forma ao lado e grava o recebimento na aba do mês.
 
 Até 31/10 vale o modelo antigo (paga o mês anterior). De novembro em diante a mensalidade é do próprio mês, vence dia 10.
 
@@ -76,8 +76,8 @@ Até 31/10 vale o modelo antigo (paga o mês anterior). De novembro em diante a 
 
 - **Agendei duas vezes a mesma pessoa.** Clique no item repetido → **Remover** → motivo "duplicado". A linha fica marcada como removida (nada é apagado). O app também já recusa agendar igual duas vezes seguidas.
 - **Remarcar**: clique no nome → **Remarcar** → nova data e hora. O item de hoje vira "não vem · remarcado para dd/mm" e a nova data recebe o paciente.
-- **Horário fixo mudou** (dia, hora ou profissional): Lista do dia → **Agenda recorrente** → Editar na linha → ao salvar, deixe marcado "vale a partir de hoje" pra guardar o histórico. Paciente parou por um tempo: Ativo = Não.
-- **Paciente não aparece na lista do Atendimento**: só quem está em Pacientes aparece. Cadastre em Novo paciente.
+- **Horário fixo mudou** (dia, hora ou profissional): Hoje → **Agenda recorrente** → Editar na linha → ao salvar, deixe marcado "vale a partir de hoje" pra guardar o histórico. Paciente parou por um tempo: Ativo = Não.
+- **Paciente não aparece na lista do Registrar**: só quem está em Pacientes aparece. Cadastre em Pacientes → Novo paciente.
 - **Errei um registro já gravado**: avise a gestão com a aba, a linha e o ID que apareceram na tela verde. A correção é feita pela gestão na planilha.
-- **A aba do mês "não existe"**: o aviso aparece no topo do Atendimento. Peça pra gestão criar (botão na tela Gestão).
+- **A aba do mês "não existe"**: o aviso aparece em Hoje e no topo do Registrar. Peça pra gestão criar (botão na tela Gestão).
 - **Deu erro vermelho**: copie a mensagem (ou print) e mande pra gestão. O que você digitou fica guardado.

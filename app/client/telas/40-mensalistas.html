@@ -1,0 +1,27 @@
+<section class="tela coluna" id="s-mensalistas" hidden>
+  <div class="titulo">
+    <h1>Mensalistas</h1>
+    <label class="campo" style="flex-direction:row;align-items:center;gap:8px;font-weight:400;font-size:14px">Competência <select id="m-col" style="width:auto;font-weight:700;font-size:14px;min-height:40px;padding:9px 12px"></select></label>
+    <span class="muted" id="m-legenda">vence dia 10 · tolerância até o 15 · dia 16 pausa</span>
+    <span class="esp"></span>
+    <div class="campo-wrap" style="min-width:240px"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg><input type="search" id="m-busca" placeholder="Buscar paciente ou pagador" aria-label="Buscar" style="font-size:14px"></div>
+  </div>
+  <div id="m-carregando" class="carregando">Carregando…</div>
+  <div class="kpis" id="m-kpis" role="group" aria-label="Filtrar por situação"></div>
+  <div id="m-painel" class="painel" hidden>
+    <div class="cab"><h2 id="m-box-t">Registrar pagamento</h2><span class="muted" id="m-box-sub"></span><span class="esp"></span><button type="button" class="btn icone p" id="m-cancel" aria-label="Fechar"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+    <div id="m-box-aviso"></div>
+    <div class="grid g5">
+      <label class="campo">Valor<div class="campo-wrap"><span class="prefixo">R$</span><input id="m-valor" class="dinheiro" inputmode="decimal"></div></label>
+      <label class="campo">Data<input id="m-data" inputmode="numeric" maxlength="10"></label>
+      <label class="campo">Forma<select id="m-forma"></select></label>
+      <label class="campo">Quem pagou<input id="m-quem" list="dl-pagadores" autocomplete="off"></label>
+      <label class="campo">Nº da NF<input id="m-nfn" autocomplete="off" placeholder="emitir agora"></label>
+      <label class="campo">Profissional<select id="m-prof"></select></label>
+      <label class="campo c2">Observação<input id="m-obs"></label>
+      <label class="check c2" id="m-quinta" hidden style="align-self:end"><input type="checkbox" id="m-extra"> Mês com 5ª sessão: somar <b id="m-extra-v"></b></label>
+    </div>
+    <div class="acoes"><span class="nota muted" style="flex:1 1 200px">Grava em Mensalistas (<span id="m-box-col"></span>) e cria a linha de recebimento na aba do mês.</span><button type="button" class="btn grande" id="m-ok">Confirmar pagamento</button></div>
+  </div>
+  <div id="m-list"></div>
+</section>

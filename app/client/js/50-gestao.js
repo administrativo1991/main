@@ -1,0 +1,69 @@
+/* ================= GESTÃO ================= */
+var GES = null, gesAberto = null, gesHora = null;
+INICIAR.gestao = function () {
+  if (!BOOT) { setTimeout(INICIAR.gestao, 300); return; }
+  if (!ehGestao()) { $("#g-carregando").hidden = true; $("#g-bloqueio").hidden = false; return; }
+  if (!$("#g-mes").options.length) { MESES_PT.forEach(function (m) { var o = document.createElement('option'); o.value = m; o.textContent = m; $("#g-mes").appendChild(o); }); $("#g-mes").value = MESES_PT[new Date().getMonth()]; }
+  $("#g-nav").hidden = false; $("#g-atualizar").hidden = false; $("#g-planilha").textContent = BOOT.planilha || 'Controle da Recepção 2026';
+  carregarGestao();
+};
+function carregarGestao() {
+  var mes = $("#g-mes").value; $("#g-titulo").textContent = mes + ' ' + new Date().getFullYear(); $("#g-carregando").hidden = false; $("#g-list").innerHTML = ''; $("#g-export-hint").textContent = '';
+  call('gestaoResumo', { mes: mes }).then(function (r) { $("#g-carregando").hidden = true; if (!r.ok) { $("#g-bloqueio").hidden = false; return; } GES = r; gesHora = new Date(); if (typeof resumoMes !== 'undefined') resumoMes[mes] = r; renderGestao(); }).catch(function (e) { $("#g-carregando").textContent = 'Não consegui carregar: ' + e.message; });
+}
+function tabelaG(titulo, cols, linhas, vazio) {
+  var card = el('<div class="tabela-card"><div class="passo" style="padding:14px 18px 4px"><h2 style="font-size:15px">' + esc(titulo) + '</h2><span class="tag ' + (linhas.length ? 'amarela' : 'verde') + '">' + linhas.length + '</span></div>' + (linhas.length ? '<div class="tabela-wrap"><table><thead><tr>' + cols.map(function (c) { return '<th>' + esc(c[0]) + '</th>'; }).join('') + '</tr></thead><tbody>' + linhas.map(function (l) { return '<tr>' + cols.map(function (c) { var v = typeof c[1] === 'function' ? c[1](l) : l[c[1]]; return '<td>' + esc(v == null ? '' : v) + '</td>'; }).join('') + '</tr>'; }).join('') + '</tbody></table></div>' : '<p class="muted" style="padding:0 18px 14px;margin:0">' + esc(vazio || 'Nada pendente.') + '</p>') + '</div>');
+  return card;
+}
+function renderGestao() {
+  var r = GES, soma = function (l) { return (l || []).reduce(function (a, x) { return a + (x.valor || 0); }, 0); };
+  var faltas = (r.faltas || []).length, aReceber = soma(r.pagamentoPendente);
+  $("#g-atualizado").textContent = 'atualizado às ' + ('0' + gesHora.getHours()).slice(-2) + ':' + ('0' + gesHora.getMinutes()).slice(-2);
+  $("#g-kpis").hidden = false; $("#g-kpis").innerHTML = '<div class="kpi"><b>' + r.total + '</b><span>atendimentos no mês</span></div><div class="kpi"><b>' + r.atendidos + '</b><span>atendidos' + (faltas ? ' · ' + faltas + ' falta' + (faltas === 1 ? '' : 's') : '') + '</span></div><div class="kpi roxo"><b>' + esc(brlCurto(r.recebido)) + '</b><span>recebido</span></div><div class="kpi amarela cheio"><b>' + esc(brlCurto(aReceber)) + '</b><span>a receber (particular)</span></div><div class="kpi"><b>' + (r.semGuia || []).length + '</b><span>convênio sem guia</span></div>';
+  $("#g-export").hidden = false; $("#g-export-txt").textContent = 'Exportar ' + r.mes + ' (.xlsx)'; $("#g-export").disabled = !r.abaExiste;
+  $("#g-corpo").hidden = false;
+  var V = function (l) { return l.valor ? 'R$ ' + brl(l.valor) : ''; }, D = function (l) { return l.data + (l.hora ? ' ' + l.hora : ''); };
+  var nomes = function (l, n) { var x = (l || []).slice(0, n || 3).map(function (i) { return primeiroNome(i.paciente) + ' ' + String(i.data || '').slice(0, 5); }); return x.join(' · ') + ((l || []).length > (n || 3) ? ' · +' + ((l || []).length - (n || 3)) : ''); };
+  var PEND = [
+    { k: 'pag', cor: 'amarela', n: (r.pagamentoPendente || []).length, t: 'Particulares atendidos sem “Pago?”', s: (r.pagamentoPendente || []).length ? nomes(r.pagamentoPendente) + ' — a recepção cobra; linha amarela na planilha' : 'Todos os particulares atendidos têm Pago? preenchido.', acao: 'Ver lista', tabela: function () { return tabelaG('Particulares atendidos sem pagamento registrado', [['Data', D], ['Paciente', 'paciente'], ['Profissional', 'profissional'], ['Procedimento', 'procedimento'], ['Valor', V], ['Pago?', 'pago'], ['Obs.', 'obs']], r.pagamentoPendente); } },
+    { k: 'nf', cor: 'laranja', n: (r.nfPendente || []).length, t: 'Pagos sem nota fiscal', s: (r.nfPendente || []).length ? brlCurto(soma(r.nfPendente)) + ' · emitir no Portal Nacional com o nome de “quem pagou”' : 'Nenhum pagamento sem NF.', acao: 'Ver lista', tabela: function () { return tabelaG('Pagos sem NF emitida', [['Data', D], ['Paciente', 'paciente'], ['Valor', V], ['Forma', 'forma'], ['Quem pagou', function (l) { return l.quem || '(pagador habitual)'; }], ['NF?', function (l) { return l.nf || '(em branco)'; }]], r.nfPendente); } },
+    { k: 'guia', cor: 'lilas', n: (r.semGuia || []).length, t: 'Convênio sem guia assinada', s: (r.semGuia || []).length ? contarPor(r.semGuia, 'convenio') + ' — glosa certa se faturar assim' : 'Todas as guias de convênio assinadas.', acao: 'Ver lista', tabela: function () { return tabelaG('Convênio sem guia assinada', [['Data', D], ['Paciente', 'paciente'], ['Convênio', 'convenio'], ['Profissional', 'profissional'], ['Guia', function (l) { return l.guia || '(em branco)'; }]], r.semGuia); } },
+    { k: 'faltas', cor: 'vermelha', n: faltas, t: 'Faltas sem aviso de particular — taxa de falta?', s: 'Você decide caso a caso; se cobrar, entra no próximo agendamento', acao: 'Decidir', tabela: function () { return tabelaG('Faltas sem aviso de particular (taxa a decidir)', [['Data', D], ['Paciente', 'paciente'], ['Profissional', 'profissional'], ['O que aconteceu', 'oque'], ['Obs.', 'obs']], r.faltas, 'Nenhuma falta sem aviso.'); } },
+    { k: 'pagador', cor: 'lilas', n: (r.pagadorDiferente || []).length, t: 'Pagou outra pessoa — conferir o nome na NF', s: (r.pagadorDiferente || []).length ? nomes(r.pagadorDiferente) + ' — se for sempre essa pessoa, promover a pagador habitual em Pacientes' : 'Ninguém pagou por outra pessoa.', acao: 'Revisar', tabela: function () { return tabelaG('Pagou outra pessoa (conferir nome na NF)', [['Data', D], ['Paciente', 'paciente'], ['Quem pagou', 'quem'], ['Valor', V], ['NF?', 'nf']], r.pagadorDiferente, 'Nenhum.'); } }
+  ];
+  var root = $("#g-pend"); root.innerHTML = '';
+  PEND.forEach(function (p) {
+    var b = el('<button type="button" class="pend ' + (p.n ? p.cor : 'verde') + '" aria-expanded="' + (gesAberto === p.k) + '"><span class="n">' + p.n + '</span><div class="corpo"><b>' + esc(p.t) + '</b><span>' + esc(p.s) + '</span></div><span class="ver">' + p.acao + ' ' + ic('direita', 14) + '</span></button>');
+    b.addEventListener('click', function () { gesAberto = gesAberto === p.k ? null : p.k; renderGestao(); if (gesAberto) $("#g-list").scrollIntoView({ behavior: 'smooth', block: 'start' }); });
+    root.appendChild(b);
+  });
+  var DISC = [['desc', 'Descontos aplicados: ' + (r.descontos || []).length, function () { return tabelaG('Descontos aplicados', [['Data', D], ['Paciente', 'paciente'], ['Procedimento', 'procedimento'], ['Cobrado', V], ['Motivo / quem autorizou', 'obs'], ['Registrado por', 'log']], r.descontos, 'Nenhum desconto no mês.'); }],
+    ['extras', 'Sessões extras: ' + (r.extras || []).length, function () { return tabelaG('Sessões extras liberadas', [['Data', D], ['Paciente', 'paciente'], ['Profissional', 'profissional'], ['Quem liberou / motivo', 'obs'], ['Registrado por', 'log']], r.extras, 'Nenhuma sessão extra.'); }],
+    ['alt', 'Alterações de cadastro: ' + (r.alteracoes || []).length, function () { return tabelaG('Alterações de cadastro no mês', [['Quando', 'quando'], ['Paciente', 'paciente'], ['Campo', 'campo'], ['De', 'de'], ['Para', 'para'], ['Quem informou', 'quem'], ['Por', 'por']], r.alteracoes, 'Nenhuma alteração.'); }]];
+  var disc = $("#g-discreto"); disc.innerHTML = '';
+  DISC.forEach(function (x) { var b = el('<button type="button"' + (gesAberto === x[0] ? ' style="color:var(--roxo);font-weight:700"' : '') + '>' + esc(x[1]) + '</button>'); b.addEventListener('click', function () { gesAberto = gesAberto === x[0] ? null : x[0]; renderGestao(); }); disc.appendChild(b); });
+  var lista = $("#g-list"); lista.innerHTML = '';
+  if (!r.abaExiste) lista.innerHTML = '<div class="vazio">A aba "' + esc(r.mes) + '" ainda não existe. Crie pela virada do mês, ao lado.</div>';
+  else if (gesAberto) { var item = PEND.filter(function (p) { return p.k === gesAberto; })[0] || { tabela: (DISC.filter(function (x) { return x[0] === gesAberto; })[0] || [])[2] }; if (item.tabela) lista.appendChild(item.tabela()); }
+  // virada do mês
+  var prox = MESES_PT[(MESES_PT.indexOf(r.mes) + 1) % 12], temAba = (r.mesesExistentes || []).indexOf(prox) >= 0, temCol = (r.colunasMensalistas || []).indexOf(prox.toUpperCase()) >= 0;
+  var vir = $("#g-virada"); vir.innerHTML = '';
+  var li = function (ok, html) { return el('<li><span class="' + (ok ? 'ok' : 'falta') + '">' + (ok ? ic('check', 12, 3.5) : '') + '</span><span>' + html + '</span></li>'); };
+  var l1 = li(temAba, 'Aba <strong>' + esc(prox) + '</strong> ' + (temAba ? 'criada' : 'ainda não existe <button type="button" class="btn ter mini" id="g-aba" data-mes="' + esc(prox) + '">criar</button>'));
+  var l2 = li(temCol, 'Colunas de ' + esc(prox.toLowerCase()) + ' em <strong>Mensalistas</strong>' + (temCol ? '' : ' <button type="button" class="btn ter mini" id="g-cols" data-mes="' + esc(prox) + '">criar</button>'));
+  var l3 = li(false, 'Recorrências dos mensalistas renovadas <small class="muted">(conferir na Agenda recorrente)</small>');
+  var l4 = li(false, 'Exportar ' + esc(r.mes.toLowerCase()) + ' → pasta do Financeiro <small class="muted">(botão no topo)</small>');
+  [l1, l2, l3, l4].forEach(function (x) { vir.appendChild(x); });
+  var ba = $("#g-aba"); if (ba) ba.addEventListener('click', function () { var b = this, m = b.dataset.mes; doisCliques(b, 'Confirmar: criar ' + m + '?', function () { b.disabled = true; call('criarAbaMes', { nome: m }).then(function (r2) { if (!r2.ok) return toast((r2.erros || ['Não criou']).join(' ')); toast('Aba ' + m + ' criada a partir de ' + r2.modelo); carregarGestao(); }).catch(function (e) { toast('Erro: ' + e.message); }); }); });
+  var bcl = $("#g-cols"); if (bcl) bcl.addEventListener('click', function () { var b = this, m = b.dataset.mes; doisCliques(b, 'Confirmar: criar colunas de ' + m + '?', function () { b.disabled = true; call('criarColunasMes', { mes: m }).then(function (r2) { if (!r2.ok) return toast((r2.erros || ['Não criou']).join(' ')); toast('Colunas criadas: ' + r2.coluna); carregarGestao(); }).catch(function (e) { toast('Erro: ' + e.message); }); }); });
+  var comRegra = (AT ? AT.pacientes : []).filter(function (p) { return regraRelevante(p) || p.obsCobranca; }).length; $("#g-regras-n").textContent = comRegra || '';
+}
+function contarPor(l, campo) { var c = {}; (l || []).forEach(function (x) { var k = x[campo] || '—'; c[k] = (c[k] || 0) + 1; }); return Object.keys(c).map(function (k) { return k + ' ×' + c[k]; }).join(' · '); }
+function doisCliques(btn, texto, acao) { if (btn.dataset.ok !== '1') { btn.dataset.ok = '1'; btn.dataset.antes = btn.textContent; btn.textContent = texto; setTimeout(function () { if (btn.dataset.ok === '1') { btn.dataset.ok = ''; btn.textContent = btn.dataset.antes; } }, 6000); return; } btn.dataset.ok = ''; acao(); }
+function mudarMes(n) { var i = MESES_PT.indexOf($("#g-mes").value); i = (i + n + 12) % 12; $("#g-mes").value = MESES_PT[i]; gesAberto = null; carregarGestao(); }
+$("#g-ant").addEventListener('click', function () { mudarMes(-1); });
+$("#g-prox").addEventListener('click', function () { mudarMes(1); });
+$("#g-atualizar").addEventListener('click', carregarGestao);
+$("#g-mes").addEventListener('change', carregarGestao);
+$("#g-atalho-regras").addEventListener('click', function () { go('pacientes', { editar: '', voltar: 'gestao' }); setModo('editar'); });
+$("#g-export").addEventListener('click', function () { var b = this; b.disabled = true; $("#g-export-hint").textContent = 'Gerando…'; call('exportarMes', { mes: GES.mes }).then(function (r) { if (!r.ok) { $("#g-export-hint").textContent = ''; return toast((r.erros || ['Não exportou']).join(' ')); } $("#g-export-hint").innerHTML = '<a href="' + r.xlsx + '" target="_blank" rel="noopener">Baixar ' + esc(GES.mes) + '.xlsx</a> · <a href="' + r.url + '" target="_blank" rel="noopener">abrir no Drive</a> (' + r.linhas + ' linhas)' + (r.pasta ? ' · salvo como <b>' + esc(r.nome) + '</b> em ' + esc(r.pasta) + (r.criadas && r.criadas.length ? ' (pasta criada: ' + esc(r.criadas.join('/')) + ')' : '') : '') + (r.aviso ? '<br><span style="color:var(--vm-tx)">' + esc(r.aviso) + '</span>' : ''); if (r.aviso) toast(r.aviso); }).catch(function (e) { toast('Erro: ' + e.message); }).finally(function () { b.disabled = false; }); });

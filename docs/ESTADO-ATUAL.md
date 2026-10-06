@@ -1,6 +1,6 @@
 # Estado atual do app — retomar daqui
 
-Atualizado em 06/10/2026. Leia este arquivo primeiro ao abrir um chat novo.
+Atualizado em 06/10/2026 (noite, nova interface). Leia este arquivo primeiro ao abrir um chat novo.
 
 ## O que é
 
@@ -19,17 +19,19 @@ Preços só em abas editáveis (Procedimentos, Pacientes, Mensalistas), nunca no
 
 | O quê | Onde |
 |---|---|
-| Código-fonte | `app/server/server.js`, `app/client/index.html`, `app/shared/duplicatas.js`, `app/loader/Code.gs` |
-| Build | `node build.js` → `dist/pedacos.json` (pedaços ≤ 12.000 caracteres) e `dist/Code.gs` |
-| Código publicado | planilha "Recepção Nascente — código do app (não mexer)" (id `1qM7tX5neTU1kAa4JBpk1xiZQmcJOk325hx873XIRPYo`), aba `arquivos`, linhas 2–18 |
+| Código-fonte | servidor `app/server/server.js` + `app/server/duplicatas.js`; tela `app/client/` (`styles.css`, `layout.html`, `telas/*.html`, `js/*.js`, `assets/*.svg`; ver `docs/NOVA-INTERFACE.md`); carregador `app/loader/Code.gs` |
+| Build | `node build.js` → `dist/index.html` (simulação), `dist/index.publicado.html`, `dist/pedacos.json` + `dist/pedacos/index-N.json` (pedaços ≤ 12.000 caracteres) e `dist/Code.gs` |
+| Código publicado | planilha "Recepção Nascente — código do app (não mexer)" (id `1qM7tX5neTU1kAa4JBpk1xiZQmcJOk325hx873XIRPYo`), aba `arquivos`, linhas 2–23 (duplicatas 2, server 3–7, index 8–23) |
 | Como publicar | `docs/PLANO-IMPLEMENTACAO.md`, seção 10 |
 | Manuais | `docs/README-RECEPCAO.md`, `docs/README-GESTAO.md`, `docs/COMO-INSTALAR.md` |
-| Testes de tela | Playwright, arquivos `*-test.js` no scratchpad (não versionados) |
+| Testes de tela | Playwright, arquivos `*-test.js` no scratchpad (não versionados); `node tests/duplicatas.test.js` |
 
-Última publicação: 06/10/2026, 17 pedaços conferidos (tamanho e soma de caracteres iguais ao build).
-Git: branch `claude/gallant-heisenberg-mp5xth`, tudo commitado e enviado.
+Última publicação: 06/10/2026 — index.html novo (16 pedaços, linhas 8–23 da aba arquivos), LEN e soma de controle conferidos pedaço a pedaço contra dist/pedacos/; duplicatas.js e server.js (linhas 2–7) não mudaram. Aponta pra CÓPIA TESTE.
+Git: branch `claude/lucid-einstein-gd6x5l`, tudo commitado e enviado.
 
 ## Feito e publicado
+
+- **Nova interface (06/10, mockups da Roberta)**: telas Hoje, Registrar atendimento, Pacientes (novo + editar), Mensalistas e Gestão com o visual aprovado; mesmo HTML no computador e no celular (barra inferior ≤ 480 px); impressão sem CPF. Servidor e regras intactos. Detalhes, decisões e limites em `docs/NOVA-INTERFACE.md`.
 
 - Novo paciente (com checagem de duplicata), Registrar atendimento, Lista do dia (com modalidade
   do paciente), Agenda recorrente, Remarcar, Confirmar, Remover do dia, Mensalistas, Editar cadastro,

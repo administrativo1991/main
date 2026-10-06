@@ -1,0 +1,42 @@
+<section class="tela coluna" id="s-gestao" hidden>
+  <div class="titulo">
+    <h1 id="g-titulo">Gestão</h1>
+    <div class="acoes" style="gap:4px" id="g-nav" hidden>
+      <button type="button" class="btn icone p" id="g-ant" aria-label="Mês anterior"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg></button>
+      <button type="button" class="btn icone p" id="g-prox" aria-label="Próximo mês"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button>
+    </div>
+    <span class="muted" id="g-atualizado"></span>
+    <span class="esp"></span>
+    <button type="button" class="btn ter" id="g-atualizar" hidden>Atualizar</button>
+    <button type="button" class="btn" id="g-export" hidden><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12M7 10l5 5 5-5M4 21h16"/></svg><span id="g-export-txt">Exportar (.xlsx)</span></button>
+  </div>
+  <select id="g-mes" class="sr" tabindex="-1" aria-hidden="true"></select>
+  <div id="g-carregando" class="carregando">Carregando…</div>
+  <div id="g-bloqueio" class="faixa lilas" hidden>
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 018 0v4"/></svg>
+    <div class="corpo"><div class="t">Só a gestão</div><div>Esta tela mostra pendências e exporta o mês. Seu login está como recepção.</div></div>
+  </div>
+  <div class="muted" id="g-export-hint"></div>
+  <div class="kpis" id="g-kpis" hidden></div>
+  <div class="tela" id="g-corpo" hidden>
+    <div class="principal" style="gap:12px">
+      <h2 style="font-size:17px">Pendências <span class="muted" style="font-weight:500;font-size:14px">— o que falta pra fechar o mês sem perguntar nada à recepção</span></h2>
+      <div id="g-pend" style="display:flex;flex-direction:column;gap:12px"></div>
+      <div class="discreto" id="g-discreto"></div>
+      <div id="g-list"></div>
+    </div>
+    <aside class="lateral larga">
+      <div class="card compacto">
+        <h2 style="font-size:15px">Virada do mês</h2>
+        <ol class="virada" id="g-virada"></ol>
+      </div>
+      <div class="card compacto">
+        <h2 style="font-size:15px">Só a gestão edita</h2>
+        <button type="button" class="atalho" id="g-atalho-regras">Regras e observações de cobrança <span class="cont" id="g-regras-n"></span></button>
+        <div class="atalho" style="cursor:default">Tabela de procedimentos e valores <small>aba Procedimentos</small></div>
+        <div class="atalho" style="cursor:default">Profissionais e salas <small>aba Profissionais</small></div>
+      </div>
+      <div class="card pessego"><strong>Fonte dos dados</strong>Tudo aqui lê e grava na <em id="g-planilha">Controle da Recepção 2026</em>. Nada vive só no app.</div>
+    </aside>
+  </div>
+</section>

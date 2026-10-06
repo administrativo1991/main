@@ -10,13 +10,13 @@ Perfil decidido pelo e-mail logado: `administrativo@clinicanascente.com.br` mais
 
 | Aba | O que o app faz |
 |---|---|
-| `Pacientes` | acrescenta linha (Novo paciente); atualiza só as células alteradas no Editar cadastro; carimbo em `Registrado por (app)` |
+| `Pacientes` | acrescenta linha (Pacientes → Novo paciente); atualiza só as células alteradas em Pacientes → Buscar / editar cadastro; carimbo em `Registrado por (app)` |
 | aba do mês (`Outubro`, `Novembro`…) | acrescenta linha por atendimento, falta, compra de pacote e mensalidade recebida; colunas U `Registrado por (app)` e V `Pacote (ID)` no fim. **Nunca escreve nas colunas automáticas F, G, H, N** nem na linha 2 |
 | `Mensalistas` | marca "Sim" no par "MÊS — pago?" e escreve a anotação na coluna "Data" (data, valor, forma, quem, NF, "app"); uma anotação anterior que não seja data é preservada como "antes: …" |
 | `Planos` | um plano de consultas por linha (compra, valor pago, validade, consultas usadas, status ativo/encerrado/vencido); coluna `Plano (ID)` na aba do mês liga cada consulta ao plano |
 | `Agenda recorrente` | horários fixos; edição "a partir de hoje" encerra a linha antiga e cria outra |
 | `Lista do dia` | acréscimos do dia, confirmações, não vem, remarcações e **removidos** (Origem "Removido · motivo") |
-| `Alterações de cadastro` | uma linha por campo alterado no Editar cadastro (de, para, quem informou, quem gravou) |
+| `Alterações de cadastro` | uma linha por campo alterado no cadastro (de, para, quem informou, quem gravou) |
 
 Nenhuma linha é apagada pelo app. Correções em registros já gravados são feitas por você na planilha; o ID da linha (coluna T) aparece na tela verde da recepção.
 

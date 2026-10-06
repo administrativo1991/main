@@ -1,0 +1,95 @@
+<section class="tela" id="s-pacientes" hidden>
+  <form class="principal" id="f-pac" novalidate>
+    <div class="titulo" style="gap:12px">
+      <div class="seg" style="width:auto" id="p-modo"><button type="button" data-v="novo" aria-pressed="true">Novo paciente</button><button type="button" data-v="editar" aria-pressed="false">Buscar / editar cadastro</button></div>
+      <span class="esp"></span>
+      <span class="muted so-pc">Depois daqui: cadastrar no ControleOdonto (agenda e prontuário).</span>
+    </div>
+
+    <div id="p-carregando" class="carregando">Carregando a planilha…</div>
+
+    <div class="card" id="p-busca" hidden>
+      <label class="campo">Paciente
+        <div class="campo-wrap"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg><input id="c-pac" list="dl-pacientes" autocomplete="off" placeholder="Comece a digitar o nome…" style="font-weight:600"></div>
+        <span class="hint" id="c-pac-info"></span>
+      </label>
+      <div id="c-carregando" class="carregando" hidden>Carregando o cadastro…</div>
+    </div>
+
+    <div id="p-form" hidden style="display:flex;flex-direction:column;gap:16px">
+    <section class="card">
+      <h2>Paciente</h2>
+      <div class="grid">
+        <label class="campo c3">Nome completo <span class="req" id="n-nome-req">*</span><input id="n-nome" autocomplete="off" placeholder="Como está no documento"></label>
+      </div>
+      <div id="n-dup"></div>
+      <div class="grid">
+        <label class="campo">CPF <span class="req">*</span><input id="n-cpf" inputmode="numeric" autocomplete="off" placeholder="000.000.000-00" maxlength="14" class="cpf"><span class="hint" id="n-cpf-hint">Da criança também. CPF repetido bloqueia.</span></label>
+        <label class="campo">Data de nascimento <span class="req">*</span><input id="n-nasc" inputmode="numeric" autocomplete="off" placeholder="dd/mm/aaaa" maxlength="10"></label>
+        <label class="campo">Quem indicou<input id="n-indic" autocomplete="off" placeholder="escola, pediatra, Instagram…"></label>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>Quem paga</h2>
+      <div class="grid">
+        <label class="campo c2">Responsável financeiro <span class="leg">— nome como aparece no Pix; vai na NF</span><input id="n-pagador" list="dl-pagadores" autocomplete="off" placeholder="ex.: Maria Aparecida Santos"></label>
+        <label class="campo">WhatsApp do pagador<input id="n-whats" inputmode="tel" autocomplete="off" placeholder="(32) 9" maxlength="16"></label>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="titulo" style="align-items:baseline;gap:10px"><h2>Atendimento</h2><span class="muted">A <strong>modalidade</strong> diz <em>como</em> cobra; o <strong>profissional</strong> diz <em>qual</em> tabela.</span></div>
+      <div class="grid">
+        <label class="campo">Profissional<select id="n-prof"><option value="">—</option></select></label>
+        <label class="campo" id="l-primeira">Data da 1ª consulta<input id="n-primeira" inputmode="numeric" autocomplete="off" placeholder="dd/mm/aaaa" maxlength="10"></label>
+        <label class="campo">Convênio<select id="n-conv"></select></label>
+        <label class="campo" id="l-cart" hidden>Nº da carteirinha<input id="n-cart" autocomplete="off"></label>
+      </div>
+      <fieldset style="border:0;padding:0;margin:0;display:flex;flex-direction:column;gap:10px">
+        <legend class="campo" style="padding:0;margin-bottom:8px;display:block">Modalidade <span class="leg">— só o que está na tabela; o paciente que já escolhe o plano ao perguntar não é negociação</span></legend>
+        <div class="cartoes" id="n-mods-tabela"></div>
+        <div class="muted" style="margin-top:6px"><strong style="color:var(--tx2)">Já em andamento</strong> — pra marcar quem já está nesses planos e saber quanto cobrar. Não oferecer a paciente novo.</div>
+        <div class="cartoes" id="n-mods-antigo"></div>
+        <select id="n-mod" class="sr" tabindex="-1" aria-hidden="true"></select>
+        <div id="n-modwarn"></div>
+        <div class="dica">Paciente novo pediu desconto ou social? Não negocia: <strong>“Aguarde a avaliação da psicóloga.”</strong> Marca Consulta individual e anota na observação.</div>
+      </fieldset>
+      <div class="grid" id="p-gestao-campos" hidden>
+        <label class="campo">Regra de cobrança <span class="leg">(só a gestão)</span><select id="c-regra"></select></label>
+        <label class="campo c2">Valor combinado <span class="leg">ex.: Plano de 4 consultas: R$ 280 · R$ 150/mês</span><input id="c-valor" autocomplete="off"></label>
+        <label class="campo c3">Observação de cobrança <span class="leg">o que a recepção precisa saber na hora de cobrar</span><textarea id="c-obs" rows="2"></textarea></label>
+      </div>
+      <div class="grid" id="p-quem-informou" hidden>
+        <label class="campo c3">Quem informou <span class="req">*</span> <span class="leg">fonte da informação, pro histórico em “Alterações de cadastro”</span><input id="c-quem" autocomplete="off" placeholder="ex.: Juliana no grupo Tratamentos · a própria mãe · carteirinha apresentada"></label>
+      </div>
+    </section>
+    </div>
+
+    <div id="n-erros"></div>
+    <div id="n-confirma"></div>
+    <div id="n-sucesso"></div>
+  </form>
+
+  <aside class="lateral">
+    <div class="card compacto">
+      <div class="eyebrow">Depois de salvar</div>
+      <ol class="lista-ol">
+        <li>Cadastrar no ControleOdonto (agenda + prontuário)</li>
+        <li>Termo da modalidade assinado na 1ª consulta</li>
+        <li>Menor: autorização do responsável legal</li>
+        <li>Convênio: vínculo + nº da carteirinha</li>
+      </ol>
+    </div>
+    <div class="card roxo compacto">
+      <h2 style="opacity:1">Por que primeiro aqui?</h2>
+      <p>Quem não está no app não aparece na lista do Registrar atendimento. Cadastrar primeiro aqui evita o paciente “fantasma” que só existe no ControleOdonto.</p>
+    </div>
+  </aside>
+</section>
+<footer class="rodape" id="p-rodape" hidden>
+  <span class="nota" id="p-rodape-nota">Grava uma linha na aba Pacientes · CPF e nascimento obrigatórios</span>
+  <button type="button" class="btn ter grande" id="p-cancelar">Cancelar</button>
+  <button type="button" class="btn ter grande" id="p-so-salvar">Só cadastrar</button>
+  <button type="button" class="btn grande" id="p-salvar">Salvar e registrar atendimento <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
+</footer>
