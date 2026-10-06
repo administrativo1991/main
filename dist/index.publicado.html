@@ -260,6 +260,8 @@ table.dia tr.vazia:hover td{background:none}
 .pend-linha.laranja{background:var(--lar-bg)}.pend-linha.laranja b{color:var(--lar-tx)}
 .pend-linha.lilas{background:var(--lilas)}
 .pend-linha:hover{filter:brightness(.97)}
+.pend-linha.fixa{cursor:default}
+.pend-linha.fixa:hover{filter:none}
 .fim-dia .check{font-size:13px}
 .mais{position:relative}
 .mais-menu{position:absolute;right:0;top:calc(100% + 6px);background:var(--sup);border:1px solid var(--borda);border-radius:12px;box-shadow:var(--sombra-forte);padding:6px;min-width:220px;z-index:6;display:flex;flex-direction:column;text-align:left}
@@ -1239,8 +1241,17 @@ return { atendido: '<span class="pill verde">' + ic('check', 14, 3) + 'Atendido<
 function botaoAcao(it, s) {
 return { atendido: '<button type="button" class="btn link" data-ac="ver">Ver registro</button>', falta: '<button type="button" class="btn link" data-ac="ver">Ver registro</button>', naovem: '<button type="button" class="btn ter mini" data-ac="remarcar">Remarcar</button>', chegou: '<button type="button" class="btn mini" data-ac="registrar">Registrar atendimento</button>', aguardando: '<button type="button" class="btn sec mini" data-ac="chegou">Chegou</button>', aconfirmar: '<button type="button" class="btn ter mini" data-ac="confirmou">Confirmou</button>' }[s];
 }
+// depois do registro, a etiqueta do convênio vira o estado da guia (vem da linha gravada na aba do mês)
+function tagGuia(it, p) {
+var r = it.registro; if (!r || !/^Atendido/.test(r.oque)) return null;
+var conv = (p && ehConvenio(p)) || (r.convenio && !/^Particular$/i.test(r.convenio)) || /^Convênio/.test(r.pago);
+if (!conv) return null;
+return r.guia === 'Sim' ? { cor: 'verde', txt: 'Guia assinada' } : { cor: 'amarela', ic: 'alerta', txt: 'Guia a emitir' };
+}
 function cobrancaHtml(it, p) {
-var html = tagsDe(p).map(function (t) { return tagHtml(t, true); }).join('');
+var guia = tagGuia(it, p);
+var html = tagsDe(p).map(function (t) { return (guia && /^Convênio /.test(t.txt)) ? guia : t; }).map(function (t) { return tagHtml(t, true); }).join('');
+if (guia && !tagsDe(p).some(function (t) { return /^Convênio /.test(t.txt); })) html += tagHtml(guia, true);
 if (it.naoVem) html += '<span class="tag p cinza">' + esc(it.naoVem.replace('Não vem · ', '')) + '</span>';
 return html || '<span class="muted">—</span>';
 }
@@ -1314,7 +1325,8 @@ $("#pp-aviso").innerHTML = avisoHtml;
 var tags = tagsDe(p).filter(function (t) { return !(t.cor === 'laranja' && avisoHtml); });
 $("#pp-tags").innerHTML = tags.map(function (t) { return tagHtml(t); }).join(''); $("#pp-tags").hidden = !tags.length;
 var r = it.registro;
-$("#pp-registro").innerHTML = r ? '<div class="faixa cinza"><b>Registrado hoje:</b> ' + esc(r.oque) + (r.procedimento ? ' · ' + esc(r.procedimento) : '') + (r.hora ? ' · ' + esc(r.hora) : '') + (r.id ? ' · ID ' + esc(r.id) : '') + ' · aba ' + esc(DIA.abaMes) + '</div>' : '';
+var cobr = r ? (r.pago === 'Sim' ? 'pago R$ ' + brl(r.valor) + (r.forma ? ' · ' + r.forma : '') + (r.nf === 'Sim' ? ' · NF emitida' : ' · NF a emitir') : (r.pago ? r.pago : (r.valor ? 'R$ ' + brl(r.valor) + ' em aberto' : ''))) : '';
+$("#pp-registro").innerHTML = r ? '<div class="faixa cinza"><b>Registrado hoje:</b> ' + esc(r.oque) + (r.procedimento ? ' · ' + esc(r.procedimento) : '') + (r.hora ? ' · ' + esc(r.hora) : '') + (cobr ? '<br>' + esc(cobr) : '') + (r.id ? ' · ID ' + esc(r.id) : '') + ' · aba ' + esc(DIA.abaMes) + '</div>' : '';
 // 4 botões de situação; o atual fica marcado
 $("#pp-sit-box").hidden = reg;
 var ch = chegadas()[chaveItem(it)];
@@ -1370,27 +1382,15 @@ function renderResumo(cont) {
 var tot = DIA.itens.length, reg = DIA.itens.filter(function (i) { return i.registro; }).length, dia = DIA.data, g = resumoMes[DIA.abaMes];
 // resumo do painel (sem paciente selecionado)
 $("#pp-resumo").innerHTML = '<div><b>' + reg + '<small>/' + tot + '</small></b><span>registrados</span></div><div><b>' + cont.chegou + '</b><span>na recepção</span></div><div><b>' + (cont.aguardando + cont.aconfirmar) + '</b><span>aguardando</span></div><div class="' + (cont.naovem ? 'atencao' : '') + '"><b>' + cont.naovem + '</b><span>não vêm</span></div>';
-// tiles: a gestão vê os valores do dia (do gestaoResumo do mês, filtrado pelo dia); a recepção vê contagens que saem do cadastro
-var tiles = [];
-if (ehGestao()) {
-if (g) {
-var aRec = doDia(g.pagamentoPendente, dia).reduce(function (a, x) { return a + (Number(x.valor) || 0); }, 0);
-tiles.push(['R$ ' + brl(g.recebido).replace(',00', ''), 'recebido no mês', 'verde', 'gestao']);
-tiles.push(['R$ ' + brl(aRec).replace(',00', ''), 'a receber hoje (particular)', aRec ? 'amarelo' : 'cinza', 'gestao']);
-tiles.push([doDia(g.nfPendente, dia).length, 'NF pendente hoje', doDia(g.nfPendente, dia).length ? 'laranja' : 'cinza', 'gestao']);
-tiles.push([doDia(g.semGuia, dia).length, 'guia a emitir hoje', doDia(g.semGuia, dia).length ? 'amarelo' : 'cinza', 'gestao']);
-} else tiles.push(['…', 'carregando o resumo do mês', 'cinza']);
-} else {
-var ps = DIA.itens.map(function (i) { return pacInfo(i.paciente); });
-var mensAberto = ps.filter(function (p) { return p && ehMensal(p) && /amarela|vermelha/.test(situacaoMensal(p)[0]); }).length;
-var conv = ps.filter(function (p) { return p && ehConvenio(p); }).length;
-var atencao = ps.filter(function (p) { return p && (regraRelevante(p) || (p.obsCobranca && !ehMensal(p) && !ehConvenio(p) && !ehProBono(p))); }).length;
-var incompl = DIA.itens.filter(function (i) { var p = pacInfo(i.paciente); return !p || cadastroIncompleto(p); }).length;
-tiles.push([mensAberto, 'mensalista com mês em aberto', mensAberto ? 'amarelo' : 'cinza', 'mensalistas']);
-tiles.push([conv, 'convênio hoje · guia por sessão', 'lilas']);
-tiles.push([atencao, 'atenção na cobrança', atencao ? 'laranja' : 'cinza']);
-tiles.push([incompl, 'cadastro a completar', incompl ? 'laranja' : 'cinza', 'pacientes']);
-}
+// tiles: valores do dia, lidos das linhas já registradas na aba do mês (recepção e gestão veem o mesmo)
+var regs = DIA.itens.filter(function (i) { return i.registro && /^Atendido/.test(i.registro.oque); }).map(function (i) { return i.registro; });
+var particular = function (r) { return !r.convenio || /^Particular$/i.test(r.convenio); };
+var recebido = regs.filter(function (r) { return r.pago === 'Sim'; }).reduce(function (a, r) { return a + (Number(r.valor) || 0); }, 0);
+var aRec = regs.filter(function (r) { return particular(r) && (r.pago === '' || r.pago === 'Não') && !/^Mensalidade|pacote|plano|mensal|convênio|AAPI/i.test(r.procedimento); }).reduce(function (a, r) { return a + (Number(r.valor) || 0); }, 0);
+var nfPend = regs.filter(function (r) { return r.pago === 'Sim' && r.nf !== 'Sim' && r.nf !== 'Não se aplica'; }).length;
+var guiaPend = regs.filter(function (r) { return (!particular(r) || /^Convênio/i.test(r.pago)) && r.guia !== 'Sim'; }).length;
+var rs = function (n) { return 'R$ ' + brl(n).replace(',00', ''); };
+var tiles = [[rs(recebido), 'recebido hoje', recebido ? 'verde' : 'cinza'], [rs(aRec), 'a receber hoje (particular)', aRec ? 'amarelo' : 'cinza'], [nfPend, 'NF a emitir hoje', nfPend ? 'laranja' : 'cinza', ehGestao() ? 'gestao' : null], [guiaPend, 'guia a emitir hoje', guiaPend ? 'amarelo' : 'cinza', ehGestao() ? 'gestao' : null]];
 var box = $("#d-resumo"); box.innerHTML = '';
 tiles.forEach(function (t) {
 var b = el('<' + (t[3] ? 'button type="button"' : 'div') + ' class="tile info ' + t[2] + '"><b>' + esc(String(t[0])) + '</b><span>' + esc(t[1]) + '</span></' + (t[3] ? 'button' : 'div') + '>');
@@ -1407,17 +1407,23 @@ var incompl = itens.filter(function (i) { var p = pacInfo(i.paciente); return p 
 if (incompl.length) out.push(['laranja', incompl.length, 'cadastro sem modalidade · ' + incompl.map(function (i) { return primeiroNome(i.paciente); }).join(', '), 'pacientes', incompl[0].paciente]);
 var fora = itens.filter(function (i) { return !pacInfo(i.paciente); });
 if (fora.length) out.push(['laranja', fora.length, 'não está em Pacientes · ' + fora.map(function (i) { return primeiroNome(i.paciente); }).join(', '), 'pacientes']);
+var regs = itens.filter(function (i) { return i.registro && /^Atendido/.test(i.registro.oque); });
+var particular = function (r) { return !r.convenio || /^Particular$/i.test(r.convenio); }, dest = ehGestao() ? 'gestao' : null;
+var sg = regs.filter(function (i) { var r = i.registro; return (!particular(r) || /^Convênio/i.test(r.pago)) && r.guia !== 'Sim'; });
+if (sg.length) out.push(['amarela', sg.length, 'guia a emitir hoje · ' + sg.map(function (i) { return primeiroNome(i.paciente) + (i.hora ? ' ' + i.hora : ''); }).join(', '), dest]);
+var nf = regs.filter(function (i) { var r = i.registro; return r.pago === 'Sim' && r.nf !== 'Sim' && r.nf !== 'Não se aplica'; });
+if (nf.length) out.push(['laranja', nf.length, 'NF a emitir hoje · ' + nf.map(function (i) { return primeiroNome(i.paciente) + (i.registro.valor ? ' R$ ' + brl(i.registro.valor).replace(',00', '') : ''); }).join(', '), dest]);
+var pp = regs.filter(function (i) { var r = i.registro; return particular(r) && (r.pago === '' || r.pago === 'Não') && !/^Mensalidade|pacote|plano|mensal|convênio|AAPI/i.test(r.procedimento); });
+if (pp.length) out.push(['amarela', pp.length, 'particular sem “Pago?” hoje · ' + pp.map(function (i) { return primeiroNome(i.paciente); }).join(', '), dest]);
 if (ehGestao() && g) {
-var sg = doDia(g.semGuia, dia); if (sg.length) out.push(['amarela', sg.length, 'guia a emitir hoje · ' + sg.map(function (x) { return primeiroNome(x.paciente) + (x.hora ? ' ' + x.hora : ''); }).join(', '), 'gestao']);
 var ontem = dataObj(dia); ontem.setDate(ontem.getDate() - 1); var dOntem = ('0' + ontem.getDate()).slice(-2) + '/' + ('0' + (ontem.getMonth() + 1)).slice(-2) + '/' + ontem.getFullYear();
-var nf = (g.nfPendente || []).filter(function (x) { return x.data === dia || x.data === dOntem; }); if (nf.length) out.push(['laranja', nf.length, 'NF a emitir (hoje e ontem) · ' + nf.map(function (x) { return primeiroNome(x.paciente) + (x.valor ? ' R$ ' + brl(x.valor).replace(',00', '') : ''); }).join(', '), 'gestao']);
-var pp = doDia(g.pagamentoPendente, dia); if (pp.length) out.push(['amarela', pp.length, 'particular sem “Pago?” hoje · ' + pp.map(function (x) { return primeiroNome(x.paciente); }).join(', '), 'gestao']);
+var nfO = (g.nfPendente || []).filter(function (x) { return x.data === dOntem; }); if (nfO.length) out.push(['laranja', nfO.length, 'NF de ontem a emitir · ' + nfO.map(function (x) { return primeiroNome(x.paciente) + (x.valor ? ' R$ ' + brl(x.valor).replace(',00', '') : ''); }).join(', '), 'gestao']);
 }
 var box = $("#d-pend"); box.innerHTML = '';
 if (!out.length) { box.innerHTML = '<div class="muted">Nada pendente por enquanto.</div>'; return; }
 out.forEach(function (o) {
-var b = el('<button type="button" class="pend-linha ' + o[0] + '"><b>' + o[1] + '</b><span>' + esc(o[2]) + '</span>' + ic('direita', 16, 2.4) + '</button>');
-b.addEventListener('click', function () { go(o[3], o[3] === 'pacientes' && o[4] ? { editar: o[4], voltar: 'hoje' } : undefined); });
+var b = el('<button type="button" class="pend-linha ' + o[0] + (o[3] ? '' : ' fixa') + '"><b>' + o[1] + '</b><span>' + esc(o[2]) + '</span>' + (o[3] ? ic('direita', 16, 2.4) : '') + '</button>');
+if (o[3]) b.addEventListener('click', function () { go(o[3], o[3] === 'pacientes' && o[4] ? { editar: o[4], voltar: 'hoje' } : undefined); });
 box.appendChild(b);
 });
 }

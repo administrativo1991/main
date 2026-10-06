@@ -45,9 +45,12 @@ Toda a lógica que decide o que vai pra planilha: ponte `call()`, módulo de dup
 ## Revisão 06/10: menu lateral e tela Hoje em tabela
 
 Fonte: `Main.dc.html` e `Celular.dc.html` revisados (13:01 de 06/10) e a nota "Prompt pro Claude Code — nova interface",
-versão revisada em 06/10. Nenhuma função do servidor mudou; os dados enviados ao servidor são os mesmos
+versão revisada em 06/10. Nenhuma gravação no servidor mudou; os dados enviados ao servidor são os mesmos
 (`listaDoDia`, `confirmar`, `acrescentarAoDia`, `remarcar`, `removerDoDia`, `registrarAtendimento` para "não vem",
-`agendaFixa`/`salvarAgendaFixa`, `gestaoResumo` só pra gestão).
+`agendaFixa`/`salvarAgendaFixa`, `gestaoResumo` só pra gestão). A única mudança no servidor, aprovada pela Roberta
+em 06/10 ("ok, pode fazer"), é **só de leitura**: `listaDoDia` passou a devolver, no `registro` de quem já foi
+registrado no dia, o que a própria linha da aba do mês já tem (Valor, Pago?, Forma, NF, Guia, Convênio (auto)).
+Nada a mais é gravado.
 
 ### Estrutura comum (todas as telas)
 
@@ -64,11 +67,15 @@ versão revisada em 06/10. Nenhuma função do servidor mudou; os dados enviados
   (preenchido com quem tem paciente no dia) · busca por nome **ou pagador** (sem acento) · Imprimir · primário "+ Encaixe no dia".
   "Agenda recorrente" virou um link discreto no rodapé da tabela.
 - **Tiles-filtro** com contagem (na lista · aguardando · chegou · registrados · não vem). "Aguardando" soma os "a confirmar";
-  clicar de novo no tile volta a "na lista". **Tiles de resumo**: a gestão vê R$ recebido no mês, R$ a receber hoje (particular),
-  NF pendente hoje e guia a emitir hoje (do `gestaoResumo` do mês, filtrado pelo dia; os dois últimos levam à Gestão).
-  A recepção vê contagens que saem do cadastro: mensalista com mês em aberto, convênio hoje, atenção na cobrança, cadastro a completar.
+  clicar de novo no tile volta a "na lista". **Tiles de resumo** (recepção e gestão, só do dia aberto, calculados das linhas
+  já registradas que `listaDoDia` devolve): R$ recebido hoje (Pago? = Sim), R$ a receber hoje (particular com Pago? vazio
+  ou Não, fora mensalidade/pacote/convênio), NF a emitir hoje (Pago? Sim e NF nem Sim nem "Não se aplica") e guia a emitir hoje
+  (convênio com Guia ≠ Sim). Pra gestão, os dois últimos levam à tela Gestão; pra recepção só informam.
+  Decisão da Roberta (06/10): a recepção vê os valores do dia porque é quem mexe com o dinheiro; o que continua só da gestão
+  é o resumo do mês (`gestaoResumo`).
 - **Tabela**: Hora · Paciente (nome + idade, ou "adulto") · Profissional · modalidade · Cobrança (as etiquetas de `tagsDe`:
-  regra laranja, mensalidade, plano, pro bono, convênio) · Situação (pill) · um botão de ação pela situação
+  regra laranja, mensalidade, plano, pro bono, convênio; depois de registrado, o convênio vira "Guia assinada" verde ou
+  "Guia a emitir" amarela, conforme a coluna Guia da linha) · Situação (pill) · um botão de ação pela situação
   (A confirmar → Confirmou · Aguardando → Chegou · Chegou → Registrar atendimento · Não vem → Remarcar · registrado → Ver registro) + ⋯.
   Quem chegou e não foi registrado: fundo `#F8F5FA` e barra roxa de 4 px; atendido e não vem com opacidade .7, não vem riscado.
   Até 1400 px de largura (o computador de 13" da recepção), a coluna Profissional · modalidade vai pra baixo do nome.
@@ -76,6 +83,7 @@ versão revisada em 06/10. Nenhuma função do servidor mudou; os dados enviados
   Inicial, nome, idade · nascimento · pagador; Hoje (hora · tipo), Profissional, Modalidade, Convênio; bloco ⚠ Atenção na cobrança
   (laranja) quando há regra/observação; etiquetas; 4 botões de situação (Confirmou · Chegou hh:mm · Não vem hoje · Remarcar) com o atual
   marcado; botão grande "Registrar atendimento →" (abre a tela 2 preenchida); links "Ver cadastro" e "Remover da lista".
+  Quando o paciente já foi registrado, o painel mostra o resumo do registro (procedimento, valor, Pago?/forma, NF, guia).
   Os formulários de "não vem", "remarcar" e "remover" agora abrem dentro do painel. Sem linha selecionada, o painel mostra o resumo do dia.
 - **Abaixo da tabela**: "Pendências de hoje" (linhas clicáveis: mensalista de hoje com mês em aberto → Mensalistas; cadastro sem
   modalidade → Pacientes; paciente fora de Pacientes; e, pra gestão, guia a emitir hoje, NF a emitir hoje/ontem, particular sem Pago? → Gestão)
@@ -83,11 +91,12 @@ versão revisada em 06/10. Nenhuma função do servidor mudou; os dados enviados
 - O lembrete da gestão virou uma faixa pêssego acima da tabela (assim aparece também no celular).
 - Impressão: só o título "Lista do dia · data" e a tabela sem a coluna de ação; sem CPF.
 
-### Limites desta rodada (sem mexer no servidor)
+### Limites desta rodada
 
-- "R$ recebido hoje" e "a receber" só pra gestão, porque `gestaoResumo` é restrito a esse perfil e `listaDoDia` não traz valor/Pago?.
-  Pra recepção ver R$ seria preciso uma leitura nova no servidor (só leitura, nenhuma gravação). Aguarda decisão da Roberta.
-- "Últimos 3 atendimentos" do painel do paciente também precisaria de uma leitura nova (histórico por paciente); ficou de fora.
-- Na coluna Cobrança, o convênio aparece como etiqueta lilás "Convênio X": "guia assinada / a emitir" só se sabe depois de registrar,
-  e o registro do dia não traz a guia.
+- O que a tela Hoje mostra de dinheiro é só o dia aberto e só o que já foi gravado na linha do mês (leitura nova em
+  `listaDoDia`, nenhuma gravação). O resumo do mês continua só pra gestão (`gestaoResumo`).
+- "Guia assinada / a emitir" só aparece depois de registrar: antes não há como saber (a guia se marca no registro).
+- "Últimos 3 atendimentos" do painel do paciente precisaria de outra leitura nova (histórico por paciente); ficou de fora.
 - "Editar horário" no menu ⋯ não existe (não há função pra isso; horário fixo se muda na Agenda recorrente).
+- A tela Registrar foi conferida contra o `Atendimento.dc.html` revisado: por dentro é igual ao mockup anterior,
+  só ganhou o menu lateral. Pacientes, Mensalistas e Gestão ainda vêm nessa ordem.

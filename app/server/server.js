@@ -581,7 +581,10 @@ API.listaDoDia = function (d) {
       var dt = r[h[HM.DATA] - 1]; if (fmtData_(dt) !== chave) return;
       var pac = String(r[h[HM.PACIENTE] - 1] || '').trim(); if (!pac) return;
       var k = pac + '|' + String(r[h[HM.PROFISSIONAL] - 1] || '').trim();
-      reg[k] = { oque: String(r[h[HM.OQUE] - 1] || ''), id: h[HM.ID] ? String(r[h[HM.ID] - 1] || '') : '', procedimento: String(r[h[HM.PROCEDIMENTO] - 1] || ''), hora: horaTxt_(r[h[HM.HORA] - 1]) };
+      var g = function (nome) { var c = h[HM[nome]] || h[nome]; return c ? r[c - 1] : ''; };
+      // só leitura: a tela Hoje mostra o que já foi gravado na linha (valor, Pago?, NF, guia) pra fechar o dia sem abrir a planilha
+      reg[k] = { oque: String(g('OQUE') || ''), id: String(g('ID') || ''), procedimento: String(g('PROCEDIMENTO') || ''), hora: horaTxt_(g('HORA')),
+        valor: Number(g('VALOR')) || 0, pago: String(g('PAGO') || '').trim(), forma: String(g('FORMA') || ''), nf: String(g('NF') || '').trim(), guia: String(g('GUIA') || '').trim(), convenio: String(g('Convênio (auto)') || '').trim() };
       if (!reg[pac]) reg[pac] = reg[k];
     });
   }

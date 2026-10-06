@@ -259,6 +259,8 @@ table.dia tr.vazia:hover td{background:none}
 .pend-linha.laranja{background:var(--lar-bg)}.pend-linha.laranja b{color:var(--lar-tx)}
 .pend-linha.lilas{background:var(--lilas)}
 .pend-linha:hover{filter:brightness(.97)}
+.pend-linha.fixa{cursor:default}
+.pend-linha.fixa:hover{filter:none}
 .fim-dia .check{font-size:13px}
 .mais{position:relative}
 .mais-menu{position:absolute;right:0;top:calc(100% + 6px);background:var(--sup);border:1px solid var(--borda);border-radius:12px;box-shadow:var(--sombra-forte);padding:6px;min-width:220px;z-index:6;display:flex;flex-direction:column;text-align:left}
