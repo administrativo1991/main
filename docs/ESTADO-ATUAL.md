@@ -7,10 +7,11 @@ Atualizado em 06/10/2026 (noite, nova interface). Leia este arquivo primeiro ao 
 App web **Recepção Nascente** (Google Apps Script) em cima da planilha
 "Controle da Recepção 2026". Tudo é desenvolvido e testado na cópia
 "CÓPIA TESTE - Controle da Recepção 2026" (id `1u6uUDpgfwP9lfBOist41JJ7zYBQtQoJzRegTsonPiyk`).
-A planilha real (id `1WvuEvxKvtRs14ddAa2QqhQkJywwQOZmZqU0o6QyqUqs`) foi preparada em 06/10 e está pronta para o app:
-Listas, Procedimentos, Pacientes (F, N, Q, R, S, T), Mensalistas (B) e a aba "Alterações de cadastro" iguais à cópia,
-tudo conferido por releitura (ver `docs/MIGRACAO-REAL-2026-10-06.md`). Falta só a Roberta instalar o carregador
-`dist/Code.real.gs` na real e mandar o URL (`docs/COMO-INSTALAR.md`, seção "Planilha real").
+**A planilha real (id `1WvuEvxKvtRs14ddAa2QqhQkJywwQOZmZqU0o6QyqUqs`) está no ar com o app desde 06/10 à noite.**
+Ela recebeu a configuração da cópia (Listas, Procedimentos, Pacientes F/N/Q/R/S/T, Mensalistas B, "Alterações de cadastro"),
+tudo conferido por releitura (`docs/MIGRACAO-REAL-2026-10-06.md`); foi movida para Meu Drive → Clínica Nascente → Gestão →
+App Recepção (fora do drive compartilhado da recepção) e o carregador `dist/Code.real.gs` foi implantado pela Roberta.
+URL definitivo da recepção em `app/config.json` (`appUrlReal`) e em `docs/COMO-INSTALAR.md`. A recepção usa só o app.
 
 Regras fixas: nunca migrar/duplicar dados; só acrescentar linhas ou atualizar células;
 nunca apagar linha (marcar "Removido"); nunca escrever nas colunas automáticas (F, G, H, N
@@ -53,7 +54,7 @@ Git: branch `claude/lucid-einstein-gd6x5l`, tudo commitado e enviado.
 2. Coluna "Gestão" na aba Listas (quem vê a tela Gestão). Hoje só vale `CONFIG.GESTAO` no código.
 3. Carga inicial da Agenda recorrente (horários fixos de cada profissional).
 4. ~440 cadastros sem modalidade: completar na véspera pela Lista do dia ("⚠ sem modalidade").
-5. Instalar `dist/Code.real.gs` na planilha real (Roberta) e registrar o URL em `app/config.json` (`appUrlReal`); liberar o link para a recepção.
+5. Mandar o link do app (`appUrlReal`) para `atendimento@clinicanascente.com.br` com a orientação de salvar como atalho (`docs/COMO-INSTALAR.md`, "Para a recepção usar").
 6. Copiar `Mensalistas!I2:I42` da real para a cópia (a cópia tem o texto antigo das observações; as decisões de 05/10 à noite só estão na real).
 
 ## Respostas que faltam da gestão

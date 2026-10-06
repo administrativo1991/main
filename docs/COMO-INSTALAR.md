@@ -45,15 +45,23 @@ Nada a fazer. Em até 2 minutos a tela nova aparece sozinha (basta recarregar a 
 
 Copie a mensagem que apareceu na tela (ou um print) e me mande. Nada do que você digitou se perde: o rascunho fica guardado no computador até gravar.
 
-## Planilha real (06/10/2026)
+## Planilha real (implantada em 06/10/2026)
 
-Repita os passos 1 a 9 **na planilha "Controle da Recepção 2026"**, colando o conteúdo de **`dist/Code.real.gs`** no passo 3
-(não o `dist/Code.gs`). O URL que sair é o endereço definitivo da recepção: me mande para eu registrar em `app/config.json`
-(`appUrlReal`) e aqui. Antes de liberar para a recepção, faça as três gravações manuais listadas em
-`docs/MIGRACAO-REAL-2026-10-06.md` (Pacientes, Mensalistas coluna B, Listas colunas A e B).
+Feito pela Roberta em 06/10 à noite: passos 1 a 9 na planilha "Controle da Recepção 2026" (que agora fica em
+Meu Drive → Clínica Nascente → Gestão → App Recepção), com o conteúdo de `dist/Code.real.gs`. Antes disso a planilha já
+tinha recebido a configuração da cópia (`docs/MIGRACAO-REAL-2026-10-06.md`).
 
-## Endereço atual (cópia de teste, implantado em 04/10/2026; app completo publicado em 05/10: Novo paciente, Atendimento, Lista do dia, Editar cadastro, Mensalistas e Gestão)
+## Endereço da recepção (planilha real, definitivo)
+
+`https://script.google.com/a/macros/clinicanascente.com.br/s/AKfycbyUQycC3p1wpPGkiarD6dzvamTzsNbkv81ueH4UWgxcx5RcYX4iu7_GL42KfCo3L3zE/exec`
+
+É este que vai para `atendimento@clinicanascente.com.br`. A planilha saiu do drive compartilhado da recepção: a recepção
+usa só o app (que roda como administrativo@ e não exige acesso ao arquivo).
+
+## Endereço da cópia de teste (implantado em 04/10/2026)
 
 `https://script.google.com/a/macros/clinicanascente.com.br/s/AKfycbzsUF7rqLabRtUQAeahEOo4cjdGd_7lLxk1vPl9EMsdjl52lTkbaWui69Ve_pdIHRNe/exec`
+
+Serve para aprovar cada publicação antes de ela ir para `arquivos_real`.
 
 Não crie outra "Nova implantação": isso gera outro endereço. Para atualizar o carregador, use Implantar → Gerenciar implantações → lápis → Nova versão.
