@@ -717,7 +717,7 @@ function valorDaModalidade(m){
   if(/cartão de parceria/.test(m)) return 'tabela, desconto parceria';
   if(/^Consulta individual|^Avulso/.test(m)) return 'tabela do procedimento';
   if(/^Plano de|^Pacote/.test(m)) return 'valor combinado, lançado na compra do plano';
-  if(/^Mensalidade fixa|^Social/.test(m)) return 'R$ 200/mês (aba Mensalistas)';
+  if(/^Mensalidade fixa|^Social/.test(m)) return 'valor mensal da aba Mensalistas';
   if(/^Mensal \(valor|\(mensal\)/.test(m)) return 'valor mensal da aba Mensalistas';
   if(m==='Convênio') return 'faturado no convênio';
   if(m==='Pro bono'||m==='Permuta') return 'sem cobrança';

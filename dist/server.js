@@ -853,7 +853,7 @@ API.registrarMensalidade = function (d) {
     if (!linha) return { ok: false, erros: ['Paciente não está na aba Mensalistas.'] };
     var u = usuario_(), carimbo = (u.email || 'app') + ' · ' + agora_();
     var anterior = String(s.getRange(linha, col.idx + 2).getValue() || '').trim();
-    var nota = fmtData_(data) + ' — R$ ' + valor.toFixed(2).replace('.', ',') + ' ' + forma + (d.quemPagou ? ' (' + String(d.quemPagou).trim() + ')' : '') + (d.nfNumero ? ' · NF ' + String(d.nfNumero).trim() : (String(d.nf || '') === 'Sim' ? ' · NF emitida' : '')) + (d.sessaoExtra ? ' · com 5ª sessão' : '') + ' · app';
+    var nota = fmtData_(data) + ' — R$ ' + valor.toFixed(2).replace('.', ',') + ' ' + forma + (d.quemPagou ? ' (' + String(d.quemPagou).trim() + ')' : '') + (d.nfNumero ? ' · NF ' + String(d.nfNumero).trim() : (String(d.nf || '') === 'Sim' ? ' · NF emitida' : '')) + (d.sessaoExtra ? ' · com 5ª sessão' : '') + ' · ' + carimbo;
     if (anterior && !/^\d{2}\/\d{2}/.test(anterior)) nota = nota + ' | antes: ' + anterior; // não perde a anotação da gestão
     s.getRange(linha, col.idx + 1).setValue('Sim');
     s.getRange(linha, col.idx + 2).setValue(nota);
