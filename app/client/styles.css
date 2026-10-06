@@ -343,6 +343,10 @@ button.kpi[aria-pressed="true"] span,.kpi.roxo span{color:#fff;opacity:.9}
 .pend.lilas{border-left-color:var(--lilas-med)}.pend.lilas .n{color:var(--roxo)}
 .pend.vermelha{border-left-color:var(--vm-b)}.pend.vermelha .n{color:var(--vm-tx)}
 .pend.verde .n{color:var(--vd-tx)}
+.tabela-card tbody tr.clicavel{cursor:pointer}
+.tabela-card tbody tr.clicavel:hover td,.tabela-card tbody tr.clicavel:focus-visible td{background:#FBF9FC}
+.corr .check.forte{align-self:end;padding:10px 0}
+.pp-links .btn.link[aria-pressed="true"]{text-decoration:underline}
 .discreto{display:flex;flex-wrap:wrap;gap:8px 20px;font-size:13px;color:var(--tx3);padding:4px 18px}
 .discreto button{border:0;background:none;color:var(--tx3);font-size:13px;padding:0;text-decoration:underline dotted}
 .discreto button:hover{color:var(--roxo)}

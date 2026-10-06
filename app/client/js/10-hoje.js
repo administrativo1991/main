@@ -141,6 +141,7 @@ function menuMais(it, btn) {
   if (s !== 'atendido' && s !== 'falta') op.push(['registrar', 'Registrar atendimento']); else op.push(['registrar', 'Registrar outro atendimento']);
   if (s !== 'atendido' && s !== 'falta' && s !== 'naovem') { op.push(['naovem', 'Não vem hoje']); op.push(['remarcar', 'Remarcar']); }
   if (it.listaId && !it.registro) op.push(['remover', 'Remover da lista', 'perigo']);
+  if (it.registro && it.registro.id) op.push(['corrigir', 'Corrigir cobrança']);
   op.push(['cadastro', 'Ver cadastro']);
   var m = el('<div class="mais-menu" role="menu">' + op.map(function (o) { return '<button type="button" role="menuitem" data-ac="' + o[0] + '" class="' + (o[2] || '') + '">' + o[1] + '</button>'; }).join('') + '</div>');
   $$('button', m).forEach(function (b) { b.addEventListener('click', function (e) { e.stopPropagation(); m.remove(); acaoDia(b.dataset.ac, it); }); });
@@ -153,7 +154,7 @@ function acaoDia(ac, it) {
   if (ac === 'registrar') { go('registrar', { paciente: it.paciente, profissional: it.profissional, data: DIA.data, hora: it.hora || '' }); return; }
   if (ac === 'cadastro') { go('pacientes', { editar: it.paciente, voltar: 'hoje' }); return; }
   if (ac === 'ver') { selecionar(it); return; }
-  selecionar(it, ac); // naovem · remarcar · remover: formulário dentro do painel do paciente
+  selecionar(it, ac); // naovem · remarcar · remover · corrigir: formulário dentro do painel do paciente
 }
 /* ---------- painel do paciente (coluna da direita; folha de baixo no celular) ---------- */
 function itemSelecionado() { if (!DIA || !selecionado) return null; return DIA.itens.filter(function (i) { return chaveItem(i) === selecionado; })[0] || null; }
@@ -197,6 +198,7 @@ function renderPainel() {
   $("#pp-registrar").innerHTML = (reg ? 'Registrar outro atendimento ' : 'Registrar atendimento ') + ic('seta', 18);
   $("#pp-registrar-leg").hidden = reg;
   $("#pp-remover").hidden = !(it.listaId && !it.registro);
+  var podeCorrigir = !!(r && r.id); $("#pp-corrigir").hidden = !podeCorrigir; $("#pp-corrigir-sep").hidden = !podeCorrigir; $("#pp-corrigir").setAttribute('aria-pressed', String(formAberto === 'corrigir'));
   renderForm(it);
 }
 function renderForm(it) {
@@ -204,6 +206,7 @@ function renderForm(it) {
   var tipo = formAberto, html;
   if (tipo === 'naovem') html = '<h3>Não vem hoje</h3><div class="grid g1"><label class="campo">Motivo<select id="d-nv-motivo"></select></label><label class="campo">Observação<input id="d-nv-obs"></label></div><div class="acoes"><button type="button" class="btn" id="d-nv-ok">Gravar</button><button type="button" class="btn ter" data-fechar>Cancelar</button></div><span class="muted">Grava a falta na aba do mês, sem cobrança nesta linha.</span>';
   else if (tipo === 'remarcar') html = '<h3>Remarcar</h3><div class="grid g2"><label class="campo">Nova data<input id="d-rm-data" placeholder="dd/mm/aaaa" maxlength="10" inputmode="numeric"></label><label class="campo">Nova hora<input id="d-rm-hora" placeholder="hh:mm" maxlength="5" inputmode="numeric" value="' + esc(it.hora || '') + '"></label><label class="campo c2">Observação<input id="d-rm-obs"></label></div><div class="acoes"><button type="button" class="btn" id="d-rm-ok">Remarcar</button><button type="button" class="btn ter" data-fechar>Cancelar</button></div><span class="muted">Hoje fica como “não vem · remarcado”; o novo dia ganha a linha.</span>';
+  else if (tipo === 'corrigir') html = '<h3>Corrigir cobrança</h3><div class="muted">Muda só os campos de cobrança da linha já gravada (Pago?, forma, NF, guia, observação). O valor não se altera por aqui: se estiver errado, avise a gestão.</div><div data-form></div><div data-erros></div><div class="acoes"><button type="button" class="btn" id="d-cor-ok">Gravar correção</button><button type="button" class="btn ter" data-fechar>Cancelar</button></div>';
   else html = '<h3>Remover da lista</h3><div class="grid g1"><label class="campo">Motivo da remoção <span class="leg">só agendamentos avulsos; horário fixo se pausa na Agenda recorrente</span><input id="d-rem-motivo" value="duplicado"></label></div><div class="acoes"><button type="button" class="btn vermelho" id="d-rem-ok">Remover da lista</button><button type="button" class="btn ter" data-fechar>Cancelar</button></div>';
   var pn = el('<div class="pp-formbox">' + html + '</div>'); box.appendChild(pn);
   $('[data-fechar]', pn).addEventListener('click', function () { formAberto = null; renderPainel(); });
@@ -226,6 +229,13 @@ function renderForm(it) {
       call('remarcar', d).then(function (r) { if (!r.ok) return toast((r.erros || ['Não gravou']).join(' ')); toast('Remarcado para ' + para); carregarDia(); }).catch(function (e) { toast('Erro: ' + e.message); });
     });
     $("#d-rm-data", pn).focus();
+  } else if (tipo === 'corrigir') {
+    var reg = it.registro, p0 = pacInfo(it.paciente), fbox = corrigirForm(reg, 'todos', p0); $('[data-form]', pn).appendChild(fbox);
+    $("#d-cor-ok", pn).addEventListener('click', function () {
+      var c = corrigirCampos(fbox, reg), erros = corrigirValidar(c, reg); $('[data-erros]', pn).innerHTML = erroBox(erros); if (erros.length) return;
+      var b = this; b.disabled = true;
+      call('corrigirLancamento', { aba: DIA.abaMes, id: reg.id, campos: c }).then(function (r) { if (!r.ok) { b.disabled = false; $('[data-erros]', pn).innerHTML = erroBox(r.erros || [], 'Não gravou'); return; } toast('Corrigido: ' + (r.alterados || []).join(', ')); formAberto = null; invalidarResumo(); carregarDia(); }).catch(function (e) { b.disabled = false; toast('Erro: ' + e.message); });
+    });
   } else {
     $("#d-rem-ok", pn).addEventListener('click', function () {
       this.disabled = true;
@@ -237,6 +247,7 @@ $("#pp-fechar").addEventListener('click', fecharPainel);
 $("#pp-registrar").addEventListener('click', function () { var it = itemSelecionado(); if (it) acaoDia('registrar', it); });
 $("#pp-cadastro").addEventListener('click', function () { var it = itemSelecionado(); if (it) acaoDia('cadastro', it); });
 $("#pp-remover").addEventListener('click', function () { var it = itemSelecionado(); if (it) selecionar(it, 'remover'); });
+$("#pp-corrigir").addEventListener('click', function () { var it = itemSelecionado(); if (!it) return; if (formAberto === 'corrigir') { formAberto = null; renderPainel(); } else selecionar(it, 'corrigir'); });
 /* ---------- tiles de resumo e resumo do painel ---------- */
 function doDia(l, dia) { return (l || []).filter(function (x) { return x.data === dia; }); }
 function renderResumo(cont) {

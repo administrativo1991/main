@@ -108,3 +108,30 @@ Nada a mais é gravado.
   pill do mês, caixa da 5ª semana e o botão da linha na largura toda (atrasado com fundo rosado). Só CSS e classes nas
   células (`table.mens`, `.td-*`); o rótulo "Pagador:" usa `.so-tel`, visível só no celular. No computador a tabela não muda.
   Escolha da Roberta em 06/10, depois de ver o protótipo.
+
+## Correção de lançamentos (06/10, noite): gestão e recepção corrigem a cobrança de uma linha já gravada
+
+Pedido da Roberta: na Gestão, clicar no atendimento com problema e resolver ali quando a pendência for resolvida (pagou
+depois, NF emitida, guia chegou assinada). Aprovado em 06/10 à noite, inclusive pra recepção; **valor não se corrige
+pelo app** (fica pra planilha, com nota na observação).
+
+- **Servidor**: função nova `corrigirLancamento({ aba, id, campos })` em `app/server/server.js`. Acha a linha pelo ID
+  (coluna "ID") na aba do mês e grava só nos campos de cobrança: Pago?, Data do pagamento, Forma, Quem pagou, NF emitida?,
+  Nº da NF, Guia assinada? e Observação (só acrescenta, separado por " | "). Compara cada campo com o que está na linha
+  e grava só o que mudou; se nada mudou, devolve "Nada mudou". Pago? = Sim exige valor > 0 na linha; Pago? ≠ Sim limpa
+  data e forma. "Registrado por (app)" recebe ` | corrigido por e-mail · dd/mm/aaaa HH:mm (campos)` somado ao carimbo
+  original. Nunca toca em Valor, nas colunas automáticas (F, G, H, N) nem apaga nada. Se a linha for a compra de um plano
+  (Observação começa com "Compra do plano P-…"), a linha correspondente da aba Planos recebe o mesmo Pago?/Forma/Quem
+  pagou/NF, com carimbo. Qualquer usuário logado pode chamar (recepção e gestão).
+- **Formulário comum** (`js/00-base.js`: `corrigirForm`, `corrigirCampos`, `corrigirValidar`): Pago? (lista da aba
+  Listas), data, forma, quem pagou, NF e número (os cinco só aparecem com Pago? = Sim), "Guia assinada" (convênio) e
+  "Acrescentar à observação". Quando a pendência é de pagamento ou de NF, abre já com Pago? = Sim / NF = Sim.
+- **Gestão** (`js/50-gestao.js`, `#g-corr` em `telas/50-gestao.html`): as cinco tabelas de pendências ganharam linhas
+  clicáveis e um botão por linha (Receber · NF · Guia · Anotar). O clique abre o painel de correção acima da tabela, com
+  os campos daquela pendência; ao gravar, o resumo do mês recarrega e a linha sai da lista. Linha sem ID (digitada direto
+  na planilha) mostra o aviso "corrija lá mesmo". Faltas e "pagou outra pessoa" só anotam na observação (com atalho
+  "Ver cadastro" pra promover o pagador habitual).
+- **Hoje** (`js/10-hoje.js`): paciente já registrado ganha "Corrigir cobrança" no painel (e no menu ⋯), que abre o mesmo
+  formulário dentro do painel, com todos os campos (guia só se for convênio). Depois de gravar, a lista do dia recarrega.
+- Simulação: `corrigirLancamento` tem mock em `00-base.js`; os itens do `gestaoResumo` simulado ganharam IDs.
+

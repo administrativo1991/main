@@ -1,5 +1,5 @@
 /* ================= GESTÃO ================= */
-var GES = null, gesAberto = null, gesHora = null;
+var GES = null, gesAberto = null, gesHora = null, gesCorr = null;
 INICIAR.gestao = function () {
   if (!BOOT) { setTimeout(INICIAR.gestao, 300); return; }
   if (!ehGestao()) { $("#g-carregando").hidden = true; $("#g-bloqueio").hidden = false; return; }
@@ -9,12 +9,45 @@ INICIAR.gestao = function () {
   carregarGestao();
 };
 function carregarGestao() {
-  var mes = $("#g-mes").value; $("#g-titulo").textContent = mes + ' ' + new Date().getFullYear(); $("#g-carregando").hidden = false; $("#g-list").innerHTML = ''; $("#g-export-hint").textContent = '';
+  var mes = $("#g-mes").value; $("#g-titulo").textContent = mes + ' ' + new Date().getFullYear(); $("#g-carregando").hidden = false; $("#g-list").innerHTML = ''; $("#g-export-hint").textContent = ''; gesCorr = null; renderCorrecao();
   call('gestaoResumo', { mes: mes }).then(function (r) { $("#g-carregando").hidden = true; if (!r.ok) { $("#g-bloqueio").hidden = false; return; } GES = r; gesHora = new Date(); if (typeof resumoMes !== 'undefined') resumoMes[mes] = r; renderGestao(); }).catch(function (e) { $("#g-carregando").textContent = 'Não consegui carregar: ' + e.message; });
 }
-function tabelaG(titulo, cols, linhas, vazio) {
-  var card = el('<div class="tabela-card"><div class="passo" style="padding:14px 18px 4px"><h2 style="font-size:15px">' + esc(titulo) + '</h2><span class="tag ' + (linhas.length ? 'amarela' : 'verde') + '">' + linhas.length + '</span></div>' + (linhas.length ? '<div class="tabela-wrap"><table><thead><tr>' + cols.map(function (c) { return '<th>' + esc(c[0]) + '</th>'; }).join('') + '</tr></thead><tbody>' + linhas.map(function (l) { return '<tr>' + cols.map(function (c) { var v = typeof c[1] === 'function' ? c[1](l) : l[c[1]]; return '<td>' + esc(v == null ? '' : v) + '</td>'; }).join('') + '</tr>'; }).join('') + '</tbody></table></div>' : '<p class="muted" style="padding:0 18px 14px;margin:0">' + esc(vazio || 'Nada pendente.') + '</p>') + '</div>');
+// foco: quando informado, cada linha ganha o botão "Corrigir" (e o clique na linha) que abre o painel de correção
+function tabelaG(titulo, cols, linhas, vazio, foco) {
+  var rotulo = { pag: 'Receber', nf: 'NF', guia: 'Guia', obs: 'Anotar' }[foco] || 'Corrigir';
+  var card = el('<div class="tabela-card"><div class="passo" style="padding:14px 18px 4px"><h2 style="font-size:15px">' + esc(titulo) + '</h2><span class="tag ' + (linhas.length ? 'amarela' : 'verde') + '">' + linhas.length + '</span>' + (foco && linhas.length ? '<span class="muted" style="font-weight:500">clique na linha pra corrigir sem abrir a planilha</span>' : '') + '</div>' + (linhas.length ? '<div class="tabela-wrap"><table><thead><tr>' + cols.map(function (c) { return '<th>' + esc(c[0]) + '</th>'; }).join('') + (foco ? '<th class="no-print"></th>' : '') + '</tr></thead><tbody>' + linhas.map(function (l, i) { return '<tr' + (foco ? ' class="clicavel" tabindex="0" data-i="' + i + '"' : '') + '>' + cols.map(function (c) { var v = typeof c[1] === 'function' ? c[1](l) : l[c[1]]; return '<td>' + esc(v == null ? '' : v) + '</td>'; }).join('') + (foco ? '<td class="no-print" style="text-align:right"><button type="button" class="btn link mini" data-i="' + i + '">' + (l.id ? rotulo : 'sem ID') + '</button></td>' : '') + '</tr>'; }).join('') + '</tbody></table></div>' : '<p class="muted" style="padding:0 18px 14px;margin:0">' + esc(vazio || 'Nada pendente.') + '</p>') + '</div>');
+  if (foco) {
+    $$('tr.clicavel', card).forEach(function (tr) { var l = linhas[+tr.dataset.i]; var abrir = function () { abrirCorrecao(l, foco); }; tr.addEventListener('click', abrir); tr.addEventListener('keydown', function (e) { if (e.key === 'Enter') abrir(); }); });
+  }
   return card;
+}
+/* painel de correção: grava pela função corrigirLancamento só nos campos de cobrança; valor não muda por aqui */
+function abrirCorrecao(l, foco) { gesCorr = { l: l, foco: foco }; renderCorrecao(); var b = $("#g-corr"); if (b.firstChild) b.firstChild.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
+function renderCorrecao() {
+  var box = $("#g-corr"); box.innerHTML = ''; if (!gesCorr || !GES) return;
+  var l = gesCorr.l, foco = gesCorr.foco, p = pacInfo(l.paciente), semId = !l.id;
+  var tit = { pag: 'Registrar o pagamento', nf: 'Registrar a nota fiscal', guia: 'Guia do convênio', obs: 'Anotar a decisão' }[foco] || 'Corrigir lançamento';
+  var pn = el('<div class="painel"><div class="cab"><h2>' + esc(tit) + ' · ' + esc(l.paciente) + '</h2><span class="esp"></span><button type="button" class="btn icone p" data-fechar aria-label="Fechar">' + ic('fechar', 16, 2.4) + '</button></div>' +
+    '<div class="muted" style="margin:0">' + esc([l.data + (l.hora ? ' ' + l.hora : ''), l.profissional, l.procedimento, l.valor ? 'R$ ' + brl(l.valor) : '', l.oque, l.id ? 'ID ' + l.id : ''].filter(Boolean).join(' · ')) + '</div>' +
+    (semId ? '<div class="faixa nota">Esta linha não tem ID (foi digitada direto na planilha): corrija lá mesmo.</div>' : '<div data-form></div><div data-erros></div>') +
+    '<div class="acoes">' + (semId ? '' : '<button type="button" class="btn" data-salvar>Gravar correção</button>') + '<button type="button" class="btn ter" data-fechar>Cancelar</button>' + (p ? '<button type="button" class="btn link" data-cad>Ver cadastro</button>' : '') + '</div>' +
+    (semId ? '' : '<span class="muted">Grava só nos campos de cobrança da linha ' + esc(String(l.linha || '')) + ' da aba ' + esc(GES.mes) + ' (Pago?, data, forma, quem pagou, NF, guia, observação), com o carimbo da correção em "Registrado por (app)". Valor não se altera por aqui.</span>') + '</div>');
+  $$('[data-fechar]', pn).forEach(function (b) { b.addEventListener('click', function () { gesCorr = null; renderCorrecao(); }); });
+  var bc = $('[data-cad]', pn); if (bc) bc.addEventListener('click', function () { go('pacientes', { editar: l.paciente, voltar: 'gestao' }); });
+  if (!semId) {
+    var fbox = corrigirForm(l, foco, p); $('[data-form]', pn).appendChild(fbox);
+    $('[data-salvar]', pn).addEventListener('click', function () {
+      var c = corrigirCampos(fbox, l), erros = corrigirValidar(c, l); $('[data-erros]', pn).innerHTML = erroBox(erros); if (erros.length) return;
+      var b = this; b.disabled = true;
+      call('corrigirLancamento', { aba: GES.mes, id: l.id, campos: c }).then(function (r) {
+        if (!r.ok) { b.disabled = false; $('[data-erros]', pn).innerHTML = erroBox(r.erros || [], 'Não gravou'); return; }
+        toast('Corrigido: ' + (r.alterados || []).join(', ') + (r.plano ? ' · plano ' + r.plano.id + ' atualizado em Planos' : ''));
+        if (typeof invalidarResumo === 'function') invalidarResumo();
+        carregarGestao();
+      }).catch(function (e) { b.disabled = false; toast('Erro: ' + e.message); });
+    });
+  }
+  box.appendChild(pn);
 }
 function renderGestao() {
   var r = GES, soma = function (l) { return (l || []).reduce(function (a, x) { return a + (x.valor || 0); }, 0); };
@@ -26,11 +59,11 @@ function renderGestao() {
   var V = function (l) { return l.valor ? 'R$ ' + brl(l.valor) : ''; }, D = function (l) { return l.data + (l.hora ? ' ' + l.hora : ''); };
   var nomes = function (l, n) { var x = (l || []).slice(0, n || 3).map(function (i) { return primeiroNome(i.paciente) + ' ' + String(i.data || '').slice(0, 5); }); return x.join(' · ') + ((l || []).length > (n || 3) ? ' · +' + ((l || []).length - (n || 3)) : ''); };
   var PEND = [
-    { k: 'pag', cor: 'amarela', n: (r.pagamentoPendente || []).length, t: 'Particulares atendidos sem “Pago?”', s: (r.pagamentoPendente || []).length ? nomes(r.pagamentoPendente) + ' — a recepção cobra; linha amarela na planilha' : 'Todos os particulares atendidos têm Pago? preenchido.', acao: 'Ver lista', tabela: function () { return tabelaG('Particulares atendidos sem pagamento registrado', [['Data', D], ['Paciente', 'paciente'], ['Profissional', 'profissional'], ['Procedimento', 'procedimento'], ['Valor', V], ['Pago?', 'pago'], ['Obs.', 'obs']], r.pagamentoPendente); } },
-    { k: 'nf', cor: 'laranja', n: (r.nfPendente || []).length, t: 'Pagos sem nota fiscal', s: (r.nfPendente || []).length ? brlCurto(soma(r.nfPendente)) + ' · emitir no Portal Nacional com o nome de “quem pagou”' : 'Nenhum pagamento sem NF.', acao: 'Ver lista', tabela: function () { return tabelaG('Pagos sem NF emitida', [['Data', D], ['Paciente', 'paciente'], ['Valor', V], ['Forma', 'forma'], ['Quem pagou', function (l) { return l.quem || '(pagador habitual)'; }], ['NF?', function (l) { return l.nf || '(em branco)'; }]], r.nfPendente); } },
-    { k: 'guia', cor: 'lilas', n: (r.semGuia || []).length, t: 'Convênio sem guia assinada', s: (r.semGuia || []).length ? contarPor(r.semGuia, 'convenio') + ' — glosa certa se faturar assim' : 'Todas as guias de convênio assinadas.', acao: 'Ver lista', tabela: function () { return tabelaG('Convênio sem guia assinada', [['Data', D], ['Paciente', 'paciente'], ['Convênio', 'convenio'], ['Profissional', 'profissional'], ['Guia', function (l) { return l.guia || '(em branco)'; }]], r.semGuia); } },
-    { k: 'faltas', cor: 'vermelha', n: faltas, t: 'Faltas sem aviso de particular — taxa de falta?', s: 'Você decide caso a caso; se cobrar, entra no próximo agendamento', acao: 'Decidir', tabela: function () { return tabelaG('Faltas sem aviso de particular (taxa a decidir)', [['Data', D], ['Paciente', 'paciente'], ['Profissional', 'profissional'], ['O que aconteceu', 'oque'], ['Obs.', 'obs']], r.faltas, 'Nenhuma falta sem aviso.'); } },
-    { k: 'pagador', cor: 'lilas', n: (r.pagadorDiferente || []).length, t: 'Pagou outra pessoa — conferir o nome na NF', s: (r.pagadorDiferente || []).length ? nomes(r.pagadorDiferente) + ' — se for sempre essa pessoa, promover a pagador habitual em Pacientes' : 'Ninguém pagou por outra pessoa.', acao: 'Revisar', tabela: function () { return tabelaG('Pagou outra pessoa (conferir nome na NF)', [['Data', D], ['Paciente', 'paciente'], ['Quem pagou', 'quem'], ['Valor', V], ['NF?', 'nf']], r.pagadorDiferente, 'Nenhum.'); } }
+    { k: 'pag', cor: 'amarela', n: (r.pagamentoPendente || []).length, t: 'Particulares atendidos sem “Pago?”', s: (r.pagamentoPendente || []).length ? nomes(r.pagamentoPendente) + ' — a recepção cobra; linha amarela na planilha' : 'Todos os particulares atendidos têm Pago? preenchido.', acao: 'Ver lista', tabela: function () { return tabelaG('Particulares atendidos sem pagamento registrado', [['Data', D], ['Paciente', 'paciente'], ['Profissional', 'profissional'], ['Procedimento', 'procedimento'], ['Valor', V], ['Pago?', 'pago'], ['Obs.', 'obs']], r.pagamentoPendente, 'Nada pendente.', 'pag'); } },
+    { k: 'nf', cor: 'laranja', n: (r.nfPendente || []).length, t: 'Pagos sem nota fiscal', s: (r.nfPendente || []).length ? brlCurto(soma(r.nfPendente)) + ' · emitir no Portal Nacional com o nome de “quem pagou”' : 'Nenhum pagamento sem NF.', acao: 'Ver lista', tabela: function () { return tabelaG('Pagos sem NF emitida', [['Data', D], ['Paciente', 'paciente'], ['Valor', V], ['Forma', 'forma'], ['Quem pagou', function (l) { return l.quem || '(pagador habitual)'; }], ['NF?', function (l) { return l.nf || '(em branco)'; }]], r.nfPendente, 'Nada pendente.', 'nf'); } },
+    { k: 'guia', cor: 'lilas', n: (r.semGuia || []).length, t: 'Convênio sem guia assinada', s: (r.semGuia || []).length ? contarPor(r.semGuia, 'convenio') + ' — glosa certa se faturar assim' : 'Todas as guias de convênio assinadas.', acao: 'Ver lista', tabela: function () { return tabelaG('Convênio sem guia assinada', [['Data', D], ['Paciente', 'paciente'], ['Convênio', 'convenio'], ['Profissional', 'profissional'], ['Guia', function (l) { return l.guia || '(em branco)'; }]], r.semGuia, 'Nada pendente.', 'guia'); } },
+    { k: 'faltas', cor: 'vermelha', n: faltas, t: 'Faltas sem aviso de particular — taxa de falta?', s: 'Você decide caso a caso; se cobrar, entra no próximo agendamento', acao: 'Decidir', tabela: function () { return tabelaG('Faltas sem aviso de particular (taxa a decidir)', [['Data', D], ['Paciente', 'paciente'], ['Profissional', 'profissional'], ['O que aconteceu', 'oque'], ['Obs.', 'obs']], r.faltas, 'Nenhuma falta sem aviso.', 'obs'); } },
+    { k: 'pagador', cor: 'lilas', n: (r.pagadorDiferente || []).length, t: 'Pagou outra pessoa — conferir o nome na NF', s: (r.pagadorDiferente || []).length ? nomes(r.pagadorDiferente) + ' — se for sempre essa pessoa, promover a pagador habitual em Pacientes' : 'Ninguém pagou por outra pessoa.', acao: 'Revisar', tabela: function () { return tabelaG('Pagou outra pessoa (conferir nome na NF)', [['Data', D], ['Paciente', 'paciente'], ['Quem pagou', 'quem'], ['Valor', V], ['NF?', 'nf']], r.pagadorDiferente, 'Nenhum.', 'obs'); } }
   ];
   var root = $("#g-pend"); root.innerHTML = '';
   PEND.forEach(function (p) {

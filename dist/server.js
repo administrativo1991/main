@@ -531,6 +531,78 @@ API.registrarAtendimento = function (d) {
   } finally { lock.releaseLock(); }
 };
 
+// Corrigir um lançamento já gravado na aba do mês (gestão e recepção; aprovado pela Roberta em 06/10).
+// Acha a linha pelo ID e só mexe nas colunas de cobrança preenchidas pela recepção: Pago?, Data do pagamento, Forma,
+// Quem pagou, NF emitida?, Nº da NF, Guia assinada? e Observação (só acrescenta). Nunca toca em Valor, nas colunas
+// automáticas (F, G, H, N) nem apaga nada; o carimbo da correção vai somado em "Registrado por (app)".
+// Se a linha for a compra de um plano (Observação "Compra do plano P-…"), a aba Planos recebe o mesmo Pago?/Forma/NF.
+API.corrigirLancamento = function (d) {
+  d = d || {};
+  var aba = String(d.aba || '').trim(), id = String(d.id || '').trim(), c = d.campos || {};
+  if (CONFIG.MESES.indexOf(aba) < 0) return { ok: false, erros: ['Aba do mês inválida.'] };
+  if (!id) return { ok: false, erros: ['Lançamento sem ID: corrija direto na planilha.'] };
+  var s = planilha_().getSheetByName(aba); if (!s) return { ok: false, erros: ['A aba "' + aba + '" não existe.'] };
+  var lock = LockService.getScriptLock(); lock.waitLock(20000);
+  try {
+    var h = cabecalhos_(s), HM = CONFIG.HM;
+    if (!h[HM.ID]) return { ok: false, erros: ['A aba "' + aba + '" não tem a coluna ID.'] };
+    var ids = s.getRange(2, h[HM.ID], Math.max(s.getLastRow() - 1, 1), 1).getValues(), linha = 0;
+    for (var i = 0; i < ids.length; i++) if (String(ids[i][0]).trim() === id) { linha = i + 2; break; }
+    if (!linha) return { ok: false, erros: ['Não achei o lançamento ' + id + ' na aba ' + aba + '.'] };
+    var r = s.getRange(linha, 1, 1, s.getLastColumn()).getValues()[0];
+    var g = function (k) { var col = h[HM[k]]; return col ? r[col - 1] : ''; }, txt = function (k) { return String(g(k) || '').trim(); };
+    var paciente = txt('PACIENTE'), valorAtual = Number(g('VALOR')) || 0;
+    var pac = indicePacientes_().filter(function (p) { return p.nome === paciente; })[0] || {};
+    var u = usuario_(), erros = [], novos = {}, rotulos = [];
+    var quer = function (k) { return Object.prototype.hasOwnProperty.call(c, k); };
+    var mudar = function (k, v, rotulo) { if (!h[HM[k]]) return; var atual = k === 'DATA_PAG' ? fmtData_(g(k)) : txt(k); var nv = v instanceof Date ? fmtData_(v) : String(v == null ? '' : v).trim(); if (nv === atual) return; novos[k] = v instanceof Date ? v : nv; rotulos.push(rotulo); };
+    if (quer('pago')) {
+      var pago = String(c.pago || '').trim();
+      if (pago === 'Sim' && !(valorAtual > 0)) erros.push('Pago? = Sim exige um valor maior que zero na linha (o valor se corrige na planilha).');
+      mudar('PAGO', pago, 'Pago?');
+      if (pago === 'Sim') {
+        var dp = parseData_(c.dataPagamento) || (fmtData_(g('DATA_PAG')) ? null : new Date());
+        if (dp) mudar('DATA_PAG', dp, 'Data do pagamento');
+        if (quer('forma')) mudar('FORMA', String(c.forma || ''), 'Forma');
+      } else { mudar('DATA_PAG', '', 'Data do pagamento'); mudar('FORMA', '', 'Forma'); }
+    } else if (quer('forma')) mudar('FORMA', String(c.forma || ''), 'Forma');
+    if (quer('quemPagou')) { var quem = String(c.quemPagou || '').trim(); mudar('QUEM', (quem && quem !== (pac.pagador || '') && quem !== paciente) ? quem : '', 'Quem pagou'); }
+    if (quer('nf')) mudar('NF', String(c.nf || ''), 'NF emitida?');
+    if (quer('nfNumero')) mudar('NF_N', String(c.nfNumero || ''), 'Nº da NF');
+    if (quer('guia')) mudar('GUIA', String(c.guia || ''), 'Guia assinada?');
+    var obsNova = String(c.observacao || '').trim();
+    if (obsNova) { novos.OBS = (txt('OBS') ? txt('OBS') + ' | ' : '') + obsNova; rotulos.push('Observação'); }
+    if (erros.length) return { ok: false, erros: erros };
+    if (!rotulos.length) return { ok: false, erros: ['Nada mudou: os campos já estavam assim.'] };
+    var pares = {}; Object.keys(novos).forEach(function (k) { pares[HM[k]] = novos[k]; });
+    var carimbo = (u.email || 'app') + ' · ' + agora_();
+    if (h[HM.LOG]) pares[HM.LOG] = (txt('LOG') ? txt('LOG') + ' | ' : '') + 'corrigido por ' + carimbo + ' (' + rotulos.join(', ') + ')';
+    gravarCelulas_(s, linha, h, pares);
+    if (novos.DATA_PAG instanceof Date && h[HM.DATA_PAG]) s.getRange(linha, h[HM.DATA_PAG]).setNumberFormat('dd/MM/yyyy');
+    // compra de plano: a aba Planos acompanha a cobrança
+    var planoId = txt('PACOTE'), plano = null;
+    if (planoId && /^Compra do plano/i.test(txt('OBS'))) {
+      var sp = planilha_().getSheetByName(CONFIG.ABA.PACOTES);
+      if (sp && sp.getLastRow() >= 2) {
+        var hp = cabecalhos_(sp), pids = sp.getRange(2, hp['ID'], sp.getLastRow() - 1, 1).getValues();
+        for (var j = 0; j < pids.length; j++) if (String(pids[j][0]).trim() === planoId) {
+          var lp = j + 2, pp = {}, mapa = { PAGO: 'Pago?', FORMA: 'Forma de pagamento', NF: 'NF emitida?', NF_N: 'Nº da NF' };
+          Object.keys(mapa).forEach(function (k) { if (novos[k] != null && hp[mapa[k]]) pp[mapa[k]] = novos[k]; });
+          if (novos.QUEM != null && hp['Quem pagou']) pp['Quem pagou'] = novos.QUEM || (pac.pagador || paciente);
+          if (Object.keys(pp).length) {
+            if (hp['Registrado por (app)']) pp['Registrado por (app)'] = (String(sp.getRange(lp, hp['Registrado por (app)']).getValue() || '') + ' | corrigido por ' + carimbo).replace(/^ \| /, '');
+            gravarCelulas_(sp, lp, hp, pp); plano = { id: planoId, linha: lp };
+          }
+          break;
+        }
+      }
+    }
+    SpreadsheetApp.flush();
+    var depois = {}; Object.keys(novos).forEach(function (k) { depois[k] = novos[k] instanceof Date ? fmtData_(novos[k]) : novos[k]; });
+    return { ok: true, id: id, aba: aba, linha: linha, alterados: rotulos, novos: depois, plano: plano };
+  } finally { lock.releaseLock(); }
+};
+
 API.lancarPacote = function (d) {
   d = d || {};
   var erros = [];
