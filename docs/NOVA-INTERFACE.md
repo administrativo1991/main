@@ -104,5 +104,7 @@ Nada a mais é gravado.
 - Registrar, Pacientes, Mensalistas e Gestão foram conferidas contra os `.dc.html` revisados: por dentro são iguais aos
   mockups anteriores, só ganharam o menu lateral. Nomes e valores das modalidades continuam vindo da planilha (o mockup
   usa nomes ilustrativos como "Pacote mensal"; o app mostra os da aba Listas, como "Plano de 4 consultas").
-- No celular, a tabela de Mensalistas rola de lado dentro do card (como o mockup, que é só de computador); o botão
-  "Registrar pagamento" fica à direita, depois de rolar. Se a recepção for usar Mensalistas pelo celular, vale virar cards.
+- No celular (≤ 480 px), Mensalistas vira cards, como a lista do dia: nome + horário, valor em destaque, plano, pagador,
+  pill do mês, caixa da 5ª semana e o botão da linha na largura toda (atrasado com fundo rosado). Só CSS e classes nas
+  células (`table.mens`, `.td-*`); o rótulo "Pagador:" usa `.so-tel`, visível só no celular. No computador a tabela não muda.
+  Escolha da Roberta em 06/10, depois de ver o protótipo.
