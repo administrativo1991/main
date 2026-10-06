@@ -17,9 +17,26 @@ Este arquivo não traz dados de pacientes: a fonte dos valores é sempre a próp
 As abas `Planos`, `Lista do dia` e `Agenda recorrente` e as colunas novas de `Pacientes` (T–Y) e da aba do mês (U, V)
 o app cria sozinho no primeiro uso.
 
-## Ficou para fazer à mão (gravação bloqueada pela permissão da sessão)
+## Concluído em 06/10 à noite (sessão em modo "Accept edits", aprovado pela Roberta)
 
-Três gravações na planilha real foram barradas pelo controle de permissões do assistente. Em todas, a fonte é a CÓPIA TESTE.
+Os quatro passos abaixo, que de tarde tinham sido barrados pela permissão da sessão em modo Auto, foram gravados
+pelo assistente à noite e conferidos por releitura:
+
+| Gravação | Resultado conferido |
+|---|---|
+| `Pacientes` F, N, R, S (linhas 2–528) + Q136 (convênio da edição registrada) + cabeçalho T1:Y1 + carimbos T70 e T136 | Pacientes da real idêntica à cópia nas 528 linhas; só F523 e Q523 ficam vazias de propósito; linha 529 (teste) não existe na real |
+| `Mensalistas` B2:B42 | iguais à cópia (B43 vazia nas duas) |
+| `Listas` A2:A6 e B6 | iguais ao combinado |
+| Planilha de código: `arquivos` A1:C30 → `arquivos_real` (só valores) | 23 pedaços idênticos ao `dist/pedacos.json` |
+
+Antes de gravar, as duas planilhas foram comparadas coluna a coluna: a real não tinha nenhuma célula preenchida que a cópia
+não tivesse, então nada foi perdido. O que ficou da Roberta: instalar `dist/Code.real.gs` na real (`docs/COMO-INSTALAR.md`)
+e mandar o URL. Pendência pequena, sem pressa: copiar `Mensalistas!I2:I42` da real para a cópia, porque a cópia ainda tem o
+texto antigo das observações (as decisões de preço de 05/10 à noite só estão na real).
+
+## Como foi feito (registro; os passos abaixo já não precisam ser repetidos)
+
+Em todas as gravações, a fonte é a CÓPIA TESTE.
 
 ### 1. `Pacientes`, colunas F, N, R e S (modalidade, valor combinado, regra e observação de cobrança)
 
@@ -45,10 +62,9 @@ Enquanto não mudar, o app continua funcionando: ele reconhece os dois rótulos.
 
 Na planilha "Recepção Nascente — código do app (não mexer)", aba `arquivos`, selecionar `A1:C30`, copiar, ir à aba
 `arquivos_real`, clicar em A1 e colar **só valores** (Ctrl+Shift+V). Isso leva a versão aprovada na cópia em 06/10 à noite
-(Lembrete da gestão + guia de convênio desmarcada) para a planilha real. A gravação pelo assistente foi barrada pela
-permissão da sessão ("implantação em produção"), por isso fica à mão. Em até 2 minutos o app da real recarrega sozinho.
+(Lembrete da gestão + guia de convênio desmarcada) para a planilha real. Em até 2 minutos o app da real recarrega sozinho.
 
-## Links diretos (abrem na aba e no intervalo certos)
+## Links diretos (abrem na aba e no intervalo certos; úteis para conferir)
 
 | Passo | Origem (CÓPIA TESTE) | Destino (real) |
 |---|---|---|

@@ -7,9 +7,10 @@ Atualizado em 06/10/2026 (noite, nova interface). Leia este arquivo primeiro ao 
 App web **Recepção Nascente** (Google Apps Script) em cima da planilha
 "Controle da Recepção 2026". Tudo é desenvolvido e testado na cópia
 "CÓPIA TESTE - Controle da Recepção 2026" (id `1u6uUDpgfwP9lfBOist41JJ7zYBQtQoJzRegTsonPiyk`).
-A planilha real (id `1WvuEvxKvtRs14ddAa2QqhQkJywwQOZmZqU0o6QyqUqs`) começou a ser preparada em 06/10:
-Listas (H, I), Procedimentos e a aba "Alterações de cadastro" já estão iguais à cópia; faltam três gravações manuais
-e a implantação do carregador `dist/Code.real.gs` pela Roberta (ver `docs/MIGRACAO-REAL-2026-10-06.md` e `docs/COMO-INSTALAR.md`).
+A planilha real (id `1WvuEvxKvtRs14ddAa2QqhQkJywwQOZmZqU0o6QyqUqs`) foi preparada em 06/10 e está pronta para o app:
+Listas, Procedimentos, Pacientes (F, N, Q, R, S, T), Mensalistas (B) e a aba "Alterações de cadastro" iguais à cópia,
+tudo conferido por releitura (ver `docs/MIGRACAO-REAL-2026-10-06.md`). Falta só a Roberta instalar o carregador
+`dist/Code.real.gs` na real e mandar o URL (`docs/COMO-INSTALAR.md`, seção "Planilha real").
 
 Regras fixas: nunca migrar/duplicar dados; só acrescentar linhas ou atualizar células;
 nunca apagar linha (marcar "Removido"); nunca escrever nas colunas automáticas (F, G, H, N
@@ -23,12 +24,12 @@ Preços só em abas editáveis (Procedimentos, Pacientes, Mensalistas), nunca no
 |---|---|
 | Código-fonte | servidor `app/server/server.js` + `app/server/duplicatas.js`; tela `app/client/` (`styles.css`, `layout.html`, `telas/*.html`, `js/*.js`, `assets/*.svg`; ver `docs/NOVA-INTERFACE.md`); carregador `app/loader/Code.gs` |
 | Build | `node build.js` → `dist/index.html` (simulação), `dist/index.publicado.html`, `dist/pedacos.json` + `dist/pedacos/index-N.json` (pedaços ≤ 12.000 caracteres) e `dist/Code.gs` (teste) + `dist/Code.real.gs` (real) |
-| Código publicado | planilha "Recepção Nascente — código do app (não mexer)" (id `1qM7tX5neTU1kAa4JBpk1xiZQmcJOk325hx873XIRPYo`), aba `arquivos` = versão de teste lida pela CÓPIA TESTE; aba `arquivos_real` = versão em uso na planilha real (criada em 06/10 como cópia de `arquivos`). Em `arquivos` (desde 06/10 à noite): linhas 2–24 (duplicatas 2, server 3–8, index 9–24); `arquivos_real` ainda tem a versão da tarde (linhas 2–23, sem o Lembrete). Publicar sempre em `arquivos` primeiro; promover copiando A1:C24 para `arquivos_real` (limpar o que sobrar abaixo) |
+| Código publicado | planilha "Recepção Nascente — código do app (não mexer)" (id `1qM7tX5neTU1kAa4JBpk1xiZQmcJOk325hx873XIRPYo`), aba `arquivos` = versão de teste lida pela CÓPIA TESTE; aba `arquivos_real` = versão em uso na planilha real (criada em 06/10 como cópia de `arquivos`). Desde 06/10 à noite as duas abas têm a mesma versão: linhas 2–24 (duplicatas 2, server 3–8, index 9–24). Publicar sempre em `arquivos` primeiro; depois da aprovação, promover copiando A1:C30 (só valores) para `arquivos_real` |
 | Como publicar | `docs/PLANO-IMPLEMENTACAO.md`, seção 10 |
 | Manuais | `docs/README-RECEPCAO.md`, `docs/README-GESTAO.md`, `docs/COMO-INSTALAR.md` |
 | Testes de tela | Playwright, arquivos `*-test.js` no scratchpad (não versionados); `node tests/duplicatas.test.js` |
 
-Última publicação: 06/10/2026 (noite, 2ª) — correção da guia de convênio (a caixa "Guia assinada antes da sessão" começa desmarcada e zera a cada paciente; antes vinha marcada por padrão): index.html pedaços 4, 10, 11, 12 e 13 (linhas 13 e 19–22) regravados em `arquivos`, LEN e soma de controle conferidos. Antes dela, na mesma noite: Lembrete da gestão — server.js (6 pedaços, linhas 3–8) e index.html (16 pedaços, linhas 9–24). Versão aprovada pela gestão em 06/10 à noite. A promoção `arquivos` → `arquivos_real` (A1:C30, só valores) foi barrada pela permissão da sessão e ficou como passo manual 4 em docs/MIGRACAO-REAL-2026-10-06.md; até lá `arquivos_real` segue com a versão da tarde.
+Última publicação: 06/10/2026 (noite, 2ª) — correção da guia de convênio (a caixa "Guia assinada antes da sessão" começa desmarcada e zera a cada paciente; antes vinha marcada por padrão): index.html pedaços 4, 10, 11, 12 e 13 (linhas 13 e 19–22) regravados em `arquivos`, LEN e soma de controle conferidos. Antes dela, na mesma noite: Lembrete da gestão — server.js (6 pedaços, linhas 3–8) e index.html (16 pedaços, linhas 9–24). Versão aprovada pela gestão em 06/10 à noite e promovida para `arquivos_real` na mesma noite (23 pedaços conferidos contra o build).
 Git: branch `claude/lucid-einstein-gd6x5l`, tudo commitado e enviado.
 
 ## Feito e publicado
@@ -52,7 +53,8 @@ Git: branch `claude/lucid-einstein-gd6x5l`, tudo commitado e enviado.
 2. Coluna "Gestão" na aba Listas (quem vê a tela Gestão). Hoje só vale `CONFIG.GESTAO` no código.
 3. Carga inicial da Agenda recorrente (horários fixos de cada profissional).
 4. ~440 cadastros sem modalidade: completar na véspera pela Lista do dia ("⚠ sem modalidade").
-5. Piloto na planilha real (trocar `CONFIG.PLANILHA_ID`), depois virada em 01/11.
+5. Instalar `dist/Code.real.gs` na planilha real (Roberta) e registrar o URL em `app/config.json` (`appUrlReal`); liberar o link para a recepção.
+6. Copiar `Mensalistas!I2:I42` da real para a cópia (a cópia tem o texto antigo das observações; as decisões de 05/10 à noite só estão na real).
 
 ## Respostas que faltam da gestão
 
