@@ -55,7 +55,7 @@ Git: branch `claude/lucid-einstein-gd6x5l`, tudo commitado e enviado.
 3. Carga inicial da Agenda recorrente (horários fixos de cada profissional).
 4. ~440 cadastros sem modalidade: completar na véspera pela Lista do dia ("⚠ sem modalidade").
 5. Mandar o link do app (`appUrlReal`) para `atendimento@clinicanascente.com.br` com a orientação de salvar como atalho (`docs/COMO-INSTALAR.md`, "Para a recepção usar").
-6. Copiar `Mensalistas!I2:I42` da real para a cópia (a cópia tem o texto antigo das observações; as decisões de 05/10 à noite só estão na real).
+6. ~~Copiar `Mensalistas!I2:I42` da real para a cópia~~ feito em 06/10 à noite (11 células; as duas planilhas estão iguais em Mensalistas).
 
 ## Respostas que faltam da gestão
 

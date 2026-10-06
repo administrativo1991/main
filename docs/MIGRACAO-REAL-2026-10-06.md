@@ -31,8 +31,8 @@ pelo assistente à noite e conferidos por releitura:
 
 Antes de gravar, as duas planilhas foram comparadas coluna a coluna: a real não tinha nenhuma célula preenchida que a cópia
 não tivesse, então nada foi perdido. O que ficou da Roberta: instalar `dist/Code.real.gs` na real (`docs/COMO-INSTALAR.md`)
-e mandar o URL. Pendência pequena, sem pressa: copiar `Mensalistas!I2:I42` da real para a cópia, porque a cópia ainda tem o
-texto antigo das observações (as decisões de preço de 05/10 à noite só estão na real).
+e mandar o URL. Na mesma noite, as 11 observações de `Mensalistas!I` que estavam desatualizadas na cópia foram copiadas da real,
+então as duas planilhas ficaram iguais também nessa aba.
 
 ## Como foi feito (registro; os passos abaixo já não precisam ser repetidos)
 
