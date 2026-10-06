@@ -519,7 +519,7 @@ table{min-width:600px}
 <div id="a-convbox" class="faixa cinza" hidden>
 <span id="a-conv-txt"></span><span class="esp"></span>
 <label class="check forte"><input type="checkbox" id="a-guia-chk"> Guia assinada antes da sessão</label>
-<select id="a-guia" class="sr" tabindex="-1" aria-hidden="true"><option>Sim</option><option>Não</option></select>
+<select id="a-guia" class="sr" tabindex="-1" aria-hidden="true"><option>Não</option><option>Sim</option></select>
 </div>
 <div id="a-pagbox" class="grid g4">
 <div class="campo">Pago?
@@ -1242,6 +1242,7 @@ ultimoPacRender = nome;
 cur = AT ? AT.pacientes.filter(function (p) { return p.nome === nome; })[0] || null : null;
 var box = $("#a-avisos"); box.innerHTML = ''; $("#a-pacotebox").hidden = true; $("#a-extrabox").hidden = true; $("#a-pagador-novo").hidden = true; decisaoPagador = null; $("#a-tornar").checked = false;
 if (cur) { cur._extra = false; cur._avulsa = false; cur._cobrar = false; }
+$("#a-guia").value = 'Não'; $("#a-guia-chk").checked = false; // guia começa como não assinada: a recepção marca quando conferir
 fillTipos();
 cartaoPaciente();
 if (!cur) { $("#a-pac-hint").textContent = nome ? 'Não está em Pacientes. Cadastre antes em "+ Novo paciente".' : 'Só quem está em Pacientes.'; aplicarTipo(); return; }

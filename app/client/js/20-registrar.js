@@ -52,6 +52,7 @@ function onPacAt(force) {
   cur = AT ? AT.pacientes.filter(function (p) { return p.nome === nome; })[0] || null : null;
   var box = $("#a-avisos"); box.innerHTML = ''; $("#a-pacotebox").hidden = true; $("#a-extrabox").hidden = true; $("#a-pagador-novo").hidden = true; decisaoPagador = null; $("#a-tornar").checked = false;
   if (cur) { cur._extra = false; cur._avulsa = false; cur._cobrar = false; }
+  $("#a-guia").value = 'Não'; $("#a-guia-chk").checked = false; // guia começa como não assinada: a recepção marca quando conferir
   fillTipos();
   cartaoPaciente();
   if (!cur) { $("#a-pac-hint").textContent = nome ? 'Não está em Pacientes. Cadastre antes em "+ Novo paciente".' : 'Só quem está em Pacientes.'; aplicarTipo(); return; }

@@ -29,7 +29,7 @@ Menu de cima: **Hoje · Registrar · Pacientes · Mensalistas · Gestão** (Gest
 
 1. **Passo 1 · Quem**: paciente (comece a digitar e escolha da lista; se não estiver, "+ Novo paciente" ali mesmo), profissional, data, hora e tipo. O cartão à direita mostra o cadastro do paciente e, embaixo, **Vai ser gravado**: exatamente a linha que vai pra planilha, atualizada enquanto você preenche.
 2. Leia o **bloco de avisos**. Ele diz como esse paciente paga:
-   - **Convênio**: Pago? vira "Convênio (fatura)", valor zerado. Marque se a **guia** veio assinada.
+   - **Convênio**: Pago? vira "Convênio (fatura)", valor zerado. A caixa **"Guia assinada antes da sessão"** começa desmarcada: marque só depois de conferir a guia. Sem marcar, a linha grava "guia não assinada" e a gestão vê isso na conferência do convênio.
    - **Plano de consultas** (4, 6 ou 12): mostra quantas já usou (ex.: "3 de 4 usadas · esta é a 4ª"). Na última, avise que o próximo plano é pago na chegada. Plano encerrado ou vencido (4 consultas valem 2 meses, 12 valem 6): o app oferece **Lançar plano e receber**, já com o valor combinado daquele paciente (grava a compra na aba Planos e o recebimento na aba do mês), **Cobrar consulta individual** ou **Liberar sessão extra** (precisa dizer quem liberou e por quê).
    - **Mensalidade fixa** e **valor especial**: diz se a mensalidade do mês está paga. Mensalidade fixa não tem remarcação de faltas. A partir de novembro: vence dia 10, tolerância até 15; **do dia 16 em diante sem pagar, não atende e chama a gestão**.
    - **Atenção na cobrança**: paga o que consegue, valor fixo combinado, pro bono, permuta. Siga o que está escrito. Se o paciente disser algo diferente, anote na Observação e avise a gestão.
