@@ -137,6 +137,8 @@ pelo app** (fica pra planilha, com nota na observação).
 
 ## Plano "vai pagar depois" e correção em largura cheia (06/10, noite, 5ª rodada)
 
+**Aprovado pela Roberta em 06/10 à noite e promovido para `arquivos_real` (planilha real) junto com a correção de lançamentos.**
+
 Pergunta da Roberta: dá pra lançar o plano sem a pessoa pagar e ir acompanhando as consultas, como pagamento a
 posteriori? Aprovado em 06/10 à noite ("pode fazer os 3"), junto com o pedido de alargar a tabela de correção da Gestão
 no computador.
