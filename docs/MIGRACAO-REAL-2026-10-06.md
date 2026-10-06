@@ -34,6 +34,16 @@ não tivesse, então nada foi perdido. O que ficou da Roberta: instalar `dist/Co
 e mandar o URL. Na mesma noite, as 11 observações de `Mensalistas!I` que estavam desatualizadas na cópia foram copiadas da real,
 então as duas planilhas ficaram iguais também nessa aba.
 
+### Aba `Setembro` copiada para a real (06/10, noite)
+
+A aba `Setembro` da CÓPIA TESTE (importada da planilha "Lançamentos Setembro 2026 - Recepção" em 06/10, IDs `IMP-SET26-001`
+a `IMP-SET26-399`, 24 colunas: as 22 da aba de mês mais "Convênio na agenda (set/26, importado)" e "Status na agenda
+(set/26, importado)") foi copiada inteira para a planilha real com `copySheetTo` (formatação, cabeçalho congelado e cor da
+aba vieram junto), renomeada de "Cópia de Setembro" para `Setembro` e movida para a primeira posição, antes de `Outubro`.
+Na real ela ficou com `gid=373771041`. Conferido por releitura: cabeçalho A1:X1, coluna A (datas) e coluna T (IDs) idênticos
+nas duas planilhas, 399 linhas de dados em cada uma. Nada foi apagado nem alterado em `Outubro` nem nas outras abas; a real
+continua sem `Lembretes` e `Lista do dia`, que o app cria sozinho na primeira vez que precisa.
+
 ## Como foi feito (registro; os passos abaixo já não precisam ser repetidos)
 
 Em todas as gravações, a fonte é a CÓPIA TESTE.
@@ -75,6 +85,7 @@ Na planilha "Recepção Nascente — código do app (não mexer)", aba `arquivos
 | 1 linha 523 (limpar F e Q na real) | — | …/1WvuEvxKvtRs14ddAa2QqhQkJywwQOZmZqU0o6QyqUqs/edit#gid=1311125793&range=F523:Q523 |
 | 2 Mensalistas B | …/1u6uUDpgfwP9lfBOist41JJ7zYBQtQoJzRegTsonPiyk/edit#gid=10&range=B2:B43 | …/1WvuEvxKvtRs14ddAa2QqhQkJywwQOZmZqU0o6QyqUqs/edit#gid=10&range=B2:B43 |
 | 3 Listas A2:B6 | — (digitar) | …/1WvuEvxKvtRs14ddAa2QqhQkJywwQOZmZqU0o6QyqUqs/edit#gid=50&range=A2:B6 |
+| 5 aba `Setembro` (cópia inteira) | https://docs.google.com/spreadsheets/d/1u6uUDpgfwP9lfBOist41JJ7zYBQtQoJzRegTsonPiyk/edit#gid=1122357511 | https://docs.google.com/spreadsheets/d/1WvuEvxKvtRs14ddAa2QqhQkJywwQOZmZqU0o6QyqUqs/edit#gid=373771041 |
 | 4 código `arquivos` → `arquivos_real` | https://docs.google.com/spreadsheets/d/1qM7tX5neTU1kAa4JBpk1xiZQmcJOk325hx873XIRPYo/edit#gid=0&range=A1:C30 | https://docs.google.com/spreadsheets/d/1qM7tX5neTU1kAa4JBpk1xiZQmcJOk325hx873XIRPYo/edit#gid=812108621&range=A1 |
 
 ## Como conferir depois

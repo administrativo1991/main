@@ -1,6 +1,6 @@
 # Estado atual do app — retomar daqui
 
-Atualizado em 06/10/2026 (noite, tela Hoje revisada). Leia este arquivo primeiro ao abrir um chat novo.
+Atualizado em 06/10/2026 (noite, interface revisada promovida e aba Setembro na real). Leia este arquivo primeiro ao abrir um chat novo.
 
 ## O que é
 
@@ -9,7 +9,8 @@ App web **Recepção Nascente** (Google Apps Script) em cima da planilha
 "CÓPIA TESTE - Controle da Recepção 2026" (id `1u6uUDpgfwP9lfBOist41JJ7zYBQtQoJzRegTsonPiyk`).
 **A planilha real (id `1WvuEvxKvtRs14ddAa2QqhQkJywwQOZmZqU0o6QyqUqs`) está no ar com o app desde 06/10 à noite.**
 Ela recebeu a configuração da cópia (Listas, Procedimentos, Pacientes F/N/Q/R/S/T, Mensalistas B, "Alterações de cadastro"),
-tudo conferido por releitura (`docs/MIGRACAO-REAL-2026-10-06.md`); foi movida para Meu Drive → Clínica Nascente → Gestão →
+tudo conferido por releitura (`docs/MIGRACAO-REAL-2026-10-06.md`), e em 06/10 à noite também a aba `Setembro`
+(399 lançamentos importados, copiada inteira da cópia e colocada antes de `Outubro`); foi movida para Meu Drive → Clínica Nascente → Gestão →
 App Recepção (fora do drive compartilhado da recepção) e o carregador `dist/Code.real.gs` foi implantado pela Roberta.
 URL definitivo da recepção em `app/config.json` (`appUrlReal`) e em `docs/COMO-INSTALAR.md`. A recepção usa só o app.
 
@@ -35,6 +36,7 @@ Git: branch `claude/lucid-einstein-gd6x5l`, tudo commitado e enviado.
 
 ## Feito e publicado
 
+- **Aba `Setembro` na planilha real (06/10, noite)**: a aba importada na cópia (IDs `IMP-SET26-001`–`399`, 24 colunas) foi copiada inteira para a real com `copySheetTo`, renomeada e movida para antes de `Outubro` (gid `373771041`); cabeçalho, datas e IDs conferidos por releitura, 399 linhas nas duas. Com isso `Setembro` entra no seletor de mês da tela Gestão da real (pendências do mês e exportar), que lista as abas de mês existentes. Detalhes em `docs/MIGRACAO-REAL-2026-10-06.md`.
 - **Lembrete da gestão (06/10, noite)**: aba `Lembretes` na planilha (só acrescenta linha); a gestão escreve e encerra na tela Gestão; a tela Hoje mostra o último lembrete com texto e dentro do prazo. Publicado só na versão de teste (`arquivos`).
 - **Tela Hoje revisada (06/10, noite)**: menu lateral de 220 px em todas as telas; Hoje em tabela (hora · paciente · profissional/modalidade · cobrança · situação · 1 ação + ⋯), tiles-filtro com contagem, tiles de resumo em R$ do dia (recepção e gestão, das linhas já registradas), "Guia assinada / a emitir" na linha depois do registro, busca por nome/pagador, painel do paciente à direita (folha no celular), "Pendências de hoje" e "Fim do dia" abaixo da tabela. Registrar, Pacientes, Mensalistas e Gestão conferidas contra os mockups revisados (sem mudança por dentro; Imprimir no cabeçalho de cada tela). No celular, Mensalistas vira cards (escolha da Roberta em 06/10, entre tabela rolando e cards). **Aprovado e promovido para `arquivos_real` em 06/10 à noite.** Ver `docs/NOVA-INTERFACE.md`, seção "Revisão 06/10".
 - **Nova interface (06/10, mockups da Roberta)**: telas Hoje, Registrar atendimento, Pacientes (novo + editar), Mensalistas e Gestão com o visual aprovado; mesmo HTML no computador e no celular (barra inferior ≤ 480 px); impressão sem CPF. Servidor e regras intactos. Detalhes, decisões e limites em `docs/NOVA-INTERFACE.md`.
