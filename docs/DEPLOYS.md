@@ -15,6 +15,10 @@ Onde cada coisa roda:
 
 Em até 90 s depois da gravação na aba, o app passa a servir a versão nova (cache do carregador).
 
+**Carimbo na planilha de código**: a célula `E2` de cada aba (`arquivos` e `arquivos_real`) guarda o nome do deploy que
+está naquela aba (ex.: `2026-10-06-09 · commit 135de84 · 27 peças · real`). O carregador só lê as colunas A–C, então a
+coluna E não afeta o app. Atualizar `E2` faz parte de toda publicação (passo 2 abaixo).
+
 ## No ar agora
 
 | Canal | Deploy | Peças | Commit |
@@ -28,7 +32,7 @@ Em até 90 s depois da gravação na aba, o app passa a servir a versão nova (c
 
 1. Fazer a publicação (seção 10 do `PLANO-IMPLEMENTACAO.md`): build, testes, gravar as peças, ler de volta e conferir
    contra `dist/pedacos.json` (peças idênticas, index/server/duplicatas remontados iguais).
-2. Acrescentar a entrada no topo da lista abaixo com: nome, canal, o que mudou (uma linha por item), peças e linhas
+2. Gravar o nome do deploy em `E2` da aba publicada (`arquivos` ou `arquivos_real`) e acrescentar a entrada no topo da lista abaixo com: nome, canal, o que mudou (uma linha por item), peças e linhas
    regravadas, resultado da conferência, commit, quem aprovou.
 3. Atualizar a tabela "No ar agora".
 4. Commitar junto com o código.
