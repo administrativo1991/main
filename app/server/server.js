@@ -788,7 +788,10 @@ API.mensalistasPainel = function (d) {
   if (!s || s.getLastRow() < 2) return { itens: [], colunas: [], coluna: '', modeloNovo: false };
   var hdr = s.getRange(1, 1, 1, s.getLastColumn()).getValues()[0].map(function (x) { return String(x || '').trim(); });
   var cols = colunasMensalistas_(hdr), ref = mensalistas_();
-  var coluna = String(d.coluna || ref.coluna || (cols.length ? cols[cols.length - 1].nome : '')).trim();
+  // abre no mês atual (Roberta, 06/10); a faixa avisa se o mês anterior ainda tem pendência
+  var hj = new Date(), mesAtual = CONFIG.MESES[hj.getMonth()].toUpperCase(), mesAnt = CONFIG.MESES[(hj.getMonth() + 11) % 12].toUpperCase();
+  var colAtual = cols.filter(function (x) { return x.mes === mesAtual; })[0], colAnt = cols.filter(function (x) { return x.mes === mesAnt; })[0];
+  var coluna = String(d.coluna || (colAtual ? colAtual.nome : '') || ref.coluna || (cols.length ? cols[cols.length - 1].nome : '')).trim();
   var c = cols.filter(function (x) { return x.nome === coluna; })[0];
   var cObs = -1; hdr.forEach(function (x, i) { if (cObs < 0 && /^Observa/i.test(x)) cObs = i; });
   var sess = sessoesNoMes_(new Date());
@@ -800,7 +803,9 @@ API.mensalistasPainel = function (d) {
       pago: String(pagoV == null ? '' : pagoV).trim(), dataPago: (dataV instanceof Date) ? fmtData_(dataV) : String(dataV == null ? '' : dataV).trim(),
       obs: cObs >= 0 ? String(r[cObs] || '') : '', sessoes: sess[pac] || 0 });
   });
-  return { itens: itens, colunas: cols.map(function (x) { return x.nome; }), coluna: coluna, mes: c ? c.mes : '', modeloNovo: ref.modeloNovo, abaMes: nomeAbaMes_(new Date()), hoje: hoje_() };
+  var anterior = null;
+  if (colAnt) anterior = { coluna: colAnt.nome, mes: colAnt.mes, pendentes: vals.filter(function (r) { return String(r[0] || '').trim() && !/^sim/i.test(String(r[colAnt.idx] == null ? '' : r[colAnt.idx]).trim()); }).length };
+  return { itens: itens, colunas: cols.map(function (x) { return x.nome; }), coluna: coluna, mes: c ? c.mes : '', anterior: anterior, modeloNovo: ref.modeloNovo, abaMes: nomeAbaMes_(new Date()), hoje: hoje_() };
 };
 API.registrarMensalidade = function (d) {
   d = d || {};

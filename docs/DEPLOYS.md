@@ -23,8 +23,8 @@ coluna E não afeta o app. Atualizar `E2` faz parte de toda publicação (passo 
 
 | Canal | Deploy | Peças | Commit |
 |---|---|---|---|
-| Real (`arquivos_real`) | **2026-10-06-09** | 27 (duplicatas 1 · server 6 · index 20; linhas 2–28) | 135de84 |
-| Teste (`arquivos`) | **2026-10-06-08** (mesmo conteúdo do 09) | 27 | 135de84 |
+| Real (`arquivos_real`) | **2026-10-06-10** | 27 (duplicatas 1 · server 6 · index 20; linhas 2–28) | branch `claude/magical-dirac-hh3zzs` |
+| Teste (`arquivos`) | **2026-10-06-08** (atrás da real: não recebeu o 10) | 27 | 135de84 |
 | Carregador real | 2026-10-06-02 (`dist/Code.real.gs`, implantado pela Roberta) | — | 4ad0272 |
 | Carregador teste | 2026-10-04-01 + nova versão pendente desde 05/10 (permissão do Drive, ver `COMO-INSTALAR.md`) | — | — |
 
@@ -48,6 +48,22 @@ Modelo:
 ```
 
 ## Lista
+
+### 2026-10-06-10 · Real (direto, sem passar pela cópia — autorizado pela gestão) · ajustes da avaliação de 06/10
+- **O que mudou**:
+  - Pacientes (Novo paciente): Profissional vem primeiro e é obrigatório; sem ele os cartões de modalidade ficam
+    escondidos e aparece a frase-guia; com ele, só as modalidades da especialidade (coluna "Especialidade (modalidade)" da aba Listas).
+  - Registrar ("Salvar e registrar outro"): faixa verde "Registrado! …" com o link "ver na lista de hoje".
+  - Mensalistas: abre na competência do mês atual; faixa amarela com as pendências do mês anterior, que troca a competência ao clicar
+    (`mensalistasPainel` devolve `anterior`).
+  - Fora do código: aba `Agenda recorrente` criada na planilha real com os 28 horários semanais da Juliana (lista da gestão, 06/10),
+    IDs `F-20261006-carga-01`–`28`, Hora como texto, listas de escolha em Paciente/Profissional/Dia/Frequência/Ativo.
+    A tela Hoje já usa esses horários automaticamente (decisão da gestão: a lista continua automática e a recepção confere com o ControleOdonto).
+- **Peças**: 27; regravadas 10: server.js 4–5 (linhas 7–8), index.html 6–7 (linhas 15–16) e 14–19 (linhas 23–28).
+- **Conferência**: as 27 linhas lidas de volta, 27/27 iguais ao build; index remontado igual ao `dist/index.publicado.html`, server igual ao fonte.
+- **Commit**: este · **Aprovação**: gestão (administrativo@), 06/10 à noite ("pode ir direto pra oficial").
+- **Não fizemos** (decidido): virada das colunas automáticas (o app não grava em F/G/H/N; sem conflito), card de "Alterações de cadastro"
+  (a linha já abre a tabela com de → para, quem informou e e-mail), painel "Montar a lista".
 
 ### 2026-10-06-09 · Real · promoção: correção de lançamentos + plano "vai pagar depois"
 - **O que mudou**: `arquivos_real` recebeu tudo o que estava em `arquivos` desde o 06 (correção de lançamentos,

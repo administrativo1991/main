@@ -24,7 +24,7 @@ function iniciarPac() {
   $("#p-carregando").hidden = true; $("#p-form").hidden = false; $("#p-rodape").hidden = telaAtual !== 'pacientes';
   $("#p-gestao-campos").hidden = !ehGestao();
   renderCards();
-  if (lerRascunhoN()) toast('Rascunho do cadastro recuperado');
+  if (lerRascunhoN()) { toast('Rascunho do cadastro recuperado'); renderCards(); }
   $("#l-cart").hidden = $("#n-conv").value === 'Particular' || !$("#n-conv").value;
 }
 function setModo(m) {
@@ -62,9 +62,20 @@ function descMod(m) {
   if (/permuta/.test(x)) return 'troca de serviços · a gestão decide';
   return '';
 }
+// especialidade de cada modalidade (aba Listas, "Especialidade (modalidade)"); vazio ou "Qualquer especialidade" = vale pra todos
+function modDaEsp(m, esps) {
+  var x = (BOOT.listas.modalidadesEsp || []).filter(function (y) { return y.nome === m; })[0], e = x ? String(x.esp || '') : '';
+  if (!e || /^qualquer/i.test(e) || !esps.length) return true;
+  var n = e.toLowerCase(); return esps.some(function (s) { return n.indexOf(s.toLowerCase().split(' ')[0]) >= 0 || s.toLowerCase().indexOf(n.split(' ')[0]) >= 0; });
+}
 function renderCards() {
   var mods = BOOT.listas.modalidades || [], atual = $("#n-mod").value, tab = $("#n-mods-tabela"), ant = $("#n-mods-antigo");
   tab.innerHTML = ''; ant.innerHTML = '';
+  // Novo paciente: profissional primeiro (Roberta, 06/10). Sem profissional, os cartões ficam escondidos; com ele, só os da especialidade dele.
+  var prof = $("#n-prof").value, semProf = pModo === 'novo' && !prof, esps = prof ? espsDoProf(prof) : [];
+  $("#n-mod-guia").hidden = !semProf; tab.hidden = semProf; ant.hidden = semProf; $("#n-mods-antigo-t").hidden = semProf; $("#n-prof-req").hidden = pModo !== 'novo';
+  if (semProf) return;
+  if (pModo === 'novo') mods = mods.filter(function (m) { return m === atual || modDaEsp(m, esps); });
   var card = function (m, classe, etiqueta, desab) {
     var on = m === atual;
     var c = el('<label class="cardmod ' + classe + (on ? ' on' : '') + (desab ? ' desab' : '') + '"><span class="nome"><input type="radio" name="mod" value="' + esc(m) + '"' + (on ? ' checked' : '') + (desab ? ' disabled' : '') + '><strong>' + esc(m) + '</strong>' + (etiqueta || '') + '</span><span>' + esc(descMod(m)) + '</span></label>');
@@ -83,7 +94,7 @@ function onModalidade() {
   var m = $("#n-mod").value, w = $("#n-modwarn"); w.innerHTML = '';
   if (MOD_RESTRITA.indexOf(m) >= 0 || /^Pro bono|^Permuta/.test(m)) w.innerHTML = '<div class="faixa lilas">' + ic('info', 20, 2.2) + '<div class="corpo">“' + esc(m) + '” é definida pela gestão. Avise a recepção pelo grupo <b>Nascente | Tratamentos</b> e anote a regra em Observação de cobrança.</div></div>';
 }
-$("#n-prof").addEventListener('change', function () { renderCards(); });
+$("#n-prof").addEventListener('change', function () { if (pModo === 'novo' && $("#n-mod").value && !modDaEsp($("#n-mod").value, espsDoProf(this.value))) { $("#n-mod").value = ''; onModalidade(); } renderCards(); salvarRascunhoN(); });
 $("#n-conv").addEventListener('change', function () { $("#l-cart").hidden = this.value === 'Particular' || !this.value; });
 
 /* ---------- novo paciente ---------- */
@@ -133,6 +144,7 @@ function validarN() {
   if (!Duplicatas.cpfValido($("#n-cpf").value)) e.push('CPF obrigatório e válido.');
   if (!dataValida($("#n-nasc").value)) e.push('Data de nascimento obrigatória, no formato dd/mm/aaaa.');
   if ($("#n-primeira").value && !dataValida($("#n-primeira").value)) e.push('Data da 1ª consulta inválida.');
+  if (!$("#n-prof").value) e.push('Escolha o profissional (a modalidade depende dele).');
   if (!$("#n-mod").value) e.push('Escolha a modalidade.');
   if ($("#n-mod").value === 'Convênio' && $("#n-conv").value === 'Particular') e.push('Modalidade "Convênio": escolha o convênio.');
   return e;

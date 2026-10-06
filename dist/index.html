@@ -874,15 +874,16 @@ button.kpi[aria-pressed="true"] span,.kpi.roxo span{color:#fff;opacity:.9}
     <section class="card">
       <div class="titulo" style="align-items:baseline;gap:10px"><h2>Atendimento</h2><span class="muted">A <strong>modalidade</strong> diz <em>como</em> cobra; o <strong>profissional</strong> diz <em>qual</em> tabela.</span></div>
       <div class="grid">
-        <label class="campo">Profissional<select id="n-prof"><option value="">—</option></select></label>
+        <label class="campo">Profissional <span class="req" id="n-prof-req">*</span><select id="n-prof"><option value="">—</option></select></label>
         <label class="campo" id="l-primeira">Data da 1ª consulta<input id="n-primeira" inputmode="numeric" autocomplete="off" placeholder="dd/mm/aaaa" maxlength="10"></label>
         <label class="campo">Convênio<select id="n-conv"></select></label>
         <label class="campo" id="l-cart" hidden>Nº da carteirinha<input id="n-cart" autocomplete="off"></label>
       </div>
       <fieldset style="border:0;padding:0;margin:0;display:flex;flex-direction:column;gap:10px">
         <legend class="campo" style="padding:0;margin-bottom:8px;display:block">Modalidade <span class="leg">— só o que está na tabela; o paciente que já escolhe o plano ao perguntar não é negociação</span></legend>
+        <div class="dica" id="n-mod-guia" hidden>Escolha o profissional: a modalidade diz como cobra, o profissional diz qual tabela.</div>
         <div class="cartoes" id="n-mods-tabela"></div>
-        <div class="muted" style="margin-top:6px"><strong style="color:var(--tx2)">Já em andamento</strong> — pra marcar quem já está nesses planos e saber quanto cobrar. Não oferecer a paciente novo.</div>
+        <div class="muted" id="n-mods-antigo-t" style="margin-top:6px"><strong style="color:var(--tx2)">Já em andamento</strong> — pra marcar quem já está nesses planos e saber quanto cobrar. Não oferecer a paciente novo.</div>
         <div class="cartoes" id="n-mods-antigo"></div>
         <select id="n-mod" class="sr" tabindex="-1" aria-hidden="true"></select>
         <div id="n-modwarn"></div>
@@ -937,6 +938,7 @@ button.kpi[aria-pressed="true"] span,.kpi.roxo span{color:#fff;opacity:.9}
     <button type="button" class="btn ter imprimir so-pc" id="m-print"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9V3h12v6"/><rect x="3" y="9" width="18" height="9" rx="2"/><path d="M6 14h12v7H6z"/></svg>Imprimir lista de cobrança</button>
   </div>
   <div id="m-carregando" class="carregando">Carregando…</div>
+  <div id="m-anterior"></div>
   <div class="kpis" id="m-kpis" role="group" aria-label="Filtrar por situação"></div>
   <div id="m-painel" class="painel" hidden>
     <div class="cab"><h2 id="m-box-t">Registrar pagamento</h2><span class="muted" id="m-box-sub"></span><span class="esp"></span><button type="button" class="btn icone p" id="m-cancel" aria-label="Fechar"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
@@ -1244,7 +1246,7 @@ function mock(nome, d) {
     if (nome === 'bootstrap') return res({ usuario: { email: 'simulacao@local', perfil: 'gestao' }, planilha: '(simulação, sem planilha)', hora: '',
       lembrete: mockLemb[mockLemb.length - 1], lembretes: mockLemb.slice(-5).reverse(),
       listas: { oque: ["Atendido", "Desmarcou com antecedência (≥ 24h)", "Faltou avisando em cima da hora (< 24h)", "Faltou sem aviso", "Cancelado pela clínica"], pago: ["Sim", "Não", "Convênio (fatura)", "Mensalista (paga no mês seguinte)", "Plano já pago", "Não se aplica (pro bono / permuta)"], formas: ["Pix", "Dinheiro", "Cartão de débito", "Cartão de crédito", "Link de pagamento"], modalidades: ["Consulta individual", "Consulta individual – cartão de parceria", "Plano de 4 consultas", "Plano de 6 consultas", "Plano de 12 consultas", "Mensalidade fixa", "Mensal (valor especial)", "AAPI JF (mensal)", "Convênio", "Por sessão", "Pro bono", "Permuta"],
-        modalidadesEsp: [], regras: ["Tabela", "Paga o que consegue", "Valor fixo combinado", "Mensalidade fixa (independe do nº de sessões)", "Pro bono", "Permuta", "Convênio"],
+        modalidadesEsp: [{ nome: 'Plano de 6 consultas', esp: 'Nutrição' }, { nome: 'Por sessão', esp: 'Psicologia' }, { nome: 'Mensalidade fixa', esp: 'Psicologia' }, { nome: 'Mensal (valor especial)', esp: 'Psicologia' }], regras: ["Tabela", "Paga o que consegue", "Valor fixo combinado", "Mensalidade fixa (independe do nº de sessões)", "Pro bono", "Permuta", "Convênio"],
         convenios: ["Particular", "Cedplan", "Sabin Sinai", "Unafisco", "AAPI JF", "Plan Minas", "PLASC", "AMIL", "ASSEFAZ", "FUSEX", "IPSM", "Sulamérica", "18 de Julho", "Aeronáutica"] },
       profissionais: [{ nome: "Juliana Ribeiro", especialidade: "Psicologia" }, { nome: "Giovana Grossi", especialidade: "Psicologia (estágio)" }, { nome: "Dr. Victor Cunha", especialidade: "Pediatria" }, { nome: "Marileia Rodrigues", especialidade: "Psicanálise e ABA" }], pacientes: mockBase.concat(mockPacientes.map(function (p) { return { linha: p.linha + 10, nome: p.nome, cpf: '', nasc: p.nasc, pagador: p.pagador, modalidade: p.modalidade, convenio: p.convenio, ativo: 'Sim' }; })) });
     if (nome === 'bootstrapAtendimento') return res({ hoje: hojeStr(), abaMes: MESES_PT[new Date().getMonth()], abaMesExiste: true, mensalistasInfo: { modeloNovo: true, mes: MESES_PT[new Date().getMonth()].toUpperCase(), coluna: MESES_PT[new Date().getMonth()].toUpperCase() + ' — pago?' },
@@ -1268,7 +1270,7 @@ function mock(nome, d) {
     if (nome === 'lerCadastro') { var pc = (AT ? AT.pacientes : []).filter(function (p) { return p.nome === d.nome; })[0]; if (!pc) return res({ ok: false, erros: ['Paciente não encontrado em Pacientes.'] }); return res({ ok: true, nome: pc.nome, nasc: pc.nasc, cpfFinal: '4725', indicacao: '', primeira: '', campos: { modalidade: pc.modalidade, convenio: pc.convenio, carteirinha: '', regra: pc.regra, valorCombinado: pc.valorCombinado, obsCobranca: pc.obsCobranca, pagador: pc.pagador, whats: '', profRef: '' } }); }
     if (nome === 'atualizarCadastro') return res({ ok: true, alterados: Object.keys(d.campos || {}).slice(0, 2) });
     if (nome === 'removerDoDia') { mockDia = mockDia.filter(function (x) { return x.id !== d.id; }); return res({ ok: true }); }
-    if (nome === 'mensalistasPainel') return res({ itens: [{ linha: 2, paciente: 'Sofia Ramos Teixeira', modalidade: 'Mensalidade fixa', valor: 200, pagador: 'Associação Boa Esperança', pago: '', dataPago: '', obs: '', sessoes: 3 }, { linha: 3, paciente: 'Theo Barreto Lima', modalidade: 'Mensal (valor especial)', valor: 150, pagador: 'Daniela Barreto Lima', pago: 'Sim', dataPago: '06/11/2026 — R$ 150,00 Pix · NF 67 · app', obs: '', sessoes: 5 }, { linha: 4, paciente: 'Adirlene Rufino Rodrigues', modalidade: 'Plano de 4 consultas · mensalista só até outubro', valor: 280, pagador: '', pago: 'Não', dataPago: 'deve R$ 280 (recepção 03/10)', obs: '', sessoes: 2 }], colunas: ['SETEMBRO (paga em outubro) — pago?', 'OUTUBRO — pago?', 'NOVEMBRO — pago?'], coluna: d.coluna || 'NOVEMBRO — pago?', mes: 'NOVEMBRO', modeloNovo: true, abaMes: MESES_PT[new Date().getMonth()], hoje: hojeStr() });
+    if (nome === 'mensalistasPainel') return res({ itens: [{ linha: 2, paciente: 'Sofia Ramos Teixeira', modalidade: 'Mensalidade fixa', valor: 200, pagador: 'Associação Boa Esperança', pago: '', dataPago: '', obs: '', sessoes: 3 }, { linha: 3, paciente: 'Theo Barreto Lima', modalidade: 'Mensal (valor especial)', valor: 150, pagador: 'Daniela Barreto Lima', pago: 'Sim', dataPago: '06/11/2026 — R$ 150,00 Pix · NF 67 · app', obs: '', sessoes: 5 }, { linha: 4, paciente: 'Adirlene Rufino Rodrigues', modalidade: 'Plano de 4 consultas · mensalista só até outubro', valor: 280, pagador: '', pago: 'Não', dataPago: 'deve R$ 280 (recepção 03/10)', obs: '', sessoes: 2 }], colunas: ['SETEMBRO (paga em outubro) — pago?', 'OUTUBRO — pago?', 'NOVEMBRO — pago?'], coluna: d.coluna || 'NOVEMBRO — pago?', mes: 'NOVEMBRO', anterior: { coluna: 'OUTUBRO — pago?', mes: 'OUTUBRO', pendentes: 26 }, modeloNovo: true, abaMes: MESES_PT[new Date().getMonth()], hoje: hojeStr() });
     if (nome === 'registrarMensalidade') return res({ ok: true, id: 'A-sim-m', linha: 50, aba: MESES_PT[new Date().getMonth()] });
     if (nome === 'criarColunasMes') return res({ ok: true, coluna: d.mes.toUpperCase() + ' — pago?' });
     if (nome === 'criarAbaMes') return res({ ok: true, aba: d.nome, modelo: 'Outubro' });
@@ -2047,7 +2049,13 @@ function salvarAt(voltar) {
     var msg = d.paciente + ' · ' + OQUE_CURTO(d.oque) + ' · gravado na aba ' + r.aba + ', linha ' + r.linha;
     limparAt(false);
     if (voltar) { go('hoje'); toast('Atendimento gravado: ' + d.paciente); }
-    else { $("#a-sucesso").innerHTML = aviso('verde', esc(msg), esc(d.procedimento) + (d.valor ? ' · R$ ' + esc(d.valor) : '') + (d.pago ? ' · Pago? ' + esc(d.pago) : '') + (r.pacote ? ' · plano ' + r.pacote.usadas + '/' + r.pacote.n + ' usadas' : '') + '. ID ' + esc(r.id) + '.'); toast('Atendimento gravado'); $("#a-pac").focus(); }
+    else {
+      // linha verde "Registrado!" + atalho pra lista do dia do atendimento (Roberta, 06/10)
+      var dataReg = d.data, ehHoje = dataReg === hojeStr();
+      $("#a-sucesso").innerHTML = aviso('verde', 'Registrado! ' + esc(msg), esc(d.procedimento) + (d.valor ? ' · R$ ' + esc(d.valor) : '') + (d.pago ? ' · Pago? ' + esc(d.pago) : '') + (r.pacote ? ' · plano ' + r.pacote.usadas + '/' + r.pacote.n + ' usadas' : '') + '. <a href="#" id="a-ver-lista">' + (ehHoje ? 'ver na lista de hoje' : 'ver na lista de ' + esc(dataReg.slice(0, 5))) + '</a>');
+      $("#a-ver-lista").addEventListener('click', function (e) { e.preventDefault(); var dt = dataObj(dataReg); if (dt) $("#d-data").value = dataParaISO(dt); go('hoje'); });
+      toast('Registrado!'); $("#a-pac").focus();
+    }
   }).catch(function (e) { banner('Não consegui gravar na planilha (' + e.message + '). Seus dados estão guardados aqui: tente de novo em instantes.'); })
     .finally(function () { salvandoAt = false; $("#a-salvar").disabled = false; $("#a-salvar-outro").disabled = false; });
 }
@@ -2133,7 +2141,7 @@ function iniciarPac() {
   $("#p-carregando").hidden = true; $("#p-form").hidden = false; $("#p-rodape").hidden = telaAtual !== 'pacientes';
   $("#p-gestao-campos").hidden = !ehGestao();
   renderCards();
-  if (lerRascunhoN()) toast('Rascunho do cadastro recuperado');
+  if (lerRascunhoN()) { toast('Rascunho do cadastro recuperado'); renderCards(); }
   $("#l-cart").hidden = $("#n-conv").value === 'Particular' || !$("#n-conv").value;
 }
 function setModo(m) {
@@ -2171,9 +2179,20 @@ function descMod(m) {
   if (/permuta/.test(x)) return 'troca de serviços · a gestão decide';
   return '';
 }
+// especialidade de cada modalidade (aba Listas, "Especialidade (modalidade)"); vazio ou "Qualquer especialidade" = vale pra todos
+function modDaEsp(m, esps) {
+  var x = (BOOT.listas.modalidadesEsp || []).filter(function (y) { return y.nome === m; })[0], e = x ? String(x.esp || '') : '';
+  if (!e || /^qualquer/i.test(e) || !esps.length) return true;
+  var n = e.toLowerCase(); return esps.some(function (s) { return n.indexOf(s.toLowerCase().split(' ')[0]) >= 0 || s.toLowerCase().indexOf(n.split(' ')[0]) >= 0; });
+}
 function renderCards() {
   var mods = BOOT.listas.modalidades || [], atual = $("#n-mod").value, tab = $("#n-mods-tabela"), ant = $("#n-mods-antigo");
   tab.innerHTML = ''; ant.innerHTML = '';
+  // Novo paciente: profissional primeiro (Roberta, 06/10). Sem profissional, os cartões ficam escondidos; com ele, só os da especialidade dele.
+  var prof = $("#n-prof").value, semProf = pModo === 'novo' && !prof, esps = prof ? espsDoProf(prof) : [];
+  $("#n-mod-guia").hidden = !semProf; tab.hidden = semProf; ant.hidden = semProf; $("#n-mods-antigo-t").hidden = semProf; $("#n-prof-req").hidden = pModo !== 'novo';
+  if (semProf) return;
+  if (pModo === 'novo') mods = mods.filter(function (m) { return m === atual || modDaEsp(m, esps); });
   var card = function (m, classe, etiqueta, desab) {
     var on = m === atual;
     var c = el('<label class="cardmod ' + classe + (on ? ' on' : '') + (desab ? ' desab' : '') + '"><span class="nome"><input type="radio" name="mod" value="' + esc(m) + '"' + (on ? ' checked' : '') + (desab ? ' disabled' : '') + '><strong>' + esc(m) + '</strong>' + (etiqueta || '') + '</span><span>' + esc(descMod(m)) + '</span></label>');
@@ -2192,7 +2211,7 @@ function onModalidade() {
   var m = $("#n-mod").value, w = $("#n-modwarn"); w.innerHTML = '';
   if (MOD_RESTRITA.indexOf(m) >= 0 || /^Pro bono|^Permuta/.test(m)) w.innerHTML = '<div class="faixa lilas">' + ic('info', 20, 2.2) + '<div class="corpo">“' + esc(m) + '” é definida pela gestão. Avise a recepção pelo grupo <b>Nascente | Tratamentos</b> e anote a regra em Observação de cobrança.</div></div>';
 }
-$("#n-prof").addEventListener('change', function () { renderCards(); });
+$("#n-prof").addEventListener('change', function () { if (pModo === 'novo' && $("#n-mod").value && !modDaEsp($("#n-mod").value, espsDoProf(this.value))) { $("#n-mod").value = ''; onModalidade(); } renderCards(); salvarRascunhoN(); });
 $("#n-conv").addEventListener('change', function () { $("#l-cart").hidden = this.value === 'Particular' || !this.value; });
 
 /* ---------- novo paciente ---------- */
@@ -2242,6 +2261,7 @@ function validarN() {
   if (!Duplicatas.cpfValido($("#n-cpf").value)) e.push('CPF obrigatório e válido.');
   if (!dataValida($("#n-nasc").value)) e.push('Data de nascimento obrigatória, no formato dd/mm/aaaa.');
   if ($("#n-primeira").value && !dataValida($("#n-primeira").value)) e.push('Data da 1ª consulta inválida.');
+  if (!$("#n-prof").value) e.push('Escolha o profissional (a modalidade depende dele).');
   if (!$("#n-mod").value) e.push('Escolha a modalidade.');
   if ($("#n-mod").value === 'Convênio' && $("#n-conv").value === 'Particular') e.push('Modalidade "Convênio": escolha o convênio.');
   return e;
@@ -2366,6 +2386,9 @@ function ehPacoteMensal(it) { return /pacote mensal|preexistente|^pacote|^plano/
 function horarioDe(nome) { var l = agendaPorPac[nome]; if (!l || !l.length) return ''; var a = l[0]; return profCurto(a['Profissional']) + ' · ' + String(a['Dia da semana'] || '').slice(0, 3).toLowerCase() + ' ' + String(a['Hora'] || '').replace(/:00$/, 'h').replace(':', 'h'); }
 function renderMensal() {
   var r = MEN, q = ($("#m-busca").value || '').toLowerCase(), itens = r.itens.map(function (it) { it._s = situacaoMen(it); return it; });
+  // faixa amarela: o mês anterior ainda tem pendência (clicar troca a competência)
+  var an = r.anterior, fa = $("#m-anterior"); fa.innerHTML = '';
+  if (an && an.pendentes > 0 && an.coluna !== r.coluna) { fa.innerHTML = aviso('amarela', esc(tituloCol(an.coluna)) + ': ' + an.pendentes + ' pendente' + (an.pendentes === 1 ? '' : 's') + ' — <a href="#" id="m-ver-ant">ver</a>', ''); $("#m-ver-ant").addEventListener('click', function (e) { e.preventDefault(); carregarMensal(an.coluna); }); }
   var cont = { todos: itens.length, ok: 0, pend: 0, atr: 0 }; itens.forEach(function (it) { if (it._s[0] === 'verde') cont.ok++; else if (it._s[0] === 'vermelha') cont.atr++; else cont.pend++; });
   var recebido = itens.filter(function (i) { return i._s[0] === 'verde'; }).reduce(function (a, i) { return a + i.valor; }, 0);
   var k = $("#m-kpis"); k.innerHTML = '';

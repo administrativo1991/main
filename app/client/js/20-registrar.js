@@ -203,7 +203,13 @@ function salvarAt(voltar) {
     var msg = d.paciente + ' · ' + OQUE_CURTO(d.oque) + ' · gravado na aba ' + r.aba + ', linha ' + r.linha;
     limparAt(false);
     if (voltar) { go('hoje'); toast('Atendimento gravado: ' + d.paciente); }
-    else { $("#a-sucesso").innerHTML = aviso('verde', esc(msg), esc(d.procedimento) + (d.valor ? ' · R$ ' + esc(d.valor) : '') + (d.pago ? ' · Pago? ' + esc(d.pago) : '') + (r.pacote ? ' · plano ' + r.pacote.usadas + '/' + r.pacote.n + ' usadas' : '') + '. ID ' + esc(r.id) + '.'); toast('Atendimento gravado'); $("#a-pac").focus(); }
+    else {
+      // linha verde "Registrado!" + atalho pra lista do dia do atendimento (Roberta, 06/10)
+      var dataReg = d.data, ehHoje = dataReg === hojeStr();
+      $("#a-sucesso").innerHTML = aviso('verde', 'Registrado! ' + esc(msg), esc(d.procedimento) + (d.valor ? ' · R$ ' + esc(d.valor) : '') + (d.pago ? ' · Pago? ' + esc(d.pago) : '') + (r.pacote ? ' · plano ' + r.pacote.usadas + '/' + r.pacote.n + ' usadas' : '') + '. <a href="#" id="a-ver-lista">' + (ehHoje ? 'ver na lista de hoje' : 'ver na lista de ' + esc(dataReg.slice(0, 5))) + '</a>');
+      $("#a-ver-lista").addEventListener('click', function (e) { e.preventDefault(); var dt = dataObj(dataReg); if (dt) $("#d-data").value = dataParaISO(dt); go('hoje'); });
+      toast('Registrado!'); $("#a-pac").focus();
+    }
   }).catch(function (e) { banner('Não consegui gravar na planilha (' + e.message + '). Seus dados estão guardados aqui: tente de novo em instantes.'); })
     .finally(function () { salvandoAt = false; $("#a-salvar").disabled = false; $("#a-salvar-outro").disabled = false; });
 }

@@ -21,6 +21,9 @@ function ehPacoteMensal(it) { return /pacote mensal|preexistente|^pacote|^plano/
 function horarioDe(nome) { var l = agendaPorPac[nome]; if (!l || !l.length) return ''; var a = l[0]; return profCurto(a['Profissional']) + ' · ' + String(a['Dia da semana'] || '').slice(0, 3).toLowerCase() + ' ' + String(a['Hora'] || '').replace(/:00$/, 'h').replace(':', 'h'); }
 function renderMensal() {
   var r = MEN, q = ($("#m-busca").value || '').toLowerCase(), itens = r.itens.map(function (it) { it._s = situacaoMen(it); return it; });
+  // faixa amarela: o mês anterior ainda tem pendência (clicar troca a competência)
+  var an = r.anterior, fa = $("#m-anterior"); fa.innerHTML = '';
+  if (an && an.pendentes > 0 && an.coluna !== r.coluna) { fa.innerHTML = aviso('amarela', esc(tituloCol(an.coluna)) + ': ' + an.pendentes + ' pendente' + (an.pendentes === 1 ? '' : 's') + ' — <a href="#" id="m-ver-ant">ver</a>', ''); $("#m-ver-ant").addEventListener('click', function (e) { e.preventDefault(); carregarMensal(an.coluna); }); }
   var cont = { todos: itens.length, ok: 0, pend: 0, atr: 0 }; itens.forEach(function (it) { if (it._s[0] === 'verde') cont.ok++; else if (it._s[0] === 'vermelha') cont.atr++; else cont.pend++; });
   var recebido = itens.filter(function (i) { return i._s[0] === 'verde'; }).reduce(function (a, i) { return a + i.valor; }, 0);
   var k = $("#m-kpis"); k.innerHTML = '';

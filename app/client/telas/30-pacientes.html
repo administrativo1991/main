@@ -41,15 +41,16 @@
     <section class="card">
       <div class="titulo" style="align-items:baseline;gap:10px"><h2>Atendimento</h2><span class="muted">A <strong>modalidade</strong> diz <em>como</em> cobra; o <strong>profissional</strong> diz <em>qual</em> tabela.</span></div>
       <div class="grid">
-        <label class="campo">Profissional<select id="n-prof"><option value="">—</option></select></label>
+        <label class="campo">Profissional <span class="req" id="n-prof-req">*</span><select id="n-prof"><option value="">—</option></select></label>
         <label class="campo" id="l-primeira">Data da 1ª consulta<input id="n-primeira" inputmode="numeric" autocomplete="off" placeholder="dd/mm/aaaa" maxlength="10"></label>
         <label class="campo">Convênio<select id="n-conv"></select></label>
         <label class="campo" id="l-cart" hidden>Nº da carteirinha<input id="n-cart" autocomplete="off"></label>
       </div>
       <fieldset style="border:0;padding:0;margin:0;display:flex;flex-direction:column;gap:10px">
         <legend class="campo" style="padding:0;margin-bottom:8px;display:block">Modalidade <span class="leg">— só o que está na tabela; o paciente que já escolhe o plano ao perguntar não é negociação</span></legend>
+        <div class="dica" id="n-mod-guia" hidden>Escolha o profissional: a modalidade diz como cobra, o profissional diz qual tabela.</div>
         <div class="cartoes" id="n-mods-tabela"></div>
-        <div class="muted" style="margin-top:6px"><strong style="color:var(--tx2)">Já em andamento</strong> — pra marcar quem já está nesses planos e saber quanto cobrar. Não oferecer a paciente novo.</div>
+        <div class="muted" id="n-mods-antigo-t" style="margin-top:6px"><strong style="color:var(--tx2)">Já em andamento</strong> — pra marcar quem já está nesses planos e saber quanto cobrar. Não oferecer a paciente novo.</div>
         <div class="cartoes" id="n-mods-antigo"></div>
         <select id="n-mod" class="sr" tabindex="-1" aria-hidden="true"></select>
         <div id="n-modwarn"></div>

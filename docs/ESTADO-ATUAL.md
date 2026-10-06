@@ -37,6 +37,11 @@ Git: branch `claude/lucid-einstein-gd6x5l`, tudo commitado e enviado.
 
 ## Feito e publicado
 
+- **Ajustes de 06/10 (deploy 2026-10-06-10, só na real)**: Novo paciente com profissional primeiro; "Registrado!" + "ver na lista de hoje";
+  Mensalistas no mês atual + faixa do mês anterior; Agenda recorrente carregada (28 horários semanais da Juliana). Ver `docs/DEPLOYS.md`.
+  Faltam da gestão: horários da Giovana (semanais × aplicação de teste), quinzenais da Juliana, e 3 pacientes ainda sem cadastro
+  (Vinicius Elias Ribeiro de Almeida, Julia Borrajo Xavier, Samantha Hadassa Oliveira dos Santos). A aba `arquivos` (teste) ficou no 2026-10-06-08.
+
 - **Plano "vai pagar depois" (06/10, noite)**: ao lançar um plano, a recepção escolhe Pagou agora ou Vai pagar depois; no segundo caso a compra fica a receber (Pago? = Não na aba do mês e em Planos), as consultas contam normalmente, a tag do paciente fica amarela "a pagar", a compra aparece na pendência de pagamento da Gestão e o recebimento se registra depois pela correção de lançamentos (que atualiza Planos também). Tabela e painel de correção da Gestão em largura cheia no computador. **Aprovado e promovido para `arquivos_real` em 06/10 à noite.** Ver `docs/NOVA-INTERFACE.md`.
 - **Correção de lançamentos (06/10, noite)**: gestão corrige a cobrança clicando na linha da pendência (Receber · NF · Guia · Anotar) e a recepção corrige pelo painel do paciente na tela Hoje ("Corrigir cobrança"). Grava só Pago?, data, forma, quem pagou, NF, guia e observação (acrescenta), com carimbo "corrigido por" em "Registrado por (app)"; compra de plano atualiza também a aba Planos. Valor não muda pelo app. **Aprovado e promovido para `arquivos_real` em 06/10 à noite.** Ver `docs/NOVA-INTERFACE.md`.
 - **Aba `Setembro` na planilha real (06/10, noite)**: a aba importada na cópia (IDs `IMP-SET26-001`–`399`, 24 colunas) foi copiada inteira para a real com `copySheetTo`, renomeada e movida para antes de `Outubro` (gid `373771041`); cabeçalho, datas e IDs conferidos por releitura, 399 linhas nas duas. Com isso `Setembro` entra no seletor de mês da tela Gestão da real (pendências do mês e exportar), que lista as abas de mês existentes. Detalhes em `docs/MIGRACAO-REAL-2026-10-06.md`.
@@ -58,7 +63,7 @@ Git: branch `claude/lucid-einstein-gd6x5l`, tudo commitado e enviado.
 
 1. **Colar o `dist/Code.gs` novo no Apps Script e publicar nova versão** (pede permissão do Drive; sem isso o Exportar não salva na pasta).
 2. Coluna "Gestão" na aba Listas (quem vê a tela Gestão). Hoje só vale `CONFIG.GESTAO` no código.
-3. Carga inicial da Agenda recorrente (horários fixos de cada profissional).
+3. Carga inicial da Agenda recorrente: Juliana feita (28 semanais, 06/10); faltam Giovana, quinzenais e os demais profissionais.
 4. ~440 cadastros sem modalidade: completar na véspera pela Lista do dia ("⚠ sem modalidade").
 5. Mandar o link do app (`appUrlReal`) para `atendimento@clinicanascente.com.br` com a orientação de salvar como atalho (`docs/COMO-INSTALAR.md`, "Para a recepção usar").
 6. ~~Copiar `Mensalistas!I2:I42` da real para a cópia~~ feito em 06/10 à noite (11 células; as duas planilhas estão iguais em Mensalistas).
