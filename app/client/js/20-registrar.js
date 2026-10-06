@@ -71,7 +71,7 @@ function onPacAt(force) {
   }
   if (ehPacote(cur)) {
     var pk = AT.pacotes[cur.nome], r = pk ? pk.n - pk.usadas : 0, vencido = pk && pk.validade && venceu(pk.validade);
-    if (pk && pk.status === 'ativo' && r > 0 && !vencido) box.innerHTML += aviso('verde', 'Plano de ' + pk.n + ' consultas · ' + pk.usadas + ' de ' + pk.n + ' usadas · esta é a ' + (pk.usadas + 1) + 'ª', 'Comprado em ' + esc(pk.compra) + ', válido até ' + esc(pk.validade) + '. ' + (r === 1 ? '<b>Última consulta do plano:</b> avise que o próximo é pago na chegada.' : 'Faltam ' + r + ' depois desta.') + ' Pago? fica como “Plano já pago”.');
+    if (pk && pk.status === 'ativo' && r > 0 && !vencido) box.innerHTML += aviso(planoAPagar(pk) ? 'amarela' : 'verde', 'Plano de ' + pk.n + ' consultas · ' + pk.usadas + ' de ' + pk.n + ' usadas · esta é a ' + (pk.usadas + 1) + 'ª' + (planoAPagar(pk) ? ' · ainda não pago' : ''), 'Comprado em ' + esc(pk.compra) + ', válido até ' + esc(pk.validade) + '. ' + (r === 1 ? '<b>Última consulta do plano:</b> avise que o próximo é pago na chegada.' : 'Faltam ' + r + ' depois desta.') + ' Pago? fica como “Plano já pago”.' + (planoAPagar(pk) ? ' <b>O plano está a receber' + (pk.valor ? ' (R$ ' + brl(pk.valor) + ')' : '') + ':</b> quando pagar, registre pela Gestão ou em Hoje → Corrigir cobrança.' : ''));
     else {
       var pim = pacoteInfoMod(cur.modalidade, cur, $("#a-prof").value);
       box.innerHTML += aviso('laranja', (pk ? (vencido && r > 0 ? 'Plano vencido em ' + esc(pk.validade) + ' · ' + r + ' consulta(s) não usada(s)' : 'Plano encerrado · ' + pk.usadas + ' de ' + pk.n + ' usadas') : 'Sem plano ativo'), 'Esta consulta não está paga. Lançar o plano e receber agora?', '<div class="acoes" style="flex-basis:100%"><button class="btn" type="button" id="a-btn-pacote">Lançar plano de ' + pim.n + ' consultas' + (pim.valor ? ' (R$ ' + brl(pim.valor) + ')' : '') + ' e receber</button><button class="btn ter" type="button" id="a-btn-avulsa">Cobrar consulta individual</button><button class="btn ter" type="button" id="a-btn-extra">Liberar sessão extra</button></div>');
@@ -217,13 +217,14 @@ function lancarPacoteAt() {
   if (!cur) return;
   var n = parseInt($("#a-pk-n").value, 10) || 4, compra = procCompra(n, $("#a-prof").value);
   var d = { paciente: cur.nome, sessoes: n, valor: $("#a-pk-valor").value, data: $("#a-data").value, hora: $("#a-hora").value, profissional: $("#a-prof").value, modalidade: cur.modalidade,
-    validadeMeses: n >= 12 ? 6 : (n >= 6 ? 3 : 2), pago: 'Sim', forma: $("#a-pk-forma").value, quemPagou: $("#a-pk-quem").value.trim(), nf: $("#a-pk-nf").value, nfNumero: $("#a-pk-nfn").value.trim(), procedimentoCompra: compra ? compra.nome : ('Plano de ' + n + ' consultas (compra)') };
+    validadeMeses: n >= 12 ? 6 : (n >= 6 ? 3 : 2), pago: $("#a-pk-pago").value === 'Não' ? 'Não' : 'Sim', forma: $("#a-pk-forma").value, quemPagou: $("#a-pk-quem").value.trim(), nf: $("#a-pk-nf").value, nfNumero: $("#a-pk-nfn").value.trim(), procedimentoCompra: compra ? compra.nome : ('Plano de ' + n + ' consultas (compra)') };
+  if (d.pago === 'Não') { d.forma = ''; d.nf = 'Não'; d.nfNumero = ''; } // a receber: forma e NF entram quando pagar (correção da linha)
   if (!(num(d.valor) > 0)) return toast('Informe o valor do plano');
   $("#a-pk-salvar").disabled = true;
   call('lancarPacote', d).then(function (r) {
     if (!r.ok) { toast((r.erros || ['Não gravou']).join(' ')); return; }
-    AT.pacotes[cur.nome] = { id: r.id, n: n, usadas: 0, compra: d.data, validade: r.validade, status: 'ativo' }; cur._avulsa = false;
-    $("#a-pacotebox").hidden = true; toast('Plano lançado · recebimento de R$ ' + brl(num(d.valor)) + ' gravado na aba ' + r.aba); if (typeof invalidarResumo === 'function') invalidarResumo(); onPacAt(true);
+    AT.pacotes[cur.nome] = { id: r.id, n: n, usadas: 0, compra: d.data, validade: r.validade, status: 'ativo', pago: d.pago }; cur._avulsa = false;
+    $("#a-pacotebox").hidden = true; toast(d.pago === 'Não' ? 'Plano lançado · R$ ' + brl(num(d.valor)) + ' a receber (linha na aba ' + r.aba + ')' : 'Plano lançado · recebimento de R$ ' + brl(num(d.valor)) + ' gravado na aba ' + r.aba); if (typeof invalidarResumo === 'function') invalidarResumo(); onPacAt(true);
   }).catch(function (e) { toast('Erro: ' + e.message); }).finally(function () { $("#a-pk-salvar").disabled = false; });
 }
 /* eventos */
@@ -243,6 +244,7 @@ $("#a-desc-val").addEventListener('input', calcDescAt);
 $("#a-extra-cancel").addEventListener('click', function () { $("#a-extrabox").hidden = true; });
 $("#a-extra-ok").addEventListener('click', function () { if (!$("#a-extra-motivo").value.trim()) return toast('Informe o motivo'); cur._extra = true; cur._extraQuem = $("#a-extra-quem").value; cur._extraMotivo = $("#a-extra-motivo").value.trim(); $("#a-extrabox").hidden = true; aplicarTipo(); toast('Sessão extra liberada · não consome nem cobra'); });
 $("#a-pk-cancel").addEventListener('click', function () { $("#a-pacotebox").hidden = true; });
+$("#a-pk-pago").addEventListener('change', function () { var depois = this.value === 'Não'; $$('[data-pk-pago]').forEach(function (l) { l.hidden = depois; }); $("#a-pk-depois").hidden = !depois; $("#a-pk-salvar").textContent = depois ? 'Salvar plano a receber' : 'Salvar plano e recebimento'; });
 $("#a-pk-salvar").addEventListener('click', lancarPacoteAt);
 $("#a-cobrar-assim").addEventListener('click', function () { if (!cur) return; cur._cobrar = true; aplicarTipo(); toast('Cobrando mesmo assim: anote o motivo na Observação'); });
 $("#a-quem").addEventListener('change', function () { decisaoPagador = null; $("#a-tornar").checked = false; var dif = pagadorDiferente(); $("#a-pagador-novo").hidden = !dif; if (dif) $("#a-pagador-nome").textContent = this.value.trim(); $("#a-quem-tag").hidden = dif || !cur; });

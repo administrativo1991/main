@@ -44,16 +44,24 @@ fs.writeFileSync(path.join(raiz, 'dist/Code.gs'), comLoader(cfg.abaCodigoTeste))
 fs.writeFileSync(path.join(raiz, 'dist/Code.real.gs'), comLoader(cfg.abaCodigoReal));
 // pedaços para a planilha de código: cada arquivo é dividido em células de até 12.000 caracteres,
 // cortadas em fim de linha. O carregador junta as partes pelo número da coluna "parte".
+// Nenhum pedaço pode começar com ' = + - ou @: a planilha trata esses caracteres no início da célula como
+// prefixo de texto ou fórmula (o apóstrofo some ao gravar). Quando o corte cairia aí, recua uma ou mais linhas.
 const TAM = 12000, linhas = [];
+const inicioRuim = l => /^['=+\-@]/.test(l);
 function pedacos(txt) {
-  const partes = []; let atual = '';
+  const partes = []; let atual = [], tam = 0;
   const ls = txt.split('\n');
   ls.forEach((l, i) => {
     const peca = l + (i < ls.length - 1 ? '\n' : '');
-    if (atual && atual.length + peca.length > TAM) { partes.push(atual); atual = ''; }
-    atual += peca;
+    if (atual.length && tam + peca.length > TAM) {
+      let j = atual.length;
+      while (j > 1 && inicioRuim(j < atual.length ? atual[j] : peca)) j--;
+      if (inicioRuim(j < atual.length ? atual[j] : peca)) throw new Error('não achei fim de linha seguro pra cortar perto de: ' + l.slice(0, 60));
+      partes.push(atual.slice(0, j).join('')); atual = atual.slice(j); tam = atual.reduce((a, x) => a + x.length, 0);
+    }
+    atual.push(peca); tam += peca.length;
   });
-  if (atual) partes.push(atual);
+  if (atual.length) partes.push(atual.join(''));
   return partes;
 }
 // na planilha de código ficam os 3 arquivos-fonte separados; o carregador monta (index + duplicatas, duplicatas + server)

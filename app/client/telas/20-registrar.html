@@ -36,11 +36,13 @@
       <div class="grid">
         <label class="campo">Consultas<input id="a-pk-n" inputmode="numeric"></label>
         <label class="campo">Valor (R$)<input id="a-pk-valor" inputmode="decimal"></label>
-        <label class="campo">Forma<select id="a-pk-forma"></select></label>
-        <label class="campo">Quem pagou<input id="a-pk-quem" list="dl-pagadores" autocomplete="off"></label>
-        <label class="campo">NF emitida?<select id="a-pk-nf"><option>Sim</option><option>Não</option></select></label>
-        <label class="campo">Nº da NF<input id="a-pk-nfn" autocomplete="off"></label>
+        <label class="campo">Pagamento<select id="a-pk-pago"><option value="Sim">Pagou agora</option><option value="Não">Vai pagar depois</option></select></label>
+        <label class="campo" data-pk-pago>Forma<select id="a-pk-forma"></select></label>
+        <label class="campo">Quem paga<input id="a-pk-quem" list="dl-pagadores" autocomplete="off"></label>
+        <label class="campo" data-pk-pago>NF emitida?<select id="a-pk-nf"><option>Sim</option><option>Não</option></select></label>
+        <label class="campo" data-pk-pago>Nº da NF<input id="a-pk-nfn" autocomplete="off"></label>
       </div>
+      <div class="faixa nota" id="a-pk-depois" hidden>O plano fica <b>a receber</b>: as consultas são contadas normalmente e a compra aparece em "Particulares sem Pago?" na Gestão até alguém registrar o pagamento (Gestão ou Hoje → Corrigir cobrança).</div>
       <div class="acoes"><button type="button" class="btn" id="a-pk-salvar">Salvar plano e recebimento</button></div>
     </div>
 

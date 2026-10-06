@@ -135,3 +135,30 @@ pelo app** (fica pra planilha, com nota na observação).
   formulário dentro do painel, com todos os campos (guia só se for convênio). Depois de gravar, a lista do dia recarrega.
 - Simulação: `corrigirLancamento` tem mock em `00-base.js`; os itens do `gestaoResumo` simulado ganharam IDs.
 
+## Plano "vai pagar depois" e correção em largura cheia (06/10, noite, 5ª rodada)
+
+Pergunta da Roberta: dá pra lançar o plano sem a pessoa pagar e ir acompanhando as consultas, como pagamento a
+posteriori? Aprovado em 06/10 à noite ("pode fazer os 3"), junto com o pedido de alargar a tabela de correção da Gestão
+no computador.
+
+- **Lançar plano sem receber** (`telas/20-registrar.html`, `js/20-registrar.js`, `lancarPacote` no servidor): a caixa
+  "Lançar plano" ganhou o seletor **Pagou agora / Vai pagar depois**. Com "Vai pagar depois", Forma, NF e Nº da NF somem,
+  o botão vira "Salvar plano a receber" e a linha da compra entra na aba do mês com Pago? = Não, sem data nem forma, e
+  Observação "Compra do plano P-… (a receber)". A aba Planos recebe a linha normalmente (Pago? = Não), então as consultas
+  passam a contar no plano como sempre. A tag do paciente na tela Hoje fica amarela: "Plano 1/4 · a pagar"; a faixa do
+  plano em Registrar diz "ainda não pago" e lembra onde registrar o pagamento.
+- **Pendência de pagamento inclui a compra do plano** (`gestaoResumo` no servidor e `pendentePagamento` em
+  `js/00-base.js`): o filtro "Particulares atendidos sem Pago?" continua ignorando sessões de plano/mensalidade/convênio,
+  mas agora deixa passar as linhas de procedimento "(compra)" com Pago? em branco ou Não. Assim a compra a receber
+  aparece na Gestão (e no tile "a receber hoje" da tela Hoje) até ser quitada.
+- **Receber depois** pela correção de lançamentos já existente: Gestão → Ver lista → Receber (ou Hoje → Corrigir cobrança)
+  grava Pago? = Sim, data, forma, quem pagou e NF na linha da compra; como a Observação começa com "Compra do plano",
+  `corrigirLancamento` atualiza também Pago?/Forma/Quem pagou/NF na aba Planos. `pacotesPorPaciente_` passou a devolver
+  o campo `pago` (só leitura) pra tela saber que o plano está a receber.
+- **Tabela e painel de correção em largura cheia** (`telas/50-gestao.html`): `#g-corr` e `#g-list` saíram da coluna
+  principal e ficaram abaixo das duas colunas (pendências + lado direito), ocupando a largura inteira da tela no
+  computador; no celular nada muda. O botão da linha (Receber · NF · Guia · Anotar) deixou de ficar cortado.
+- **Build**: `build.js` não deixa um pedaço começar com `'`, `=`, `+`, `-` ou `@` (a planilha trata esses caracteres no
+  início da célula como prefixo de texto ou fórmula e o apóstrofo some ao gravar; aconteceu com o pedaço 9 nesta rodada).
+  Quando o corte cairia aí, recua uma linha. Os cortes do index mudaram do pedaço 8 em diante.
+

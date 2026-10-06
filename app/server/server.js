@@ -289,7 +289,7 @@ function pacotesPorPaciente_() {
     var st = String(g(r, 'Status') || '').trim();
     var item = { linha: i + 2, id: String(g(r, 'ID') || ''), modalidade: String(g(r, 'Modalidade') || ''), n: Number(g(r, 'Nº de sessões')) || 0,
       valor: Number(g(r, 'Valor (R$)')) || 0, compra: fmtData_(g(r, 'Data da compra')), validade: fmtData_(g(r, 'Válido até')),
-      usadas: Number(g(r, 'Sessões usadas')) || 0, ultima: fmtData_(g(r, 'Última sessão')), status: st || 'ativo' };
+      usadas: Number(g(r, 'Sessões usadas')) || 0, ultima: fmtData_(g(r, 'Última sessão')), status: st || 'ativo', pago: String(g(r, 'Pago?') || '').trim() };
     if (!out[pac] || item.status === 'ativo') out[pac] = item; // o ativo mais recente
   });
   return out;
@@ -496,8 +496,9 @@ API.lancarPacote = function (d) {
     var pm = {};
     pm[HM.DATA] = data; pm[HM.HORA] = String(d.hora || ''); pm[HM.PACIENTE] = paciente; pm[HM.PROFISSIONAL] = String(d.profissional || '');
     pm[HM.PROCEDIMENTO] = String(d.procedimentoCompra || ''); pm[HM.OQUE] = 'Atendido'; pm[HM.VALOR] = valor; pm[HM.PAGO] = String(d.pago || 'Sim');
-    pm[HM.DATA_PAG] = data; pm[HM.FORMA] = String(d.forma || ''); pm[HM.QUEM] = (d.quemPagou && d.quemPagou !== (pac.pagador || '') && d.quemPagou !== paciente) ? String(d.quemPagou) : '';
-    pm[HM.NF] = String(d.nf || ''); pm[HM.NF_N] = String(d.nfNumero || ''); pm[HM.OBS] = ('Compra do plano ' + id + '. ' + String(d.observacao || '')).trim();
+    var pagoPlano = String(d.pago || 'Sim') === 'Sim'; // "vai pagar depois" (Roberta 06/10): data e forma ficam em branco até a correção da linha
+    pm[HM.DATA_PAG] = pagoPlano ? data : ''; pm[HM.FORMA] = pagoPlano ? String(d.forma || '') : ''; pm[HM.QUEM] = (d.quemPagou && d.quemPagou !== (pac.pagador || '') && d.quemPagou !== paciente) ? String(d.quemPagou) : '';
+    pm[HM.NF] = String(d.nf || ''); pm[HM.NF_N] = String(d.nfNumero || ''); pm[HM.OBS] = ('Compra do plano ' + id + (pagoPlano ? '' : ' (a receber)') + '. ' + String(d.observacao || '')).trim();
     pm[HM.ID] = idA; pm[HM.LOG] = (u.email || 'app') + ' · ' + agora_(); pm[HM.PACOTE] = id;
     gravarCelulas_(sm, lm, hm, pm);
     [HM.DATA, HM.DATA_PAG].forEach(function (k) { if (hm[k]) sm.getRange(lm, hm[k]).setNumberFormat('dd/MM/yyyy'); });
@@ -885,7 +886,8 @@ API.gestaoResumo = function (d) {
   var out = {
     ok: true, mes: mes, abaExiste: m.existe, total: L.length, atendidos: atend.length,
     recebido: atend.filter(function (r) { return r.pago === 'Sim'; }).reduce(function (a, r) { return a + r.valor; }, 0),
-    pagamentoPendente: atend.filter(function (r) { return particular(r) && (r.pago === '' || r.pago === 'Não') && !/^Mensalidade|pacote|plano|mensal|convênio|AAPI/i.test(r.procedimento) ; }),
+    // compra de plano "a receber" (lançada com Pago? = Não) entra aqui; sessões de plano/mensalidade/convênio não (aprovado pela Roberta em 06/10)
+    pagamentoPendente: atend.filter(function (r) { return particular(r) && (r.pago === '' || r.pago === 'Não') && (!/^Mensalidade|pacote|plano|mensal|convênio|AAPI/i.test(r.procedimento) || /\(compra\)/i.test(r.procedimento)); }),
     nfPendente: atend.filter(function (r) { return r.pago === 'Sim' && r.nf !== 'Sim' && r.nf !== 'Não se aplica'; }),
     semGuia: L.filter(function (r) { return (!particular(r) || /^Convênio/i.test(r.pago)) && r.guia !== 'Sim' && /^Atendido/.test(r.oque); }),
     faltas: L.filter(function (r) { return /sem aviso|em cima da hora/i.test(r.oque) && particular(r) && !/Pacote|Plano/i.test(r.pago); }),

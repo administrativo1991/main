@@ -258,7 +258,7 @@ function renderResumo(cont) {
   var regs = DIA.itens.filter(function (i) { return i.registro && /^Atendido/.test(i.registro.oque); }).map(function (i) { return i.registro; });
   var particular = function (r) { return !r.convenio || /^Particular$/i.test(r.convenio); };
   var recebido = regs.filter(function (r) { return r.pago === 'Sim'; }).reduce(function (a, r) { return a + (Number(r.valor) || 0); }, 0);
-  var aRec = regs.filter(function (r) { return particular(r) && (r.pago === '' || r.pago === 'Não') && !/^Mensalidade|pacote|plano|mensal|convênio|AAPI/i.test(r.procedimento); }).reduce(function (a, r) { return a + (Number(r.valor) || 0); }, 0);
+  var aRec = regs.filter(function (r) { return particular(r) && pendentePagamento(r); }).reduce(function (a, r) { return a + (Number(r.valor) || 0); }, 0);
   var nfPend = regs.filter(function (r) { return r.pago === 'Sim' && r.nf !== 'Sim' && r.nf !== 'Não se aplica'; }).length;
   var guiaPend = regs.filter(function (r) { return (!particular(r) || /^Convênio/i.test(r.pago)) && r.guia !== 'Sim'; }).length;
   var rs = function (n) { return 'R$ ' + brl(n).replace(',00', ''); };
@@ -285,7 +285,7 @@ function renderPend(itens) {
   if (sg.length) out.push(['amarela', sg.length, 'guia a emitir hoje · ' + sg.map(function (i) { return primeiroNome(i.paciente) + (i.hora ? ' ' + i.hora : ''); }).join(', '), dest]);
   var nf = regs.filter(function (i) { var r = i.registro; return r.pago === 'Sim' && r.nf !== 'Sim' && r.nf !== 'Não se aplica'; });
   if (nf.length) out.push(['laranja', nf.length, 'NF a emitir hoje · ' + nf.map(function (i) { return primeiroNome(i.paciente) + (i.registro.valor ? ' R$ ' + brl(i.registro.valor).replace(',00', '') : ''); }).join(', '), dest]);
-  var pp = regs.filter(function (i) { var r = i.registro; return particular(r) && (r.pago === '' || r.pago === 'Não') && !/^Mensalidade|pacote|plano|mensal|convênio|AAPI/i.test(r.procedimento); });
+  var pp = regs.filter(function (i) { var r = i.registro; return particular(r) && pendentePagamento(r); });
   if (pp.length) out.push(['amarela', pp.length, 'particular sem “Pago?” hoje · ' + pp.map(function (i) { return primeiroNome(i.paciente); }).join(', '), dest]);
   if (ehGestao() && g) {
     var ontem = dataObj(dia); ontem.setDate(ontem.getDate() - 1); var dOntem = ('0' + ontem.getDate()).slice(-2) + '/' + ('0' + (ontem.getMonth() + 1)).slice(-2) + '/' + ontem.getFullYear();
