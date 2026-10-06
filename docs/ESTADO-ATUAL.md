@@ -28,7 +28,7 @@ Preços só em abas editáveis (Procedimentos, Pacientes, Mensalistas), nunca no
 | Manuais | `docs/README-RECEPCAO.md`, `docs/README-GESTAO.md`, `docs/COMO-INSTALAR.md` |
 | Testes de tela | Playwright, arquivos `*-test.js` no scratchpad (não versionados); `node tests/duplicatas.test.js` |
 
-Última publicação: 06/10/2026 (noite, 2ª) — correção da guia de convênio (a caixa "Guia assinada antes da sessão" começa desmarcada e zera a cada paciente; antes vinha marcada por padrão): index.html pedaços 4, 10, 11, 12 e 13 (linhas 13 e 19–22) regravados em `arquivos`, LEN e soma de controle conferidos. Antes dela, na mesma noite: Lembrete da gestão — server.js (6 pedaços, linhas 3–8) e index.html (16 pedaços, linhas 9–24). Só na versão de teste (CÓPIA TESTE); `arquivos_real` segue com a versão da tarde.
+Última publicação: 06/10/2026 (noite, 2ª) — correção da guia de convênio (a caixa "Guia assinada antes da sessão" começa desmarcada e zera a cada paciente; antes vinha marcada por padrão): index.html pedaços 4, 10, 11, 12 e 13 (linhas 13 e 19–22) regravados em `arquivos`, LEN e soma de controle conferidos. Antes dela, na mesma noite: Lembrete da gestão — server.js (6 pedaços, linhas 3–8) e index.html (16 pedaços, linhas 9–24). Versão aprovada pela gestão em 06/10 à noite. A promoção `arquivos` → `arquivos_real` (A1:C30, só valores) foi barrada pela permissão da sessão e ficou como passo manual 4 em docs/MIGRACAO-REAL-2026-10-06.md; até lá `arquivos_real` segue com a versão da tarde.
 Git: branch `claude/lucid-einstein-gd6x5l`, tudo commitado e enviado.
 
 ## Feito e publicado

@@ -41,6 +41,26 @@ Copiar `Mensalistas!B2:B43` da cópia e colar só valores na real. As colunas C 
 
 Enquanto não mudar, o app continua funcionando: ele reconhece os dois rótulos.
 
+### 4. Planilha de código: promover a versão aprovada para `arquivos_real`
+
+Na planilha "Recepção Nascente — código do app (não mexer)", aba `arquivos`, selecionar `A1:C30`, copiar, ir à aba
+`arquivos_real`, clicar em A1 e colar **só valores** (Ctrl+Shift+V). Isso leva a versão aprovada na cópia em 06/10 à noite
+(Lembrete da gestão + guia de convênio desmarcada) para a planilha real. A gravação pelo assistente foi barrada pela
+permissão da sessão ("implantação em produção"), por isso fica à mão. Em até 2 minutos o app da real recarrega sozinho.
+
+## Links diretos (abrem na aba e no intervalo certos)
+
+| Passo | Origem (CÓPIA TESTE) | Destino (real) |
+|---|---|---|
+| 1 Pacientes F | https://docs.google.com/spreadsheets/d/1u6uUDpgfwP9lfBOist41JJ7zYBQtQoJzRegTsonPiyk/edit#gid=1311125793&range=F2:F528 | https://docs.google.com/spreadsheets/d/1WvuEvxKvtRs14ddAa2QqhQkJywwQOZmZqU0o6QyqUqs/edit#gid=1311125793&range=F2:F528 |
+| 1 Pacientes N | …/1u6uUDpgfwP9lfBOist41JJ7zYBQtQoJzRegTsonPiyk/edit#gid=1311125793&range=N2:N528 | …/1WvuEvxKvtRs14ddAa2QqhQkJywwQOZmZqU0o6QyqUqs/edit#gid=1311125793&range=N2:N528 |
+| 1 Pacientes R | …&range=R2:R528 | …&range=R2:R528 |
+| 1 Pacientes S | …&range=S2:S528 | …&range=S2:S528 |
+| 1 linha 523 (limpar F e Q na real) | — | …/1WvuEvxKvtRs14ddAa2QqhQkJywwQOZmZqU0o6QyqUqs/edit#gid=1311125793&range=F523:Q523 |
+| 2 Mensalistas B | …/1u6uUDpgfwP9lfBOist41JJ7zYBQtQoJzRegTsonPiyk/edit#gid=10&range=B2:B43 | …/1WvuEvxKvtRs14ddAa2QqhQkJywwQOZmZqU0o6QyqUqs/edit#gid=10&range=B2:B43 |
+| 3 Listas A2:B6 | — (digitar) | …/1WvuEvxKvtRs14ddAa2QqhQkJywwQOZmZqU0o6QyqUqs/edit#gid=50&range=A2:B6 |
+| 4 código `arquivos` → `arquivos_real` | https://docs.google.com/spreadsheets/d/1qM7tX5neTU1kAa4JBpk1xiZQmcJOk325hx873XIRPYo/edit#gid=0&range=A1:C30 | https://docs.google.com/spreadsheets/d/1qM7tX5neTU1kAa4JBpk1xiZQmcJOk325hx873XIRPYo/edit#gid=812108621&range=A1 |
+
 ## Como conferir depois
 
 Abrir o app apontado para a real, tela Pacientes → Buscar / editar cadastro, e abrir um mensalista:
