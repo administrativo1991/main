@@ -350,7 +350,9 @@ function renderRec() {
   });
 }
 function limparRec() { recEdit = null; ['r-pac', 'r-hora', 'r-ini', 'r-fim', 'r-obs'].forEach(function (id) { $("#" + id).value = ''; }); $("#r-pac-info").textContent = ''; $("#r-freq").value = 'Semanal'; $("#r-ativo").value = 'Sim'; $("#r-hint").textContent = 'Nova recorrência.'; }
-$("#d-rec").addEventListener('click', function () { $("#d-recbox").hidden = !$("#d-recbox").hidden; $("#d-addbox").hidden = true; if (!$("#d-recbox").hidden) { carregarRec(); $("#d-recbox").scrollIntoView({ behavior: 'smooth', block: 'start' }); } });
+function alternarRec() { $("#d-recbox").hidden = !$("#d-recbox").hidden; $("#d-addbox").hidden = true; if (!$("#d-recbox").hidden) { carregarRec(); $("#d-recbox").scrollIntoView({ behavior: 'smooth', block: 'start' }); } }
+$("#d-rec").addEventListener('click', alternarRec);
+$("#d-rec-topo").addEventListener('click', alternarRec); // botão visível no topo (gestão, 06/10): a recepção mantém os horários fixos
 $("#d-rec-fechar").addEventListener('click', function () { $("#d-recbox").hidden = true; });
 $("#r-novo").addEventListener('click', limparRec);
 $("#r-pac").addEventListener('input', function () { mostrarInfo($("#r-pac-info"), this.value); });

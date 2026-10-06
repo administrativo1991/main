@@ -23,8 +23,8 @@ coluna E não afeta o app. Atualizar `E2` faz parte de toda publicação (passo 
 
 | Canal | Deploy | Peças | Commit |
 |---|---|---|---|
-| Real (`arquivos_real`) | **2026-10-06-10** | 27 (duplicatas 1 · server 6 · index 20; linhas 2–28) | branch `claude/magical-dirac-hh3zzs` |
-| Teste (`arquivos`) | **2026-10-06-08** (atrás da real: não recebeu o 10) | 27 | 135de84 |
+| Real (`arquivos_real`) | **2026-10-06-11** | 27 (duplicatas 1 · server 6 · index 20; linhas 2–28) | branch `claude/magical-dirac-hh3zzs` |
+| Teste (`arquivos`) | **2026-10-06-08** (atrás da real: não recebeu o 10 nem o 11) | 27 | 135de84 |
 | Carregador real | 2026-10-06-02 (`dist/Code.real.gs`, implantado pela Roberta) | — | 4ad0272 |
 | Carregador teste | 2026-10-04-01 + nova versão pendente desde 05/10 (permissão do Drive, ver `COMO-INSTALAR.md`) | — | — |
 
@@ -48,6 +48,13 @@ Modelo:
 ```
 
 ## Lista
+
+### 2026-10-06-11 · Real (direto) · botão "Horários fixos" na tela Hoje
+- **O que mudou**: botão "Horários fixos" no topo da tela Hoje, ao lado de "Encaixe no dia", abre o mesmo painel da Agenda recorrente
+  (antes só havia o link discreto no rodapé da tabela, que continua). A recepção mantém os horários fixos por ali (editar, incluir, pausar).
+- **Peças**: 27; regravadas 13: index.html 4–8 (linhas 13–17) e 12–19 (linhas 21–28).
+- **Conferência**: as 27 linhas lidas de volta, 27/27 iguais ao build; index remontado igual ao `dist/index.publicado.html`, server igual ao fonte.
+- **Aprovação**: gestão, 06/10 à noite ("pode fazer a alteração e incluir o botão").
 
 ### 2026-10-06-10 · Real (direto, sem passar pela cópia — autorizado pela gestão) · ajustes da avaliação de 06/10
 - **O que mudou**:
