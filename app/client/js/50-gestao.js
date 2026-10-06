@@ -4,7 +4,7 @@ INICIAR.gestao = function () {
   if (!BOOT) { setTimeout(INICIAR.gestao, 300); return; }
   if (!ehGestao()) { $("#g-carregando").hidden = true; $("#g-bloqueio").hidden = false; return; }
   if (!$("#g-mes").options.length) { MESES_PT.forEach(function (m) { var o = document.createElement('option'); o.value = m; o.textContent = m; $("#g-mes").appendChild(o); }); $("#g-mes").value = MESES_PT[new Date().getMonth()]; }
-  $("#g-nav").hidden = false; $("#g-atualizar").hidden = false; $("#g-planilha").textContent = BOOT.planilha || 'Controle da Recepção 2026';
+  $("#g-nav").hidden = false; $("#g-atualizar").hidden = false; $("#g-print").hidden = false; $("#g-planilha").textContent = BOOT.planilha || 'Controle da Recepção 2026';
   renderLembrete();
   carregarGestao();
 };

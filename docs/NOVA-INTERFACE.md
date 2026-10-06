@@ -14,7 +14,7 @@ Porte visual dos 6 mockups aprovados pela Roberta (pasta "Recepção Nascente �
 |---|---|
 | `app/client/index.tpl.html` | esqueleto da página (head, fontes Poppins/Mulish, marcadores) |
 | `app/client/styles.css` | a folha única: tokens da identidade, componentes, impressão, celular |
-| `app/client/layout.html` | menu lateral de 220 px (logo, 5 itens com ícone, Imprimir das telas Mensalistas/Gestão, chip do perfil embaixo), cabeçalho do celular (símbolo + título + inicial), barra inferior do celular, toast |
+| `app/client/layout.html` | menu lateral de 220 px (logo, 5 itens com ícone, chip do perfil embaixo), cabeçalho do celular (símbolo + título + inicial), barra inferior do celular, toast |
 | `app/client/telas/10-hoje.html` … `50-gestao.html` | a estrutura de cada tela, só HTML |
 | `app/client/js/00-base.js` | ponte com o Apps Script, simulação local, utilitários, leitura das regras do cadastro (reaproveitado do app anterior), navegação |
 | `app/client/js/10-hoje.js` … `50-gestao.js` | o JavaScript de cada tela; `90-boot.js` arranca |
@@ -56,10 +56,13 @@ Nada a mais é gravado.
 
 - `.app` é uma linha flex: `nav.lado` (220 px, branco, fixo na rolagem) + `.conteudo` (cabeçalho do celular + `main`).
 - Menu: Hoje · Registrar · Pacientes · Mensalistas · Gestão (só gestão), item ativo com fundo lavanda e texto roxo;
-  embaixo, o botão Imprimir das telas que imprimem pelo menu (Mensalistas, Gestão) e o chip do perfil
-  ("Recepção · recepção" / "Gestão · gestão").
+  embaixo, o chip do perfil ("Recepção · recepção" / "Gestão · gestão"). Os botões Imprimir ficam no cabeçalho de cada
+  tela, como nos mockups (Hoje, Mensalistas "Imprimir lista de cobrança", Gestão "Imprimir pendências"); no celular não aparecem.
 - ≤ 480 px: o menu some, aparece o cabeçalho do celular (símbolo, título da tela, inicial) e a barra inferior com 4 ícones.
 - As telas Registrar, Pacientes, Mensalistas e Gestão não mudaram por dentro: só passaram a viver à direita do menu.
+  Cada uma foi conferida contra o `.dc.html` revisado de 06/10 (texto visível e estrutura): a diferença é só o menu lateral.
+- Telas em coluna (Mensalistas, Gestão): os filhos esticam a largura toda (`.tela.coluna{align-items:stretch}`); sem isso,
+  no celular a tabela de Mensalistas alargava a página inteira em vez de rolar dentro do próprio card.
 
 ### Tela Hoje (`telas/10-hoje.html`, `js/10-hoje.js`)
 
@@ -98,5 +101,8 @@ Nada a mais é gravado.
 - "Guia assinada / a emitir" só aparece depois de registrar: antes não há como saber (a guia se marca no registro).
 - "Últimos 3 atendimentos" do painel do paciente precisaria de outra leitura nova (histórico por paciente); ficou de fora.
 - "Editar horário" no menu ⋯ não existe (não há função pra isso; horário fixo se muda na Agenda recorrente).
-- A tela Registrar foi conferida contra o `Atendimento.dc.html` revisado: por dentro é igual ao mockup anterior,
-  só ganhou o menu lateral. Pacientes, Mensalistas e Gestão ainda vêm nessa ordem.
+- Registrar, Pacientes, Mensalistas e Gestão foram conferidas contra os `.dc.html` revisados: por dentro são iguais aos
+  mockups anteriores, só ganharam o menu lateral. Nomes e valores das modalidades continuam vindo da planilha (o mockup
+  usa nomes ilustrativos como "Pacote mensal"; o app mostra os da aba Listas, como "Plano de 4 consultas").
+- No celular, a tabela de Mensalistas rola de lado dentro do card (como o mockup, que é só de computador); o botão
+  "Registrar pagamento" fica à direita, depois de rolar. Se a recepção for usar Mensalistas pelo celular, vale virar cards.

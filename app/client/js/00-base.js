@@ -221,8 +221,6 @@ function go(id, extra) {
   $("#a-rodape").hidden = id !== 'registrar' || !AT;
   $("#p-rodape").hidden = id !== 'pacientes' || !BOOT;
   $$("[data-go]").forEach(function (b) { if (b.dataset.go === id) b.setAttribute("aria-current", "page"); else b.removeAttribute("aria-current"); });
-  var imp = { mensalistas: 'Imprimir lista de cobrança', gestao: 'Imprimir pendências' }[id]; // Hoje tem o Imprimir na própria barra
-  $("#btn-print").hidden = !imp; if (imp) $("#btn-print-txt").textContent = imp;
   $("#titulo-cel").textContent = TITULOS[id];
   document.title = TITULOS[id] + ' · Recepção Nascente';
   if (INICIAR[id]) INICIAR[id](extra);
@@ -230,7 +228,7 @@ function go(id, extra) {
 }
 $$("[data-go]").forEach(function (b) { b.addEventListener("click", function (e) { e.preventDefault(); go(b.dataset.go); }); });
 $$("#logo-link, #logo-link-cel").forEach(function (a) { a.addEventListener('click', function (e) { e.preventDefault(); go('hoje'); }); });
-$("#btn-print").addEventListener('click', function () { window.print(); });
+$$(".imprimir").forEach(function (b) { b.addEventListener('click', function () { window.print(); }); }); // Imprimir de cada tela, como nos mockups
 document.addEventListener('click', function (e) { if (!e.target.closest('.mais')) $$('.mais-menu').forEach(function (m) { m.remove(); }); });
 
 /* ---------- carga inicial ---------- */

@@ -46,7 +46,6 @@ h1{font-size:26px}h2{font-size:16px}
 .lado>button[data-go]:hover{background:var(--bg)}
 .lado>button[data-go][aria-current="page"]{background:var(--bg);color:var(--roxo);font-weight:600}
 .lado>button[data-go] svg{flex:none}
-.lado .imprimir{justify-content:flex-start;margin-bottom:6px;white-space:normal;text-align:left;font-size:13px;line-height:1.25;padding:8px 12px}
 .lado>button:focus-visible,.btn:focus-visible,.tile:focus-visible,.filtro:focus-visible{outline:2px solid var(--roxo);outline-offset:2px}
 .chip-user{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:12px;background:var(--bg);font-size:13px;color:var(--tx2);line-height:1.2}
 .chip-user.gestao{background:var(--lilas)}
@@ -60,7 +59,7 @@ h1{font-size:26px}h2{font-size:16px}
 /* ---------- conteúdo ---------- */
 main{flex:1;display:flex;flex-direction:column;min-width:0}
 .tela{display:flex;flex-wrap:wrap;gap:24px;align-items:flex-start;max-width:1216px;width:100%;margin:0 auto;padding:28px 32px 48px}
-.tela.coluna{flex-direction:column;flex-wrap:nowrap;gap:20px}
+.tela.coluna{flex-direction:column;flex-wrap:nowrap;align-items:stretch;gap:20px}
 .tela.hoje{max-width:none;padding:0;gap:0;align-items:stretch;flex:1;flex-wrap:nowrap}
 .tela.hoje>.principal{padding:24px 28px 40px;gap:18px}
 .principal{flex:999 1 560px;min-width:0;display:flex;flex-direction:column;gap:16px}
@@ -511,10 +510,6 @@ button.kpi[aria-pressed="true"] span,.kpi.roxo span{color:#fff;opacity:.9}
   <button type="button" data-go="mensalistas"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="6" width="18" height="12" rx="2"/><path d="M3 10h18"/></svg>Mensalistas</button>
   <button type="button" data-go="gestao" id="menu-gestao" hidden><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 19V10M10 19V5M16 19v-8M22 19H2"/></svg>Gestão</button>
   <span class="esp"></span>
-  <button type="button" class="btn ter imprimir" id="btn-print" hidden>
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9V3h12v6"/><rect x="3" y="9" width="18" height="9" rx="2"/><path d="M6 14h12v7H6z"/></svg>
-    <span id="btn-print-txt">Imprimir</span>
-  </button>
   <div class="chip-user" id="chip-user" title="">
     <span class="av" id="chip-av">R</span>
     <span class="txt"><strong id="chip-nome">Recepção</strong><span class="mail" id="chip-mail"></span></span>
@@ -912,6 +907,7 @@ button.kpi[aria-pressed="true"] span,.kpi.roxo span{color:#fff;opacity:.9}
     <span class="muted" id="m-legenda">vence dia 10 · tolerância até o 15 · dia 16 pausa</span>
     <span class="esp"></span>
     <div class="campo-wrap" style="min-width:240px"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg><input type="search" id="m-busca" placeholder="Buscar paciente ou pagador" aria-label="Buscar" style="font-size:14px"></div>
+    <button type="button" class="btn ter imprimir so-pc" id="m-print"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9V3h12v6"/><rect x="3" y="9" width="18" height="9" rx="2"/><path d="M6 14h12v7H6z"/></svg>Imprimir lista de cobrança</button>
   </div>
   <div id="m-carregando" class="carregando">Carregando…</div>
   <div class="kpis" id="m-kpis" role="group" aria-label="Filtrar por situação"></div>
@@ -943,6 +939,7 @@ button.kpi[aria-pressed="true"] span,.kpi.roxo span{color:#fff;opacity:.9}
     <span class="muted" id="g-atualizado"></span>
     <span class="esp"></span>
     <button type="button" class="btn ter" id="g-atualizar" hidden>Atualizar</button>
+    <button type="button" class="btn ter imprimir so-pc" id="g-print" hidden><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9V3h12v6"/><rect x="3" y="9" width="18" height="9" rx="2"/><path d="M6 14h12v7H6z"/></svg>Imprimir pendências</button>
     <button type="button" class="btn" id="g-export" hidden><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12M7 10l5 5 5-5M4 21h16"/></svg><span id="g-export-txt">Exportar (.xlsx)</span></button>
   </div>
   <select id="g-mes" class="sr" tabindex="-1" aria-hidden="true"></select>
@@ -1366,8 +1363,6 @@ function go(id, extra) {
   $("#a-rodape").hidden = id !== 'registrar' || !AT;
   $("#p-rodape").hidden = id !== 'pacientes' || !BOOT;
   $$("[data-go]").forEach(function (b) { if (b.dataset.go === id) b.setAttribute("aria-current", "page"); else b.removeAttribute("aria-current"); });
-  var imp = { mensalistas: 'Imprimir lista de cobrança', gestao: 'Imprimir pendências' }[id]; // Hoje tem o Imprimir na própria barra
-  $("#btn-print").hidden = !imp; if (imp) $("#btn-print-txt").textContent = imp;
   $("#titulo-cel").textContent = TITULOS[id];
   document.title = TITULOS[id] + ' · Recepção Nascente';
   if (INICIAR[id]) INICIAR[id](extra);
@@ -1375,7 +1370,7 @@ function go(id, extra) {
 }
 $$("[data-go]").forEach(function (b) { b.addEventListener("click", function (e) { e.preventDefault(); go(b.dataset.go); }); });
 $$("#logo-link, #logo-link-cel").forEach(function (a) { a.addEventListener('click', function (e) { e.preventDefault(); go('hoje'); }); });
-$("#btn-print").addEventListener('click', function () { window.print(); });
+$$(".imprimir").forEach(function (b) { b.addEventListener('click', function () { window.print(); }); }); // Imprimir de cada tela, como nos mockups
 document.addEventListener('click', function (e) { if (!e.target.closest('.mais')) $$('.mais-menu').forEach(function (m) { m.remove(); }); });
 
 /* ---------- carga inicial ---------- */
@@ -2344,7 +2339,7 @@ INICIAR.gestao = function () {
   if (!BOOT) { setTimeout(INICIAR.gestao, 300); return; }
   if (!ehGestao()) { $("#g-carregando").hidden = true; $("#g-bloqueio").hidden = false; return; }
   if (!$("#g-mes").options.length) { MESES_PT.forEach(function (m) { var o = document.createElement('option'); o.value = m; o.textContent = m; $("#g-mes").appendChild(o); }); $("#g-mes").value = MESES_PT[new Date().getMonth()]; }
-  $("#g-nav").hidden = false; $("#g-atualizar").hidden = false; $("#g-planilha").textContent = BOOT.planilha || 'Controle da Recepção 2026';
+  $("#g-nav").hidden = false; $("#g-atualizar").hidden = false; $("#g-print").hidden = false; $("#g-planilha").textContent = BOOT.planilha || 'Controle da Recepção 2026';
   renderLembrete();
   carregarGestao();
 };
