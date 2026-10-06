@@ -4,6 +4,15 @@ O app mora dentro da planilha. Você vai colar um texto curto (o "carregador") n
 
 Faça primeiro na **cópia de teste**. Quando aprovar, repita os mesmos passos na planilha real.
 
+São dois carregadores quase iguais, gerados pelo `node build.js`:
+
+| Planilha | Arquivo a colar | Lê o código da aba |
+|---|---|---|
+| CÓPIA TESTE | `dist/Code.gs` | `arquivos` (versão de teste) |
+| Controle da Recepção 2026 (real) | `dist/Code.real.gs` | `arquivos_real` (versão em uso) |
+
+Assim uma atualização vai primeiro para a cópia; só depois de aprovada ela é copiada para `arquivos_real` e a recepção a recebe.
+
 ## Passo a passo
 
 1. Abra a planilha (a cópia de teste: "CÓPIA TESTE - Controle da Recepção 2026").
@@ -35,6 +44,13 @@ Nada a fazer. Em até 2 minutos a tela nova aparece sozinha (basta recarregar a 
 ## Se der algum erro
 
 Copie a mensagem que apareceu na tela (ou um print) e me mande. Nada do que você digitou se perde: o rascunho fica guardado no computador até gravar.
+
+## Planilha real (06/10/2026)
+
+Repita os passos 1 a 9 **na planilha "Controle da Recepção 2026"**, colando o conteúdo de **`dist/Code.real.gs`** no passo 3
+(não o `dist/Code.gs`). O URL que sair é o endereço definitivo da recepção: me mande para eu registrar em `app/config.json`
+(`appUrlReal`) e aqui. Antes de liberar para a recepção, faça as três gravações manuais listadas em
+`docs/MIGRACAO-REAL-2026-10-06.md` (Pacientes, Mensalistas coluna B, Listas colunas A e B).
 
 ## Endereço atual (cópia de teste, implantado em 04/10/2026; app completo publicado em 05/10: Novo paciente, Atendimento, Lista do dia, Editar cadastro, Mensalistas e Gestão)
 

@@ -3,7 +3,7 @@
    Assim, cada atualização do app chega sem mexer aqui. */
 
 var CODIGO_PLANILHA_ID = '__CODIGO_PLANILHA_ID__';   // planilha "Recepção Nascente — código do app (não mexer)"
-var CODIGO_ABA = 'arquivos';                          // colunas: arquivo | parte | conteúdo
+var CODIGO_ABA = '__CODIGO_ABA__';                    // 'arquivos' = versão de teste (CÓPIA TESTE) · 'arquivos_real' = versão em uso na planilha real. Colunas: arquivo | parte | conteúdo
 var CACHE_SEGUNDOS = 90;                              // quanto tempo guarda o código em memória
 
 function doGet(e) {

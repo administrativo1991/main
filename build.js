@@ -1,5 +1,5 @@
 // node build.js  → monta a tela a partir de app/client/{styles.css, layout.html, telas/*.html, js/*.js, assets/*.svg}
-// e gera dist/index.html (simulação local, com duplicatas embutido), dist/server.js, dist/Code.gs e dist/pedacos.json.
+// e gera dist/index.html (simulação local, com duplicatas embutido), dist/server.js, dist/Code.gs (teste), dist/Code.real.gs (real) e dist/pedacos.json.
 const fs = require('fs'), path = require('path');
 const raiz = __dirname, C = p => path.join(raiz, 'app/client', p);
 const ler = p => fs.readFileSync(p, 'utf8');
@@ -38,7 +38,10 @@ fs.mkdirSync(path.join(raiz, 'dist'), { recursive: true });
 fs.writeFileSync(path.join(raiz, 'dist/index.html'), client.replace('/*__DUPLICATAS__*/', () => dup));
 fs.writeFileSync(path.join(raiz, 'dist/index.publicado.html'), publicado);
 fs.writeFileSync(path.join(raiz, 'dist/server.js'), dup + '\n' + server);
-fs.writeFileSync(path.join(raiz, 'dist/Code.gs'), loader.replace('__CODIGO_PLANILHA_ID__', cfg.codigoPlanilhaId));
+// dois carregadores iguais, mudando só a aba lida: Code.gs (teste, aba 'arquivos') vai na CÓPIA TESTE; Code.real.gs (aba 'arquivos_real') vai na planilha real
+const comLoader = aba => loader.replace('__CODIGO_PLANILHA_ID__', cfg.codigoPlanilhaId).replace('__CODIGO_ABA__', aba);
+fs.writeFileSync(path.join(raiz, 'dist/Code.gs'), comLoader(cfg.abaCodigoTeste));
+fs.writeFileSync(path.join(raiz, 'dist/Code.real.gs'), comLoader(cfg.abaCodigoReal));
 // pedaços para a planilha de código: cada arquivo é dividido em células de até 12.000 caracteres,
 // cortadas em fim de linha. O carregador junta as partes pelo número da coluna "parte".
 const TAM = 12000, linhas = [];

@@ -7,7 +7,9 @@ Atualizado em 06/10/2026 (noite, nova interface). Leia este arquivo primeiro ao 
 App web **Recepção Nascente** (Google Apps Script) em cima da planilha
 "Controle da Recepção 2026". Tudo é desenvolvido e testado na cópia
 "CÓPIA TESTE - Controle da Recepção 2026" (id `1u6uUDpgfwP9lfBOist41JJ7zYBQtQoJzRegTsonPiyk`).
-A planilha real (id `1WvuEvxKvtRs14ddAa2QqhQkJywwQOZmZqU0o6QyqUqs`) ainda não foi tocada pelo app.
+A planilha real (id `1WvuEvxKvtRs14ddAa2QqhQkJywwQOZmZqU0o6QyqUqs`) começou a ser preparada em 06/10:
+Listas (H, I), Procedimentos e a aba "Alterações de cadastro" já estão iguais à cópia; faltam três gravações manuais
+e a implantação do carregador `dist/Code.real.gs` pela Roberta (ver `docs/MIGRACAO-REAL-2026-10-06.md` e `docs/COMO-INSTALAR.md`).
 
 Regras fixas: nunca migrar/duplicar dados; só acrescentar linhas ou atualizar células;
 nunca apagar linha (marcar "Removido"); nunca escrever nas colunas automáticas (F, G, H, N
@@ -20,8 +22,8 @@ Preços só em abas editáveis (Procedimentos, Pacientes, Mensalistas), nunca no
 | O quê | Onde |
 |---|---|
 | Código-fonte | servidor `app/server/server.js` + `app/server/duplicatas.js`; tela `app/client/` (`styles.css`, `layout.html`, `telas/*.html`, `js/*.js`, `assets/*.svg`; ver `docs/NOVA-INTERFACE.md`); carregador `app/loader/Code.gs` |
-| Build | `node build.js` → `dist/index.html` (simulação), `dist/index.publicado.html`, `dist/pedacos.json` + `dist/pedacos/index-N.json` (pedaços ≤ 12.000 caracteres) e `dist/Code.gs` |
-| Código publicado | planilha "Recepção Nascente — código do app (não mexer)" (id `1qM7tX5neTU1kAa4JBpk1xiZQmcJOk325hx873XIRPYo`), aba `arquivos`, linhas 2–23 (duplicatas 2, server 3–7, index 8–23) |
+| Build | `node build.js` → `dist/index.html` (simulação), `dist/index.publicado.html`, `dist/pedacos.json` + `dist/pedacos/index-N.json` (pedaços ≤ 12.000 caracteres) e `dist/Code.gs` (teste) + `dist/Code.real.gs` (real) |
+| Código publicado | planilha "Recepção Nascente — código do app (não mexer)" (id `1qM7tX5neTU1kAa4JBpk1xiZQmcJOk325hx873XIRPYo`), aba `arquivos` = versão de teste lida pela CÓPIA TESTE; aba `arquivos_real` = versão em uso na planilha real (criada em 06/10 como cópia de `arquivos`). Nas duas: linhas 2–23 (duplicatas 2, server 3–7, index 8–23). Publicar sempre em `arquivos` primeiro; promover copiando A1:C23 para `arquivos_real` |
 | Como publicar | `docs/PLANO-IMPLEMENTACAO.md`, seção 10 |
 | Manuais | `docs/README-RECEPCAO.md`, `docs/README-GESTAO.md`, `docs/COMO-INSTALAR.md` |
 | Testes de tela | Playwright, arquivos `*-test.js` no scratchpad (não versionados); `node tests/duplicatas.test.js` |

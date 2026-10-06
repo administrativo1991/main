@@ -1,6 +1,9 @@
 {
   "codigoPlanilhaId": "1qM7tX5neTU1kAa4JBpk1xiZQmcJOk325hx873XIRPYo",
+  "abaCodigoTeste": "arquivos",
+  "abaCodigoReal": "arquivos_real",
   "copiaPlanilhaId": "1u6uUDpgfwP9lfBOist41JJ7zYBQtQoJzRegTsonPiyk",
   "planilhaRealId": "1WvuEvxKvtRs14ddAa2QqhQkJywwQOZmZqU0o6QyqUqs",
-  "appUrlCopia": "https://script.google.com/a/macros/clinicanascente.com.br/s/AKfycbzsUF7rqLabRtUQAeahEOo4cjdGd_7lLxk1vPl9EMsdjl52lTkbaWui69Ve_pdIHRNe/exec"
+  "appUrlCopia": "https://script.google.com/a/macros/clinicanascente.com.br/s/AKfycbzsUF7rqLabRtUQAeahEOo4cjdGd_7lLxk1vPl9EMsdjl52lTkbaWui69Ve_pdIHRNe/exec",
+  "appUrlReal": ""
 }
