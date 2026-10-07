@@ -1,6 +1,6 @@
 /* ================= REGISTRAR ATENDIMENTO ================= */
 var cur = null, baseValor = null, atIniciado = false, ultimoPacRender = null, atPrefill = null, decisaoPagador = null, salvandoAt = false;
-var CAMPOS_AT = ["a-pac", "a-prof", "a-data", "a-hora", "a-tipo", "a-oque", "a-pago", "a-valor", "a-forma", "a-datapag", "a-quem", "a-nf", "a-nfn", "a-guia", "a-obs"];
+var CAMPOS_AT = ["a-pac", "a-prof", "a-data", "a-hora", "a-tipo", "a-oque", "a-pago", "a-valor", "a-forma", "a-recebido", "a-datapag", "a-quem", "a-nf", "a-nfn", "a-guia", "a-obs"];
 var OQUE_CURTO = function (x) { return String(x).split(' (')[0]; };
 
 INICIAR.registrar = function (extra) {
@@ -13,7 +13,7 @@ function iniciarAtend() {
     $("#a-aba-nome").textContent = 'Grava na aba ' + AT.abaMes + (AT.abaMesExiste ? '' : ' (ainda não existe!)');
     preencherSelect($("#a-prof"), BOOT.profissionais, '—');
     preencherSelect($("#a-oque"), BOOT.listas.oque || []);
-    preencherSelect($("#a-pago"), BOOT.listas.pago || [], '—');
+    preencherSelect($("#a-pago"), (BOOT.listas.pago || []).concat((BOOT.listas.pago || []).indexOf('Parcial') < 0 ? ['Parcial'] : []), '—');
     preencherSelect($("#a-forma"), BOOT.listas.formas || []);
     preencherSelect($("#a-pk-forma"), BOOT.listas.formas || []);
     var segO = $("#a-oque-seg"); segO.innerHTML = '';
@@ -71,7 +71,7 @@ function onPacAt(force) {
   }
   if (ehPacote(cur)) {
     var pk = AT.pacotes[cur.nome], r = pk ? pk.n - pk.usadas : 0, vencido = pk && pk.validade && venceu(pk.validade);
-    if (pk && pk.status === 'ativo' && r > 0 && !vencido) box.innerHTML += aviso(planoAPagar(pk) ? 'amarela' : 'verde', 'Plano de ' + pk.n + ' consultas · ' + pk.usadas + ' de ' + pk.n + ' usadas · esta é a ' + (pk.usadas + 1) + 'ª' + (planoAPagar(pk) ? ' · ainda não pago' : ''), 'Comprado em ' + esc(pk.compra) + ', válido até ' + esc(pk.validade) + '. ' + (r === 1 ? '<b>Última consulta do plano:</b> avise que o próximo é pago na chegada.' : 'Faltam ' + r + ' depois desta.') + ' Pago? fica como “Plano já pago”.' + (planoAPagar(pk) ? ' <b>O plano está a receber' + (pk.valor ? ' (R$ ' + brl(pk.valor) + ')' : '') + ':</b> quando pagar, registre pela Gestão ou em Hoje → Corrigir cobrança.' : ''));
+    if (pk && pk.status === 'ativo' && r > 0 && !vencido) box.innerHTML += aviso(planoAPagar(pk) ? 'amarela' : 'verde', 'Plano de ' + pk.n + ' consultas · ' + pk.usadas + ' de ' + pk.n + ' usadas · esta é a ' + (pk.usadas + 1) + 'ª' + (planoAPagar(pk) ? ' · ainda não pago' : ''), 'Comprado em ' + esc(pk.compra) + ', válido até ' + esc(pk.validade) + '. ' + (r === 1 ? '<b>Última consulta do plano:</b> avise que o próximo é pago na chegada.' : 'Faltam ' + r + ' depois desta.') + ' Pago? fica como “Plano já pago”.' + (planoAPagar(pk) ? ' <b>O plano está a receber' + (pk.valor ? ' (R$ ' + brl(pk.valor) + ')' : '') + ':</b> quando pagar, registre em Pendências ou na Agenda → Receber.' : ''));
     else {
       var pim = pacoteInfoMod(cur.modalidade, cur, $("#a-prof").value);
       box.innerHTML += aviso('laranja', (pk ? (vencido && r > 0 ? 'Plano vencido em ' + esc(pk.validade) + ' · ' + r + ' consulta(s) não usada(s)' : 'Plano encerrado · ' + pk.usadas + ' de ' + pk.n + ' usadas') : 'Sem plano ativo'), 'Esta consulta não está paga. Lançar o plano e receber agora?', '<div class="acoes" style="flex-basis:100%"><button class="btn" type="button" id="a-btn-pacote">Lançar plano de ' + pim.n + ' consultas' + (pim.valor ? ' (R$ ' + brl(pim.valor) + ')' : '') + ' e receber</button><button class="btn ter" type="button" id="a-btn-avulsa">Cobrar consulta individual</button><button class="btn ter" type="button" id="a-btn-extra">Liberar sessão extra</button></div>');
@@ -122,7 +122,7 @@ function aplicarRegra() {
   var hintFalta = '';
   if (falta) { v.value = ''; v.disabled = true; forma.disabled = true; desc.disabled = true; pago.value = ''; nf.value = 'Não se aplica'; hintFalta = (/sem aviso|em cima da hora/.test(oque) && !ehMensal(cur) && !ehConvenio(cur) && !/^Pro bono|^Permuta/.test(regra)) ? (pacoteOk ? 'Consome 1 consulta do plano.' : 'Falta: vira pendência de taxa pra gestão decidir.') : 'Sem cobrança nesta linha.'; }
   $("#a-oque-hint").textContent = hintFalta;
-  $("#l-datapag").hidden = pago.value !== 'Sim';
+  mostrarPagParcial();
   layoutCobranca(modo, falta);
 }
 // o que aparece no passo 3, pelo modo da regra
@@ -139,7 +139,7 @@ function layoutCobranca(modo, falta) {
     else if (modo === 'fixo') $("#a-cob-aviso").innerHTML = '<div class="faixa nota">Valor combinado com a gestão' + (cur.valorCombinado ? ': <strong>' + esc(cur.valorCombinado) + '</strong>' : '') + '. Não negociar na recepção.</div>';
   }
   seg($("#a-pago-seg"), $("#a-pago").value); seg($("#a-nf-seg"), $("#a-nf").value === 'Sim' ? 'Sim' : 'Não');
-  var pagoVal = $("#a-pago").value; $("#a-pago-outro").hidden = false; if (pagoVal && pagoVal !== 'Sim' && pagoVal !== 'Não') { $("#a-pago").classList.remove('sr'); } else $("#a-pago").classList.add('sr');
+  var pagoVal = $("#a-pago").value; $("#a-pago-outro").hidden = false; if (pagoVal && pagoVal !== 'Sim' && pagoVal !== 'Não' && pagoVal !== 'Parcial') { $("#a-pago").classList.remove('sr'); } else $("#a-pago").classList.add('sr');
   $("#a-quem-tag").hidden = !(cur && $("#a-quem").value.trim() === (cur.pagador || cur.nome));
   atualizarPreview();
 }
@@ -153,11 +153,12 @@ function resumoCobranca() {
   if (/^Plano|^Pacote|^Mensalista/.test(pago)) return ehMensal(cur) ? 'mensalidade (já paga) · sem cobrança' : 'plano · sem cobrança';
   if (pago === 'Sim') return 'pago · R$ ' + (v || '…') + ' · ' + forma + ($("#a-nf").value === 'Sim' ? ' · NF ' + ($("#a-nfn").value || 'emitida') : ' · NF depois');
   if (pago === 'Não') return 'não pago · ' + (v ? 'R$ ' + v + ' em aberto' : 'valor em aberto');
+  if (pago === 'Parcial') { var rc = num($("#a-recebido").value) || 0, vt = num(v) || 0; return 'pago em parte · R$ ' + brl(rc) + ' de R$ ' + (v || '…') + ' · ' + forma + ' · em aberto R$ ' + brl(Math.max(0, vt - rc)) + ($("#a-nf").value === 'Sim' ? ' · NF ' + ($("#a-nfn").value || 'emitida') + ' sobre o recebido' : ' · NF depois'); }
   return pago || 'Pago? em branco';
 }
 function atualizarPreview() {
   var d = $("#a-data").value, h = $("#a-hora").value;
-  $("#a-preview").innerHTML = '<div><span class="muted">Aba</span> ' + esc(AT ? AT.abaMes : '') + ' · linha nova</div>' +
+  $("#a-preview").innerHTML = '<div><span class="muted">Aba</span> ' + esc(dataObj($("#a-data").value) ? MESES_PT[dataObj($("#a-data").value).getMonth()] : (AT ? AT.abaMes : '')) + ' · linha nova</div>' +
     '<div><span class="muted">Paciente</span> ' + esc($("#a-pac").value || '—') + '</div>' +
     '<div><span class="muted">Profissional</span> ' + esc($("#a-prof").value || '—') + ' · ' + esc(d.slice(0, 5)) + (h ? ' ' + esc(h) : '') + '</div>' +
     '<div><span class="muted">Aconteceu</span> ' + esc(OQUE_CURTO($("#a-oque").value)) + '</div>' +
@@ -172,7 +173,7 @@ function dadosAt() {
   if (cur && cur._extra) obs = ('Sessão extra liberada por ' + cur._extraQuem + ' — ' + cur._extraMotivo + '. ' + obs).trim();
   var pk = cur ? AT.pacotes[cur.nome] : null, usaPacote = cur && ehPacote(cur) && pk && (cur._extra || (pk.status === 'ativo' && (pk.n - pk.usadas) > 0 && !cur._avulsa));
   return { paciente: $("#a-pac").value.trim(), profissional: $("#a-prof").value, data: $("#a-data").value, hora: $("#a-hora").value, procedimento: $("#a-proc").value,
-    oque: $("#a-oque").value, pago: $("#a-pago").value, valor: $("#a-valor").disabled ? '' : $("#a-valor").value, forma: $("#a-forma").value, dataPagamento: $("#a-datapag").value,
+    oque: $("#a-oque").value, pago: $("#a-pago").value, valorRecebido: $("#a-pago").value === 'Parcial' ? $("#a-recebido").value : '', valor: $("#a-valor").disabled ? '' : $("#a-valor").value, forma: $("#a-forma").value, dataPagamento: $("#a-datapag").value,
     quemPagou: $("#a-quem").value.trim(), nf: $("#a-nf").value, nfNumero: $("#a-nfn").value.trim(), guia: $("#a-convbox").hidden && !(cur && ehConvenio(cur)) ? '' : $("#a-guia").value, observacao: obs,
     pacoteId: usaPacote ? pk.id : '', sessaoExtra: !!(cur && cur._extra), tornarPagadorHabitual: $("#a-tornar").checked };
 }
@@ -186,6 +187,7 @@ function validarAt() {
   if ($("#a-hora").value && !/^\d{1,2}:\d{2}$/.test($("#a-hora").value)) e.push('Hora inválida (hh:mm).');
   if (!$("#a-descbox").hidden && $("#a-desc-val").value.trim() && !$("#a-desc-motivo").value.trim()) e.push('Desconto: informe quem autorizou.');
   if ($("#a-pago").value === 'Sim' && !(num($("#a-valor").value) > 0)) e.push('Pago? = Sim exige um valor maior que zero.');
+  if ($("#a-pago").value === 'Parcial') { var vt = num($("#a-valor").value), rc = num($("#a-recebido").value); if (!(vt > 0)) e.push('Pago parcial: falta o valor da sessão.'); else if (!(rc > 0 && rc < vt)) e.push('Pago parcial: o recebido agora tem de ser maior que zero e menor que R$ ' + brl(vt) + '.'); }
   return e;
 }
 function salvarAt(voltar) {
@@ -215,7 +217,7 @@ function salvarAt(voltar) {
 }
 function limparAt(apagaSucesso, semFoco) {
   $("#a-pac").value = ''; cur = null; $("#a-oque").selectedIndex = 0; seg($("#a-oque-seg"), $("#a-oque").value); $("#a-obs").value = ''; $("#a-nfn").value = ''; $("#a-desc-val").value = ''; $("#a-desc-motivo").value = ''; $("#a-desc-sel").value = ''; $("#a-descbox").hidden = true; $("#a-extra-motivo").value = ''; $("#a-tornar").checked = false; $("#a-pagador-novo").hidden = true; $("#l-proc").hidden = true; decisaoPagador = null;
-  $("#a-data").value = hojeStr(); $("#a-hora").value = agoraHora(); $("#a-datapag").value = hojeStr(); $("#a-erros").innerHTML = '';
+  $("#a-data").value = hojeStr(); $("#a-hora").value = agoraHora(); $("#a-datapag").value = hojeStr(); $("#a-erros").innerHTML = ''; $("#a-aba-nome").textContent = 'Grava na aba ' + AT.abaMes;
   if (apagaSucesso !== false) $("#a-sucesso").innerHTML = '';
   limparRascunhoAt(); ultimoPacRender = null; onPacAt(true); if (!semFoco) $("#a-pac").focus();
 }
@@ -240,9 +242,9 @@ $("#a-prof").addEventListener('change', function () { fillTipos(); aplicarTipo()
 $("#a-tipo").addEventListener('change', aplicarTipo);
 $("#a-proc").addEventListener('change', function () { mostrarProc(); aplicarRegra(); });
 $("#a-proc-alterar").addEventListener('click', function () { $("#l-proc").hidden = !$("#l-proc").hidden; });
-$$("#a-pago-seg button").forEach(function (b) { b.addEventListener('click', function () { $("#a-pago").value = b.dataset.v; seg($("#a-pago-seg"), b.dataset.v); $("#l-datapag").hidden = b.dataset.v !== 'Sim'; $("#a-pago").classList.add('sr'); atualizarPreview(); salvarRascunhoAt(); }); });
+$$("#a-pago-seg button").forEach(function (b) { b.addEventListener('click', function () { $("#a-pago").value = b.dataset.v; seg($("#a-pago-seg"), b.dataset.v); mostrarPagParcial(); $("#a-pago").classList.add('sr'); atualizarPreview(); salvarRascunhoAt(); }); });
 $("#a-pago-mais").addEventListener('click', function () { $("#a-pago").classList.toggle('sr'); });
-$("#a-pago").addEventListener('change', function () { seg($("#a-pago-seg"), this.value); $("#l-datapag").hidden = this.value !== 'Sim'; atualizarPreview(); });
+$("#a-pago").addEventListener('change', function () { seg($("#a-pago-seg"), this.value); mostrarPagParcial(); atualizarPreview(); });
 $$("#a-nf-seg button").forEach(function (b) { b.addEventListener('click', function () { $("#a-nf").value = b.dataset.v; seg($("#a-nf-seg"), b.dataset.v); atualizarPreview(); salvarRascunhoAt(); }); });
 $("#a-guia-chk").addEventListener('change', function () { $("#a-guia").value = this.checked ? 'Sim' : 'Não'; atualizarPreview(); });
 $("#a-desc-sel").addEventListener('change', function () { $("#a-descbox").hidden = this.value !== 'sim'; if ($("#a-descbox").hidden) aplicarRegra(); else { calcDescAt(); $("#a-desc-val").focus(); } });
@@ -258,6 +260,11 @@ $("#a-tornar-sim").addEventListener('click', function () { decisaoPagador = true
 $("#a-tornar-nao").addEventListener('click', function () { decisaoPagador = false; $("#a-tornar").checked = false; $("#a-pagador-novo").hidden = true; });
 $("#a-data").addEventListener('input', function () { this.value = mascaraData(this.value); atualizarPreview(); });
 $("#a-datapag").addEventListener('input', function () { this.value = mascaraData(this.value); });
+// pago parcial (gestão, 07/10): recebe uma parte agora; a linha fica "Parcial" e o resto aparece como pendência até completar
+function mostrarPagParcial() { var v = $("#a-pago").value; $("#l-datapag").hidden = !(v === 'Sim' || v === 'Parcial'); $("#l-recebido").hidden = v !== 'Parcial'; }
+$("#a-recebido").addEventListener('input', atualizarPreview);
+// a sessão vai pra aba do mês da data (lançar sessão de setembro que faltou: é só pôr a data de setembro)
+$("#a-data").addEventListener('input', function () { var d = dataObj(this.value); if (d && AT) $("#a-aba-nome").textContent = 'Grava na aba ' + MESES_PT[d.getMonth()]; });
 $("#a-hora").addEventListener('input', function () { this.value = mascaraHora(this.value); atualizarPreview(); });
 $("#f-atend").addEventListener('submit', function (e) { e.preventDefault(); salvarAt(true); });
 $("#a-salvar").addEventListener('click', function () { salvarAt(true); });

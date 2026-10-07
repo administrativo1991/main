@@ -42,7 +42,7 @@
         <label class="campo" data-pk-pago>NF emitida?<select id="a-pk-nf"><option>Sim</option><option>Não</option></select></label>
         <label class="campo" data-pk-pago>Nº da NF<input id="a-pk-nfn" autocomplete="off"></label>
       </div>
-      <div class="faixa nota" id="a-pk-depois" hidden>O plano fica <b>a receber</b>: as consultas são contadas normalmente e a compra aparece em "Particulares sem Pago?" na Gestão até alguém registrar o pagamento (Gestão ou Hoje → Corrigir cobrança).</div>
+      <div class="faixa nota" id="a-pk-depois" hidden>O plano fica <b>a receber</b>: as consultas são contadas normalmente e a compra aparece em "Particulares sem Pago?" na tela Pendências até alguém registrar o pagamento (Pendências ou Agenda → Receber).</div>
       <div class="acoes"><button type="button" class="btn" id="a-pk-salvar">Salvar plano e recebimento</button></div>
     </div>
 
@@ -75,7 +75,7 @@
       </div>
       <div id="a-pagbox" class="grid g4">
         <div class="campo">Pago?
-          <div class="seg" id="a-pago-seg"><button type="button" data-v="Sim" aria-pressed="false">Sim</button><button type="button" data-v="Não" aria-pressed="false">Não</button></div>
+          <div class="seg" id="a-pago-seg"><button type="button" data-v="Sim" aria-pressed="false">Sim</button><button type="button" data-v="Não" aria-pressed="false">Não</button><button type="button" data-v="Parcial" aria-pressed="false">Parcial</button></div>
           <span class="hint" id="a-pago-outro"><button type="button" class="btn link" id="a-pago-mais" style="padding:0;min-height:0;font-size:12px">outra opção</button></span>
           <select id="a-pago" class="sr" tabindex="-1" aria-hidden="true"></select>
         </div>
@@ -84,6 +84,9 @@
         </label>
         <label class="campo">Forma<select id="a-forma"></select></label>
         <label class="campo">Desconto<select id="a-desc-sel"><option value="">Nenhum</option><option value="sim">Aplicar desconto…</option></select></label>
+        <label class="campo" id="l-recebido" hidden>Recebido agora <span class="hint">o resto fica em aberto</span>
+          <div class="campo-wrap"><span class="prefixo">R$</span><input id="a-recebido" class="dinheiro" inputmode="decimal" placeholder="0,00"></div>
+        </label>
         <label class="campo" id="l-datapag" hidden>Data do pagamento<input id="a-datapag" inputmode="numeric" maxlength="10"></label>
         <label class="campo c2">Quem pagou <span class="leg">(vai na nota)</span>
           <div class="campo-wrap"><input id="a-quem" list="dl-pagadores" autocomplete="off"><span class="tag lilas" id="a-quem-tag" hidden>pagador habitual</span></div>
@@ -100,7 +103,7 @@
           <label class="campo">Quem autorizou (obrigatório)<input id="a-desc-motivo" placeholder="ex.: Juliana, no grupo Tratamentos"></label>
           <label class="campo">Valor final<input id="a-desc-final" readonly></label>
         </div>
-        <span class="muted">Vai pra Observação como "Desconto R$ X — motivo" e aparece na lista de descontos do mês, na Gestão.</span>
+        <span class="muted">Vai pra Observação como "Desconto R$ X — motivo" e aparece na lista de descontos do mês, na tela Pendências.</span>
       </div>
     </section>
 

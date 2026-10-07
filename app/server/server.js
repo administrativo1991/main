@@ -8,7 +8,7 @@ var CONFIG = {
   TZ: 'America/Sao_Paulo',
   PASTA_FINANCEIRO: '1TVCErWCv4bn0ed66T5eZSvcATPIoxboc', // Drive: Clínica Nascente/Controle Financeiro (as exportações vão em <ano>/<MM Mês_AA>/2_Atendimentos)
   GESTAO: ['administrativo@clinicanascente.com.br'],
-  ABA: { PACIENTES: 'Pacientes', LISTAS: 'Listas', PROFISSIONAIS: 'Profissionais', PROCEDIMENTOS: 'Procedimentos', MENSALISTAS: 'Mensalistas', PACOTES: 'Planos', AGENDA: 'Agenda recorrente', DIA: 'Lista do dia', ALTERACOES: 'Alterações de cadastro', LEMBRETES: 'Lembretes' },
+  ABA: { PACIENTES: 'Pacientes', LISTAS: 'Listas', PROFISSIONAIS: 'Profissionais', PROCEDIMENTOS: 'Procedimentos', MENSALISTAS: 'Mensalistas', PACOTES: 'Planos', AGENDA: 'Agenda recorrente', DIA: 'Lista do dia', ALTERACOES: 'Alterações de cadastro', LEMBRETES: 'Lembretes', ALT_LANC: 'Alterações de lançamento' },
   DIAS: ['Domingo','Segunda','Terça','Quarta','Quinta','Sexta','Sábado'],
   HA: ['ID', 'Paciente', 'Profissional', 'Dia da semana', 'Hora', 'Frequência', 'Começa em', 'Termina em', 'Ativo', 'Observação', 'Registrado por (app)'],
   HD: ['ID', 'Data', 'Hora', 'Paciente', 'Profissional', 'Origem', 'Observação', 'Registrado por (app)'],
@@ -17,7 +17,8 @@ var CONFIG = {
   MESES: ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'],
   VIRADA: '2026-11-01', // a partir daqui a mensalidade é antecipada (vence dia 10, tolerância 15)
   // cabeçalhos da aba do mês (os existentes são lidos como estão; U e V são criados no fim se faltarem)
-  HM: { DATA: 'Data', HORA: 'Hora', PACIENTE: 'Paciente', PROFISSIONAL: 'Profissional', PROCEDIMENTO: 'Procedimento', OQUE: 'O que aconteceu', VALOR: 'Valor (R$)', PAGO: 'Pago?', DATA_PAG: 'Data do pagamento', FORMA: 'Forma de pagamento', QUEM: 'Quem pagou (só se foi outra pessoa)', NF: 'NF emitida?', NF_N: 'Nº da NF', GUIA: 'Guia assinada? (convênio)', OBS: 'Observação', ID: 'ID', LOG: 'Registrado por (app)', PACOTE: 'Plano (ID)' },
+  HM: { DATA: 'Data', HORA: 'Hora', PACIENTE: 'Paciente', PROFISSIONAL: 'Profissional', PROCEDIMENTO: 'Procedimento', OQUE: 'O que aconteceu', VALOR: 'Valor (R$)', PAGO: 'Pago?', DATA_PAG: 'Data do pagamento', FORMA: 'Forma de pagamento', QUEM: 'Quem pagou (só se foi outra pessoa)', NF: 'NF emitida?', NF_N: 'Nº da NF', GUIA: 'Guia assinada? (convênio)', OBS: 'Observação', ID: 'ID', LOG: 'Registrado por (app)', PACOTE: 'Plano (ID)', RECEBIDO: 'Valor recebido (R$)' },
+  HL_LANC: ['Data/hora', 'Aba', 'ID', 'Paciente', 'Campo', 'De', 'Para', 'Quem informou', 'Registrado por (app)'],
   HP: ['ID', 'Paciente', 'Modalidade', 'Nº de sessões', 'Valor (R$)', 'Data da compra', 'Válido até', 'Pago?', 'Forma de pagamento', 'Quem pagou', 'NF emitida?', 'Nº da NF', 'Sessões usadas', 'Última sessão', 'Status', 'Registrado por (app)', 'Observação'],
   // Cabeçalhos de Pacientes (os existentes são lidos como estão; os novos são criados no fim da aba se faltarem)
   H: {
@@ -408,28 +409,33 @@ API.registrarAtendimento = function (d) {
   var valor = d.valor === '' || d.valor == null ? '' : Number(String(d.valor).replace(/\./g, '').replace(',', '.'));
   if (valor !== '' && isNaN(valor)) erros.push('Valor inválido.');
   if (pago === 'Sim' && (valor === '' || valor <= 0)) erros.push('Pago? = Sim exige um valor maior que zero.');
+  var recebido = pago === 'Parcial' ? numBR_(d.valorRecebido) : 0;
+  if (pago === 'Parcial' && !(valor > 0)) erros.push('Pago parcial exige o valor total da sessão.');
+  else if (pago === 'Parcial' && !(recebido > 0 && recebido < valor)) erros.push('Pago parcial: o valor recebido agora tem de ser maior que zero e menor que o valor da sessão.');
   if (erros.length) return { ok: false, erros: erros };
 
   var lock = LockService.getScriptLock(); lock.waitLock(20000);
   try {
     var indice = indicePacientes_(), pac = indice.filter(function (p) { return p.nome === paciente; })[0];
     if (!pac) return { ok: false, erros: ['Paciente não está em Pacientes. Cadastre primeiro em "Novo paciente".'] };
-    var s = abaMes_(data), g = garantirColunas_(s, [CONFIG.HM.LOG, CONFIG.HM.PACOTE]), h = g.h, HM = CONFIG.HM;
+    var s = abaMes_(data), g = garantirColunas_(s, [CONFIG.HM.LOG, CONFIG.HM.PACOTE].concat(pago === 'Parcial' ? [CONFIG.HM.RECEBIDO] : [])), h = g.h, HM = CONFIG.HM;
     var linha = proximaLinha_(s, h[HM.PACIENTE] || 3);
-    var u = usuario_(), id = novoId_('A');
+    var u = usuario_(), id = novoId_('A'), pagou = pago === 'Sim' || pago === 'Parcial';
     var quem = String(d.quemPagou || '').trim();
     var obs = String(d.observacao || '').trim();
     var pares = {};
     pares[HM.DATA] = data; pares[HM.HORA] = hora; pares[HM.PACIENTE] = paciente; pares[HM.PROFISSIONAL] = profissional; pares[HM.PROCEDIMENTO] = procedimento;
     pares[HM.OQUE] = oque; pares[HM.VALOR] = valor === '' ? '' : valor; pares[HM.PAGO] = pago;
-    pares[HM.DATA_PAG] = pago === 'Sim' ? (parseData_(d.dataPagamento) || data) : '';
-    pares[HM.FORMA] = pago === 'Sim' ? String(d.forma || '').trim() : '';
+    pares[HM.DATA_PAG] = pagou ? (parseData_(d.dataPagamento) || data) : '';
+    pares[HM.FORMA] = pagou ? String(d.forma || '').trim() : '';
+    if (pago === 'Parcial') { pares[HM.RECEBIDO] = recebido; obs = ('Recebido ' + brl_(recebido) + ' em ' + fmtData_(pares[HM.DATA_PAG]) + ' (' + pares[HM.FORMA] + ')' + (d.nfNumero ? ' · NF ' + String(d.nfNumero).trim() : '') + '; em aberto ' + brl_(valor - recebido) + (obs ? ' | ' + obs : '')); }
     pares[HM.QUEM] = (quem && quem !== (pac.pagador || '') && quem !== paciente) ? quem : '';
     pares[HM.NF] = String(d.nf || '').trim(); pares[HM.NF_N] = String(d.nfNumero || '').trim(); pares[HM.GUIA] = String(d.guia || '').trim();
     pares[HM.OBS] = obs; pares[HM.ID] = id; pares[HM.LOG] = (u.email || 'app') + ' · ' + agora_(); pares[HM.PACOTE] = String(d.pacoteId || '');
     gravarCelulas_(s, linha, h, pares);
     [HM.DATA, HM.DATA_PAG].forEach(function (k) { if (h[k]) s.getRange(linha, h[k]).setNumberFormat('dd/MM/yyyy'); });
     if (h[HM.VALOR]) s.getRange(linha, h[HM.VALOR]).setNumberFormat('#,##0.00');
+    if (h[HM.RECEBIDO] && pago === 'Parcial') s.getRange(linha, h[HM.RECEBIDO]).setNumberFormat('#,##0.00');
 
     // plano: consome consulta (Atendido ou falta sem aviso / em cima da hora), salvo sessão extra
     var pk = null;
@@ -478,34 +484,79 @@ API.corrigirLancamento = function (d) {
     if (!linha) return { ok: false, erros: ['Não achei o lançamento ' + id + ' na aba ' + aba + '.'] };
     var r = s.getRange(linha, 1, 1, s.getLastColumn()).getValues()[0];
     var g = function (k) { var col = h[HM[k]]; return col ? r[col - 1] : ''; }, txt = function (k) { return String(g(k) || '').trim(); };
-    var paciente = txt('PACIENTE'), valorAtual = Number(g('VALOR')) || 0;
+    var paciente = txt('PACIENTE'), valorAtual = numBR_(g('VALOR')), recebidoAtual = numBR_(g('RECEBIDO')), pagoAtual = txt('PAGO');
     var pac = indicePacientes_().filter(function (p) { return p.nome === paciente; })[0] || {};
-    var u = usuario_(), erros = [], novos = {}, rotulos = [];
+    var u = usuario_(), erros = [], novos = {}, rotulos = [], amplos = [];
     var quer = function (k) { return Object.prototype.hasOwnProperty.call(c, k); };
-    var mudar = function (k, v, rotulo) { if (!h[HM[k]]) return; var atual = k === 'DATA_PAG' ? fmtData_(g(k)) : txt(k); var nv = v instanceof Date ? fmtData_(v) : String(v == null ? '' : v).trim(); if (nv === atual) return; novos[k] = v instanceof Date ? v : nv; rotulos.push(rotulo); };
-    if (quer('pago')) {
+    var atualDe = function (k) { return k === 'DATA_PAG' || k === 'DATA' ? fmtData_(g(k)) : k === 'HORA' ? horaTxt_(g(k)) : (k === 'VALOR' || k === 'RECEBIDO') ? (g(k) === '' ? '' : String(numBR_(g(k)))) : txt(k); };
+    var mudar = function (k, v, rotulo) { if (!h[HM[k]] && k !== 'RECEBIDO') return; var atual = atualDe(k); var nv = v instanceof Date ? fmtData_(v) : String(v == null ? '' : v).trim(); if (nv === atual) return; novos[k] = v instanceof Date ? v : (typeof v === 'number' ? v : nv); rotulos.push(rotulo); return { de: atual, para: nv }; };
+    var amplo = function (k, v, rotulo) { var m = mudar(k, v, rotulo); if (m) amplos.push({ campo: rotulo, de: m.de, para: m.para }); };
+    // correção ampla (recepção e gestão; gestão 07/10): dados da sessão e valores, sempre com "quem informou" e registro em "Alterações de lançamento"
+    if (quer('data')) { var dt = parseData_(c.data); if (!dt) erros.push('Data da sessão inválida.'); else if (nomeAbaMes_(dt) !== aba) erros.push('A data nova é de outro mês: lance a sessão no mês certo (Registrar) e marque esta como "Cancelado pela clínica".'); else amplo('DATA', dt, 'Data'); }
+    if (quer('hora')) { var hr = horaTxt_(c.hora); if (hr && !/^\d{2}:\d{2}$/.test(hr)) erros.push('Hora inválida (hh:mm).'); else amplo('HORA', hr, 'Hora'); }
+    if (quer('paciente')) { var np = String(c.paciente || '').trim(); if (!indicePacientes_().some(function (p) { return p.nome === np; })) erros.push('Paciente novo não está em Pacientes.'); else amplo('PACIENTE', np, 'Paciente'); }
+    if (quer('profissional')) amplo('PROFISSIONAL', String(c.profissional || '').trim(), 'Profissional');
+    if (quer('procedimento')) amplo('PROCEDIMENTO', String(c.procedimento || '').trim(), 'Procedimento');
+    if (quer('oque')) amplo('OQUE', String(c.oque || '').trim(), 'O que aconteceu');
+    var valorNovo = valorAtual;
+    if (quer('valor')) { var vn = c.valor === '' ? '' : numBR_(c.valor); if (vn !== '' && !(vn >= 0)) erros.push('Valor inválido.'); else { amplo('VALOR', vn, 'Valor'); valorNovo = vn === '' ? 0 : vn; if (pagoAtual === 'Sim' && h[HM.RECEBIDO] && g('RECEBIDO') !== '' && !quer('valorRecebido')) mudar('RECEBIDO', valorNovo, 'Valor recebido'); } }
+    if (quer('valorRecebido')) { var vr = c.valorRecebido === '' ? '' : numBR_(c.valorRecebido); amplo('RECEBIDO', vr, 'Valor recebido'); recebidoAtual = vr === '' ? 0 : vr; }
+    if (amplos.length && !String(c.quemInformou || '').trim()) erros.push('Mudou dados da sessão ou valores: informe quem passou a informação / o motivo.');
+    var histPag = '';
+    if (quer('recebidoAgora')) {
+      // recebimento (total ou parcial): soma ao que já entrou; completa = "Sim", senão "Parcial" e o resto continua em aberto
+      var agora = numBR_(c.recebidoAgora), base = pagoAtual === 'Parcial' ? recebidoAtual : 0, total = Math.round((base + agora) * 100) / 100;
+      if (!(agora > 0)) erros.push('Informe o valor recebido agora.');
+      else if (!(valorNovo > 0)) erros.push('A linha não tem valor da sessão: corrija o valor antes de receber.');
+      else if (total > valorNovo + 0.001) erros.push('O recebido (' + brl_(total) + ') passa do valor da sessão (' + brl_(valorNovo) + '). Se o valor está errado, corrija o valor.');
+      else {
+        var completo = total >= valorNovo - 0.001, dpg = parseData_(c.dataPagamento) || new Date();
+        mudar('PAGO', completo ? 'Sim' : 'Parcial', 'Pago?');
+        if (completo) { if (pagoAtual === 'Parcial' || h[HM.RECEBIDO]) { if (h[HM.RECEBIDO]) mudar('RECEBIDO', valorNovo, 'Valor recebido'); } }
+        else mudar('RECEBIDO', total, 'Valor recebido');
+        mudar('DATA_PAG', dpg, 'Data do pagamento');
+        if (quer('forma')) mudar('FORMA', String(c.forma || ''), 'Forma');
+        var nfNum = String(c.nfNumero || '').trim(), nfAnt = txt('NF_N');
+        if (nfNum && nfAnt && nfAnt.indexOf(nfNum) < 0 && (pagoAtual === 'Parcial')) nfNum = nfAnt + ', ' + nfNum; // NF por pagamento (gestão, 07/10)
+        if (quer('nfNumero') && nfNum) mudar('NF_N', nfNum, 'Nº da NF');
+        if (quer('nf')) mudar('NF', String(c.nf || ''), 'NF emitida?');
+        histPag = 'Recebido ' + brl_(agora) + ' em ' + fmtData_(dpg) + ' (' + String(c.forma || '') + ')' + (String(c.nfNumero || '').trim() ? ' · NF ' + String(c.nfNumero).trim() : '') + (completo ? '; quitado' : '; em aberto ' + brl_(valorNovo - total));
+      }
+    } else if (quer('pago')) {
       var pago = String(c.pago || '').trim();
-      if (pago === 'Sim' && !(valorAtual > 0)) erros.push('Pago? = Sim exige um valor maior que zero na linha (o valor se corrige na planilha).');
+      if (pago === 'Sim' && !(valorNovo > 0)) erros.push('Pago? = Sim exige um valor maior que zero na linha.');
+      if (pago === 'Parcial' && !(recebidoAtual > 0 && recebidoAtual < valorNovo)) erros.push('Pago? = Parcial exige "Valor recebido" maior que zero e menor que o valor.');
       mudar('PAGO', pago, 'Pago?');
-      if (pago === 'Sim') {
+      if (pago === 'Sim' || pago === 'Parcial') {
         var dp = parseData_(c.dataPagamento) || (fmtData_(g('DATA_PAG')) ? null : new Date());
         if (dp) mudar('DATA_PAG', dp, 'Data do pagamento');
         if (quer('forma')) mudar('FORMA', String(c.forma || ''), 'Forma');
       } else { mudar('DATA_PAG', '', 'Data do pagamento'); mudar('FORMA', '', 'Forma'); }
-    } else if (quer('forma')) mudar('FORMA', String(c.forma || ''), 'Forma');
+      if (quer('nf')) mudar('NF', String(c.nf || ''), 'NF emitida?');
+      if (quer('nfNumero')) mudar('NF_N', String(c.nfNumero || ''), 'Nº da NF');
+    } else {
+      if (quer('forma')) mudar('FORMA', String(c.forma || ''), 'Forma');
+      if (quer('nf')) mudar('NF', String(c.nf || ''), 'NF emitida?');
+      if (quer('nfNumero')) mudar('NF_N', String(c.nfNumero || ''), 'Nº da NF');
+    }
     if (quer('quemPagou')) { var quem = String(c.quemPagou || '').trim(); mudar('QUEM', (quem && quem !== (pac.pagador || '') && quem !== paciente) ? quem : '', 'Quem pagou'); }
-    if (quer('nf')) mudar('NF', String(c.nf || ''), 'NF emitida?');
-    if (quer('nfNumero')) mudar('NF_N', String(c.nfNumero || ''), 'Nº da NF');
     if (quer('guia')) mudar('GUIA', String(c.guia || ''), 'Guia assinada?');
-    var obsNova = String(c.observacao || '').trim();
-    if (obsNova) { novos.OBS = (txt('OBS') ? txt('OBS') + ' | ' : '') + obsNova; rotulos.push('Observação'); }
+    var obsNova = [histPag, String(c.observacao || '').trim(), amplos.length ? 'corrigido: ' + amplos.map(function (m) { return m.campo + ' ' + (m.de || '(vazio)') + ' → ' + (m.para || '(vazio)'); }).join('; ') + ' (informou: ' + String(c.quemInformou || '').trim() + ')' : ''].filter(Boolean).join(' · ');
+    if (obsNova) { novos.OBS = (txt('OBS') ? txt('OBS') + ' | ' : '') + obsNova; if (rotulos.indexOf('Observação') < 0) rotulos.push('Observação'); }
     if (erros.length) return { ok: false, erros: erros };
     if (!rotulos.length) return { ok: false, erros: ['Nada mudou: os campos já estavam assim.'] };
+    if (novos.RECEBIDO != null && !h[HM.RECEBIDO]) h = garantirColunas_(s, [HM.RECEBIDO]).h;
     var pares = {}; Object.keys(novos).forEach(function (k) { pares[HM[k]] = novos[k]; });
     var carimbo = (u.email || 'app') + ' · ' + agora_();
     if (h[HM.LOG]) pares[HM.LOG] = (txt('LOG') ? txt('LOG') + ' | ' : '') + 'corrigido por ' + carimbo + ' (' + rotulos.join(', ') + ')';
     gravarCelulas_(s, linha, h, pares);
-    if (novos.DATA_PAG instanceof Date && h[HM.DATA_PAG]) s.getRange(linha, h[HM.DATA_PAG]).setNumberFormat('dd/MM/yyyy');
+    ['DATA_PAG', 'DATA'].forEach(function (k) { if (novos[k] instanceof Date && h[HM[k]]) s.getRange(linha, h[HM[k]]).setNumberFormat('dd/MM/yyyy'); });
+    ['VALOR', 'RECEBIDO'].forEach(function (k) { if (novos[k] != null && h[HM[k]]) s.getRange(linha, h[HM[k]]).setNumberFormat('#,##0.00'); });
+    if (novos.HORA != null && h[HM.HORA]) s.getRange(linha, h[HM.HORA]).setNumberFormat('@');
+    if (amplos.length) {
+      var sa = abaComCabecalho_(CONFIG.ABA.ALT_LANC, CONFIG.HL_LANC), ha = cabecalhos_(sa);
+      amplos.forEach(function (m) { gravarCelulas_(sa, proximaLinha_(sa, ha['ID']), ha, { 'Data/hora': agora_(), 'Aba': aba, 'ID': id, 'Paciente': paciente, 'Campo': m.campo, 'De': m.de, 'Para': m.para, 'Quem informou': String(c.quemInformou || '').trim(), 'Registrado por (app)': carimbo }); });
+    }
     // compra de plano: a aba Planos acompanha a cobrança
     var planoId = txt('PACOTE'), plano = null;
     if (planoId && /^Compra do plano/i.test(txt('OBS'))) {
@@ -622,6 +673,11 @@ function horaTxt_(v) {
   if (v instanceof Date && !isNaN(v)) return Utilities.formatDate(v, CONFIG.TZ, 'HH:mm');
   var t = String(v == null ? '' : v).trim(); var m = t.match(/^(\d{1,2})[:h](\d{2})/); return m ? ('0' + m[1]).slice(-2) + ':' + m[2] : t;
 }
+// valor da planilha: número, ou texto "1.234,56" / "100,00" (linhas importadas)
+function numBR_(v) { if (typeof v === 'number') return v; var t = String(v == null ? '' : v).replace(/[R$\s]/g, ''); if (!t) return 0; if (/,/.test(t)) t = t.replace(/\./g, '').replace(',', '.'); var n = Number(t); return isNaN(n) ? 0 : n; }
+function brl_(n) { return 'R$ ' + Number(n || 0).toFixed(2).replace('.', ','); }
+// em aberto de uma linha: Parcial = valor − recebido; Não / em branco = valor
+function saldo_(r) { return r.pago === 'Parcial' ? Math.max(0, Math.round((r.valor - r.recebido) * 100) / 100) : r.valor; }
 API.agendaFixa = function () {
   return linhasComo_(planilha_().getSheetByName(CONFIG.ABA.AGENDA)).filter(function (r) { return r['Paciente']; }).map(function (r) { r['Hora'] = horaTxt_(r['Hora']); return r; });
 };
@@ -730,7 +786,7 @@ function montarDia_(data, cache) {
       var g = function (nome) { var c = h[HM[nome]] || h[nome]; return c ? r[c - 1] : ''; };
       // só leitura: a tela Hoje mostra o que já foi gravado na linha (valor, Pago?, NF, guia) pra fechar o dia sem abrir a planilha
       reg[k] = { oque: String(g('OQUE') || ''), id: String(g('ID') || ''), procedimento: String(g('PROCEDIMENTO') || ''), hora: horaTxt_(g('HORA')),
-        valor: Number(g('VALOR')) || 0, pago: String(g('PAGO') || '').trim(), forma: String(g('FORMA') || ''), nf: String(g('NF') || '').trim(), guia: String(g('GUIA') || '').trim(), convenio: String(g('Convênio (auto)') || '').trim() };
+        valor: numBR_(g('VALOR')), recebido: numBR_(g('RECEBIDO')), pago: String(g('PAGO') || '').trim(), forma: String(g('FORMA') || ''), nf: String(g('NF') || '').trim(), guia: String(g('GUIA') || '').trim(), convenio: String(g('Convênio (auto)') || '').trim() };
       if (!reg[pac]) reg[pac] = reg[k];
     });
   }
@@ -761,11 +817,11 @@ function pendenciasDe_(nomes, data) {
       if (!quer[r.paciente] || !/^Atendido/.test(r.oque)) return;
       var dt = parseData_(r.data); if (!dt || Utilities.formatDate(dt, CONFIG.TZ, 'yyyyMMdd') >= hojeChave) return;
       var particular = !r.convenio || /^Particular$/i.test(r.convenio), tipo = null;
-      if (particular && (r.pago === '' || r.pago === 'Não') && (!/^Mensalidade|pacote|plano|mensal|convênio|AAPI/i.test(r.procedimento) || /\(compra\)/i.test(r.procedimento))) tipo = 'pag';
+      if (particular && (r.pago === '' || r.pago === 'Não' || r.pago === 'Parcial') && (!/^Mensalidade|pacote|plano|mensal|convênio|AAPI/i.test(r.procedimento) || /\(compra\)/i.test(r.procedimento))) tipo = 'pag';
       else if ((!particular || /^Convênio/i.test(r.pago)) && r.guia !== 'Sim') tipo = 'guia';
       if (!tipo) return;
       (out[r.paciente] = out[r.paciente] || []).push({ tipo: tipo, aba: aba, id: r.id, linha: r.linha, data: r.data, hora: r.hora, profissional: r.profissional, procedimento: r.procedimento, oque: r.oque,
-        valor: r.valor, pago: r.pago, forma: r.forma, dataPag: r.dataPag, quem: r.quem, nf: r.nf, nfN: r.nfN, guia: r.guia, convenio: r.convenio });
+        valor: r.valor, recebido: r.recebido, saldo: saldo_(r), pago: r.pago, forma: r.forma, dataPag: r.dataPag, quem: r.quem, nf: r.nf, nfN: r.nfN, guia: r.guia, convenio: r.convenio });
     });
   });
   return out;
@@ -990,24 +1046,35 @@ function linhasMes_(nome) {
   vals.forEach(function (r, i) {
     var pac = String(g(r, 'PACIENTE') || '').trim(); if (!pac) return;
     out.push({ linha: i + 2, data: fmtData_(g(r, 'DATA')), hora: horaTxt_(g(r, 'HORA')), paciente: pac, profissional: String(g(r, 'PROFISSIONAL') || ''), procedimento: String(g(r, 'PROCEDIMENTO') || ''),
-      convenio: String(g(r, 'Convênio (auto)') || ''), oque: String(g(r, 'OQUE') || ''), valor: Number(g(r, 'VALOR')) || 0, pago: String(g(r, 'PAGO') || '').trim(), dataPag: fmtData_(g(r, 'DATA_PAG')),
+      convenio: String(g(r, 'Convênio (auto)') || ''), oque: String(g(r, 'OQUE') || ''), valor: numBR_(g(r, 'VALOR')), recebido: numBR_(g(r, 'RECEBIDO')), pago: String(g(r, 'PAGO') || '').trim(), dataPag: fmtData_(g(r, 'DATA_PAG')),
       forma: String(g(r, 'FORMA') || ''), quem: String(g(r, 'QUEM') || ''), nf: String(g(r, 'NF') || '').trim(), nfN: String(g(r, 'NF_N') || ''), guia: String(g(r, 'GUIA') || '').trim(), obs: String(g(r, 'OBS') || ''), id: String(g(r, 'ID') || ''), log: String(g(r, 'LOG') || '') });
   });
   return { existe: true, linhas: out };
 }
+// Lançamentos (tela Pendências): linhas de um mês, ou de todos os meses existentes quando busca um paciente
+API.lancamentos = function (d) {
+  d = d || {};
+  var q = Duplicatas.normalizar(String(d.paciente || '')), mes = String(d.mes || '').trim(), abas = [];
+  if (mes && mes !== 'todos') { if (CONFIG.MESES.indexOf(mes) < 0) return { ok: false, erros: ['Mês inválido.'] }; abas = [mes]; }
+  else { if (!q) return { ok: false, erros: ['Escolha o mês ou digite o paciente.'] }; abas = CONFIG.MESES.filter(function (x) { return !!planilha_().getSheetByName(x); }); }
+  var out = [];
+  abas.forEach(function (aba) { linhasMes_(aba).linhas.forEach(function (r) { if (q && Duplicatas.normalizar(r.paciente).indexOf(q) < 0) return; r.aba = aba; r.saldo = saldo_(r); out.push(r); }); });
+  return { ok: true, linhas: out.slice(-400), total: out.length };
+};
 API.gestaoResumo = function (d) {
   d = d || {};
-  if (usuario_().perfil !== 'gestao') return { ok: false, erros: ['Esta tela é só da gestão.'] };
+  // recepção também vê (gestão, 07/10: a tela virou "Pendências"); exportar e virada do mês continuam só da gestão
   var mes = String(d.mes || nomeAbaMes_(new Date())).trim();
   var m = linhasMes_(mes), L = m.linhas;
+  L.forEach(function (r) { r.saldo = saldo_(r); });
   var particular = function (r) { return !r.convenio || /^Particular$/i.test(r.convenio); };
   var atend = L.filter(function (r) { return /^Atendido/.test(r.oque); });
   var out = {
     ok: true, mes: mes, abaExiste: m.existe, total: L.length, atendidos: atend.length,
-    recebido: atend.filter(function (r) { return r.pago === 'Sim'; }).reduce(function (a, r) { return a + r.valor; }, 0),
+    recebido: atend.reduce(function (a, r) { return a + (r.pago === 'Sim' ? r.valor : r.pago === 'Parcial' ? r.recebido : 0); }, 0),
     // compra de plano "a receber" (lançada com Pago? = Não) entra aqui; sessões de plano/mensalidade/convênio não (aprovado pela Roberta em 06/10)
-    pagamentoPendente: atend.filter(function (r) { return particular(r) && (r.pago === '' || r.pago === 'Não') && (!/^Mensalidade|pacote|plano|mensal|convênio|AAPI/i.test(r.procedimento) || /\(compra\)/i.test(r.procedimento)); }),
-    nfPendente: atend.filter(function (r) { return r.pago === 'Sim' && r.nf !== 'Sim' && r.nf !== 'Não se aplica'; }),
+    pagamentoPendente: atend.filter(function (r) { return particular(r) && (r.pago === '' || r.pago === 'Não' || r.pago === 'Parcial') && (!/^Mensalidade|pacote|plano|mensal|convênio|AAPI/i.test(r.procedimento) || /\(compra\)/i.test(r.procedimento)); }),
+    nfPendente: atend.filter(function (r) { return (r.pago === 'Sim' || r.pago === 'Parcial') && r.nf !== 'Sim' && r.nf !== 'Não se aplica'; }),
     semGuia: L.filter(function (r) { return (!particular(r) || /^Convênio/i.test(r.pago)) && r.guia !== 'Sim' && /^Atendido/.test(r.oque); }),
     faltas: L.filter(function (r) { return /sem aviso|em cima da hora/i.test(r.oque) && particular(r) && !/Pacote|Plano/i.test(r.pago); }),
     descontos: L.filter(function (r) { return /^Desconto:/i.test(r.obs); }),

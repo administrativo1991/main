@@ -495,7 +495,7 @@ table.dia tr.apagada,table.dia tr.fora{opacity:.75}
 .rodape{padding:12px 16px}
 .rodape .nota{display:none}
 .rodape .btn{flex:1}
-.tabbar{display:grid;position:fixed;left:0;right:0;bottom:0;background:var(--sup);border-top:1px solid var(--borda);grid-template-columns:repeat(4,minmax(0,1fr));padding:8px 8px calc(8px + env(safe-area-inset-bottom,0px));z-index:7}
+.tabbar{display:grid;position:fixed;left:0;right:0;bottom:0;background:var(--sup);border-top:1px solid var(--borda);grid-template-columns:repeat(5,minmax(0,1fr));padding:8px 8px calc(8px + env(safe-area-inset-bottom,0px));z-index:7}
 .tabbar button{border:0;background:none;display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px 4px;border-radius:12px;color:var(--tx3);font-size:11px;font-weight:600;min-height:50px}
 .tabbar button[aria-current="page"]{color:var(--roxo);font-weight:700}
 table{min-width:600px}
@@ -561,7 +561,7 @@ table.mens .td-acao .btn.link{padding-left:0}
 <button type="button" data-go="registrar"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>Registrar</button>
 <button type="button" data-go="pacientes"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0116 0"/></svg>Pacientes</button>
 <button type="button" data-go="mensalistas"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="6" width="18" height="12" rx="2"/><path d="M3 10h18"/></svg>Mensalistas</button>
-<button type="button" data-go="gestao" id="menu-gestao" hidden><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 19V10M10 19V5M16 19v-8M22 19H2"/></svg>Gestão</button>
+<button type="button" data-go="gestao" id="menu-gestao"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 19V10M10 19V5M16 19v-8M22 19H2"/></svg>Pendências</button>
 <span class="esp"></span>
 <div class="chip-user" id="chip-user" title="">
 <span class="av" id="chip-av">R</span>
@@ -712,7 +712,7 @@ table.mens .td-acao .btn.link{padding-left:0}
 <button type="button" class="btn grande pp-registrar" id="pp-registrar">Registrar atendimento <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
 <div class="muted centro" id="pp-registrar-leg">abre já preenchido: paciente, profissional, hora, procedimento, pagador</div>
 <div class="esp"></div>
-<div class="pp-links"><button type="button" class="btn link" id="pp-corrigir" hidden>Corrigir cobrança</button><span class="sep" id="pp-corrigir-sep" hidden>·</span><button type="button" class="btn link" id="pp-cadastro">Ver cadastro</button><span class="sep">·</span><button type="button" class="btn link perigo" id="pp-remover">Remover da lista</button></div>
+<div class="pp-links"><button type="button" class="btn link" id="pp-corrigir" hidden>Corrigir lançamento</button><span class="sep" id="pp-corrigir-sep" hidden>·</span><button type="button" class="btn link" id="pp-cadastro">Ver cadastro</button><span class="sep">·</span><button type="button" class="btn link perigo" id="pp-remover">Remover da lista</button></div>
 </div>
 </aside>
 </section>
@@ -756,7 +756,7 @@ table.mens .td-acao .btn.link{padding-left:0}
 <label class="campo" data-pk-pago>NF emitida?<select id="a-pk-nf"><option>Sim</option><option>Não</option></select></label>
 <label class="campo" data-pk-pago>Nº da NF<input id="a-pk-nfn" autocomplete="off"></label>
 </div>
-<div class="faixa nota" id="a-pk-depois" hidden>O plano fica <b>a receber</b>: as consultas são contadas normalmente e a compra aparece em "Particulares sem Pago?" na Gestão até alguém registrar o pagamento (Gestão ou Hoje → Corrigir cobrança).</div>
+<div class="faixa nota" id="a-pk-depois" hidden>O plano fica <b>a receber</b>: as consultas são contadas normalmente e a compra aparece em "Particulares sem Pago?" na tela Pendências até alguém registrar o pagamento (Pendências ou Agenda → Receber).</div>
 <div class="acoes"><button type="button" class="btn" id="a-pk-salvar">Salvar plano e recebimento</button></div>
 </div>
 <div id="a-extrabox" class="painel" hidden>
@@ -786,7 +786,7 @@ table.mens .td-acao .btn.link{padding-left:0}
 </div>
 <div id="a-pagbox" class="grid g4">
 <div class="campo">Pago?
-<div class="seg" id="a-pago-seg"><button type="button" data-v="Sim" aria-pressed="false">Sim</button><button type="button" data-v="Não" aria-pressed="false">Não</button></div>
+<div class="seg" id="a-pago-seg"><button type="button" data-v="Sim" aria-pressed="false">Sim</button><button type="button" data-v="Não" aria-pressed="false">Não</button><button type="button" data-v="Parcial" aria-pressed="false">Parcial</button></div>
 <span class="hint" id="a-pago-outro"><button type="button" class="btn link" id="a-pago-mais" style="padding:0;min-height:0;font-size:12px">outra opção</button></span>
 <select id="a-pago" class="sr" tabindex="-1" aria-hidden="true"></select>
 </div>
@@ -795,6 +795,9 @@ table.mens .td-acao .btn.link{padding-left:0}
 </label>
 <label class="campo">Forma<select id="a-forma"></select></label>
 <label class="campo">Desconto<select id="a-desc-sel"><option value="">Nenhum</option><option value="sim">Aplicar desconto…</option></select></label>
+<label class="campo" id="l-recebido" hidden>Recebido agora <span class="hint">o resto fica em aberto</span>
+<div class="campo-wrap"><span class="prefixo">R$</span><input id="a-recebido" class="dinheiro" inputmode="decimal" placeholder="0,00"></div>
+</label>
 <label class="campo" id="l-datapag" hidden>Data do pagamento<input id="a-datapag" inputmode="numeric" maxlength="10"></label>
 <label class="campo c2">Quem pagou <span class="leg">(vai na nota)</span>
 <div class="campo-wrap"><input id="a-quem" list="dl-pagadores" autocomplete="off"><span class="tag lilas" id="a-quem-tag" hidden>pagador habitual</span></div>
@@ -811,7 +814,7 @@ table.mens .td-acao .btn.link{padding-left:0}
 <label class="campo">Quem autorizou (obrigatório)<input id="a-desc-motivo" placeholder="ex.: Juliana, no grupo Tratamentos"></label>
 <label class="campo">Valor final<input id="a-desc-final" readonly></label>
 </div>
-<span class="muted">Vai pra Observação como "Desconto R$ X — motivo" e aparece na lista de descontos do mês, na Gestão.</span>
+<span class="muted">Vai pra Observação como "Desconto R$ X — motivo" e aparece na lista de descontos do mês, na tela Pendências.</span>
 </div>
 </section>
 <div id="a-probono" class="faixa lilas" hidden>
@@ -989,7 +992,7 @@ table.mens .td-acao .btn.link{padding-left:0}
 </section>
 <section class="tela coluna" id="s-gestao" hidden>
 <div class="titulo">
-<h1 id="g-titulo">Gestão</h1>
+<h1 id="g-titulo">Pendências</h1>
 <div class="acoes" style="gap:4px" id="g-nav" hidden>
 <button type="button" class="btn icone p" id="g-ant" aria-label="Mês anterior"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg></button>
 <button type="button" class="btn icone p" id="g-prox" aria-label="Próximo mês"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button>
@@ -1013,9 +1016,18 @@ table.mens .td-acao .btn.link{padding-left:0}
 <h2 style="font-size:17px">Pendências <span class="muted" style="font-weight:500;font-size:14px">— o que falta pra fechar o mês sem perguntar nada à recepção</span></h2>
 <div id="g-pend" style="display:flex;flex-direction:column;gap:12px"></div>
 <div class="discreto" id="g-discreto"></div>
+<section class="card compacto" id="g-lanc">
+<div class="titulo" style="align-items:baseline;gap:10px"><h2 style="font-size:15px">Lançamentos</h2><span class="muted">corrigir valor, recebimento, data ou profissional de qualquer sessão já lançada</span></div>
+<div class="grid g4">
+<label class="campo c2">Paciente <span class="leg">(vazio = todas do mês)</span><input id="g-lanc-pac" list="dl-pacientes" autocomplete="off" placeholder="Comece a digitar o nome…"></label>
+<label class="campo">Onde procurar<select id="g-lanc-escopo"><option value="mes">no mês mostrado</option><option value="todos">em todos os meses</option></select></label>
+<div class="campo" style="justify-content:flex-end"><button type="button" class="btn" id="g-lanc-buscar">Buscar</button></div>
+</div>
+<div class="acoes"><button type="button" class="btn ter" id="g-lanc-novo">+ Lançar sessão que faltou</button><span class="muted">abre o Registrar: ponha a data da sessão (ex.: 15/09) e ela vai pra aba do mês certo</span></div>
+</section>
 </div>
 <aside class="lateral larga">
-<div class="card compacto">
+<div class="card compacto" id="g-virada-card">
 <h2 style="font-size:15px">Virada do mês</h2>
 <ol class="virada" id="g-virada"></ol>
 </div>
@@ -1027,7 +1039,7 @@ table.mens .td-acao .btn.link{padding-left:0}
 <div class="acoes"><button type="button" class="btn" id="g-lemb-salvar">Publicar na tela Hoje</button><button type="button" class="btn ter" id="g-lemb-encerrar" hidden>Encerrar o atual</button></div>
 <details id="g-lemb-hist" hidden><summary class="muted" style="cursor:pointer;font-size:13px">Lembretes anteriores</summary><ul id="g-lemb-lista" style="margin:6px 0 0;padding-left:18px;font-size:13px;color:var(--tx2)"></ul></details>
 </div>
-<div class="card compacto">
+<div class="card compacto" id="g-so-gestao">
 <h2 style="font-size:15px">Só a gestão edita</h2>
 <button type="button" class="atalho" id="g-atalho-regras">Regras e observações de cobrança <span class="cont" id="g-regras-n"></span></button>
 <div class="atalho" style="cursor:default">Tabela de procedimentos e valores <small>aba Procedimentos</small></div>
@@ -1047,6 +1059,7 @@ table.mens .td-acao .btn.link{padding-left:0}
 <button type="button" data-go="registrar"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>Registrar</button>
 <button type="button" data-go="pacientes"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0116 0"/></svg>Pacientes</button>
 <button type="button" data-go="mensalistas"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="6" width="18" height="12" rx="2"/><path d="M3 10h18"/></svg>Mensalistas</button>
+<button type="button" data-go="gestao"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 19V10M10 19V5M16 19v-8M22 19H2"/></svg>Pendências</button>
 </nav>
 </div>
 <div class="toast" id="toast" role="status"></div>
@@ -1150,7 +1163,7 @@ function procCompra(n, prof) { var esps = espsDoProf(prof); return (AT ? AT.proc
 function pacoteInfoMod(m, p, prof) { var n = parseInt((String(m || '').match(/(\d+)\s*(sessões|consultas)/) || [])[1], 10) || 4; var vc = (p && p.valorCombinado || '').match(/R\$\s?([\d.]+(?:,\d{1,2})?)/), vm = String(m || '').match(/R\$\s?([\d.]+)/); var v = vc ? num(vc[1]) : (vm ? num(vm[1]) : null); if (v == null) { var pc = procCompra(n, prof); if (pc && pc.valor != null) v = pc.valor; } return { n: n, valor: v }; }
 function planoAPagar(pk) { return !!(pk && pk.pago && pk.pago !== 'Sim'); } // plano lançado "vai pagar depois": consultas contam, compra fica a receber
 // compra de plano a receber entra nas pendências de pagamento; sessões de plano/mensalidade/convênio não
-function pendentePagamento(r) { return (r.pago === '' || r.pago === 'Não') && (!/^Mensalidade|pacote|plano|mensal|convênio|AAPI/i.test(r.procedimento) || /\(compra\)/i.test(r.procedimento)); }
+function pendentePagamento(r) { return (r.pago === '' || r.pago === 'Não' || r.pago === 'Parcial') && (!/^Mensalidade|pacote|plano|mensal|convênio|AAPI/i.test(r.procedimento) || /\(compra\)/i.test(r.procedimento)); }
 function planoAtivo(p) { var pk = AT && AT.pacotes[p.nome]; return !!(pk && pk.status === 'ativo' && (pk.n - pk.usadas) > 0 && !(pk.validade && venceu(pk.validade))); }
 function derivarProc(base, p) {
 var l = AT.procedimentos, cands = l.filter(function (q) { return q.nome.indexOf(base + ' – ') === 0; });
@@ -1198,40 +1211,82 @@ function tagHtml(t, p) { return '<span class="tag ' + (p ? 'p ' : '') + t.cor + 
 /* ---------- correção de um lançamento já gravado na aba do mês (gestão e recepção usam o mesmo formulário) ---------- */
 // reg: { id, oque, pago, forma, nf, nfN, guia, quem, valor, convenio, dataPag } · foco: 'pag' | 'nf' | 'guia' | 'obs' | 'todos'
 function ehConvReg(reg, p) { return !!((p && ehConvenio(p)) || (reg.convenio && !/^Particular$/i.test(reg.convenio)) || /^Convênio/.test(reg.pago || '')); }
+function saldoReg(reg) { var v = Number(reg.valor) || 0; return reg.pago === 'Parcial' ? Math.max(0, Math.round((v - (Number(reg.recebido) || 0)) * 100) / 100) : v; }
+// foco 'pag' = receber (total ou parcial; gestão 07/10) · 'amplo' = corrigir tudo da linha (data, profissional, valores…) · 'nf' / 'guia' / 'obs' / 'todos' = campos de cobrança
 function corrigirForm(reg, foco, p) {
-var atendido = /^Atendido/.test(reg.oque || 'Atendido'), conv = ehConvReg(reg, p);
-var mostraPago = atendido && (foco === 'pag' || foco === 'nf' || foco === 'todos'), mostraGuia = foco === 'guia' || (foco === 'todos' && conv);
-var pagoOpts = (BOOT.listas.pago || []).slice(); if (reg.pago && pagoOpts.indexOf(reg.pago) < 0) pagoOpts.unshift(reg.pago); if (!reg.pago) pagoOpts.unshift('');
-// pendência de pagamento ou de NF: a tela já abre com o que a gestão quer registrar (Pago? = Sim / NF = Sim); dá pra mudar
-var pagoIni = (foco === 'pag' || foco === 'nf') && (!reg.pago || reg.pago === 'Não') ? 'Sim' : (reg.pago || ''), nfIni = foco === 'nf' ? 'Sim' : (reg.nf || 'Não');
-var html = '<div class="grid g2 corr">';
+var atendido = /^Atendido/.test(reg.oque || 'Atendido'), conv = ehConvReg(reg, p), html = '<div class="grid g2 corr">';
+var forma = '<label class="campo" data-sim>Forma<select data-c="forma"></select></label>';
+var quem = '<label class="campo" data-sim>Quem pagou<input data-c="quemPagou" list="dl-pagadores" autocomplete="off" value="' + esc(reg.quem || (p ? (p.pagador || p.nome) : '')) + '"></label>';
+var nf = '<label class="campo" data-sim>NF emitida?<select data-c="nf"><option>Sim</option><option>Não</option><option>Não se aplica</option></select></label><label class="campo" data-sim>Nº da NF<input data-c="nfNumero" autocomplete="off" value="' + (foco === 'pag' ? '' : esc(reg.nfN || '')) + '"></label>';
+if (foco === 'pag') {
+var sal = saldoReg(reg);
+html += '<div class="c2 muted" data-resumo>Sessão ' + (reg.valor ? 'R$ ' + brl(reg.valor) : 'sem valor') + (reg.pago === 'Parcial' ? ' · já recebido R$ ' + brl(reg.recebido) + ' · <b>em aberto R$ ' + brl(sal) + '</b>' : '') + '. Recebeu menos que o total? O resto continua em aberto.</div>' +
+'<label class="campo">Valor recebido agora<div class="campo-wrap"><span class="prefixo">R$</span><input data-c="recebidoAgora" class="dinheiro" inputmode="decimal" value="' + (sal ? brl(sal) : '') + '"></div></label>' +
+'<label class="campo">Data do pagamento<input data-c="dataPagamento" inputmode="numeric" maxlength="10" value="' + esc(hojeStr()) + '"></label>' + forma + quem + nf;
+} else {
+if (foco === 'amplo') {
+var prOpts = (AT && AT.procedimentos || []).map(function (x) { return x.nome; }); if (reg.procedimento && prOpts.indexOf(reg.procedimento) < 0) prOpts.unshift(reg.procedimento);
+var oqOpts = (BOOT.listas.oque || []).slice(); if (reg.oque && oqOpts.indexOf(reg.oque) < 0) oqOpts.unshift(reg.oque);
+var sel = function (k, opts, atual) { return '<select data-c="' + k + '">' + opts.map(function (o) { return '<option' + (o === atual ? ' selected' : '') + '>' + esc(o) + '</option>'; }).join('') + '</select>'; };
+html += '<label class="campo">Data<input data-c="data" inputmode="numeric" maxlength="10" value="' + esc(reg.data || '') + '"></label><label class="campo">Hora<input data-c="hora" inputmode="numeric" maxlength="5" value="' + esc(reg.hora || '') + '"></label>' +
+'<label class="campo c2">Paciente<input data-c="paciente" list="dl-pacientes" autocomplete="off" value="' + esc(reg.paciente || '') + '"></label>' +
+'<label class="campo">Profissional' + sel('profissional', (BOOT.profissionais || []).map(function (x) { return x.nome; }).concat(reg.profissional && !(BOOT.profissionais || []).some(function (x) { return x.nome === reg.profissional; }) ? [reg.profissional] : []), reg.profissional) + '</label>' +
+'<label class="campo">O que aconteceu' + sel('oque', oqOpts, reg.oque) + '</label>' +
+'<label class="campo c2">Procedimento' + sel('procedimento', prOpts, reg.procedimento) + '</label>' +
+'<label class="campo">Valor da sessão<div class="campo-wrap"><span class="prefixo">R$</span><input data-c="valor" class="dinheiro" inputmode="decimal" value="' + (reg.valor !== '' && reg.valor != null ? brl(reg.valor) : '') + '"></div></label>';
+}
+var mostraPago = foco === 'amplo' || (atendido && (foco === 'nf' || foco === 'todos')), mostraGuia = foco === 'guia' || ((foco === 'todos' || foco === 'amplo') && conv);
+var pagoOpts = (BOOT.listas.pago || []).slice(); if (pagoOpts.indexOf('Parcial') < 0) pagoOpts.push('Parcial'); if (reg.pago && pagoOpts.indexOf(reg.pago) < 0) pagoOpts.unshift(reg.pago); if (!reg.pago) pagoOpts.unshift('');
+var pagoIni = foco === 'nf' && (!reg.pago || reg.pago === 'Não') ? 'Sim' : (reg.pago || '');
 if (mostraPago) html += '<label class="campo">Pago?<select data-c="pago">' + pagoOpts.map(function (o) { return '<option value="' + esc(o) + '"' + (o === pagoIni ? ' selected' : '') + '>' + esc(o || '(em branco)') + '</option>'; }).join('') + '</select></label>' +
-'<label class="campo" data-sim>Data do pagamento<input data-c="dataPagamento" inputmode="numeric" maxlength="10" value="' + esc(reg.dataPag || hojeStr()) + '"></label>' +
-'<label class="campo" data-sim>Forma<select data-c="forma"></select></label>' +
-'<label class="campo" data-sim>Quem pagou<input data-c="quemPagou" list="dl-pagadores" autocomplete="off" value="' + esc(reg.quem || (p ? (p.pagador || p.nome) : '')) + '"></label>' +
-'<label class="campo" data-sim>NF emitida?<select data-c="nf"><option>Sim</option><option>Não</option><option>Não se aplica</option></select></label>' +
-'<label class="campo" data-sim>Nº da NF<input data-c="nfNumero" autocomplete="off" value="' + esc(reg.nfN || '') + '"></label>';
+'<label class="campo" data-parcial>Valor já recebido<div class="campo-wrap"><span class="prefixo">R$</span><input data-c="valorRecebido" class="dinheiro" inputmode="decimal" value="' + (reg.recebido ? brl(reg.recebido) : '') + '"></div></label>' +
+'<label class="campo" data-sim>Data do pagamento<input data-c="dataPagamento" inputmode="numeric" maxlength="10" value="' + esc(reg.dataPag || hojeStr()) + '"></label>' + forma + quem + nf;
 if (mostraGuia) html += '<label class="check forte c2"><input type="checkbox" data-c="guia"' + (reg.guia === 'Sim' ? ' checked' : '') + '> Guia assinada</label>';
+if (foco === 'amplo') html += '<label class="campo c2">Quem informou / motivo <span class="leg">(obrigatório se mudar data, paciente, profissional, procedimento ou valores)</span><input data-c="quemInformou" autocomplete="off" placeholder="ex.: extrato do Pix de 12/09 mostra R$ 80"></label>';
+}
 html += '<label class="campo c2">Acrescentar à observação' + (foco === 'obs' ? '' : ' <span class="leg">(opcional)</span>') + '<input data-c="observacao" autocomplete="off" placeholder="' + (foco === 'obs' ? 'ex.: taxa de falta — cobrar no próximo atendimento (gestão)' : 'ex.: pagou depois, por Pix') + '"></label></div>';
 var box = el('<div>' + html + '</div>');
-var fSel = $('[data-c=forma]', box); if (fSel) { preencherSelect(fSel, BOOT.listas.formas || [], '—'); setSel(fSel, reg.forma || ''); }
-var nfSel = $('[data-c=nf]', box); if (nfSel) setSel(nfSel, nfIni);
-var pSel = $('[data-c=pago]', box), soSim = function () { var sim = pSel && pSel.value === 'Sim'; $$('[data-sim]', box).forEach(function (l) { l.hidden = !sim; }); };
-if (pSel) { pSel.addEventListener('change', soSim); soSim(); }
-var dp = $('[data-c=dataPagamento]', box); if (dp) dp.addEventListener('input', function () { this.value = mascaraData(this.value); });
+var fSel = $('[data-c=forma]', box); if (fSel) { preencherSelect(fSel, BOOT.listas.formas || [], '—'); setSel(fSel, foco === 'pag' ? '' : (reg.forma || '')); }
+var nfSel = $('[data-c=nf]', box); if (nfSel) setSel(nfSel, foco === 'nf' ? 'Sim' : foco === 'pag' ? 'Não' : (reg.nf || 'Não'));
+var pSel = $('[data-c=pago]', box), soSim = function () { var v = pSel ? pSel.value : 'Sim', sim = v === 'Sim' || v === 'Parcial'; $$('[data-sim]', box).forEach(function (l) { l.hidden = !sim; }); $$('[data-parcial]', box).forEach(function (l) { l.hidden = v !== 'Parcial'; }); };
+if (pSel) pSel.addEventListener('change', soSim); soSim();
+$$('[data-c=dataPagamento], [data-c=data]', box).forEach(function (i) { i.addEventListener('input', function () { this.value = mascaraData(this.value); }); });
+var hr = $('[data-c=hora]', box); if (hr) hr.addEventListener('input', function () { this.value = mascaraHora(this.value); });
 return box;
 }
-// lê o formulário: manda o que está na tela; o servidor compara com a linha e grava só o que mudou
+// lê o formulário: manda só o que mudou em relação à linha (o servidor confere de novo e registra)
 function corrigirCampos(box, reg) {
-var c = {}, v = function (k) { return $('[data-c=' + k + ']', box); };
-var pago = v('pago'); if (pago) { c.pago = pago.value; if (pago.value === 'Sim') { c.dataPagamento = v('dataPagamento').value.trim(); c.forma = v('forma').value; c.quemPagou = v('quemPagou').value.trim(); c.nf = v('nf').value; c.nfNumero = v('nfNumero').value.trim(); } }
+var c = {}, v = function (k) { return $('[data-c=' + k + ']', box); }, txt = function (k) { var e = v(k); return e ? e.value.trim() : null; };
+var mudou = function (k, atual) { var x = txt(k); if (x != null && x !== String(atual == null ? '' : atual)) c[k] = x; };
+if (v('recebidoAgora')) { c.recebidoAgora = txt('recebidoAgora'); c.dataPagamento = txt('dataPagamento'); c.forma = v('forma').value; c.quemPagou = txt('quemPagou'); c.nf = v('nf').value; c.nfNumero = txt('nfNumero'); }
+['data', 'hora', 'paciente', 'profissional', 'procedimento', 'oque'].forEach(function (k) { mudou(k, reg[k]); });
+var val = v('valor'); if (val) { var nv = num(val.value); if (nv !== (reg.valor === '' || reg.valor == null ? null : Number(reg.valor))) c.valor = val.value.trim(); }
+var pago = v('pago');
+if (pago) {
+if (pago.value !== (reg.pago || '') || v('valor') == null) c.pago = pago.value;
+if (pago.value === 'Parcial') { var vr = num(txt('valorRecebido')); if (vr !== (Number(reg.recebido) || null)) { c.valorRecebido = txt('valorRecebido'); c.pago = 'Parcial'; } }
+if (pago.value === 'Sim' || pago.value === 'Parcial') { c.dataPagamento = txt('dataPagamento'); c.forma = v('forma').value; c.quemPagou = txt('quemPagou'); c.nf = v('nf').value; c.nfNumero = txt('nfNumero'); if (v('valor') && c.pago == null && c.forma === (reg.forma || '') && c.nf === (reg.nf || 'Não') && c.nfNumero === (reg.nfN || '') && c.dataPagamento === (reg.dataPag || hojeStr())) { delete c.dataPagamento; delete c.forma; delete c.nf; delete c.nfNumero; if (c.quemPagou === (reg.quem || '') || !reg.quem) delete c.quemPagou; } }
+if (v('valor') && c.pago == null && (c.dataPagamento != null || c.forma != null || c.nf != null || c.nfNumero != null || c.quemPagou != null)) c.pago = pago.value;
+}
 var g = v('guia'); if (g) { var gv = g.checked ? 'Sim' : 'Não'; if (gv !== (reg.guia || 'Não')) c.guia = gv; }
-var o = v('observacao'); if (o && o.value.trim()) c.observacao = o.value.trim();
+var qi = txt('quemInformou'); if (qi) c.quemInformou = qi;
+var o = txt('observacao'); if (o) c.observacao = o;
 return c;
 }
-function corrigirValidar(c, reg) { var e = []; if (c.pago === 'Sim' && !(Number(reg.valor) > 0)) e.push('Pago? = Sim exige um valor na linha; o valor se corrige na planilha.'); if (c.dataPagamento && !dataValida(c.dataPagamento)) e.push('Data do pagamento inválida (dd/mm/aaaa).'); if (!Object.keys(c).length) e.push('Nada pra corrigir: mude algum campo ou escreva na observação.'); return e; }
+function corrigirValidar(c, reg) {
+var e = [], valor = c.valor != null ? num(c.valor) : Number(reg.valor);
+if (c.recebidoAgora != null) { var ag = num(c.recebidoAgora); if (!(ag > 0)) e.push('Informe o valor recebido agora.'); else if (ag > saldoReg(Object.assign({}, reg, { valor: valor })) + 0.001) e.push('O valor recebido passa do que está em aberto (R$ ' + brl(saldoReg(reg)) + '). Se o valor da sessão está errado, use "Corrigir lançamento" na tela Pendências.'); }
+if (c.pago === 'Sim' && !(valor > 0)) e.push('Pago? = Sim exige um valor da sessão maior que zero.');
+if (c.pago === 'Parcial') { var vr = num(c.valorRecebido != null ? c.valorRecebido : reg.recebido); if (!(vr > 0 && vr < valor)) e.push('Pago? = Parcial: o "valor já recebido" tem de ser maior que zero e menor que o valor da sessão.'); }
+if (c.dataPagamento && !dataValida(c.dataPagamento)) e.push('Data do pagamento inválida (dd/mm/aaaa).');
+if (c.data && !dataObj(c.data)) e.push('Data da sessão inválida (dd/mm/aaaa).');
+var amplo = ['data', 'hora', 'paciente', 'profissional', 'procedimento', 'oque', 'valor', 'valorRecebido'].some(function (k) { return c[k] != null; });
+if (amplo && !c.quemInformou) e.push('Mudou dados da sessão ou valores: preencha "Quem informou / motivo".');
+if (!Object.keys(c).filter(function (k) { return k !== 'quemInformou'; }).length) e.push('Nada pra corrigir: mude algum campo ou escreva na observação.');
+return e;
+}
 var TELAS = { hoje: 's-hoje', registrar: 's-registrar', pacientes: 's-pacientes', mensalistas: 's-mensalistas', gestao: 's-gestao' };
-var TITULOS = { hoje: 'Agenda', registrar: 'Registrar atendimento', pacientes: 'Pacientes', mensalistas: 'Mensalistas', gestao: 'Gestão' };
+var TITULOS = { hoje: 'Agenda', registrar: 'Registrar atendimento', pacientes: 'Pacientes', mensalistas: 'Mensalistas', gestao: 'Pendências' };
 var telaAtual = 'hoje';
 var INICIAR = {};
 function go(id, extra) {
@@ -1260,7 +1315,7 @@ var email = b.usuario.email || '';
 $("#chip-nome").textContent = quemSou(); $("#chip-av").textContent = quemSou().charAt(0); $("#chip-av-cel").textContent = quemSou().charAt(0);
 $("#chip-mail").textContent = (ehGestao() ? 'gestão' : 'recepção') + (MOCK ? ' · simulação' : '');
 $("#chip-user").title = (email || '') + ' · perfil ' + (ehGestao() ? 'gestão' : 'recepção');
-if (ehGestao()) { $("#chip-user").classList.add('gestao'); $("#menu-gestao").hidden = false; }
+if (ehGestao()) $("#chip-user").classList.add('gestao');
 var dl = $("#dl-pagadores"); dl.innerHTML = ''; var vistos = {};
 b.pacientes.forEach(function (p) { String(p.pagador || '').split(/\s*\/\s*/).forEach(function (n) { n = n.trim(); if (n && !vistos[n]) { vistos[n] = 1; var o = document.createElement('option'); o.value = n; dl.appendChild(o); } }); });
 banner('');
@@ -1400,7 +1455,7 @@ return r.guia === 'Sim' ? { cor: 'verde', txt: 'Guia assinada' } : { cor: 'amare
 function pendDe(nome) { return (DIA && DIA.pendencias && DIA.pendencias[nome]) || []; }
 function tagsPend(nome) {
 var l = pendDe(nome), pag = l.filter(function (x) { return x.tipo === 'pag'; }), guia = l.filter(function (x) { return x.tipo === 'guia'; }), t = [];
-if (pag.length) t.push({ cor: 'amarela', ic: 'alerta', txt: 'deve ' + (pag.length > 1 ? pag.length + ' sessões' : 'sessão de ' + pag[0].data.slice(0, 5)) + (pag.some(function (x) { return x.valor; }) ? ' · R$ ' + brl(pag.reduce(function (a, x) { return a + (x.valor || 0); }, 0)).replace(',00', '') : '') });
+if (pag.length) t.push({ cor: 'amarela', ic: 'alerta', txt: 'deve ' + (pag.length > 1 ? pag.length + ' sessões' : 'sessão de ' + pag[0].data.slice(0, 5)) + (pag.some(function (x) { return x.valor; }) ? ' · R$ ' + brl(pag.reduce(function (a, x) { return a + saldoReg(x); }, 0)).replace(',00', '') : '') });
 if (guia.length) t.push({ cor: 'lilas', ic: 'alerta', txt: 'guia a assinar · ' + guia.map(function (x) { return x.data.slice(0, 5); }).join(', ') });
 return t;
 }
@@ -1437,7 +1492,7 @@ if (s === 'aconfirmar') op.push(['confirmou', 'Confirmou']);
 if (s !== 'atendido' && s !== 'falta') op.push(['registrar', 'Registrar atendimento']); else op.push(['registrar', 'Registrar outro atendimento']);
 if (s !== 'atendido' && s !== 'falta' && s !== 'naovem') { op.push(['naovem', 'Não vem hoje']); op.push(['remarcar', 'Remarcar']); }
 if (it.listaId && !it.registro) op.push(['remover', 'Remover da lista', 'perigo']);
-if (it.registro && it.registro.id) op.push(['corrigir', 'Corrigir cobrança']);
+if (it.registro && it.registro.id) op.push(['corrigir', 'Corrigir lançamento']);
 op.push(['cadastro', 'Ver cadastro']);
 var m = el('<div class="mais-menu" role="menu">' + op.map(function (o) { return '<button type="button" role="menuitem" data-ac="' + o[0] + '" class="' + (o[2] || '') + '">' + o[1] + '</button>'; }).join('') + '</div>');
 $$('button', m).forEach(function (b) { b.addEventListener('click', function (e) { e.stopPropagation(); m.remove(); acaoDia(b.dataset.ac, it); }); });
@@ -1484,7 +1539,7 @@ $("#pp-aviso").innerHTML = avisoHtml;
 var pendHtml = pendDe(it.paciente).map(function (x, i) {
 var quando = x.data + (x.hora ? ' ' + x.hora : '');
 return x.tipo === 'pag'
-? aviso('amarela', 'Sessão anterior sem pagamento', esc([quando, x.procedimento, x.valor ? 'R$ ' + brl(x.valor) : 'valor não lançado', profCurto(x.profissional)].filter(Boolean).join(' · ')), '<button type="button" class="btn mini" data-pend="' + i + '">Receber</button>')
+? aviso('amarela', x.pago === 'Parcial' ? 'Sessão anterior paga em parte' : 'Sessão anterior sem pagamento', esc([quando, x.procedimento, x.pago === 'Parcial' ? 'em aberto R$ ' + brl(saldoReg(x)) + ' (de R$ ' + brl(x.valor) + ')' : x.valor ? 'R$ ' + brl(x.valor) : 'valor não lançado', profCurto(x.profissional)].filter(Boolean).join(' · ')), '<button type="button" class="btn mini" data-pend="' + i + '">Receber</button>')
 : aviso('lilas', 'Guia sem assinatura · pedir pra imprimir', esc([quando, 'Convênio ' + (x.convenio || ''), x.procedimento, profCurto(x.profissional)].filter(Boolean).join(' · ')), '<button type="button" class="btn ter mini" data-pend="' + i + '">Guia assinada</button>');
 }).join('');
 $("#pp-pend").innerHTML = pendHtml; $("#pp-pend").hidden = !pendHtml;
@@ -1493,7 +1548,7 @@ $$('[data-pend]', $("#pp-pend")).forEach(function (b) { b.addEventListener('clic
 var tags = tagsDe(p).filter(function (t) { return !(t.cor === 'laranja' && avisoHtml); });
 $("#pp-tags").innerHTML = tags.map(function (t) { return tagHtml(t); }).join(''); $("#pp-tags").hidden = !tags.length;
 var r = it.registro;
-var cobr = r ? (r.pago === 'Sim' ? 'pago R$ ' + brl(r.valor) + (r.forma ? ' · ' + r.forma : '') + (r.nf === 'Sim' ? ' · NF emitida' : ' · NF a emitir') : (r.pago ? r.pago : (r.valor ? 'R$ ' + brl(r.valor) + ' em aberto' : ''))) : '';
+var cobr = r ? (r.pago === 'Parcial' ? 'pago R$ ' + brl(r.recebido) + ' de R$ ' + brl(r.valor) + ' · em aberto R$ ' + brl(saldoReg(r)) + (r.forma ? ' · ' + r.forma : '') : r.pago === 'Sim' ? 'pago R$ ' + brl(r.valor) + (r.forma ? ' · ' + r.forma : '') + (r.nf === 'Sim' ? ' · NF emitida' : ' · NF a emitir') : (r.pago ? r.pago : (r.valor ? 'R$ ' + brl(r.valor) + ' em aberto' : ''))) : '';
 $("#pp-registro").innerHTML = r ? '<div class="faixa cinza"><b>Registrado hoje:</b> ' + esc(r.oque) + (r.procedimento ? ' · ' + esc(r.procedimento) : '') + (r.hora ? ' · ' + esc(r.hora) : '') + (cobr ? '<br>' + esc(cobr) : '') + (r.id ? ' · ID ' + esc(r.id) : '') + ' · aba ' + esc(DIA.abaMes) + '</div>' : '';
 // 4 botões de situação; o atual fica marcado
 $("#pp-sit-box").hidden = reg;
@@ -1513,8 +1568,8 @@ var tipo = formAberto, html, pend = /^pend:/.test(tipo) ? pendDe(it.paciente)[+t
 if (/^pend:/.test(tipo) && !pend) { formAberto = null; return; }
 if (tipo === 'naovem') html = '<h3>Não vem hoje</h3><div class="grid g1"><label class="campo">Motivo<select id="d-nv-motivo"></select></label><label class="campo">Observação<input id="d-nv-obs"></label></div><div class="acoes"><button type="button" class="btn" id="d-nv-ok">Gravar</button><button type="button" class="btn ter" data-fechar>Cancelar</button></div><span class="muted">Grava a falta na aba do mês, sem cobrança nesta linha.</span>';
 else if (tipo === 'remarcar') html = '<h3>Remarcar</h3><div class="grid g2"><label class="campo">Nova data<input id="d-rm-data" placeholder="dd/mm/aaaa" maxlength="10" inputmode="numeric"></label><label class="campo">Nova hora<input id="d-rm-hora" placeholder="hh:mm" maxlength="5" inputmode="numeric" value="' + esc(it.hora || '') + '"></label><label class="campo c2">Observação<input id="d-rm-obs"></label></div><div class="acoes"><button type="button" class="btn" id="d-rm-ok">Remarcar</button><button type="button" class="btn ter" data-fechar>Cancelar</button></div><span class="muted">Hoje fica como “não vem · remarcado”; o novo dia ganha a linha.</span>';
-else if (pend) html = '<h3>' + (pend.tipo === 'pag' ? 'Receber a sessão de ' : 'Guia da sessão de ') + esc(pend.data) + '</h3><div class="muted">Grava na linha dessa sessão na aba ' + esc(pend.aba) + (pend.id ? '' : ' (sem ID: corrija direto na planilha)') + '. O valor não se altera por aqui.</div><div data-form></div><div data-erros></div><div class="acoes">' + (pend.id ? '<button type="button" class="btn" id="d-pend-ok">Gravar</button>' : '') + '<button type="button" class="btn ter" data-fechar>Cancelar</button></div>';
-else if (tipo === 'corrigir') html = '<h3>Corrigir cobrança</h3><div class="muted">Muda só os campos de cobrança da linha já gravada (Pago?, forma, NF, guia, observação). O valor não se altera por aqui: se estiver errado, avise a gestão.</div><div data-form></div><div data-erros></div><div class="acoes"><button type="button" class="btn" id="d-cor-ok">Gravar correção</button><button type="button" class="btn ter" data-fechar>Cancelar</button></div>';
+else if (pend) html = '<h3>' + (pend.tipo === 'pag' ? 'Receber a sessão de ' : 'Guia da sessão de ') + esc(pend.data) + '</h3><div class="muted">Grava na linha dessa sessão na aba ' + esc(pend.aba) + (pend.id ? '' : ' (sem ID: corrija direto na planilha)') + '. Recebeu só uma parte? Ponha o valor recebido: o resto continua em aberto.</div><div data-form></div><div data-erros></div><div class="acoes">' + (pend.id ? '<button type="button" class="btn" id="d-pend-ok">Gravar</button>' : '') + '<button type="button" class="btn ter" data-fechar>Cancelar</button></div>';
+else if (tipo === 'corrigir') html = '<h3>Corrigir lançamento</h3><div class="muted">Corrige a linha já gravada na aba ' + esc(DIA.abaMes) + '. Mudou data, profissional, procedimento ou valores? Diga quem informou: fica registrado em "Alterações de lançamento".</div><div data-form></div><div data-erros></div><div class="acoes"><button type="button" class="btn" id="d-cor-ok">Gravar correção</button><button type="button" class="btn ter" data-fechar>Cancelar</button></div>';
 else html = '<h3>Remover da lista</h3><div class="grid g1"><label class="campo">Motivo da remoção <span class="leg">só agendamentos avulsos; horário fixo se pausa na Agenda recorrente</span><input id="d-rem-motivo" value="duplicado"></label></div><div class="acoes"><button type="button" class="btn vermelho" id="d-rem-ok">Remover da lista</button><button type="button" class="btn ter" data-fechar>Cancelar</button></div>';
 var pn = el('<div class="pp-formbox">' + html + '</div>'); box.appendChild(pn);
 $('[data-fechar]', pn).addEventListener('click', function () { formAberto = null; renderPainel(); });
@@ -1545,7 +1600,7 @@ var b = this; b.disabled = true;
 call('corrigirLancamento', { aba: pend.aba, id: pend.id, campos: c }).then(function (r) { if (!r.ok) { b.disabled = false; $('[data-erros]', pn).innerHTML = erroBox(r.erros || [], 'Não gravou'); return; } toast('Gravado na sessão de ' + pend.data + ': ' + (r.alterados || []).join(', ')); formAberto = null; invalidarResumo(); carregarDia(); }).catch(function (e) { b.disabled = false; toast('Erro: ' + e.message); });
 });
 } else if (tipo === 'corrigir') {
-var reg = it.registro, p0 = pacInfo(it.paciente), fbox = corrigirForm(reg, 'todos', p0); $('[data-form]', pn).appendChild(fbox);
+var reg = Object.assign({ data: DIA.data, paciente: it.paciente, profissional: it.profissional }, it.registro), p0 = pacInfo(it.paciente), fbox = corrigirForm(reg, 'amplo', p0); $('[data-form]', pn).appendChild(fbox);
 $("#d-cor-ok", pn).addEventListener('click', function () {
 var c = corrigirCampos(fbox, reg), erros = corrigirValidar(c, reg); $('[data-erros]', pn).innerHTML = erroBox(erros); if (erros.length) return;
 var b = this; b.disabled = true;
@@ -1572,12 +1627,12 @@ $("#pp-resumo").innerHTML = '<div><b>' + reg + '<small>/' + tot + '</small></b><
 // tiles: valores do dia, lidos das linhas já registradas na aba do mês (recepção e gestão veem o mesmo)
 var regs = DIA.itens.filter(function (i) { return i.registro && /^Atendido/.test(i.registro.oque); }).map(function (i) { return i.registro; });
 var particular = function (r) { return !r.convenio || /^Particular$/i.test(r.convenio); };
-var recebido = regs.filter(function (r) { return r.pago === 'Sim'; }).reduce(function (a, r) { return a + (Number(r.valor) || 0); }, 0);
-var aRec = regs.filter(function (r) { return particular(r) && pendentePagamento(r); }).reduce(function (a, r) { return a + (Number(r.valor) || 0); }, 0);
-var nfPend = regs.filter(function (r) { return r.pago === 'Sim' && r.nf !== 'Sim' && r.nf !== 'Não se aplica'; }).length;
+var recebido = regs.reduce(function (a, r) { return a + (r.pago === 'Sim' ? (Number(r.valor) || 0) : r.pago === 'Parcial' ? (Number(r.recebido) || 0) : 0); }, 0);
+var aRec = regs.filter(function (r) { return particular(r) && pendentePagamento(r); }).reduce(function (a, r) { return a + saldoReg(r); }, 0);
+var nfPend = regs.filter(function (r) { return (r.pago === 'Sim' || r.pago === 'Parcial') && r.nf !== 'Sim' && r.nf !== 'Não se aplica'; }).length;
 var guiaPend = regs.filter(function (r) { return (!particular(r) || /^Convênio/i.test(r.pago)) && r.guia !== 'Sim'; }).length;
 var rs = function (n) { return 'R$ ' + brl(n).replace(',00', ''); };
-var tiles = [[rs(recebido), 'recebido hoje', recebido ? 'verde' : 'cinza'], [rs(aRec), 'a receber hoje (particular)', aRec ? 'amarelo' : 'cinza'], [nfPend, 'NF a emitir hoje', nfPend ? 'laranja' : 'cinza', ehGestao() ? 'gestao' : null], [guiaPend, 'guia a emitir hoje', guiaPend ? 'amarelo' : 'cinza', ehGestao() ? 'gestao' : null]];
+var tiles = [[rs(recebido), 'recebido hoje', recebido ? 'verde' : 'cinza'], [rs(aRec), 'a receber hoje (particular)', aRec ? 'amarelo' : 'cinza'], [nfPend, 'NF a emitir hoje', nfPend ? 'laranja' : 'cinza', 'gestao'], [guiaPend, 'guia a emitir hoje', guiaPend ? 'amarelo' : 'cinza', 'gestao']];
 var box = $("#d-resumo"); box.innerHTML = '';
 tiles.forEach(function (t) {
 var b = el('<' + (t[3] ? 'button type="button"' : 'div') + ' class="tile info ' + t[2] + '"><b>' + esc(String(t[0])) + '</b><span>' + esc(t[1]) + '</span></' + (t[3] ? 'button' : 'div') + '>');
@@ -1599,10 +1654,10 @@ if (devem.length) out.push(['amarela', devem.length, 'de hoje com sessão anteri
 var guiasAnt = itens.filter(function (i) { return pendDe(i.paciente).some(function (x) { return x.tipo === 'guia'; }); });
 if (guiasAnt.length) out.push(['lilas', guiasAnt.length, 'de hoje com guia anterior sem assinatura (pedir pra imprimir) · ' + guiasAnt.map(function (i) { return primeiroNome(i.paciente); }).join(', '), null]);
 var regs = itens.filter(function (i) { return i.registro && /^Atendido/.test(i.registro.oque); });
-var particular = function (r) { return !r.convenio || /^Particular$/i.test(r.convenio); }, dest = ehGestao() ? 'gestao' : null;
+var particular = function (r) { return !r.convenio || /^Particular$/i.test(r.convenio); }, dest = 'gestao';
 var sg = regs.filter(function (i) { var r = i.registro; return (!particular(r) || /^Convênio/i.test(r.pago)) && r.guia !== 'Sim'; });
 if (sg.length) out.push(['amarela', sg.length, 'guia a emitir hoje · ' + sg.map(function (i) { return primeiroNome(i.paciente) + (i.hora ? ' ' + i.hora : ''); }).join(', '), dest]);
-var nf = regs.filter(function (i) { var r = i.registro; return r.pago === 'Sim' && r.nf !== 'Sim' && r.nf !== 'Não se aplica'; });
+var nf = regs.filter(function (i) { var r = i.registro; return (r.pago === 'Sim' || r.pago === 'Parcial') && r.nf !== 'Sim' && r.nf !== 'Não se aplica'; });
 if (nf.length) out.push(['laranja', nf.length, 'NF a emitir hoje · ' + nf.map(function (i) { return primeiroNome(i.paciente) + (i.registro.valor ? ' R$ ' + brl(i.registro.valor).replace(',00', '') : ''); }).join(', '), dest]);
 var pp = regs.filter(function (i) { var r = i.registro; return particular(r) && pendentePagamento(r); });
 if (pp.length) out.push(['amarela', pp.length, 'particular sem “Pago?” hoje · ' + pp.map(function (i) { return primeiroNome(i.paciente); }).join(', '), dest]);
@@ -1911,7 +1966,7 @@ $("#d-exp-fechar").addEventListener('click', function () { $("#d-expbox").hidden
 /* ===== 20-registrar.js ===== */
 /* ================= REGISTRAR ATENDIMENTO ================= */
 var cur = null, baseValor = null, atIniciado = false, ultimoPacRender = null, atPrefill = null, decisaoPagador = null, salvandoAt = false;
-var CAMPOS_AT = ["a-pac", "a-prof", "a-data", "a-hora", "a-tipo", "a-oque", "a-pago", "a-valor", "a-forma", "a-datapag", "a-quem", "a-nf", "a-nfn", "a-guia", "a-obs"];
+var CAMPOS_AT = ["a-pac", "a-prof", "a-data", "a-hora", "a-tipo", "a-oque", "a-pago", "a-valor", "a-forma", "a-recebido", "a-datapag", "a-quem", "a-nf", "a-nfn", "a-guia", "a-obs"];
 var OQUE_CURTO = function (x) { return String(x).split(' (')[0]; };
 INICIAR.registrar = function (extra) {
 if (extra && extra.paciente) atPrefill = extra;
@@ -1923,7 +1978,7 @@ atIniciado = true;
 $("#a-aba-nome").textContent = 'Grava na aba ' + AT.abaMes + (AT.abaMesExiste ? '' : ' (ainda não existe!)');
 preencherSelect($("#a-prof"), BOOT.profissionais, '—');
 preencherSelect($("#a-oque"), BOOT.listas.oque || []);
-preencherSelect($("#a-pago"), BOOT.listas.pago || [], '—');
+preencherSelect($("#a-pago"), (BOOT.listas.pago || []).concat((BOOT.listas.pago || []).indexOf('Parcial') < 0 ? ['Parcial'] : []), '—');
 preencherSelect($("#a-forma"), BOOT.listas.formas || []);
 preencherSelect($("#a-pk-forma"), BOOT.listas.formas || []);
 var segO = $("#a-oque-seg"); segO.innerHTML = '';
@@ -1979,7 +2034,7 @@ else box.innerHTML += aviso(s[0] === 'amarela' ? 'amarela' : 'cinza', s[1].charA
 }
 if (ehPacote(cur)) {
 var pk = AT.pacotes[cur.nome], r = pk ? pk.n - pk.usadas : 0, vencido = pk && pk.validade && venceu(pk.validade);
-if (pk && pk.status === 'ativo' && r > 0 && !vencido) box.innerHTML += aviso(planoAPagar(pk) ? 'amarela' : 'verde', 'Plano de ' + pk.n + ' consultas · ' + pk.usadas + ' de ' + pk.n + ' usadas · esta é a ' + (pk.usadas + 1) + 'ª' + (planoAPagar(pk) ? ' · ainda não pago' : ''), 'Comprado em ' + esc(pk.compra) + ', válido até ' + esc(pk.validade) + '. ' + (r === 1 ? '<b>Última consulta do plano:</b> avise que o próximo é pago na chegada.' : 'Faltam ' + r + ' depois desta.') + ' Pago? fica como “Plano já pago”.' + (planoAPagar(pk) ? ' <b>O plano está a receber' + (pk.valor ? ' (R$ ' + brl(pk.valor) + ')' : '') + ':</b> quando pagar, registre pela Gestão ou em Hoje → Corrigir cobrança.' : ''));
+if (pk && pk.status === 'ativo' && r > 0 && !vencido) box.innerHTML += aviso(planoAPagar(pk) ? 'amarela' : 'verde', 'Plano de ' + pk.n + ' consultas · ' + pk.usadas + ' de ' + pk.n + ' usadas · esta é a ' + (pk.usadas + 1) + 'ª' + (planoAPagar(pk) ? ' · ainda não pago' : ''), 'Comprado em ' + esc(pk.compra) + ', válido até ' + esc(pk.validade) + '. ' + (r === 1 ? '<b>Última consulta do plano:</b> avise que o próximo é pago na chegada.' : 'Faltam ' + r + ' depois desta.') + ' Pago? fica como “Plano já pago”.' + (planoAPagar(pk) ? ' <b>O plano está a receber' + (pk.valor ? ' (R$ ' + brl(pk.valor) + ')' : '') + ':</b> quando pagar, registre em Pendências ou na Agenda → Receber.' : ''));
 else {
 var pim = pacoteInfoMod(cur.modalidade, cur, $("#a-prof").value);
 box.innerHTML += aviso('laranja', (pk ? (vencido && r > 0 ? 'Plano vencido em ' + esc(pk.validade) + ' · ' + r + ' consulta(s) não usada(s)' : 'Plano encerrado · ' + pk.usadas + ' de ' + pk.n + ' usadas') : 'Sem plano ativo'), 'Esta consulta não está paga. Lançar o plano e receber agora?', '<div class="acoes" style="flex-basis:100%"><button class="btn" type="button" id="a-btn-pacote">Lançar plano de ' + pim.n + ' consultas' + (pim.valor ? ' (R$ ' + brl(pim.valor) + ')' : '') + ' e receber</button><button class="btn ter" type="button" id="a-btn-avulsa">Cobrar consulta individual</button><button class="btn ter" type="button" id="a-btn-extra">Liberar sessão extra</button></div>');
@@ -2030,7 +2085,7 @@ baseValor = procV;
 var hintFalta = '';
 if (falta) { v.value = ''; v.disabled = true; forma.disabled = true; desc.disabled = true; pago.value = ''; nf.value = 'Não se aplica'; hintFalta = (/sem aviso|em cima da hora/.test(oque) && !ehMensal(cur) && !ehConvenio(cur) && !/^Pro bono|^Permuta/.test(regra)) ? (pacoteOk ? 'Consome 1 consulta do plano.' : 'Falta: vira pendência de taxa pra gestão decidir.') : 'Sem cobrança nesta linha.'; }
 $("#a-oque-hint").textContent = hintFalta;
-$("#l-datapag").hidden = pago.value !== 'Sim';
+mostrarPagParcial();
 layoutCobranca(modo, falta);
 }
 // o que aparece no passo 3, pelo modo da regra
@@ -2047,7 +2102,7 @@ else if (modo === 'paga') { var ref = refValor(cur); $("#a-cob-aviso").innerHTML
 else if (modo === 'fixo') $("#a-cob-aviso").innerHTML = '<div class="faixa nota">Valor combinado com a gestão' + (cur.valorCombinado ? ': <strong>' + esc(cur.valorCombinado) + '</strong>' : '') + '. Não negociar na recepção.</div>';
 }
 seg($("#a-pago-seg"), $("#a-pago").value); seg($("#a-nf-seg"), $("#a-nf").value === 'Sim' ? 'Sim' : 'Não');
-var pagoVal = $("#a-pago").value; $("#a-pago-outro").hidden = false; if (pagoVal && pagoVal !== 'Sim' && pagoVal !== 'Não') { $("#a-pago").classList.remove('sr'); } else $("#a-pago").classList.add('sr');
+var pagoVal = $("#a-pago").value; $("#a-pago-outro").hidden = false; if (pagoVal && pagoVal !== 'Sim' && pagoVal !== 'Não' && pagoVal !== 'Parcial') { $("#a-pago").classList.remove('sr'); } else $("#a-pago").classList.add('sr');
 $("#a-quem-tag").hidden = !(cur && $("#a-quem").value.trim() === (cur.pagador || cur.nome));
 atualizarPreview();
 }
@@ -2061,11 +2116,12 @@ if (/^Convênio/.test(pago)) return 'convênio ' + (cur.convenio || '') + ' · R
 if (/^Plano|^Pacote|^Mensalista/.test(pago)) return ehMensal(cur) ? 'mensalidade (já paga) · sem cobrança' : 'plano · sem cobrança';
 if (pago === 'Sim') return 'pago · R$ ' + (v || '…') + ' · ' + forma + ($("#a-nf").value === 'Sim' ? ' · NF ' + ($("#a-nfn").value || 'emitida') : ' · NF depois');
 if (pago === 'Não') return 'não pago · ' + (v ? 'R$ ' + v + ' em aberto' : 'valor em aberto');
+if (pago === 'Parcial') { var rc = num($("#a-recebido").value) || 0, vt = num(v) || 0; return 'pago em parte · R$ ' + brl(rc) + ' de R$ ' + (v || '…') + ' · ' + forma + ' · em aberto R$ ' + brl(Math.max(0, vt - rc)) + ($("#a-nf").value === 'Sim' ? ' · NF ' + ($("#a-nfn").value || 'emitida') + ' sobre o recebido' : ' · NF depois'); }
 return pago || 'Pago? em branco';
 }
 function atualizarPreview() {
 var d = $("#a-data").value, h = $("#a-hora").value;
-$("#a-preview").innerHTML = '<div><span class="muted">Aba</span> ' + esc(AT ? AT.abaMes : '') + ' · linha nova</div>' +
+$("#a-preview").innerHTML = '<div><span class="muted">Aba</span> ' + esc(dataObj($("#a-data").value) ? MESES_PT[dataObj($("#a-data").value).getMonth()] : (AT ? AT.abaMes : '')) + ' · linha nova</div>' +
 '<div><span class="muted">Paciente</span> ' + esc($("#a-pac").value || '—') + '</div>' +
 '<div><span class="muted">Profissional</span> ' + esc($("#a-prof").value || '—') + ' · ' + esc(d.slice(0, 5)) + (h ? ' ' + esc(h) : '') + '</div>' +
 '<div><span class="muted">Aconteceu</span> ' + esc(OQUE_CURTO($("#a-oque").value)) + '</div>' +
@@ -2080,7 +2136,7 @@ if (!$("#a-descbox").hidden && $("#a-desc-val").value.trim()) obs = ('Desconto: 
 if (cur && cur._extra) obs = ('Sessão extra liberada por ' + cur._extraQuem + ' — ' + cur._extraMotivo + '. ' + obs).trim();
 var pk = cur ? AT.pacotes[cur.nome] : null, usaPacote = cur && ehPacote(cur) && pk && (cur._extra || (pk.status === 'ativo' && (pk.n - pk.usadas) > 0 && !cur._avulsa));
 return { paciente: $("#a-pac").value.trim(), profissional: $("#a-prof").value, data: $("#a-data").value, hora: $("#a-hora").value, procedimento: $("#a-proc").value,
-oque: $("#a-oque").value, pago: $("#a-pago").value, valor: $("#a-valor").disabled ? '' : $("#a-valor").value, forma: $("#a-forma").value, dataPagamento: $("#a-datapag").value,
+oque: $("#a-oque").value, pago: $("#a-pago").value, valorRecebido: $("#a-pago").value === 'Parcial' ? $("#a-recebido").value : '', valor: $("#a-valor").disabled ? '' : $("#a-valor").value, forma: $("#a-forma").value, dataPagamento: $("#a-datapag").value,
 quemPagou: $("#a-quem").value.trim(), nf: $("#a-nf").value, nfNumero: $("#a-nfn").value.trim(), guia: $("#a-convbox").hidden && !(cur && ehConvenio(cur)) ? '' : $("#a-guia").value, observacao: obs,
 pacoteId: usaPacote ? pk.id : '', sessaoExtra: !!(cur && cur._extra), tornarPagadorHabitual: $("#a-tornar").checked };
 }
@@ -2094,6 +2150,7 @@ if (!dataValida($("#a-data").value)) e.push('Data inválida.');
 if ($("#a-hora").value && !/^\d{1,2}:\d{2}$/.test($("#a-hora").value)) e.push('Hora inválida (hh:mm).');
 if (!$("#a-descbox").hidden && $("#a-desc-val").value.trim() && !$("#a-desc-motivo").value.trim()) e.push('Desconto: informe quem autorizou.');
 if ($("#a-pago").value === 'Sim' && !(num($("#a-valor").value) > 0)) e.push('Pago? = Sim exige um valor maior que zero.');
+if ($("#a-pago").value === 'Parcial') { var vt = num($("#a-valor").value), rc = num($("#a-recebido").value); if (!(vt > 0)) e.push('Pago parcial: falta o valor da sessão.'); else if (!(rc > 0 && rc < vt)) e.push('Pago parcial: o recebido agora tem de ser maior que zero e menor que R$ ' + brl(vt) + '.'); }
 return e;
 }
 function salvarAt(voltar) {
@@ -2123,7 +2180,7 @@ toast('Registrado!'); $("#a-pac").focus();
 }
 function limparAt(apagaSucesso, semFoco) {
 $("#a-pac").value = ''; cur = null; $("#a-oque").selectedIndex = 0; seg($("#a-oque-seg"), $("#a-oque").value); $("#a-obs").value = ''; $("#a-nfn").value = ''; $("#a-desc-val").value = ''; $("#a-desc-motivo").value = ''; $("#a-desc-sel").value = ''; $("#a-descbox").hidden = true; $("#a-extra-motivo").value = ''; $("#a-tornar").checked = false; $("#a-pagador-novo").hidden = true; $("#l-proc").hidden = true; decisaoPagador = null;
-$("#a-data").value = hojeStr(); $("#a-hora").value = agoraHora(); $("#a-datapag").value = hojeStr(); $("#a-erros").innerHTML = '';
+$("#a-data").value = hojeStr(); $("#a-hora").value = agoraHora(); $("#a-datapag").value = hojeStr(); $("#a-erros").innerHTML = ''; $("#a-aba-nome").textContent = 'Grava na aba ' + AT.abaMes;
 if (apagaSucesso !== false) $("#a-sucesso").innerHTML = '';
 limparRascunhoAt(); ultimoPacRender = null; onPacAt(true); if (!semFoco) $("#a-pac").focus();
 }
@@ -2148,9 +2205,9 @@ $("#a-prof").addEventListener('change', function () { fillTipos(); aplicarTipo()
 $("#a-tipo").addEventListener('change', aplicarTipo);
 $("#a-proc").addEventListener('change', function () { mostrarProc(); aplicarRegra(); });
 $("#a-proc-alterar").addEventListener('click', function () { $("#l-proc").hidden = !$("#l-proc").hidden; });
-$$("#a-pago-seg button").forEach(function (b) { b.addEventListener('click', function () { $("#a-pago").value = b.dataset.v; seg($("#a-pago-seg"), b.dataset.v); $("#l-datapag").hidden = b.dataset.v !== 'Sim'; $("#a-pago").classList.add('sr'); atualizarPreview(); salvarRascunhoAt(); }); });
+$$("#a-pago-seg button").forEach(function (b) { b.addEventListener('click', function () { $("#a-pago").value = b.dataset.v; seg($("#a-pago-seg"), b.dataset.v); mostrarPagParcial(); $("#a-pago").classList.add('sr'); atualizarPreview(); salvarRascunhoAt(); }); });
 $("#a-pago-mais").addEventListener('click', function () { $("#a-pago").classList.toggle('sr'); });
-$("#a-pago").addEventListener('change', function () { seg($("#a-pago-seg"), this.value); $("#l-datapag").hidden = this.value !== 'Sim'; atualizarPreview(); });
+$("#a-pago").addEventListener('change', function () { seg($("#a-pago-seg"), this.value); mostrarPagParcial(); atualizarPreview(); });
 $$("#a-nf-seg button").forEach(function (b) { b.addEventListener('click', function () { $("#a-nf").value = b.dataset.v; seg($("#a-nf-seg"), b.dataset.v); atualizarPreview(); salvarRascunhoAt(); }); });
 $("#a-guia-chk").addEventListener('change', function () { $("#a-guia").value = this.checked ? 'Sim' : 'Não'; atualizarPreview(); });
 $("#a-desc-sel").addEventListener('change', function () { $("#a-descbox").hidden = this.value !== 'sim'; if ($("#a-descbox").hidden) aplicarRegra(); else { calcDescAt(); $("#a-desc-val").focus(); } });
@@ -2166,6 +2223,11 @@ $("#a-tornar-sim").addEventListener('click', function () { decisaoPagador = true
 $("#a-tornar-nao").addEventListener('click', function () { decisaoPagador = false; $("#a-tornar").checked = false; $("#a-pagador-novo").hidden = true; });
 $("#a-data").addEventListener('input', function () { this.value = mascaraData(this.value); atualizarPreview(); });
 $("#a-datapag").addEventListener('input', function () { this.value = mascaraData(this.value); });
+// pago parcial (gestão, 07/10): recebe uma parte agora; a linha fica "Parcial" e o resto aparece como pendência até completar
+function mostrarPagParcial() { var v = $("#a-pago").value; $("#l-datapag").hidden = !(v === 'Sim' || v === 'Parcial'); $("#l-recebido").hidden = v !== 'Parcial'; }
+$("#a-recebido").addEventListener('input', atualizarPreview);
+// a sessão vai pra aba do mês da data (lançar sessão de setembro que faltou: é só pôr a data de setembro)
+$("#a-data").addEventListener('input', function () { var d = dataObj(this.value); if (d && AT) $("#a-aba-nome").textContent = 'Grava na aba ' + MESES_PT[d.getMonth()]; });
 $("#a-hora").addEventListener('input', function () { this.value = mascaraHora(this.value); atualizarPreview(); });
 $("#f-atend").addEventListener('submit', function (e) { e.preventDefault(); salvarAt(true); });
 $("#a-salvar").addEventListener('click', function () { salvarAt(true); });
@@ -2520,23 +2582,24 @@ $("#m-col").addEventListener('change', function () { carregarMensal(this.value);
 $("#m-busca").addEventListener('input', function () { if (MEN) renderMensal(); });
 $("#m-data").addEventListener('input', function () { this.value = mascaraData(this.value); });
 /* ===== 50-gestao.js ===== */
-/* ================= GESTÃO ================= */
-var GES = null, gesAberto = null, gesHora = null, gesCorr = null;
+/* ================= PENDÊNCIAS (antiga Gestão; recepção também usa desde 07/10) ================= */
+var GES = null, gesAberto = null, gesHora = null, gesCorr = null, LANC = null;
 INICIAR.gestao = function () {
 if (!BOOT) { setTimeout(INICIAR.gestao, 300); return; }
-if (!ehGestao()) { $("#g-carregando").hidden = true; $("#g-bloqueio").hidden = false; return; }
+// recepção vê pendências e lançamentos; exportar, virada do mês, lembrete e regras de cobrança continuam só da gestão
+['g-virada-card', 'g-lemb', 'g-so-gestao'].forEach(function (id) { $("#" + id).hidden = !ehGestao(); });
 if (!$("#g-mes").options.length) { MESES_PT.forEach(function (m) { var o = document.createElement('option'); o.value = m; o.textContent = m; $("#g-mes").appendChild(o); }); $("#g-mes").value = MESES_PT[new Date().getMonth()]; }
 $("#g-nav").hidden = false; $("#g-atualizar").hidden = false; $("#g-print").hidden = false; $("#g-planilha").textContent = BOOT.planilha || 'Controle da Recepção 2026';
 renderLembrete();
 carregarGestao();
 };
 function carregarGestao() {
-var mes = $("#g-mes").value; $("#g-titulo").textContent = mes + ' ' + new Date().getFullYear(); $("#g-carregando").hidden = false; $("#g-list").innerHTML = ''; $("#g-export-hint").textContent = ''; gesCorr = null; renderCorrecao();
+var mes = $("#g-mes").value; $("#g-titulo").textContent = 'Pendências · ' + mes + ' ' + new Date().getFullYear(); $("#g-carregando").hidden = false; $("#g-list").innerHTML = ''; $("#g-export-hint").textContent = ''; gesCorr = null; renderCorrecao();
 call('gestaoResumo', { mes: mes }).then(function (r) { $("#g-carregando").hidden = true; if (!r.ok) { $("#g-bloqueio").hidden = false; return; } GES = r; gesHora = new Date(); if (typeof resumoMes !== 'undefined') resumoMes[mes] = r; renderGestao(); }).catch(function (e) { $("#g-carregando").textContent = 'Não consegui carregar: ' + e.message; });
 }
 // foco: quando informado, cada linha ganha o botão "Corrigir" (e o clique na linha) que abre o painel de correção
 function tabelaG(titulo, cols, linhas, vazio, foco) {
-var rotulo = { pag: 'Receber', nf: 'NF', guia: 'Guia', obs: 'Anotar' }[foco] || 'Corrigir';
+var rotulo = { pag: 'Receber', nf: 'NF', guia: 'Guia', obs: 'Anotar', amplo: 'Corrigir' }[foco] || 'Corrigir';
 var card = el('<div class="tabela-card"><div class="passo" style="padding:14px 18px 4px"><h2 style="font-size:15px">' + esc(titulo) + '</h2><span class="tag ' + (linhas.length ? 'amarela' : 'verde') + '">' + linhas.length + '</span>' + (foco && linhas.length ? '<span class="muted" style="font-weight:500">clique na linha pra corrigir sem abrir a planilha</span>' : '') + '</div>' + (linhas.length ? '<div class="tabela-wrap"><table><thead><tr>' + cols.map(function (c) { return '<th>' + esc(c[0]) + '</th>'; }).join('') + (foco ? '<th class="no-print"></th>' : '') + '</tr></thead><tbody>' + linhas.map(function (l, i) { return '<tr' + (foco ? ' class="clicavel" tabindex="0" data-i="' + i + '"' : '') + '>' + cols.map(function (c) { var v = typeof c[1] === 'function' ? c[1](l) : l[c[1]]; return '<td>' + esc(v == null ? '' : v) + '</td>'; }).join('') + (foco ? '<td class="no-print" style="text-align:right"><button type="button" class="btn link mini" data-i="' + i + '">' + (l.id ? rotulo : 'sem ID') + '</button></td>' : '') + '</tr>'; }).join('') + '</tbody></table></div>' : '<p class="muted" style="padding:0 18px 14px;margin:0">' + esc(vazio || 'Nada pendente.') + '</p>') + '</div>');
 if (foco) {
 $$('tr.clicavel', card).forEach(function (tr) { var l = linhas[+tr.dataset.i]; var abrir = function () { abrirCorrecao(l, foco); }; tr.addEventListener('click', abrir); tr.addEventListener('keydown', function (e) { if (e.key === 'Enter') abrir(); }); });
@@ -2548,12 +2611,12 @@ function abrirCorrecao(l, foco) { gesCorr = { l: l, foco: foco }; renderCorrecao
 function renderCorrecao() {
 var box = $("#g-corr"); box.innerHTML = ''; if (!gesCorr || !GES) return;
 var l = gesCorr.l, foco = gesCorr.foco, p = pacInfo(l.paciente), semId = !l.id;
-var tit = { pag: 'Registrar o pagamento', nf: 'Registrar a nota fiscal', guia: 'Guia do convênio', obs: 'Anotar a decisão' }[foco] || 'Corrigir lançamento';
+var tit = { pag: 'Receber (total ou parte)', nf: 'Registrar a nota fiscal', guia: 'Guia do convênio', obs: 'Anotar a decisão' }[foco] || 'Corrigir lançamento', abaL = l.aba || GES.mes;
 var pn = el('<div class="painel"><div class="cab"><h2>' + esc(tit) + ' · ' + esc(l.paciente) + '</h2><span class="esp"></span><button type="button" class="btn icone p" data-fechar aria-label="Fechar">' + ic('fechar', 16, 2.4) + '</button></div>' +
 '<div class="muted" style="margin:0">' + esc([l.data + (l.hora ? ' ' + l.hora : ''), l.profissional, l.procedimento, l.valor ? 'R$ ' + brl(l.valor) : '', l.oque, l.id ? 'ID ' + l.id : ''].filter(Boolean).join(' · ')) + '</div>' +
 (semId ? '<div class="faixa nota">Esta linha não tem ID (foi digitada direto na planilha): corrija lá mesmo.</div>' : '<div data-form></div><div data-erros></div>') +
 '<div class="acoes">' + (semId ? '' : '<button type="button" class="btn" data-salvar>Gravar correção</button>') + '<button type="button" class="btn ter" data-fechar>Cancelar</button>' + (p ? '<button type="button" class="btn link" data-cad>Ver cadastro</button>' : '') + '</div>' +
-(semId ? '' : '<span class="muted">Grava só nos campos de cobrança da linha ' + esc(String(l.linha || '')) + ' da aba ' + esc(GES.mes) + ' (Pago?, data, forma, quem pagou, NF, guia, observação), com o carimbo da correção em "Registrado por (app)". Valor não se altera por aqui.</span>') + '</div>');
+(semId ? '' : '<span class="muted">Grava na linha ' + esc(String(l.linha || '')) + ' da aba ' + esc(abaL) + ', com o carimbo da correção em "Registrado por (app)".' + (foco === 'amplo' ? ' Mudança de data, paciente, profissional, procedimento ou valores fica registrada em "Alterações de lançamento", com quem informou.' : '') + (foco === 'pag' ? ' Recebeu só uma parte? O resto continua em aberto e aparece como pendência.' : '') + '</span>') + '</div>');
 $$('[data-fechar]', pn).forEach(function (b) { b.addEventListener('click', function () { gesCorr = null; renderCorrecao(); }); });
 var bc = $('[data-cad]', pn); if (bc) bc.addEventListener('click', function () { go('pacientes', { editar: l.paciente, voltar: 'gestao' }); });
 if (!semId) {
@@ -2561,11 +2624,11 @@ var fbox = corrigirForm(l, foco, p); $('[data-form]', pn).appendChild(fbox);
 $('[data-salvar]', pn).addEventListener('click', function () {
 var c = corrigirCampos(fbox, l), erros = corrigirValidar(c, l); $('[data-erros]', pn).innerHTML = erroBox(erros); if (erros.length) return;
 var b = this; b.disabled = true;
-call('corrigirLancamento', { aba: GES.mes, id: l.id, campos: c }).then(function (r) {
+call('corrigirLancamento', { aba: abaL, id: l.id, campos: c }).then(function (r) {
 if (!r.ok) { b.disabled = false; $('[data-erros]', pn).innerHTML = erroBox(r.erros || [], 'Não gravou'); return; }
 toast('Corrigido: ' + (r.alterados || []).join(', ') + (r.plano ? ' · plano ' + r.plano.id + ' atualizado em Planos' : ''));
 if (typeof invalidarResumo === 'function') invalidarResumo();
-carregarGestao();
+var reLanc = gesAberto === 'lanc'; carregarGestao(); if (reLanc) buscarLanc();
 }).catch(function (e) { b.disabled = false; toast('Erro: ' + e.message); });
 });
 }
@@ -2573,15 +2636,15 @@ box.appendChild(pn);
 }
 function renderGestao() {
 var r = GES, soma = function (l) { return (l || []).reduce(function (a, x) { return a + (x.valor || 0); }, 0); };
-var faltas = (r.faltas || []).length, aReceber = soma(r.pagamentoPendente);
+var faltas = (r.faltas || []).length, aReceber = (r.pagamentoPendente || []).reduce(function (a, x) { return a + saldoReg(x); }, 0);
 $("#g-atualizado").textContent = 'atualizado às ' + ('0' + gesHora.getHours()).slice(-2) + ':' + ('0' + gesHora.getMinutes()).slice(-2);
 $("#g-kpis").hidden = false; $("#g-kpis").innerHTML = '<div class="kpi"><b>' + r.total + '</b><span>atendimentos no mês</span></div><div class="kpi"><b>' + r.atendidos + '</b><span>atendidos' + (faltas ? ' · ' + faltas + ' falta' + (faltas === 1 ? '' : 's') : '') + '</span></div><div class="kpi roxo"><b>' + esc(brlCurto(r.recebido)) + '</b><span>recebido</span></div><div class="kpi amarela cheio"><b>' + esc(brlCurto(aReceber)) + '</b><span>a receber (particular)</span></div><div class="kpi"><b>' + (r.semGuia || []).length + '</b><span>convênio sem guia</span></div>';
-$("#g-export").hidden = false; $("#g-export-txt").textContent = 'Exportar ' + r.mes + ' (.xlsx)'; $("#g-export").disabled = !r.abaExiste;
+$("#g-export").hidden = !ehGestao(); $("#g-export-txt").textContent = 'Exportar ' + r.mes + ' (.xlsx)'; $("#g-export").disabled = !r.abaExiste;
 $("#g-corpo").hidden = false;
 var V = function (l) { return l.valor ? 'R$ ' + brl(l.valor) : ''; }, D = function (l) { return l.data + (l.hora ? ' ' + l.hora : ''); };
 var nomes = function (l, n) { var x = (l || []).slice(0, n || 3).map(function (i) { return primeiroNome(i.paciente) + ' ' + String(i.data || '').slice(0, 5); }); return x.join(' · ') + ((l || []).length > (n || 3) ? ' · +' + ((l || []).length - (n || 3)) : ''); };
 var PEND = [
-{ k: 'pag', cor: 'amarela', n: (r.pagamentoPendente || []).length, t: 'Particulares atendidos sem “Pago?”', s: (r.pagamentoPendente || []).length ? nomes(r.pagamentoPendente) + ' — a recepção cobra; linha amarela na planilha' : 'Todos os particulares atendidos têm Pago? preenchido.', acao: 'Ver lista', tabela: function () { return tabelaG('Particulares atendidos sem pagamento registrado', [['Data', D], ['Paciente', 'paciente'], ['Profissional', 'profissional'], ['Procedimento', 'procedimento'], ['Valor', V], ['Pago?', 'pago'], ['Obs.', 'obs']], r.pagamentoPendente, 'Nada pendente.', 'pag'); } },
+{ k: 'pag', cor: 'amarela', n: (r.pagamentoPendente || []).length, t: 'Particulares atendidos sem “Pago?”', s: (r.pagamentoPendente || []).length ? nomes(r.pagamentoPendente) + ' — a recepção cobra; linha amarela na planilha' : 'Todos os particulares atendidos têm Pago? preenchido.', acao: 'Ver lista', tabela: function () { return tabelaG('Particulares atendidos sem pagamento registrado', [['Data', D], ['Paciente', 'paciente'], ['Profissional', 'profissional'], ['Procedimento', 'procedimento'], ['Valor', V], ['Pago?', 'pago'], ['Em aberto', function (l) { return 'R$ ' + brl(saldoReg(l)); }], ['Obs.', 'obs']], r.pagamentoPendente, 'Nada pendente.', 'pag'); } },
 { k: 'nf', cor: 'laranja', n: (r.nfPendente || []).length, t: 'Pagos sem nota fiscal', s: (r.nfPendente || []).length ? brlCurto(soma(r.nfPendente)) + ' · emitir no Portal Nacional com o nome de “quem pagou”' : 'Nenhum pagamento sem NF.', acao: 'Ver lista', tabela: function () { return tabelaG('Pagos sem NF emitida', [['Data', D], ['Paciente', 'paciente'], ['Valor', V], ['Forma', 'forma'], ['Quem pagou', function (l) { return l.quem || '(pagador habitual)'; }], ['NF?', function (l) { return l.nf || '(em branco)'; }]], r.nfPendente, 'Nada pendente.', 'nf'); } },
 { k: 'guia', cor: 'lilas', n: (r.semGuia || []).length, t: 'Convênio sem guia assinada', s: (r.semGuia || []).length ? contarPor(r.semGuia, 'convenio') + ' — glosa certa se faturar assim' : 'Todas as guias de convênio assinadas.', acao: 'Ver lista', tabela: function () { return tabelaG('Convênio sem guia assinada', [['Data', D], ['Paciente', 'paciente'], ['Convênio', 'convenio'], ['Profissional', 'profissional'], ['Guia', function (l) { return l.guia || '(em branco)'; }]], r.semGuia, 'Nada pendente.', 'guia'); } },
 { k: 'faltas', cor: 'vermelha', n: faltas, t: 'Faltas sem aviso de particular — taxa de falta?', s: 'Você decide caso a caso; se cobrar, entra no próximo agendamento', acao: 'Decidir', tabela: function () { return tabelaG('Faltas sem aviso de particular (taxa a decidir)', [['Data', D], ['Paciente', 'paciente'], ['Profissional', 'profissional'], ['O que aconteceu', 'oque'], ['Obs.', 'obs']], r.faltas, 'Nenhuma falta sem aviso.', 'obs'); } },
@@ -2600,6 +2663,7 @@ var disc = $("#g-discreto"); disc.innerHTML = '';
 DISC.forEach(function (x) { var b = el('<button type="button"' + (gesAberto === x[0] ? ' style="color:var(--roxo);font-weight:700"' : '') + '>' + esc(x[1]) + '</button>'); b.addEventListener('click', function () { gesAberto = gesAberto === x[0] ? null : x[0]; renderGestao(); }); disc.appendChild(b); });
 var lista = $("#g-list"); lista.innerHTML = '';
 if (!r.abaExiste) lista.innerHTML = '<div class="vazio">A aba "' + esc(r.mes) + '" ainda não existe. Crie pela virada do mês, ao lado.</div>';
+else if (gesAberto === 'lanc') { if (LANC) lista.appendChild(tabelaLanc()); }
 else if (gesAberto) { var item = PEND.filter(function (p) { return p.k === gesAberto; })[0] || { tabela: (DISC.filter(function (x) { return x[0] === gesAberto; })[0] || [])[2] }; if (item.tabela) lista.appendChild(item.tabela()); }
 // virada do mês
 var prox = MESES_PT[(MESES_PT.indexOf(r.mes) + 1) % 12], temAba = (r.mesesExistentes || []).indexOf(prox) >= 0, temCol = (r.colunasMensalistas || []).indexOf(prox.toUpperCase()) >= 0;
@@ -2614,6 +2678,24 @@ var ba = $("#g-aba"); if (ba) ba.addEventListener('click', function () { var b =
 var bcl = $("#g-cols"); if (bcl) bcl.addEventListener('click', function () { var b = this, m = b.dataset.mes; doisCliques(b, 'Confirmar: criar colunas de ' + m + '?', function () { b.disabled = true; call('criarColunasMes', { mes: m }).then(function (r2) { if (!r2.ok) return toast((r2.erros || ['Não criou']).join(' ')); toast('Colunas criadas: ' + r2.coluna); carregarGestao(); }).catch(function (e) { toast('Erro: ' + e.message); }); }); });
 var comRegra = (AT ? AT.pacientes : []).filter(function (p) { return regraRelevante(p) || p.obsCobranca; }).length; $("#g-regras-n").textContent = comRegra || '';
 }
+/* ---------- Lançamentos: achar qualquer linha (mês mostrado ou todos) e corrigir tudo ---------- */
+function buscarLanc() {
+var pac = $("#g-lanc-pac").value.trim(), escopo = $("#g-lanc-escopo").value, b = $("#g-lanc-buscar");
+if (escopo === 'todos' && !pac) return toast('Pra procurar em todos os meses, digite o paciente');
+b.disabled = true; gesAberto = 'lanc'; gesCorr = null; renderCorrecao(); $("#g-list").innerHTML = '<div class="carregando">Buscando…</div>';
+call('lancamentos', { mes: escopo === 'todos' ? 'todos' : GES.mes, paciente: pac }).then(function (r) {
+if (!r.ok) { $("#g-list").innerHTML = ''; return toast((r.erros || ['Não achei']).join(' ')); }
+LANC = { linhas: r.linhas, total: r.total, titulo: (pac ? pac + ' · ' : '') + (escopo === 'todos' ? 'todos os meses' : GES.mes) };
+renderGestao(); $("#g-list").scrollIntoView({ behavior: 'smooth', block: 'start' });
+}).catch(function (e) { toast('Erro: ' + e.message); }).finally(function () { b.disabled = false; });
+}
+function tabelaLanc() {
+var V = function (l) { return l.valor ? 'R$ ' + brl(l.valor) : ''; };
+return tabelaG('Lançamentos · ' + LANC.titulo + (LANC.total > LANC.linhas.length ? ' (últimos ' + LANC.linhas.length + ' de ' + LANC.total + ')' : ''), [['Data', function (l) { return l.data + (l.hora ? ' ' + l.hora : ''); }], ['Aba', 'aba'], ['Paciente', 'paciente'], ['Profissional', 'profissional'], ['Procedimento', 'procedimento'], ['O que', 'oque'], ['Valor', V], ['Pago?', 'pago'], ['Recebido', function (l) { return l.pago === 'Parcial' ? 'R$ ' + brl(l.recebido) : l.pago === 'Sim' ? V(l) : ''; }], ['Em aberto', function (l) { return /^(|Não|Parcial)$/.test(l.pago) && l.valor ? 'R$ ' + brl(saldoReg(l)) : ''; }], ['NF', 'nf']], LANC.linhas.slice().reverse(), 'Nenhum lançamento encontrado.', 'amplo');
+}
+$("#g-lanc-buscar").addEventListener('click', buscarLanc);
+$("#g-lanc-pac").addEventListener('keydown', function (e) { if (e.key === 'Enter') buscarLanc(); });
+$("#g-lanc-novo").addEventListener('click', function () { go('registrar'); var d = $("#a-data"); if (d) { d.focus(); if (d.select) d.select(); } toast('Ponha a data da sessão: ela vai pra aba do mês dessa data'); });
 function contarPor(l, campo) { var c = {}; (l || []).forEach(function (x) { var k = x[campo] || '—'; c[k] = (c[k] || 0) + 1; }); return Object.keys(c).map(function (k) { return k + ' ×' + c[k]; }).join(' · '); }
 function doisCliques(btn, texto, acao) { if (btn.dataset.ok !== '1') { btn.dataset.ok = '1'; btn.dataset.antes = btn.textContent; btn.textContent = texto; setTimeout(function () { if (btn.dataset.ok === '1') { btn.dataset.ok = ''; btn.textContent = btn.dataset.antes; } }, 6000); return; } btn.dataset.ok = ''; acao(); }
 function mudarMes(n) { var i = MESES_PT.indexOf($("#g-mes").value); i = (i + n + 12) % 12; $("#g-mes").value = MESES_PT[i]; gesAberto = null; carregarGestao(); }

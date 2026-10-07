@@ -1,6 +1,6 @@
 <section class="tela coluna" id="s-gestao" hidden>
   <div class="titulo">
-    <h1 id="g-titulo">Gestão</h1>
+    <h1 id="g-titulo">Pendências</h1>
     <div class="acoes" style="gap:4px" id="g-nav" hidden>
       <button type="button" class="btn icone p" id="g-ant" aria-label="Mês anterior"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg></button>
       <button type="button" class="btn icone p" id="g-prox" aria-label="Próximo mês"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button>
@@ -24,9 +24,18 @@
       <h2 style="font-size:17px">Pendências <span class="muted" style="font-weight:500;font-size:14px">— o que falta pra fechar o mês sem perguntar nada à recepção</span></h2>
       <div id="g-pend" style="display:flex;flex-direction:column;gap:12px"></div>
       <div class="discreto" id="g-discreto"></div>
+      <section class="card compacto" id="g-lanc">
+        <div class="titulo" style="align-items:baseline;gap:10px"><h2 style="font-size:15px">Lançamentos</h2><span class="muted">corrigir valor, recebimento, data ou profissional de qualquer sessão já lançada</span></div>
+        <div class="grid g4">
+          <label class="campo c2">Paciente <span class="leg">(vazio = todas do mês)</span><input id="g-lanc-pac" list="dl-pacientes" autocomplete="off" placeholder="Comece a digitar o nome…"></label>
+          <label class="campo">Onde procurar<select id="g-lanc-escopo"><option value="mes">no mês mostrado</option><option value="todos">em todos os meses</option></select></label>
+          <div class="campo" style="justify-content:flex-end"><button type="button" class="btn" id="g-lanc-buscar">Buscar</button></div>
+        </div>
+        <div class="acoes"><button type="button" class="btn ter" id="g-lanc-novo">+ Lançar sessão que faltou</button><span class="muted">abre o Registrar: ponha a data da sessão (ex.: 15/09) e ela vai pra aba do mês certo</span></div>
+      </section>
     </div>
     <aside class="lateral larga">
-      <div class="card compacto">
+      <div class="card compacto" id="g-virada-card">
         <h2 style="font-size:15px">Virada do mês</h2>
         <ol class="virada" id="g-virada"></ol>
       </div>
@@ -38,7 +47,7 @@
         <div class="acoes"><button type="button" class="btn" id="g-lemb-salvar">Publicar na tela Hoje</button><button type="button" class="btn ter" id="g-lemb-encerrar" hidden>Encerrar o atual</button></div>
         <details id="g-lemb-hist" hidden><summary class="muted" style="cursor:pointer;font-size:13px">Lembretes anteriores</summary><ul id="g-lemb-lista" style="margin:6px 0 0;padding-left:18px;font-size:13px;color:var(--tx2)"></ul></details>
       </div>
-      <div class="card compacto">
+      <div class="card compacto" id="g-so-gestao">
         <h2 style="font-size:15px">Só a gestão edita</h2>
         <button type="button" class="atalho" id="g-atalho-regras">Regras e observações de cobrança <span class="cont" id="g-regras-n"></span></button>
         <div class="atalho" style="cursor:default">Tabela de procedimentos e valores <small>aba Procedimentos</small></div>
