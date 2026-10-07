@@ -101,6 +101,7 @@ function cartaoPaciente() {
   $("#a-pc-conv").textContent = p ? (p.convenio || '—') : '—';
   $("#a-pc-pag").textContent = p ? (p.pagador || p.nome) : '—';
   $("#a-pc-prof").textContent = $("#a-prof").value || '—';
+  $("#a-pc-valor").textContent = p ? valorSessaoTxt(p, $("#a-prof").value) : '—';
   $("#a-editcad").hidden = !p; $("#a-hist").hidden = !(p && ehMensal(p));
 }
 // Regras de cobrança: idênticas ao app anterior. Só muda o que aparece na tela (layoutCobranca).

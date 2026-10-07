@@ -190,6 +190,20 @@ function procObj(nome) { return AT.procedimentos.filter(function (p) { return p.
 function procCompra(n, prof) { var esps = espsDoProf(prof); return (AT ? AT.procedimentos : []).filter(function (p) { return /\(compra\)/.test(p.nome) && new RegExp('\\b' + n + '\\b').test(p.nome) && (!esps.length || esps.concat(['Psicologia']).indexOf(p.especialidade) >= 0); })[0] || null; }
 // nº de consultas vem do nome da modalidade; o valor vem do cadastro (primeiro "R$" em Valor combinado), senão da tabela (procedimento de compra), senão fica à mão
 function pacoteInfoMod(m, p, prof) { var n = parseInt((String(m || '').match(/(\d+)\s*(sessões|consultas)/) || [])[1], 10) || 4; var vc = (p && p.valorCombinado || '').match(/R\$\s?([\d.]+(?:,\d{1,2})?)/), vm = String(m || '').match(/R\$\s?([\d.]+)/); var v = vc ? num(vc[1]) : (vm ? num(vm[1]) : null); if (v == null) { var pc = procCompra(n, prof); if (pc && pc.valor != null) v = pc.valor; } return { n: n, valor: v }; }
+// valor da sessão pra mostrar junto da modalidade (painel da Agenda e cartão do Registrar): cadastro ("R$ 70 por sessão") ou tabela do profissional
+function valorSessaoTxt(p, prof) {
+  if (!p) return '—';
+  if (ehProBono(p)) return 'sem cobrança';
+  if (ehConvenio(p) && (!p.modalidade || p.modalidade === 'Convênio')) return 'convênio (R$ 0)';
+  if (ehMensal(p)) return 'incluído na mensalidade';
+  if (/^Paga o que/i.test(p.regra || '')) { var rf = refValor(p); return 'o que puder pagar' + (rf ? ' (ref. R$ ' + brl(rf) + ')' : ''); }
+  if (/^Valor fixo/i.test(p.regra || '')) { var vf = num((p.valorCombinado || '').match(/[\d.]+,?\d*/) || ''); if (vf != null) return 'R$ ' + brl(vf) + ' (combinado)'; }
+  var vs = valorSessaoCad(p), quando = ehPosterior(p) ? ' · paga no fim do mês' : ehAntecipado(p) ? ' · pago adiantado' : '';
+  if (vs != null) return 'R$ ' + brl(vs) + quando;
+  if (!AT || !prof) return 'tabela' + quando;
+  var base = tiposDe(espsDoProf(prof)).filter(function (x) { return /^(Sessão|Consulta)/.test(x.nome); })[0], pr = base ? procObj(derivarProc(base.nome, p)) : null;
+  return (pr && pr.valor != null ? 'R$ ' + brl(pr.valor) + ' (tabela)' : 'tabela') + quando;
+}
 function planoAPagar(pk) { return !!(pk && pk.pago && pk.pago !== 'Sim'); } // plano lançado "vai pagar depois": consultas contam, compra fica a receber
 // compra de plano a receber entra nas pendências de pagamento; sessões de plano/mensalidade/convênio não
 function pendentePagamento(r) { return (r.pago === '' || r.pago === 'Não' || r.pago === 'Parcial') && (!/^Mensalidade|pacote|plano|mensal|convênio|AAPI/i.test(r.procedimento) || /\(compra\)/i.test(r.procedimento)); }
