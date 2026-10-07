@@ -23,8 +23,8 @@ coluna E não afeta o app. Atualizar `E2` faz parte de toda publicação (passo 
 
 | Canal | Deploy | Peças | Commit |
 |---|---|---|---|
-| Real (`arquivos_real`) | **2026-10-07-02** | 30 (duplicatas 1 · server 7 · index 22; linhas 2 e 32–60; 3–28 = versão anterior com prefixo `antigo:`) | branch `claude/magical-dirac-hh3zzs` |
-| Teste (`arquivos`) | **2026-10-06-08** (atrás da real: não recebeu o 10, o 11, o 07-01 nem o 07-02) | 27 | 135de84 |
+| Real (`arquivos_real`) | **2026-10-07-03** | 30 (duplicatas 1 · server 7 · index 22; ativas: linhas 2, 32–42, 45–48, 50, 54–66; `antigo:` = 07-01, `antigo2:` = peças trocadas no 07-03) | branch `claude/magical-dirac-hh3zzs` |
+| Teste (`arquivos`) | **2026-10-06-08** (atrás da real: não recebeu o 10, o 11, o 07-01 nem os de 07/10) | 27 | 135de84 |
 | Carregador real | 2026-10-06-02 (`dist/Code.real.gs`, implantado pela Roberta) | — | 4ad0272 |
 | Carregador teste | 2026-10-04-01 + nova versão pendente desde 05/10 (permissão do Drive, ver `COMO-INSTALAR.md`) | — | — |
 
@@ -48,6 +48,14 @@ Modelo:
 ```
 
 ## Lista
+
+### 2026-10-07-03 · Real (direto) · nomes: "Horário dos profissionais" e "Agendamento"
+- **O que mudou**: "Horário das profissionais" → **Horário dos profissionais**; "Todas as profissionais" → **Todos os profissionais**;
+  o botão e o painel "Encaixe no dia" → **Agendamento** (vaga: "+ agendar"). Só textos da tela; servidor igual.
+- **Peças**: 6 do index (partes 4, 5, 10, 12, 13, 14) gravadas nas linhas 61–66 como `novo:`, conferidas 6/6, e troca de nomes num update
+  (43, 44, 49, 51, 52, 53 viraram `antigo2:`). Pra voltar: inverter os nomes dessas 12 linhas.
+- **Conferência**: remontado como o carregador: index = `dist/index.publicado.html`, server e duplicatas = fonte.
+- **Aprovação**: gestão, 07/10.
 
 ### 2026-10-07-02 · Real (direto) · tela Agenda (grade de horários) + Horário das profissionais
 - **O que mudou**: a tela Hoje passa a se chamar **Agenda**, com seletor **Lista | Agenda**. Na Agenda: **Dia** (todas as
