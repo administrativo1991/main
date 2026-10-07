@@ -23,8 +23,8 @@ coluna E não afeta o app. Atualizar `E2` faz parte de toda publicação (passo 
 
 | Canal | Deploy | Peças | Commit |
 |---|---|---|---|
-| Real (`arquivos_real`) | **2026-10-07-01** | 27 (duplicatas 1 · server 6 · index 20; linhas 2–28) | branch `claude/magical-dirac-hh3zzs` |
-| Teste (`arquivos`) | **2026-10-06-08** (atrás da real: não recebeu o 10, o 11 nem o 07-01) | 27 | 135de84 |
+| Real (`arquivos_real`) | **2026-10-07-02** | 30 (duplicatas 1 · server 7 · index 22; linhas 2 e 32–60; 3–28 = versão anterior com prefixo `antigo:`) | branch `claude/magical-dirac-hh3zzs` |
+| Teste (`arquivos`) | **2026-10-06-08** (atrás da real: não recebeu o 10, o 11, o 07-01 nem o 07-02) | 27 | 135de84 |
 | Carregador real | 2026-10-06-02 (`dist/Code.real.gs`, implantado pela Roberta) | — | 4ad0272 |
 | Carregador teste | 2026-10-04-01 + nova versão pendente desde 05/10 (permissão do Drive, ver `COMO-INSTALAR.md`) | — | — |
 
@@ -48,6 +48,21 @@ Modelo:
 ```
 
 ## Lista
+
+### 2026-10-07-02 · Real (direto) · tela Agenda (grade de horários) + Horário das profissionais
+- **O que mudou**: a tela Hoje passa a se chamar **Agenda**, com seletor **Lista | Agenda**. Na Agenda: **Dia** (todas as
+  profissionais lado a lado) ou **Semana** (uma profissional). Ocupado = nome do paciente (cor da situação); vaga = branco
+  tracejado; intervalo e horário fechado = cinza. Clicar numa vaga abre o "Encaixe no dia" com profissional, dia e hora;
+  clicar num nome abre o painel do paciente. Botão **Horário das profissionais**: a recepção grava, por profissional, as faixas
+  de cada dia (ex.: `08:00-12:00, 13:00-19:00`) e a duração da sessão; vai para colunas novas no fim da aba **Profissionais**
+  (`Horário segunda` … `Horário sábado`, `Duração da sessão (min)`, `Horário alterado por (app)`), criadas no primeiro salvamento.
+  Servidor: `listaDoDia` passou a usar `montarDia_` (mesma regra) e ganhou `agendaSemana` e `salvarExpediente`.
+- **Publicação sem janela quebrada**: as 29 peças novas foram gravadas nas linhas 32–60 com prefixo `novo:` (o carregador ignora),
+  conferidas 29/29 e só então os nomes da coluna A foram trocados num único update (3–28 viraram `antigo:`, 32–60 os nomes reais).
+  **Pra voltar atrás**: trocar de volta a coluna A (3–28 sem `antigo:`, 32–60 com `novo:`).
+- **Conferência**: lido de volta e remontado como o carregador faz (por arquivo e parte): index igual ao `dist/index.publicado.html`,
+  server igual ao fonte.
+- **Aprovação**: gestão, 07/10 ("pode colocar as 2 opções", "Clicar numa vaga abre o Encaixe… perfeito").
 
 ### 2026-10-07-01 · Real (direto) · convênio de plano não mostra mensalidade/modalidades
 - **O que mudou**: no cadastro (Pacientes), com convênio de plano (qualquer um que não seja Particular nem convênio de desconto)
