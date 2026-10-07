@@ -23,7 +23,7 @@ coluna E não afeta o app. Atualizar `E2` faz parte de toda publicação (passo 
 
 | Canal | Deploy | Peças | Commit |
 |---|---|---|---|
-| Real (`arquivos_real`) | **2026-10-07-04** | 31 (duplicatas 1 · server 7 · index 23); ativas = linhas com nome sem prefixo na coluna A; `antigo:` 07-01, `antigo2:`/`antigo3:` peças substituídas depois | branch `claude/magical-dirac-hh3zzs` |
+| Real (`arquivos_real`) | **2026-10-07-05** | 31 (duplicatas 1 · server 7 · index 23); ativas = linhas com nome sem prefixo na coluna A; `antigo:` 07-01, `antigo2:`/`antigo3:` peças substituídas depois | branch `claude/magical-dirac-hh3zzs` |
 | Teste (`arquivos`) | **2026-10-06-08** (atrás da real: não recebeu o 10, o 11, o 07-01 nem os de 07/10) | 27 | 135de84 |
 | Carregador real | 2026-10-06-02 (`dist/Code.real.gs`, implantado pela Roberta) | — | 4ad0272 |
 | Carregador teste | 2026-10-04-01 + nova versão pendente desde 05/10 (permissão do Drive, ver `COMO-INSTALAR.md`) | — | — |
@@ -48,6 +48,17 @@ Modelo:
 ```
 
 ## Lista
+
+### 2026-10-07-05 · Real (direto) · responsável legal e CPF do pagador
+- **O que mudou**: Pacientes ganhou "CPF do pagador" (Quem paga) e o bloco **Responsável** (nome, parentesco com sugestões,
+  telefone, CPF), que aparece pra menor de idade ou quando já tem algo preenchido. CPFs extras opcionais, mas validados se
+  preenchidos. Colunas novas no fim de Pacientes, criadas no primeiro salvamento: `CPF do pagador`, `Responsável (nome)`,
+  `Parentesco do responsável`, `Telefone do responsável`, `CPF do responsável`. Edição grava e registra em "Alterações de cadastro".
+  Painel da Agenda mostra "Responsável: nome (parentesco) · telefone".
+- **Peças**: 23 trocadas (server 0–6; index 7–22), gravadas nas linhas 92–114 como `novo:`, conferidas 23/23, troca num update
+  (as substituídas viraram `antigo4:`).
+- **Conferência**: remontado como o carregador: index = `dist/index.publicado.html`, server e duplicatas = fonte.
+- **Aprovação**: gestão, 07/10.
 
 ### 2026-10-07-04 · Real (direto) · pendências anteriores aparecem pra recepção
 - **O que mudou**: `listaDoDia` devolve `pendencias` dos pacientes do dia (mês do dia e o anterior, só sessões de antes do dia):
