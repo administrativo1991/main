@@ -23,7 +23,7 @@ coluna E não afeta o app. Atualizar `E2` faz parte de toda publicação (passo 
 
 | Canal | Deploy | Peças | Commit |
 |---|---|---|---|
-| Real (`arquivos_real`) | **2026-10-07-03** | 30 (duplicatas 1 · server 7 · index 22; ativas: linhas 2, 32–42, 45–48, 50, 54–66; `antigo:` = 07-01, `antigo2:` = peças trocadas no 07-03) | branch `claude/magical-dirac-hh3zzs` |
+| Real (`arquivos_real`) | **2026-10-07-04** | 31 (duplicatas 1 · server 7 · index 23); ativas = linhas com nome sem prefixo na coluna A; `antigo:` 07-01, `antigo2:`/`antigo3:` peças substituídas depois | branch `claude/magical-dirac-hh3zzs` |
 | Teste (`arquivos`) | **2026-10-06-08** (atrás da real: não recebeu o 10, o 11, o 07-01 nem os de 07/10) | 27 | 135de84 |
 | Carregador real | 2026-10-06-02 (`dist/Code.real.gs`, implantado pela Roberta) | — | 4ad0272 |
 | Carregador teste | 2026-10-04-01 + nova versão pendente desde 05/10 (permissão do Drive, ver `COMO-INSTALAR.md`) | — | — |
@@ -48,6 +48,17 @@ Modelo:
 ```
 
 ## Lista
+
+### 2026-10-07-04 · Real (direto) · pendências anteriores aparecem pra recepção
+- **O que mudou**: `listaDoDia` devolve `pendencias` dos pacientes do dia (mês do dia e o anterior, só sessões de antes do dia):
+  particular atendido sem "Pago?" (mesma regra da Gestão) e convênio sem guia assinada. Falta sem aviso não entra (decisão da gestão).
+  Na tela: etiqueta na coluna Cobrança ("deve sessão de 29/09 · R$ 70", "guia a assinar · 30/09"), faixa no painel do paciente
+  com **Receber** / **Guia assinada** (grava na linha antiga via `corrigirLancamento`) e linhas em "Pendências de hoje".
+  Texto do erro "Escolha o profissional."
+- **Peças**: 25 trocadas (server 0, 4, 5, 6; index 2–22), gravadas nas linhas 67–91 como `novo:`, conferidas 25/25, troca de nomes num update
+  (as substituídas viraram `antigo3:`).
+- **Conferência**: remontado como o carregador: index = `dist/index.publicado.html`, server e duplicatas = fonte.
+- **Aprovação**: gestão, 07/10 ("sessão sem pagar … guia sem assinatura também … falta sem aviso não precisa").
 
 ### 2026-10-07-03 · Real (direto) · nomes: "Horário dos profissionais" e "Agendamento"
 - **O que mudou**: "Horário das profissionais" → **Horário dos profissionais**; "Todas as profissionais" → **Todos os profissionais**;
