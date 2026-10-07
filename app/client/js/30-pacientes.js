@@ -3,6 +3,10 @@ var pModo = 'novo', pVoltar = null, pacIniciado = false, cadNome = '', cadDados 
 var CAMPOS_N = ["n-nome", "n-cpf", "n-nasc", "n-pagador", "n-whats", "n-prof", "n-mod", "n-conv", "n-cart", "n-indic", "n-primeira"];
 var RASCUNHO_N = 'rn-novo-paciente';
 var MOD_TABELA = /^Consulta individual|^Por sessão|^Plano de|^Convênio$/i;
+// convênios de desconto (gestão, 07/10): o paciente paga particular com desconto, então os cartões de modalidade continuam.
+// Os demais convênios são de plano: a modalidade é sempre "Convênio" e os cartões somem. Convênio de desconto novo: acrescentar aqui.
+var CONVENIOS_DESCONTO = ['AAPI JF', 'Plan Minas'];
+function convenioDePlano(c) { return !!(c && c !== 'Particular' && CONVENIOS_DESCONTO.indexOf(c) < 0); }
 
 INICIAR.pacientes = function (extra) {
   quandoAT(function () {
@@ -73,8 +77,13 @@ function renderCards() {
   tab.innerHTML = ''; ant.innerHTML = '';
   // Novo paciente: profissional primeiro (Roberta, 06/10). Sem profissional, os cartões ficam escondidos; com ele, só os da especialidade dele.
   var prof = $("#n-prof").value, semProf = pModo === 'novo' && !prof, esps = prof ? espsDoProf(prof) : [];
-  $("#n-mod-guia").hidden = !semProf; tab.hidden = semProf; ant.hidden = semProf; $("#n-mods-antigo-t").hidden = semProf; $("#n-prof-req").hidden = pModo !== 'novo';
-  if (semProf) return;
+  var conv = $("#n-conv").value, plano = convenioDePlano(conv);
+  if (plano) { $("#n-mod").value = 'Convênio'; atual = 'Convênio'; } // convênio de plano: modalidade é sempre Convênio
+  else if (atual === 'Convênio' && pModo === 'novo') { $("#n-mod").value = ''; atual = ''; } // paciente novo voltou pra particular/desconto: escolher de novo (no editar, mantém o que está gravado)
+  var esconde = semProf || plano;
+  $("#n-mod-guia").textContent = plano ? 'Convênio ' + conv + ': a modalidade fica “Convênio” (o convênio paga). Só preencher a carteirinha.' : 'Escolha o profissional: a modalidade diz como cobra, o profissional diz qual tabela.';
+  $("#n-mod-guia").hidden = !esconde; tab.hidden = esconde; ant.hidden = esconde; $("#n-mods-antigo-t").hidden = esconde; $("#n-prof-req").hidden = pModo !== 'novo';
+  if (esconde) return;
   if (pModo === 'novo') mods = mods.filter(function (m) { return m === atual || modDaEsp(m, esps); });
   var card = function (m, classe, etiqueta, desab) {
     var on = m === atual;
@@ -95,7 +104,7 @@ function onModalidade() {
   if (MOD_RESTRITA.indexOf(m) >= 0 || /^Pro bono|^Permuta/.test(m)) w.innerHTML = '<div class="faixa lilas">' + ic('info', 20, 2.2) + '<div class="corpo">“' + esc(m) + '” é definida pela gestão. Avise a recepção pelo grupo <b>Nascente | Tratamentos</b> e anote a regra em Observação de cobrança.</div></div>';
 }
 $("#n-prof").addEventListener('change', function () { if (pModo === 'novo' && $("#n-mod").value && !modDaEsp($("#n-mod").value, espsDoProf(this.value))) { $("#n-mod").value = ''; onModalidade(); } renderCards(); salvarRascunhoN(); });
-$("#n-conv").addEventListener('change', function () { $("#l-cart").hidden = this.value === 'Particular' || !this.value; });
+$("#n-conv").addEventListener('change', function () { $("#l-cart").hidden = this.value === 'Particular' || !this.value; renderCards(); onModalidade(); salvarRascunhoN(); });
 
 /* ---------- novo paciente ---------- */
 function salvarRascunhoN() { if (pModo !== 'novo') return; try { var o = {}; CAMPOS_N.forEach(function (id) { o[id] = $("#" + id).value; }); localStorage.setItem(RASCUNHO_N, JSON.stringify(o)); } catch (e) { } }

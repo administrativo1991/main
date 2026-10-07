@@ -23,8 +23,8 @@ coluna E não afeta o app. Atualizar `E2` faz parte de toda publicação (passo 
 
 | Canal | Deploy | Peças | Commit |
 |---|---|---|---|
-| Real (`arquivos_real`) | **2026-10-06-11** | 27 (duplicatas 1 · server 6 · index 20; linhas 2–28) | branch `claude/magical-dirac-hh3zzs` |
-| Teste (`arquivos`) | **2026-10-06-08** (atrás da real: não recebeu o 10 nem o 11) | 27 | 135de84 |
+| Real (`arquivos_real`) | **2026-10-07-01** | 27 (duplicatas 1 · server 6 · index 20; linhas 2–28) | branch `claude/magical-dirac-hh3zzs` |
+| Teste (`arquivos`) | **2026-10-06-08** (atrás da real: não recebeu o 10, o 11 nem o 07-01) | 27 | 135de84 |
 | Carregador real | 2026-10-06-02 (`dist/Code.real.gs`, implantado pela Roberta) | — | 4ad0272 |
 | Carregador teste | 2026-10-04-01 + nova versão pendente desde 05/10 (permissão do Drive, ver `COMO-INSTALAR.md`) | — | — |
 
@@ -48,6 +48,16 @@ Modelo:
 ```
 
 ## Lista
+
+### 2026-10-07-01 · Real (direto) · convênio de plano não mostra mensalidade/modalidades
+- **O que mudou**: no cadastro (Pacientes), com convênio de plano (qualquer um que não seja Particular nem convênio de desconto)
+  os cards de modalidade/mensalidade somem e a modalidade fica "Convênio", com a dica "só preencher a carteirinha".
+  Particular e convênios de desconto continuam com os cards. Lista de convênios de desconto fixa no código
+  (`CONVENIOS_DESCONTO` em `app/client/js/30-pacientes.js`): AAPI JF, Plan Minas. A gestão avisa quando houver outro.
+  Na edição, trocar para convênio de desconto não apaga em silêncio a modalidade já gravada.
+- **Peças**: 27; regravadas 5: index.html 15–19 (linhas 24–28).
+- **Conferência**: as 27 linhas lidas de volta, 27/27 iguais ao build; index remontado igual ao `dist/index.publicado.html`.
+- **Aprovação**: gestão, 06–07/10 ("AAPI JF, Plan Minas").
 
 ### 2026-10-06-11 · Real (direto) · botão "Horários fixos" na tela Hoje
 - **O que mudou**: botão "Horários fixos" no topo da tela Hoje, ao lado de "Encaixe no dia", abre o mesmo painel da Agenda recorrente
