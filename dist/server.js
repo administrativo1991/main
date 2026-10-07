@@ -169,11 +169,13 @@ var CONFIG = {
     OBS_COBRANCA: 'Observação de cobrança (a recepção lê — diz O QUE cobrar, nunca o porquê)',
     // novas (criadas pelo app, sempre no fim)
     LOG: 'Registrado por (app)', WHATS: 'WhatsApp do pagador', CARTEIRINHA: 'Nº da carteirinha',
-    INDICACAO: 'Quem indicou', PRIMEIRA: 'Data da 1ª consulta', PROF_REF: 'Profissional de referência'
+    INDICACAO: 'Quem indicou', PRIMEIRA: 'Data da 1ª consulta', PROF_REF: 'Profissional de referência',
+    // responsável legal (quem traz; pode ser diferente de quem paga) e CPF do pagador (gestão, 07/10)
+    PAGADOR_CPF: 'CPF do pagador', RESP: 'Responsável (nome)', RESP_PAR: 'Parentesco do responsável', RESP_TEL: 'Telefone do responsável', RESP_CPF: 'CPF do responsável'
   },
   LISTAS: { OQUE: 'O que aconteceu', PAGO: 'Pago?', FORMA: 'Forma de pagamento', CONVENIO: 'Convênio', REGRA: 'Regra de cobrança', MODALIDADE: 'Modalidade', MODALIDADE_ESP: 'Especialidade (modalidade)', GESTAO: 'Gestão' }
 };
-var COLS_NOVAS_PACIENTES = ['LOG', 'WHATS', 'CARTEIRINHA', 'INDICACAO', 'PRIMEIRA', 'PROF_REF'];
+var COLS_NOVAS_PACIENTES = ['LOG', 'WHATS', 'CARTEIRINHA', 'INDICACAO', 'PRIMEIRA', 'PROF_REF', 'PAGADOR_CPF', 'RESP', 'RESP_PAR', 'RESP_TEL', 'RESP_CPF'];
 
 var API = {};
 
@@ -250,7 +252,8 @@ function indicePacientes_() {
   var vals = s.getRange(2, 1, n - 1, s.getLastColumn()).getValues();
   var H = CONFIG.H, col = function (k) { return h[H[k]] ? h[H[k]] - 1 : -1; };
   var cNome = col('NOME'), cCpf = col('CPF'), cNasc = col('NASC'), cAtivo = col('ATIVO'), cMod = col('MODALIDADE'),
-      cPag = col('PAGADOR'), cConv = col('CONVENIO'), cRegra = col('REGRA'), cObs = col('OBS_COBRANCA'), cVal = col('VALOR_COMB');
+      cPag = col('PAGADOR'), cConv = col('CONVENIO'), cRegra = col('REGRA'), cObs = col('OBS_COBRANCA'), cVal = col('VALOR_COMB'),
+      cResp = col('RESP'), cRespPar = col('RESP_PAR'), cRespTel = col('RESP_TEL');
   var out = [];
   vals.forEach(function (r, i) {
     var nome = String(r[cNome] || '').trim();
@@ -265,7 +268,8 @@ function indicePacientes_() {
       convenio: cConv >= 0 ? String(r[cConv] || '').trim() : '',
       regra: cRegra >= 0 ? String(r[cRegra] || '').trim() : '',
       obsCobranca: cObs >= 0 ? String(r[cObs] || '').trim() : '',
-      valorCombinado: cVal >= 0 ? String(r[cVal] || '').trim() : ''
+      valorCombinado: cVal >= 0 ? String(r[cVal] || '').trim() : '',
+      resp: cResp >= 0 ? String(r[cResp] || '').trim() : '', respPar: cRespPar >= 0 ? String(r[cRespPar] || '').trim() : '', respTel: cRespTel >= 0 ? String(r[cRespTel] || '').trim() : ''
     });
   });
   return out;
@@ -355,6 +359,14 @@ API.bootstrap = function () {
 };
 
 /* ---------- Novo paciente ---------- */
+// CPF do pagador e do responsável: opcionais; se preenchidos, têm de ser válidos. Gravados formatados (000.000.000-00)
+function cpfFmt_(v) { var c = Duplicatas.digitos(v); return c ? c.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4') : ''; }
+function errosCpfsExtras_(d) {
+  var e = [];
+  if (Duplicatas.digitos(d.pagadorCpf) && !Duplicatas.cpfValido(Duplicatas.digitos(d.pagadorCpf))) e.push('CPF do pagador inválido. Confira os 11 dígitos.');
+  if (Duplicatas.digitos(d.respCpf) && !Duplicatas.cpfValido(Duplicatas.digitos(d.respCpf))) e.push('CPF do responsável inválido. Confira os 11 dígitos.');
+  return e;
+}
 API.criarPaciente = function (d) {
   d = d || {};
   var erros = [];
@@ -374,6 +386,7 @@ API.criarPaciente = function (d) {
   if (modalidade === 'Convênio' && convenio === 'Particular') erros.push('Modalidade "Convênio" exige escolher o convênio.');
   var primeira = d.primeiraConsulta ? parseData_(d.primeiraConsulta) : null;
   if (d.primeiraConsulta && !primeira) erros.push('Data da 1ª consulta inválida.');
+  erros = erros.concat(errosCpfsExtras_(d));
   if (erros.length) return { ok: false, erros: erros };
 
   var lock = LockService.getScriptLock();
@@ -408,6 +421,11 @@ API.criarPaciente = function (d) {
     put('INDICACAO', String(d.indicacao || '').trim());
     put('PRIMEIRA', primeira || '');
     put('PROF_REF', String(d.profissional || '').trim());
+    put('PAGADOR_CPF', cpfFmt_(d.pagadorCpf));
+    put('RESP', String(d.respNome || '').replace(/\s+/g, ' ').trim());
+    put('RESP_PAR', String(d.respPar || '').trim());
+    put('RESP_TEL', String(d.respTel || '').trim());
+    put('RESP_CPF', cpfFmt_(d.respCpf));
     put('LOG', (u.email || 'app') + ' · ' + agora_() + (d.confirmouDuplicata ? ' · confirmou que não é duplicata' : ''));
     s.appendRow(linha);
     var novaLinha = s.getLastRow();
@@ -941,7 +959,8 @@ API.confirmar = function (d) {
 };
 
 /* ---------- Editar cadastro (recepção e gestão; toda alteração vai pro log) ---------- */
-var CAMPOS_CADASTRO = { modalidade: 'MODALIDADE', convenio: 'CONVENIO', carteirinha: 'CARTEIRINHA', regra: 'REGRA', valorCombinado: 'VALOR_COMB', obsCobranca: 'OBS_COBRANCA', pagador: 'PAGADOR', whats: 'WHATS', profRef: 'PROF_REF' };
+var CAMPOS_CADASTRO = { modalidade: 'MODALIDADE', convenio: 'CONVENIO', carteirinha: 'CARTEIRINHA', regra: 'REGRA', valorCombinado: 'VALOR_COMB', obsCobranca: 'OBS_COBRANCA', pagador: 'PAGADOR', whats: 'WHATS', profRef: 'PROF_REF',
+  pagadorCpf: 'PAGADOR_CPF', respNome: 'RESP', respPar: 'RESP_PAR', respTel: 'RESP_TEL', respCpf: 'RESP_CPF' };
 function linhaPaciente_(nome) {
   var alvo = Duplicatas.normalizar(String(nome || ''));
   return indicePacientes_().filter(function (p) { return Duplicatas.normalizar(p.nome) === alvo; })[0] || null;
@@ -966,6 +985,9 @@ API.atualizarCadastro = function (d) {
   if (campos.convenio != null && campos.convenio !== '' && convs.length && convs.indexOf(campos.convenio) < 0) erros.push('Convênio fora da lista.');
   if (campos.regra != null && campos.regra !== '' && regras.length && regras.indexOf(campos.regra) < 0) erros.push('Regra de cobrança fora da lista.');
   if (campos.modalidade === 'Convênio' && (!campos.convenio || campos.convenio === 'Particular')) erros.push('Modalidade "Convênio" exige escolher o convênio.');
+  erros = erros.concat(errosCpfsExtras_(campos));
+  if (campos.pagadorCpf != null) campos.pagadorCpf = cpfFmt_(campos.pagadorCpf);
+  if (campos.respCpf != null) campos.respCpf = cpfFmt_(campos.respCpf);
   if (erros.length) return { ok: false, erros: erros };
   var lock = LockService.getScriptLock(); lock.waitLock(20000);
   try {

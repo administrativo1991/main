@@ -195,7 +195,7 @@ function renderPainel() {
   var sub = []; if (p && p.nasc) { var i = idade(p.nasc); if (i) sub.push(i); sub.push('nasc. ' + p.nasc); } if (p && p.pagador && p.pagador !== p.nome) sub.push('pagador: ' + p.pagador); if (!p) sub.push('não está em Pacientes');
   $("#pp-sub").textContent = sub.join(' · ');
   var tipo = it.origem && !/Semanal|Quinzenal|Registrado/.test(it.origem) ? it.origem : 'sessão';
-  $("#pp-dl").innerHTML = '<div><dt>Hoje</dt><dd>' + esc((it.hora || '—') + ' · ' + tipo) + '</dd></div><div><dt>Profissional</dt><dd>' + esc(it.profissional) + '</dd></div><div><dt>Modalidade</dt><dd>' + esc(p && p.modalidade ? modCurta(p.modalidade) : (p ? 'sem modalidade' : '—')) + '</dd></div><div><dt>Convênio</dt><dd>' + esc(p ? (p.convenio || 'Particular') : '—') + '</dd></div>';
+  $("#pp-dl").innerHTML = '<div><dt>Hoje</dt><dd>' + esc((it.hora || '—') + ' · ' + tipo) + '</dd></div><div><dt>Profissional</dt><dd>' + esc(it.profissional) + '</dd></div><div><dt>Modalidade</dt><dd>' + esc(p && p.modalidade ? modCurta(p.modalidade) : (p ? 'sem modalidade' : '—')) + '</dd></div><div><dt>Convênio</dt><dd>' + esc(p ? (p.convenio || 'Particular') : '—') + '</dd></div>' + (p && p.resp ? '<div><dt>Responsável</dt><dd>' + esc(p.resp + (p.respPar ? ' (' + p.respPar.toLowerCase() + ')' : '') + (p.respTel ? ' · ' + p.respTel : '')) + '</dd></div>' : '');
   var avisoHtml = '';
   if (p && (regraRelevante(p) || p.obsCobranca) && !ehProBono(p) && !ehConvenio(p) && !ehMensal(p)) avisoHtml = aviso('laranja', 'Atenção na cobrança · ' + esc(modCurta(p.regra || 'ver observação')), esc(p.obsCobranca || ''));
   else if (p && cadastroIncompleto(p)) avisoHtml = aviso('laranja', 'Cadastro incompleto', 'Sem modalidade nem convênio. Confira como paga antes de registrar.');

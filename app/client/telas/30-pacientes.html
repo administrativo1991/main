@@ -35,7 +35,19 @@
       <div class="grid">
         <label class="campo c2">Responsável financeiro <span class="leg">— nome como aparece no Pix; vai na NF</span><input id="n-pagador" list="dl-pagadores" autocomplete="off" placeholder="ex.: Maria Aparecida Santos"></label>
         <label class="campo">WhatsApp do pagador<input id="n-whats" inputmode="tel" autocomplete="off" placeholder="(32) 9" maxlength="16"></label>
+        <label class="campo">CPF do pagador <span class="leg">— se souber</span><input id="n-pag-cpf" inputmode="numeric" autocomplete="off" placeholder="000.000.000-00" maxlength="14"></label>
       </div>
+    </section>
+
+    <section class="card" id="n-resp-card">
+      <div class="titulo" style="align-items:baseline;gap:10px"><h2>Responsável</h2><span class="muted" id="n-resp-leg">quem traz e responde pela criança · pode ser diferente de quem paga</span></div>
+      <div class="grid">
+        <label class="campo c2">Nome do responsável<input id="n-resp" autocomplete="off" placeholder="ex.: Ana Paula Souza"></label>
+        <label class="campo">Parentesco <span class="leg">— se souber</span><input id="n-resp-par" list="dl-parentesco" autocomplete="off" placeholder="mãe, pai, avó…"></label>
+        <label class="campo">Telefone do responsável<input id="n-resp-tel" inputmode="tel" autocomplete="off" placeholder="(32) 9" maxlength="16"></label>
+        <label class="campo">CPF do responsável<input id="n-resp-cpf" inputmode="numeric" autocomplete="off" placeholder="000.000.000-00" maxlength="14"></label>
+      </div>
+      <datalist id="dl-parentesco"><option value="Mãe"><option value="Pai"><option value="Avó"><option value="Avô"><option value="Tia"><option value="Tio"><option value="Irmã"><option value="Irmão"><option value="Madrasta"><option value="Padrasto"><option value="Tutor(a) legal"></datalist>
     </section>
 
     <section class="card">

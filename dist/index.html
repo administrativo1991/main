@@ -936,7 +936,19 @@ button.kpi[aria-pressed="true"] span,.kpi.roxo span{color:#fff;opacity:.9}
       <div class="grid">
         <label class="campo c2">Responsável financeiro <span class="leg">— nome como aparece no Pix; vai na NF</span><input id="n-pagador" list="dl-pagadores" autocomplete="off" placeholder="ex.: Maria Aparecida Santos"></label>
         <label class="campo">WhatsApp do pagador<input id="n-whats" inputmode="tel" autocomplete="off" placeholder="(32) 9" maxlength="16"></label>
+        <label class="campo">CPF do pagador <span class="leg">— se souber</span><input id="n-pag-cpf" inputmode="numeric" autocomplete="off" placeholder="000.000.000-00" maxlength="14"></label>
       </div>
+    </section>
+
+    <section class="card" id="n-resp-card">
+      <div class="titulo" style="align-items:baseline;gap:10px"><h2>Responsável</h2><span class="muted" id="n-resp-leg">quem traz e responde pela criança · pode ser diferente de quem paga</span></div>
+      <div class="grid">
+        <label class="campo c2">Nome do responsável<input id="n-resp" autocomplete="off" placeholder="ex.: Ana Paula Souza"></label>
+        <label class="campo">Parentesco <span class="leg">— se souber</span><input id="n-resp-par" list="dl-parentesco" autocomplete="off" placeholder="mãe, pai, avó…"></label>
+        <label class="campo">Telefone do responsável<input id="n-resp-tel" inputmode="tel" autocomplete="off" placeholder="(32) 9" maxlength="16"></label>
+        <label class="campo">CPF do responsável<input id="n-resp-cpf" inputmode="numeric" autocomplete="off" placeholder="000.000.000-00" maxlength="14"></label>
+      </div>
+      <datalist id="dl-parentesco"><option value="Mãe"><option value="Pai"><option value="Avó"><option value="Avô"><option value="Tia"><option value="Tio"><option value="Irmã"><option value="Irmão"><option value="Madrasta"><option value="Padrasto"><option value="Tutor(a) legal"></datalist>
     </section>
 
     <section class="card">
@@ -1348,7 +1360,7 @@ function mock(nome, d) {
     if (nome === 'remarcar') { mockDia.push({ id: 'D-x' + mockDia.length, data: d.de, hora: d.horaDe, paciente: d.paciente, profissional: d.profissional, origem: 'Não vem · remarcado para ' + d.para }); mockDia.push({ id: 'D-y' + mockDia.length, data: d.para, hora: d.horaPara || d.horaDe, paciente: d.paciente, profissional: d.profissional, origem: 'Remarcação de ' + d.de }); return res({ ok: true }); }
     if (nome === 'lancarPacote') return res({ ok: true, id: 'P-novo', validade: '11/01/2027', linhaRecebimento: 43, aba: MESES_PT[new Date().getMonth()] });
     if (nome === 'confirmar') { mockDia.push({ id: 'D-c' + mockDia.length, data: d.data, hora: d.hora, paciente: d.paciente, profissional: d.profissional, origem: 'Confirmado' }); return res({ ok: true }); }
-    if (nome === 'lerCadastro') { var pc = (AT ? AT.pacientes : []).filter(function (p) { return p.nome === d.nome; })[0]; if (!pc) return res({ ok: false, erros: ['Paciente não encontrado em Pacientes.'] }); return res({ ok: true, nome: pc.nome, nasc: pc.nasc, cpfFinal: '4725', indicacao: '', primeira: '', campos: { modalidade: pc.modalidade, convenio: pc.convenio, carteirinha: '', regra: pc.regra, valorCombinado: pc.valorCombinado, obsCobranca: pc.obsCobranca, pagador: pc.pagador, whats: '', profRef: '' } }); }
+    if (nome === 'lerCadastro') { var pc = (AT ? AT.pacientes : []).filter(function (p) { return p.nome === d.nome; })[0]; if (!pc) return res({ ok: false, erros: ['Paciente não encontrado em Pacientes.'] }); return res({ ok: true, nome: pc.nome, nasc: pc.nasc, cpfFinal: '4725', indicacao: '', primeira: '', campos: { modalidade: pc.modalidade, convenio: pc.convenio, carteirinha: '', regra: pc.regra, valorCombinado: pc.valorCombinado, obsCobranca: pc.obsCobranca, pagador: pc.pagador, whats: '', profRef: '', pagadorCpf: '', respNome: pc.nome === 'Theo Barreto Lima' ? 'Daniela Barreto Lima' : '', respPar: pc.nome === 'Theo Barreto Lima' ? 'Mãe' : '', respTel: '', respCpf: '' } }); }
     if (nome === 'atualizarCadastro') return res({ ok: true, alterados: Object.keys(d.campos || {}).slice(0, 2) });
     if (nome === 'removerDoDia') { mockDia = mockDia.filter(function (x) { return x.id !== d.id; }); return res({ ok: true }); }
     if (nome === 'mensalistasPainel') return res({ itens: [{ linha: 2, paciente: 'Sofia Ramos Teixeira', modalidade: 'Mensalidade fixa', valor: 200, pagador: 'Associação Boa Esperança', pago: '', dataPago: '', obs: '', sessoes: 3 }, { linha: 3, paciente: 'Theo Barreto Lima', modalidade: 'Mensal (valor especial)', valor: 150, pagador: 'Daniela Barreto Lima', pago: 'Sim', dataPago: '06/11/2026 — R$ 150,00 Pix · NF 67 · app', obs: '', sessoes: 5 }, { linha: 4, paciente: 'Adirlene Rufino Rodrigues', modalidade: 'Plano de 4 consultas · mensalista só até outubro', valor: 280, pagador: '', pago: 'Não', dataPago: 'deve R$ 280 (recepção 03/10)', obs: '', sessoes: 2 }], colunas: ['SETEMBRO (paga em outubro) — pago?', 'OUTUBRO — pago?', 'NOVEMBRO — pago?'], coluna: d.coluna || 'NOVEMBRO — pago?', mes: 'NOVEMBRO', anterior: { coluna: 'OUTUBRO — pago?', mes: 'OUTUBRO', pendentes: 26 }, modeloNovo: true, abaMes: MESES_PT[new Date().getMonth()], hoje: hojeStr() });
@@ -1751,7 +1763,7 @@ function renderPainel() {
   var sub = []; if (p && p.nasc) { var i = idade(p.nasc); if (i) sub.push(i); sub.push('nasc. ' + p.nasc); } if (p && p.pagador && p.pagador !== p.nome) sub.push('pagador: ' + p.pagador); if (!p) sub.push('não está em Pacientes');
   $("#pp-sub").textContent = sub.join(' · ');
   var tipo = it.origem && !/Semanal|Quinzenal|Registrado/.test(it.origem) ? it.origem : 'sessão';
-  $("#pp-dl").innerHTML = '<div><dt>Hoje</dt><dd>' + esc((it.hora || '—') + ' · ' + tipo) + '</dd></div><div><dt>Profissional</dt><dd>' + esc(it.profissional) + '</dd></div><div><dt>Modalidade</dt><dd>' + esc(p && p.modalidade ? modCurta(p.modalidade) : (p ? 'sem modalidade' : '—')) + '</dd></div><div><dt>Convênio</dt><dd>' + esc(p ? (p.convenio || 'Particular') : '—') + '</dd></div>';
+  $("#pp-dl").innerHTML = '<div><dt>Hoje</dt><dd>' + esc((it.hora || '—') + ' · ' + tipo) + '</dd></div><div><dt>Profissional</dt><dd>' + esc(it.profissional) + '</dd></div><div><dt>Modalidade</dt><dd>' + esc(p && p.modalidade ? modCurta(p.modalidade) : (p ? 'sem modalidade' : '—')) + '</dd></div><div><dt>Convênio</dt><dd>' + esc(p ? (p.convenio || 'Particular') : '—') + '</dd></div>' + (p && p.resp ? '<div><dt>Responsável</dt><dd>' + esc(p.resp + (p.respPar ? ' (' + p.respPar.toLowerCase() + ')' : '') + (p.respTel ? ' · ' + p.respTel : '')) + '</dd></div>' : '');
   var avisoHtml = '';
   if (p && (regraRelevante(p) || p.obsCobranca) && !ehProBono(p) && !ehConvenio(p) && !ehMensal(p)) avisoHtml = aviso('laranja', 'Atenção na cobrança · ' + esc(modCurta(p.regra || 'ver observação')), esc(p.obsCobranca || ''));
   else if (p && cadastroIncompleto(p)) avisoHtml = aviso('laranja', 'Cadastro incompleto', 'Sem modalidade nem convênio. Confira como paga antes de registrar.');
@@ -2464,7 +2476,7 @@ CAMPOS_AT.forEach(function (id) { $("#" + id).addEventListener('input', salvarRa
 /* ===== 30-pacientes.js ===== */
 /* ================= PACIENTES (novo paciente + editar cadastro) ================= */
 var pModo = 'novo', pVoltar = null, pacIniciado = false, cadNome = '', cadDados = null, dupConfirmada = false, salvandoP = false;
-var CAMPOS_N = ["n-nome", "n-cpf", "n-nasc", "n-pagador", "n-whats", "n-prof", "n-mod", "n-conv", "n-cart", "n-indic", "n-primeira"];
+var CAMPOS_N = ["n-nome", "n-cpf", "n-nasc", "n-pagador", "n-whats", "n-prof", "n-mod", "n-conv", "n-cart", "n-indic", "n-primeira", "n-pag-cpf", "n-resp", "n-resp-par", "n-resp-tel", "n-resp-cpf"];
 var RASCUNHO_N = 'rn-novo-paciente';
 var MOD_TABELA = /^Consulta individual|^Por sessão|^Plano de|^Convênio$/i;
 // convênios de desconto (gestão, 07/10): o paciente paga particular com desconto, então os cartões de modalidade continuam.
@@ -2493,6 +2505,7 @@ function iniciarPac() {
   $("#p-gestao-campos").hidden = !ehGestao();
   renderCards();
   if (lerRascunhoN()) { toast('Rascunho do cadastro recuperado'); renderCards(); }
+  mostrarResp();
   $("#l-cart").hidden = $("#n-conv").value === 'Particular' || !$("#n-conv").value;
 }
 function setModo(m) {
@@ -2609,7 +2622,8 @@ function atualizarBotaoN() {
 function dadosN(confirmou) {
   return { nome: $("#n-nome").value, cpf: $("#n-cpf").value, nasc: $("#n-nasc").value, pagador: $("#n-pagador").value, whatsapp: $("#n-whats").value,
     profissional: $("#n-prof").value, modalidade: $("#n-mod").value, convenio: $("#n-conv").value, carteirinha: $("#n-cart").value,
-    indicacao: $("#n-indic").value, primeiraConsulta: $("#n-primeira").value, confirmouDuplicata: !!confirmou };
+    indicacao: $("#n-indic").value, primeiraConsulta: $("#n-primeira").value, confirmouDuplicata: !!confirmou,
+    pagadorCpf: $("#n-pag-cpf").value, respNome: $("#n-resp").value, respPar: $("#n-resp-par").value, respTel: $("#n-resp-tel").value, respCpf: $("#n-resp-cpf").value };
 }
 function validarN() {
   var e = [];
@@ -2620,7 +2634,7 @@ function validarN() {
   if (!$("#n-prof").value) e.push('Escolha o profissional (a modalidade depende dele).');
   if (!$("#n-mod").value) e.push('Escolha a modalidade.');
   if ($("#n-mod").value === 'Convênio' && $("#n-conv").value === 'Particular') e.push('Modalidade "Convênio": escolha o convênio.');
-  return e;
+  return e.concat(errosCpfsExtras());
 }
 function salvarNovo(confirmou, registrarDepois) {
   if (salvandoP) return;
@@ -2654,6 +2668,7 @@ function salvarNovo(confirmou, registrarDepois) {
 }
 function limparFormN(apagaSucesso) {
   CAMPOS_N.forEach(function (id) { var e = $("#" + id); if (e.tagName === 'SELECT') e.value = ''; else e.value = ''; });
+  mostrarResp();
   if ($("#n-conv").options.length) $("#n-conv").value = 'Particular';
   ["c-regra", "c-valor", "c-obs", "c-quem"].forEach(function (id) { $("#" + id).value = ''; });
   $("#n-dup").innerHTML = ''; $("#n-erros").innerHTML = ''; $("#n-confirma").innerHTML = ''; $("#n-modwarn").innerHTML = ''; $("#n-nome").classList.remove('erro');
@@ -2677,10 +2692,11 @@ function carregarCad() {
     $("#n-nome").value = r.nome; $("#n-cpf").value = r.cpfFinal ? '···' + r.cpfFinal : ''; $("#n-nasc").value = r.nasc || '';
     $("#n-indic").value = r.indicacao || ''; $("#n-primeira").value = r.primeira || '';
     $("#n-pagador").value = c.pagador || ''; $("#n-whats").value = c.whats || '';
+    $("#n-pag-cpf").value = c.pagadorCpf || ''; $("#n-resp").value = c.respNome || ''; $("#n-resp-par").value = c.respPar || ''; $("#n-resp-tel").value = c.respTel || ''; $("#n-resp-cpf").value = c.respCpf || '';
     setSel($("#n-prof"), c.profRef); setSel($("#n-conv"), c.convenio || 'Particular'); $("#n-cart").value = c.carteirinha || '';
     setSel($("#n-mod"), c.modalidade); setSel($("#c-regra"), c.regra); $("#c-valor").value = c.valorCombinado || ''; $("#c-obs").value = c.obsCobranca || ''; $("#c-quem").value = '';
     $("#l-cart").hidden = !$("#n-conv").value || $("#n-conv").value === 'Particular';
-    renderCards(); onModalidade(); $("#p-form").hidden = false; atualizarBotaoN();
+    renderCards(); onModalidade(); mostrarResp(); $("#p-form").hidden = false; atualizarBotaoN();
   }).catch(function (e) { $("#c-carregando").hidden = true; toast('Erro: ' + e.message); });
 }
 function salvarEdicao() {
@@ -2689,14 +2705,16 @@ function salvarEdicao() {
   var quem = $("#c-quem").value.trim(); if (!quem) erros.push('Informe quem passou a informação.');
   if ($("#n-mod").value === 'Convênio' && (!$("#n-conv").value || $("#n-conv").value === 'Particular')) erros.push('Modalidade "Convênio": escolha o convênio.');
   if ($("#n-primeira").value && !dataValida($("#n-primeira").value)) erros.push('Data da 1ª consulta inválida.');
+  erros = erros.concat(errosCpfsExtras());
   $("#n-erros").innerHTML = erroBox(erros); if (erros.length) return;
   var c0 = cadDados.campos || {};
   var campos = { modalidade: $("#n-mod").value, convenio: $("#n-conv").value, carteirinha: $("#n-cart").value.trim(), pagador: $("#n-pagador").value.trim(), whats: $("#n-whats").value.trim(), profRef: $("#n-prof").value,
-    regra: ehGestao() ? $("#c-regra").value : (c0.regra || ''), valorCombinado: ehGestao() ? $("#c-valor").value.trim() : (c0.valorCombinado || ''), obsCobranca: ehGestao() ? $("#c-obs").value.trim() : (c0.obsCobranca || '') };
+    regra: ehGestao() ? $("#c-regra").value : (c0.regra || ''), valorCombinado: ehGestao() ? $("#c-valor").value.trim() : (c0.valorCombinado || ''), obsCobranca: ehGestao() ? $("#c-obs").value.trim() : (c0.obsCobranca || ''),
+    pagadorCpf: $("#n-pag-cpf").value.trim(), respNome: $("#n-resp").value.trim(), respPar: $("#n-resp-par").value.trim(), respTel: $("#n-resp-tel").value.trim(), respCpf: $("#n-resp-cpf").value.trim() };
   salvandoP = true; $("#p-salvar").disabled = true;
   call('atualizarCadastro', { nome: nome, quemInformou: quem, campos: campos }).then(function (r) {
     if (!r.ok) { $("#n-erros").innerHTML = erroBox(r.erros || [], 'Não gravou'); return; }
-    [AT && AT.pacientes, BOOT && BOOT.pacientes].forEach(function (l) { (l || []).filter(function (p) { return p.nome === nome; }).forEach(function (p) { p.modalidade = campos.modalidade; p.convenio = campos.convenio; p.regra = campos.regra; p.obsCobranca = campos.obsCobranca; p.valorCombinado = campos.valorCombinado; p.pagador = campos.pagador; }); });
+    [AT && AT.pacientes, BOOT && BOOT.pacientes].forEach(function (l) { (l || []).filter(function (p) { return p.nome === nome; }).forEach(function (p) { p.modalidade = campos.modalidade; p.convenio = campos.convenio; p.regra = campos.regra; p.obsCobranca = campos.obsCobranca; p.valorCombinado = campos.valorCombinado; p.pagador = campos.pagador; p.resp = campos.respNome; p.respPar = campos.respPar; p.respTel = campos.respTel; }); });
     var mudou = r.alterados && r.alterados.length;
     toast(mudou ? 'Cadastro atualizado' : 'Nada mudou');
     $("#n-sucesso").innerHTML = aviso('verde', esc(nome) + ' · ' + (mudou ? 'cadastro atualizado' : 'nada mudou'), mudou ? 'Alterado: ' + esc(r.alterados.map(function (c) { return c.split(' (')[0]; }).join(', ')) + '. Registrado em “Alterações de cadastro”.' : 'Nenhum campo mudou.');
@@ -2708,6 +2726,18 @@ $("#n-cpf").addEventListener('input', function () { if (pModo === 'novo') this.v
 $("#n-nasc").addEventListener('input', function () { this.value = mascaraData(this.value); });
 $("#n-primeira").addEventListener('input', function () { this.value = mascaraData(this.value); });
 $("#n-whats").addEventListener('input', function () { this.value = mascaraFone(this.value); });
+$("#n-resp-tel").addEventListener('input', function () { this.value = mascaraFone(this.value); });
+["n-pag-cpf", "n-resp-cpf"].forEach(function (id) { $("#" + id).addEventListener('input', function () { this.value = mascaraCPF(this.value); }); });
+$("#n-nasc").addEventListener('input', mostrarResp);
+/* responsável legal: aparece pra menor de idade (ou quando já tem algo preenchido); CPFs extras são opcionais, mas se preenchidos têm de ser válidos */
+function ehMenor(nasc) { var d = dataObj(nasc); if (!d) return false; var h = new Date(), a = h.getFullYear() - d.getFullYear(); if (h.getMonth() < d.getMonth() || (h.getMonth() === d.getMonth() && h.getDate() < d.getDate())) a--; return a < 18; }
+function mostrarResp() { var tem = ['n-resp', 'n-resp-par', 'n-resp-tel', 'n-resp-cpf'].some(function (id) { return $("#" + id).value.trim(); }); $("#n-resp-card").hidden = !(ehMenor($("#n-nasc").value) || tem); }
+function errosCpfsExtras() {
+  var e = [], ok = function (v) { var c = String(v || '').replace(/\D/g, ''); return !c || Duplicatas.cpfValido(c); };
+  if (!ok($("#n-pag-cpf").value)) e.push('CPF do pagador inválido. Confira os 11 dígitos.');
+  if (!ok($("#n-resp-cpf").value)) e.push('CPF do responsável inválido. Confira os 11 dígitos.');
+  return e;
+}
 $("#n-nome").addEventListener('input', function () { dupConfirmada = false; checarDup(); });
 ["n-cpf", "n-nasc", "n-pagador"].forEach(function (id) { $("#" + id).addEventListener('input', checarDup); });
 CAMPOS_N.forEach(function (id) { $("#" + id).addEventListener('input', salvarRascunhoN); $("#" + id).addEventListener('change', salvarRascunhoN); });

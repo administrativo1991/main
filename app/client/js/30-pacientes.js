@@ -1,6 +1,6 @@
 /* ================= PACIENTES (novo paciente + editar cadastro) ================= */
 var pModo = 'novo', pVoltar = null, pacIniciado = false, cadNome = '', cadDados = null, dupConfirmada = false, salvandoP = false;
-var CAMPOS_N = ["n-nome", "n-cpf", "n-nasc", "n-pagador", "n-whats", "n-prof", "n-mod", "n-conv", "n-cart", "n-indic", "n-primeira"];
+var CAMPOS_N = ["n-nome", "n-cpf", "n-nasc", "n-pagador", "n-whats", "n-prof", "n-mod", "n-conv", "n-cart", "n-indic", "n-primeira", "n-pag-cpf", "n-resp", "n-resp-par", "n-resp-tel", "n-resp-cpf"];
 var RASCUNHO_N = 'rn-novo-paciente';
 var MOD_TABELA = /^Consulta individual|^Por sessão|^Plano de|^Convênio$/i;
 // convênios de desconto (gestão, 07/10): o paciente paga particular com desconto, então os cartões de modalidade continuam.
@@ -29,6 +29,7 @@ function iniciarPac() {
   $("#p-gestao-campos").hidden = !ehGestao();
   renderCards();
   if (lerRascunhoN()) { toast('Rascunho do cadastro recuperado'); renderCards(); }
+  mostrarResp();
   $("#l-cart").hidden = $("#n-conv").value === 'Particular' || !$("#n-conv").value;
 }
 function setModo(m) {
@@ -145,7 +146,8 @@ function atualizarBotaoN() {
 function dadosN(confirmou) {
   return { nome: $("#n-nome").value, cpf: $("#n-cpf").value, nasc: $("#n-nasc").value, pagador: $("#n-pagador").value, whatsapp: $("#n-whats").value,
     profissional: $("#n-prof").value, modalidade: $("#n-mod").value, convenio: $("#n-conv").value, carteirinha: $("#n-cart").value,
-    indicacao: $("#n-indic").value, primeiraConsulta: $("#n-primeira").value, confirmouDuplicata: !!confirmou };
+    indicacao: $("#n-indic").value, primeiraConsulta: $("#n-primeira").value, confirmouDuplicata: !!confirmou,
+    pagadorCpf: $("#n-pag-cpf").value, respNome: $("#n-resp").value, respPar: $("#n-resp-par").value, respTel: $("#n-resp-tel").value, respCpf: $("#n-resp-cpf").value };
 }
 function validarN() {
   var e = [];
@@ -156,7 +158,7 @@ function validarN() {
   if (!$("#n-prof").value) e.push('Escolha o profissional (a modalidade depende dele).');
   if (!$("#n-mod").value) e.push('Escolha a modalidade.');
   if ($("#n-mod").value === 'Convênio' && $("#n-conv").value === 'Particular') e.push('Modalidade "Convênio": escolha o convênio.');
-  return e;
+  return e.concat(errosCpfsExtras());
 }
 function salvarNovo(confirmou, registrarDepois) {
   if (salvandoP) return;
@@ -190,6 +192,7 @@ function salvarNovo(confirmou, registrarDepois) {
 }
 function limparFormN(apagaSucesso) {
   CAMPOS_N.forEach(function (id) { var e = $("#" + id); if (e.tagName === 'SELECT') e.value = ''; else e.value = ''; });
+  mostrarResp();
   if ($("#n-conv").options.length) $("#n-conv").value = 'Particular';
   ["c-regra", "c-valor", "c-obs", "c-quem"].forEach(function (id) { $("#" + id).value = ''; });
   $("#n-dup").innerHTML = ''; $("#n-erros").innerHTML = ''; $("#n-confirma").innerHTML = ''; $("#n-modwarn").innerHTML = ''; $("#n-nome").classList.remove('erro');
@@ -213,10 +216,11 @@ function carregarCad() {
     $("#n-nome").value = r.nome; $("#n-cpf").value = r.cpfFinal ? '···' + r.cpfFinal : ''; $("#n-nasc").value = r.nasc || '';
     $("#n-indic").value = r.indicacao || ''; $("#n-primeira").value = r.primeira || '';
     $("#n-pagador").value = c.pagador || ''; $("#n-whats").value = c.whats || '';
+    $("#n-pag-cpf").value = c.pagadorCpf || ''; $("#n-resp").value = c.respNome || ''; $("#n-resp-par").value = c.respPar || ''; $("#n-resp-tel").value = c.respTel || ''; $("#n-resp-cpf").value = c.respCpf || '';
     setSel($("#n-prof"), c.profRef); setSel($("#n-conv"), c.convenio || 'Particular'); $("#n-cart").value = c.carteirinha || '';
     setSel($("#n-mod"), c.modalidade); setSel($("#c-regra"), c.regra); $("#c-valor").value = c.valorCombinado || ''; $("#c-obs").value = c.obsCobranca || ''; $("#c-quem").value = '';
     $("#l-cart").hidden = !$("#n-conv").value || $("#n-conv").value === 'Particular';
-    renderCards(); onModalidade(); $("#p-form").hidden = false; atualizarBotaoN();
+    renderCards(); onModalidade(); mostrarResp(); $("#p-form").hidden = false; atualizarBotaoN();
   }).catch(function (e) { $("#c-carregando").hidden = true; toast('Erro: ' + e.message); });
 }
 function salvarEdicao() {
@@ -225,14 +229,16 @@ function salvarEdicao() {
   var quem = $("#c-quem").value.trim(); if (!quem) erros.push('Informe quem passou a informação.');
   if ($("#n-mod").value === 'Convênio' && (!$("#n-conv").value || $("#n-conv").value === 'Particular')) erros.push('Modalidade "Convênio": escolha o convênio.');
   if ($("#n-primeira").value && !dataValida($("#n-primeira").value)) erros.push('Data da 1ª consulta inválida.');
+  erros = erros.concat(errosCpfsExtras());
   $("#n-erros").innerHTML = erroBox(erros); if (erros.length) return;
   var c0 = cadDados.campos || {};
   var campos = { modalidade: $("#n-mod").value, convenio: $("#n-conv").value, carteirinha: $("#n-cart").value.trim(), pagador: $("#n-pagador").value.trim(), whats: $("#n-whats").value.trim(), profRef: $("#n-prof").value,
-    regra: ehGestao() ? $("#c-regra").value : (c0.regra || ''), valorCombinado: ehGestao() ? $("#c-valor").value.trim() : (c0.valorCombinado || ''), obsCobranca: ehGestao() ? $("#c-obs").value.trim() : (c0.obsCobranca || '') };
+    regra: ehGestao() ? $("#c-regra").value : (c0.regra || ''), valorCombinado: ehGestao() ? $("#c-valor").value.trim() : (c0.valorCombinado || ''), obsCobranca: ehGestao() ? $("#c-obs").value.trim() : (c0.obsCobranca || ''),
+    pagadorCpf: $("#n-pag-cpf").value.trim(), respNome: $("#n-resp").value.trim(), respPar: $("#n-resp-par").value.trim(), respTel: $("#n-resp-tel").value.trim(), respCpf: $("#n-resp-cpf").value.trim() };
   salvandoP = true; $("#p-salvar").disabled = true;
   call('atualizarCadastro', { nome: nome, quemInformou: quem, campos: campos }).then(function (r) {
     if (!r.ok) { $("#n-erros").innerHTML = erroBox(r.erros || [], 'Não gravou'); return; }
-    [AT && AT.pacientes, BOOT && BOOT.pacientes].forEach(function (l) { (l || []).filter(function (p) { return p.nome === nome; }).forEach(function (p) { p.modalidade = campos.modalidade; p.convenio = campos.convenio; p.regra = campos.regra; p.obsCobranca = campos.obsCobranca; p.valorCombinado = campos.valorCombinado; p.pagador = campos.pagador; }); });
+    [AT && AT.pacientes, BOOT && BOOT.pacientes].forEach(function (l) { (l || []).filter(function (p) { return p.nome === nome; }).forEach(function (p) { p.modalidade = campos.modalidade; p.convenio = campos.convenio; p.regra = campos.regra; p.obsCobranca = campos.obsCobranca; p.valorCombinado = campos.valorCombinado; p.pagador = campos.pagador; p.resp = campos.respNome; p.respPar = campos.respPar; p.respTel = campos.respTel; }); });
     var mudou = r.alterados && r.alterados.length;
     toast(mudou ? 'Cadastro atualizado' : 'Nada mudou');
     $("#n-sucesso").innerHTML = aviso('verde', esc(nome) + ' · ' + (mudou ? 'cadastro atualizado' : 'nada mudou'), mudou ? 'Alterado: ' + esc(r.alterados.map(function (c) { return c.split(' (')[0]; }).join(', ')) + '. Registrado em “Alterações de cadastro”.' : 'Nenhum campo mudou.');
@@ -244,6 +250,18 @@ $("#n-cpf").addEventListener('input', function () { if (pModo === 'novo') this.v
 $("#n-nasc").addEventListener('input', function () { this.value = mascaraData(this.value); });
 $("#n-primeira").addEventListener('input', function () { this.value = mascaraData(this.value); });
 $("#n-whats").addEventListener('input', function () { this.value = mascaraFone(this.value); });
+$("#n-resp-tel").addEventListener('input', function () { this.value = mascaraFone(this.value); });
+["n-pag-cpf", "n-resp-cpf"].forEach(function (id) { $("#" + id).addEventListener('input', function () { this.value = mascaraCPF(this.value); }); });
+$("#n-nasc").addEventListener('input', mostrarResp);
+/* responsável legal: aparece pra menor de idade (ou quando já tem algo preenchido); CPFs extras são opcionais, mas se preenchidos têm de ser válidos */
+function ehMenor(nasc) { var d = dataObj(nasc); if (!d) return false; var h = new Date(), a = h.getFullYear() - d.getFullYear(); if (h.getMonth() < d.getMonth() || (h.getMonth() === d.getMonth() && h.getDate() < d.getDate())) a--; return a < 18; }
+function mostrarResp() { var tem = ['n-resp', 'n-resp-par', 'n-resp-tel', 'n-resp-cpf'].some(function (id) { return $("#" + id).value.trim(); }); $("#n-resp-card").hidden = !(ehMenor($("#n-nasc").value) || tem); }
+function errosCpfsExtras() {
+  var e = [], ok = function (v) { var c = String(v || '').replace(/\D/g, ''); return !c || Duplicatas.cpfValido(c); };
+  if (!ok($("#n-pag-cpf").value)) e.push('CPF do pagador inválido. Confira os 11 dígitos.');
+  if (!ok($("#n-resp-cpf").value)) e.push('CPF do responsável inválido. Confira os 11 dígitos.');
+  return e;
+}
 $("#n-nome").addEventListener('input', function () { dupConfirmada = false; checarDup(); });
 ["n-cpf", "n-nasc", "n-pagador"].forEach(function (id) { $("#" + id).addEventListener('input', checarDup); });
 CAMPOS_N.forEach(function (id) { $("#" + id).addEventListener('input', salvarRascunhoN); $("#" + id).addEventListener('change', salvarRascunhoN); });
