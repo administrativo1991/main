@@ -251,6 +251,7 @@ function corrigirForm(reg, foco, p) {
       var prOpts = (AT && AT.procedimentos || []).map(function (x) { return x.nome; }); if (reg.procedimento && prOpts.indexOf(reg.procedimento) < 0) prOpts.unshift(reg.procedimento);
       var oqOpts = (BOOT.listas.oque || []).slice(); if (reg.oque && oqOpts.indexOf(reg.oque) < 0) oqOpts.unshift(reg.oque);
       var sel = function (k, opts, atual) { return '<select data-c="' + k + '">' + opts.map(function (o) { return '<option' + (o === atual ? ' selected' : '') + '>' + esc(o) + '</option>'; }).join('') + '</select>'; };
+      html += '<div class="c2 faixa nota">Lançou por engano (duplicado, paciente errado)? <button type="button" class="btn link" data-engano>Marcar como lançado por engano</button> A linha vira "Cancelado pela clínica" (nada é apagado) e, se for sessão de plano, a consulta volta pro plano.</div>';
       html += '<label class="campo">Data<input data-c="data" inputmode="numeric" maxlength="10" value="' + esc(reg.data || '') + '"></label><label class="campo">Hora<input data-c="hora" inputmode="numeric" maxlength="5" value="' + esc(reg.hora || '') + '"></label>' +
         '<label class="campo c2">Paciente<input data-c="paciente" list="dl-pacientes" autocomplete="off" value="' + esc(reg.paciente || '') + '"></label>' +
         '<label class="campo">Profissional' + sel('profissional', (BOOT.profissionais || []).map(function (x) { return x.nome; }).concat(reg.profissional && !(BOOT.profissionais || []).some(function (x) { return x.nome === reg.profissional; }) ? [reg.profissional] : []), reg.profissional) + '</label>' +
@@ -275,6 +276,14 @@ function corrigirForm(reg, foco, p) {
   if (pSel) pSel.addEventListener('change', soSim); soSim();
   $$('[data-c=dataPagamento], [data-c=data]', box).forEach(function (i) { i.addEventListener('input', function () { this.value = mascaraData(this.value); }); });
   var hr = $('[data-c=hora]', box); if (hr) hr.addEventListener('input', function () { this.value = mascaraHora(this.value); });
+  var be = $('[data-engano]', box); if (be) be.addEventListener('click', function () {
+    var oq = $('[data-c=oque]', box), canc = (BOOT.listas.oque || []).filter(function (o) { return /^Cancelado pela cl/i.test(o); })[0];
+    if (!canc) return toast('"Cancelado pela clínica" não está na aba Listas: peça pra gestão acrescentar.');
+    setSel(oq, canc);
+    var qi = $('[data-c=quemInformou]', box); if (qi && !qi.value.trim()) qi.value = 'lançado por engano (' + quemSou() + ')';
+    var ob = $('[data-c=observacao]', box); if (ob && !ob.value.trim()) ob.value = 'Lançado por engano — não houve esta sessão';
+    toast('Confira e clique em "Gravar correção"');
+  });
   return box;
 }
 // lê o formulário: manda só o que mudou em relação à linha (o servidor confere de novo e registra)

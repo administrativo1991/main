@@ -42,7 +42,7 @@ function renderCorrecao() {
       var b = this; b.disabled = true;
       call('corrigirLancamento', { aba: abaL, id: l.id, campos: c }).then(function (r) {
         if (!r.ok) { b.disabled = false; $('[data-erros]', pn).innerHTML = erroBox(r.erros || [], 'Não gravou'); return; }
-        toast('Corrigido: ' + (r.alterados || []).join(', ') + (r.plano ? ' · plano ' + r.plano.id + ' atualizado em Planos' : ''));
+        toast('Corrigido: ' + (r.alterados || []).join(', ') + (r.plano ? ' · plano ' + r.plano.id + (r.plano.n ? ' agora ' + r.plano.usadas + '/' + r.plano.n : '') + ' em Planos' : ''));
         if (typeof invalidarResumo === 'function') invalidarResumo();
         var reLanc = gesAberto === 'lanc'; carregarGestao(); if (reLanc) buscarLanc();
       }).catch(function (e) { b.disabled = false; toast('Erro: ' + e.message); });

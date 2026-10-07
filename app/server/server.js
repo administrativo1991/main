@@ -575,6 +575,23 @@ API.corrigirLancamento = function (d) {
         }
       }
     }
+    // sessão de plano: mudar "O que aconteceu" devolve ou consome a consulta em Planos (mesma regra do registrar)
+    var consome = function (o) { return /^(Atendido|Faltou)/.test(String(o || '')); };
+    if (planoId && novos.OQUE != null && !/^(Compra do plano|Sessão extra liberada)/i.test(txt('OBS')) && consome(txt('OQUE')) !== consome(novos.OQUE)) {
+      var sp2 = planilha_().getSheetByName(CONFIG.ABA.PACOTES);
+      if (sp2 && sp2.getLastRow() >= 2) {
+        var hp2 = cabecalhos_(sp2), pids2 = sp2.getRange(2, hp2['ID'], sp2.getLastRow() - 1, 1).getValues();
+        for (var k2 = 0; k2 < pids2.length; k2++) if (String(pids2[k2][0]).trim() === planoId) {
+          var lp2 = k2 + 2, n2 = Number(sp2.getRange(lp2, hp2['Nº de sessões']).getValue()) || 0;
+          var us2 = Math.max(0, (Number(sp2.getRange(lp2, hp2['Sessões usadas']).getValue()) || 0) + (consome(novos.OQUE) ? 1 : -1));
+          var st2 = String(sp2.getRange(lp2, hp2['Status']).getValue() || '').trim(), pp2 = { 'Sessões usadas': us2 };
+          if (n2 > 0 && us2 >= n2) pp2['Status'] = 'encerrado'; else if (st2 === 'encerrado') pp2['Status'] = 'ativo';
+          if (hp2['Registrado por (app)']) pp2['Registrado por (app)'] = (String(sp2.getRange(lp2, hp2['Registrado por (app)']).getValue() || '') + ' | ' + (consome(novos.OQUE) ? 'consulta consumida' : 'consulta devolvida') + ' (' + id + ') por ' + carimbo).replace(/^ \| /, '');
+          gravarCelulas_(sp2, lp2, hp2, pp2); plano = { id: planoId, linha: lp2, usadas: us2, n: n2 };
+          break;
+        }
+      }
+    }
     SpreadsheetApp.flush();
     var depois = {}; Object.keys(novos).forEach(function (k) { depois[k] = novos[k] instanceof Date ? fmtData_(novos[k]) : novos[k]; });
     return { ok: true, id: id, aba: aba, linha: linha, alterados: rotulos, novos: depois, plano: plano };

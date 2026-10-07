@@ -270,7 +270,7 @@ function renderForm(it) {
     $("#d-cor-ok", pn).addEventListener('click', function () {
       var c = corrigirCampos(fbox, reg), erros = corrigirValidar(c, reg); $('[data-erros]', pn).innerHTML = erroBox(erros); if (erros.length) return;
       var b = this; b.disabled = true;
-      call('corrigirLancamento', { aba: DIA.abaMes, id: reg.id, campos: c }).then(function (r) { if (!r.ok) { b.disabled = false; $('[data-erros]', pn).innerHTML = erroBox(r.erros || [], 'Não gravou'); return; } toast('Corrigido: ' + (r.alterados || []).join(', ')); formAberto = null; invalidarResumo(); carregarDia(); }).catch(function (e) { b.disabled = false; toast('Erro: ' + e.message); });
+      call('corrigirLancamento', { aba: DIA.abaMes, id: reg.id, campos: c }).then(function (r) { if (!r.ok) { b.disabled = false; $('[data-erros]', pn).innerHTML = erroBox(r.erros || [], 'Não gravou'); return; } toast('Corrigido: ' + (r.alterados || []).join(', ') + (r.plano && r.plano.n ? ' · plano ' + r.plano.usadas + '/' + r.plano.n : '')); formAberto = null; invalidarResumo(); carregarDia(); }).catch(function (e) { b.disabled = false; toast('Erro: ' + e.message); });
     });
   } else {
     $("#d-rem-ok", pn).addEventListener('click', function () {
