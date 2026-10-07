@@ -130,7 +130,7 @@ function indicePacientes_() {
   return out;
 }
 // Profissionais: A = nome, B = especialidade; o expediente (horário por dia da semana + duração da sessão) fica em colunas
-// criadas no fim pela tela Agenda → "Horário das profissionais". Formato da célula: "08:00-12:00, 13:00-19:00" (vazio = não atende)
+// criadas no fim pela tela Agenda → "Horário dos profissionais". Formato da célula: "08:00-12:00, 13:00-19:00" (vazio = não atende)
 var EXPEDIENTE = { DIAS: ['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'], DURACAO: 'Duração da sessão (min)', LOG: 'Horário alterado por (app)' };
 function colExpediente_(dia) { return 'Horário ' + dia.toLowerCase(); }
 function profissionais_() {
@@ -166,7 +166,7 @@ function faixasTxt_(f) { var hm = function (m) { return ('0' + Math.floor(m / 60
 API.salvarExpediente = function (d) {
   d = d || {};
   var nome = String(d.profissional || '').trim(), erros = [], horarios = {};
-  if (!nome) erros.push('Escolha a profissional.');
+  if (!nome) erros.push('Escolha o profissional.');
   EXPEDIENTE.DIAS.forEach(function (dia) { var f = faixasHorario_((d.horarios || {})[dia]); if (f === null) erros.push(dia + ': horário inválido. Use o formato 08:00-12:00, 13:00-19:00.'); else horarios[dia] = faixasTxt_(f); });
   var dur = String(d.duracao == null ? '' : d.duracao).trim(), durN = parseInt(dur, 10);
   if (dur && !(durN >= 10 && durN <= 240)) erros.push('Duração da sessão: informe os minutos (entre 10 e 240).');
@@ -725,7 +725,33 @@ function montarDia_(data, cache) {
   itens.sort(function (a, b) { return (a.profissional + a.hora).localeCompare(b.profissional + b.hora); });
   return { data: chave, diaSemana: diaSemana, itens: itens, abaMes: nomeAbaMes_(data), abaMesExiste: cm.existe };
 }
-API.listaDoDia = function (d) { d = d || {}; return montarDia_(parseData_(d.data) || new Date()); };
+API.listaDoDia = function (d) {
+  d = d || {};
+  var data = parseData_(d.data) || new Date(), r = montarDia_(data);
+  r.pendencias = pendenciasDe_(r.itens.map(function (it) { return it.paciente; }), data);
+  return r;
+};
+// Pendências de sessões anteriores (mês do dia e o anterior), pra recepção ver quando o paciente chega (gestão, 07/10):
+// particular atendido sem "Pago?" (mesma regra da Gestão: plano, mensalidade e convênio não entram) e convênio sem guia assinada.
+// Falta sem aviso não entra (decisão da gestão). Só linhas de antes do dia mostrado; as do próprio dia já aparecem no registro.
+function pendenciasDe_(nomes, data) {
+  var quer = {}; nomes.forEach(function (n) { quer[n] = 1; });
+  var out = {}, hojeChave = Utilities.formatDate(data, CONFIG.TZ, 'yyyyMMdd');
+  var ant = new Date(data.getFullYear(), data.getMonth() - 1, 1);
+  [nomeAbaMes_(ant), nomeAbaMes_(data)].forEach(function (aba) {
+    linhasMes_(aba).linhas.forEach(function (r) {
+      if (!quer[r.paciente] || !/^Atendido/.test(r.oque)) return;
+      var dt = parseData_(r.data); if (!dt || Utilities.formatDate(dt, CONFIG.TZ, 'yyyyMMdd') >= hojeChave) return;
+      var particular = !r.convenio || /^Particular$/i.test(r.convenio), tipo = null;
+      if (particular && (r.pago === '' || r.pago === 'Não') && (!/^Mensalidade|pacote|plano|mensal|convênio|AAPI/i.test(r.procedimento) || /\(compra\)/i.test(r.procedimento))) tipo = 'pag';
+      else if ((!particular || /^Convênio/i.test(r.pago)) && r.guia !== 'Sim') tipo = 'guia';
+      if (!tipo) return;
+      (out[r.paciente] = out[r.paciente] || []).push({ tipo: tipo, aba: aba, id: r.id, linha: r.linha, data: r.data, hora: r.hora, profissional: r.profissional, procedimento: r.procedimento, oque: r.oque,
+        valor: r.valor, pago: r.pago, forma: r.forma, dataPag: r.dataPag, quem: r.quem, nf: r.nf, nfN: r.nfN, guia: r.guia, convenio: r.convenio });
+    });
+  });
+  return out;
+}
 // Agenda (visão semana): os 7 dias da semana da data (segunda a domingo), opcionalmente de uma profissional só
 API.agendaSemana = function (d) {
   d = d || {};

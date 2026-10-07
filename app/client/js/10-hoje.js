@@ -117,10 +117,19 @@ function tagGuia(it, p) {
   if (!conv) return null;
   return r.guia === 'Sim' ? { cor: 'verde', txt: 'Guia assinada' } : { cor: 'amarela', ic: 'alerta', txt: 'Guia a emitir' };
 }
+// pendências de sessões anteriores (servidor: mês do dia e o anterior) — sessão particular sem pagamento e guia sem assinatura
+function pendDe(nome) { return (DIA && DIA.pendencias && DIA.pendencias[nome]) || []; }
+function tagsPend(nome) {
+  var l = pendDe(nome), pag = l.filter(function (x) { return x.tipo === 'pag'; }), guia = l.filter(function (x) { return x.tipo === 'guia'; }), t = [];
+  if (pag.length) t.push({ cor: 'amarela', ic: 'alerta', txt: 'deve ' + (pag.length > 1 ? pag.length + ' sessões' : 'sessão de ' + pag[0].data.slice(0, 5)) + (pag.some(function (x) { return x.valor; }) ? ' · R$ ' + brl(pag.reduce(function (a, x) { return a + (x.valor || 0); }, 0)).replace(',00', '') : '') });
+  if (guia.length) t.push({ cor: 'lilas', ic: 'alerta', txt: 'guia a assinar · ' + guia.map(function (x) { return x.data.slice(0, 5); }).join(', ') });
+  return t;
+}
 function cobrancaHtml(it, p) {
   var guia = tagGuia(it, p);
   var html = tagsDe(p).map(function (t) { return (guia && /^Convênio /.test(t.txt)) ? guia : t; }).map(function (t) { return tagHtml(t, true); }).join('');
   if (guia && !tagsDe(p).some(function (t) { return /^Convênio /.test(t.txt); })) html += tagHtml(guia, true);
+  html += tagsPend(it.paciente).map(function (t) { return tagHtml(t, true); }).join('');
   if (it.naoVem) html += '<span class="tag p cinza">' + esc(it.naoVem.replace('Não vem · ', '')) + '</span>';
   return html || '<span class="muted">—</span>';
 }
@@ -192,6 +201,15 @@ function renderPainel() {
   else if (p && cadastroIncompleto(p)) avisoHtml = aviso('laranja', 'Cadastro incompleto', 'Sem modalidade nem convênio. Confira como paga antes de registrar.');
   else if (p && ehProBono(p) && p.obsCobranca) avisoHtml = aviso('lilas', /permuta/i.test(p.regra + p.modalidade) ? 'Permuta' : 'Pro bono', esc(p.obsCobranca));
   $("#pp-aviso").innerHTML = avisoHtml;
+  // sessões anteriores em aberto: a recepção vê na chegada e resolve ali mesmo (grava na linha antiga, como a Gestão)
+  var pendHtml = pendDe(it.paciente).map(function (x, i) {
+    var quando = x.data + (x.hora ? ' ' + x.hora : '');
+    return x.tipo === 'pag'
+      ? aviso('amarela', 'Sessão anterior sem pagamento', esc([quando, x.procedimento, x.valor ? 'R$ ' + brl(x.valor) : 'valor não lançado', profCurto(x.profissional)].filter(Boolean).join(' · ')), '<button type="button" class="btn mini" data-pend="' + i + '">Receber</button>')
+      : aviso('lilas', 'Guia sem assinatura · pedir pra imprimir', esc([quando, 'Convênio ' + (x.convenio || ''), x.procedimento, profCurto(x.profissional)].filter(Boolean).join(' · ')), '<button type="button" class="btn ter mini" data-pend="' + i + '">Guia assinada</button>');
+  }).join('');
+  $("#pp-pend").innerHTML = pendHtml; $("#pp-pend").hidden = !pendHtml;
+  $$('[data-pend]', $("#pp-pend")).forEach(function (b) { b.addEventListener('click', function () { var k = 'pend:' + b.dataset.pend; formAberto = formAberto === k ? null : k; renderPainel(); var f = $("#pp-form"); if (f.firstChild) f.firstChild.scrollIntoView({ behavior: 'smooth', block: 'center' }); }); });
   // etiquetas de cobrança (as mesmas da tabela), menos a laranja quando o bloco acima já a explica
   var tags = tagsDe(p).filter(function (t) { return !(t.cor === 'laranja' && avisoHtml); });
   $("#pp-tags").innerHTML = tags.map(function (t) { return tagHtml(t); }).join(''); $("#pp-tags").hidden = !tags.length;
@@ -212,9 +230,11 @@ function renderPainel() {
 }
 function renderForm(it) {
   var box = $("#pp-form"); box.innerHTML = ''; if (!formAberto) return;
-  var tipo = formAberto, html;
+  var tipo = formAberto, html, pend = /^pend:/.test(tipo) ? pendDe(it.paciente)[+tipo.slice(5)] : null;
+  if (/^pend:/.test(tipo) && !pend) { formAberto = null; return; }
   if (tipo === 'naovem') html = '<h3>Não vem hoje</h3><div class="grid g1"><label class="campo">Motivo<select id="d-nv-motivo"></select></label><label class="campo">Observação<input id="d-nv-obs"></label></div><div class="acoes"><button type="button" class="btn" id="d-nv-ok">Gravar</button><button type="button" class="btn ter" data-fechar>Cancelar</button></div><span class="muted">Grava a falta na aba do mês, sem cobrança nesta linha.</span>';
   else if (tipo === 'remarcar') html = '<h3>Remarcar</h3><div class="grid g2"><label class="campo">Nova data<input id="d-rm-data" placeholder="dd/mm/aaaa" maxlength="10" inputmode="numeric"></label><label class="campo">Nova hora<input id="d-rm-hora" placeholder="hh:mm" maxlength="5" inputmode="numeric" value="' + esc(it.hora || '') + '"></label><label class="campo c2">Observação<input id="d-rm-obs"></label></div><div class="acoes"><button type="button" class="btn" id="d-rm-ok">Remarcar</button><button type="button" class="btn ter" data-fechar>Cancelar</button></div><span class="muted">Hoje fica como “não vem · remarcado”; o novo dia ganha a linha.</span>';
+  else if (pend) html = '<h3>' + (pend.tipo === 'pag' ? 'Receber a sessão de ' : 'Guia da sessão de ') + esc(pend.data) + '</h3><div class="muted">Grava na linha dessa sessão na aba ' + esc(pend.aba) + (pend.id ? '' : ' (sem ID: corrija direto na planilha)') + '. O valor não se altera por aqui.</div><div data-form></div><div data-erros></div><div class="acoes">' + (pend.id ? '<button type="button" class="btn" id="d-pend-ok">Gravar</button>' : '') + '<button type="button" class="btn ter" data-fechar>Cancelar</button></div>';
   else if (tipo === 'corrigir') html = '<h3>Corrigir cobrança</h3><div class="muted">Muda só os campos de cobrança da linha já gravada (Pago?, forma, NF, guia, observação). O valor não se altera por aqui: se estiver errado, avise a gestão.</div><div data-form></div><div data-erros></div><div class="acoes"><button type="button" class="btn" id="d-cor-ok">Gravar correção</button><button type="button" class="btn ter" data-fechar>Cancelar</button></div>';
   else html = '<h3>Remover da lista</h3><div class="grid g1"><label class="campo">Motivo da remoção <span class="leg">só agendamentos avulsos; horário fixo se pausa na Agenda recorrente</span><input id="d-rem-motivo" value="duplicado"></label></div><div class="acoes"><button type="button" class="btn vermelho" id="d-rem-ok">Remover da lista</button><button type="button" class="btn ter" data-fechar>Cancelar</button></div>';
   var pn = el('<div class="pp-formbox">' + html + '</div>'); box.appendChild(pn);
@@ -238,6 +258,13 @@ function renderForm(it) {
       call('remarcar', d).then(function (r) { if (!r.ok) return toast((r.erros || ['Não gravou']).join(' ')); toast('Remarcado para ' + para); carregarDia(); }).catch(function (e) { toast('Erro: ' + e.message); });
     });
     $("#d-rm-data", pn).focus();
+  } else if (pend) {
+    var pbox = corrigirForm(pend, pend.tipo, pacInfo(it.paciente)); $('[data-form]', pn).appendChild(pbox);
+    var okp = $("#d-pend-ok", pn); if (okp) okp.addEventListener('click', function () {
+      var c = corrigirCampos(pbox, pend), erros = corrigirValidar(c, pend); $('[data-erros]', pn).innerHTML = erroBox(erros); if (erros.length) return;
+      var b = this; b.disabled = true;
+      call('corrigirLancamento', { aba: pend.aba, id: pend.id, campos: c }).then(function (r) { if (!r.ok) { b.disabled = false; $('[data-erros]', pn).innerHTML = erroBox(r.erros || [], 'Não gravou'); return; } toast('Gravado na sessão de ' + pend.data + ': ' + (r.alterados || []).join(', ')); formAberto = null; invalidarResumo(); carregarDia(); }).catch(function (e) { b.disabled = false; toast('Erro: ' + e.message); });
+    });
   } else if (tipo === 'corrigir') {
     var reg = it.registro, p0 = pacInfo(it.paciente), fbox = corrigirForm(reg, 'todos', p0); $('[data-form]', pn).appendChild(fbox);
     $("#d-cor-ok", pn).addEventListener('click', function () {
@@ -288,6 +315,10 @@ function renderPend(itens) {
   if (incompl.length) out.push(['laranja', incompl.length, 'cadastro sem modalidade · ' + incompl.map(function (i) { return primeiroNome(i.paciente); }).join(', '), 'pacientes', incompl[0].paciente]);
   var fora = itens.filter(function (i) { return !pacInfo(i.paciente); });
   if (fora.length) out.push(['laranja', fora.length, 'não está em Pacientes · ' + fora.map(function (i) { return primeiroNome(i.paciente); }).join(', '), 'pacientes']);
+  var devem = itens.filter(function (i) { return pendDe(i.paciente).some(function (x) { return x.tipo === 'pag'; }); });
+  if (devem.length) out.push(['amarela', devem.length, 'de hoje com sessão anterior sem pagamento · ' + devem.map(function (i) { return primeiroNome(i.paciente); }).join(', '), null]);
+  var guiasAnt = itens.filter(function (i) { return pendDe(i.paciente).some(function (x) { return x.tipo === 'guia'; }); });
+  if (guiasAnt.length) out.push(['lilas', guiasAnt.length, 'de hoje com guia anterior sem assinatura (pedir pra imprimir) · ' + guiasAnt.map(function (i) { return primeiroNome(i.paciente); }).join(', '), null]);
   var regs = itens.filter(function (i) { return i.registro && /^Atendido/.test(i.registro.oque); });
   var particular = function (r) { return !r.convenio || /^Particular$/i.test(r.convenio); }, dest = ehGestao() ? 'gestao' : null;
   var sg = regs.filter(function (i) { var r = i.registro; return (!particular(r) || /^Convênio/i.test(r.pago)) && r.guia !== 'Sim'; });

@@ -368,6 +368,8 @@ button.kpi[aria-pressed="true"] span,.kpi.roxo span{color:#fff;opacity:.9}
 
 /* ---------- impressão ---------- */
 
+.pp-pend{display:flex;flex-direction:column;gap:10px}
+.pp-pend .faixa .btn{align-self:center;flex:none}
 /* ---------- Agenda (grade: vagas em branco, ocupados com o nome, intervalo/fechado em cinza) ---------- */
 .seg.mini button{min-height:40px;padding:8px 14px;flex:0 0 auto}
 .ag-card{display:flex;flex-direction:column}
