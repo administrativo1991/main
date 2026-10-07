@@ -785,6 +785,66 @@ API.lancarPacote = function (d) {
   } finally { lock.releaseLock(); }
 };
 
+/* ---------- Pagamento antecipado (gestão, 07/10): no dia em que a pessoa paga, lança as N sessões já pagas, uma por data da agenda ---------- */
+// próximas sessões do paciente pela agenda (recorrente + acréscimos do dia), a partir de "de"; ignora "Não vem" e dias que já têm lançamento
+API.proximasSessoes = function (d) {
+  d = d || {};
+  var paciente = String(d.paciente || '').trim(), prof = String(d.profissional || '').trim(), n = Math.min(parseInt(d.n, 10) || 4, 24);
+  var de = parseData_(d.de) || new Date(), cache = {}, out = [];
+  for (var i = 0; i < 120 && out.length < n; i++) {
+    var dia = dataMais_(de, i), r;
+    try { r = montarDia_(dia, cache); } catch (e) { continue; }
+    r.itens.forEach(function (it) {
+      if (out.length >= n || it.paciente !== paciente || (prof && it.profissional !== prof) || it.naoVem || it.registro) return;
+      out.push({ data: r.data, hora: horaTxt_(it.hora), profissional: it.profissional });
+    });
+  }
+  return { ok: true, sessoes: out };
+};
+API.lancarAntecipado = function (d) {
+  d = d || {};
+  var erros = [], HM = CONFIG.HM;
+  var paciente = String(d.paciente || '').trim(); if (!paciente) erros.push('Escolha o paciente.');
+  var procedimento = String(d.procedimento || '').trim(); if (!procedimento) erros.push('Escolha o procedimento.');
+  var valor = numBR_(d.valorSessao); if (!(valor > 0)) erros.push('Informe o valor por sessão.');
+  var dpg = parseData_(d.dataPagamento); if (!dpg) erros.push('Data do pagamento inválida.');
+  var forma = String(d.forma || '').trim(); if (!forma) erros.push('Escolha a forma de pagamento.');
+  var sessoes = (d.sessoes || []).map(function (x) { return { data: parseData_(x.data), dataTxt: String(x.data || ''), hora: String(x.hora || '').trim(), profissional: String(x.profissional || d.profissional || '').trim() }; });
+  if (!sessoes.length) erros.push('Informe as datas das sessões.');
+  sessoes.forEach(function (x, i) {
+    if (!x.data) erros.push('Sessão ' + (i + 1) + ': data inválida (' + x.dataTxt + ').');
+    if (x.hora && !/^\d{1,2}:\d{2}$/.test(x.hora)) erros.push('Sessão ' + (i + 1) + ': hora inválida (hh:mm).');
+    if (!x.profissional) erros.push('Sessão ' + (i + 1) + ': sem profissional.');
+  });
+  if (erros.length) return { ok: false, erros: erros };
+  var faltam = {}; sessoes.forEach(function (x) { var nm = nomeAbaMes_(x.data); if (!planilha_().getSheetByName(nm)) faltam[nm] = 1; });
+  if (Object.keys(faltam).length) return { ok: false, erros: ['A aba ' + Object.keys(faltam).join(', ') + ' ainda não existe. Crie em Pendências → Criar aba do mês, ou lance só as datas deste mês.'] };
+  var lock = LockService.getScriptLock(); lock.waitLock(20000);
+  try {
+    var pac = indicePacientes_().filter(function (p) { return p.nome === paciente; })[0];
+    if (!pac) return { ok: false, erros: ['Paciente não está em Pacientes.'] };
+    // não lança duas vezes o mesmo dia/profissional
+    var cache = {}, dup = sessoes.filter(function (x) { var r = montarDia_(x.data, cache); return r.itens.some(function (it) { return it.paciente === paciente && it.profissional === x.profissional && it.registro; }); });
+    if (dup.length) return { ok: false, erros: ['Já há lançamento de ' + paciente + ' em ' + dup.map(function (x) { return fmtData_(x.data); }).join(', ') + '. Tire essas datas da lista.'] };
+    var u = usuario_(), carimbo = (u.email || 'app') + ' · ' + agora_(), total = Math.round(valor * sessoes.length * 100) / 100, quem = String(d.quemPagou || '').trim(), ids = [];
+    var obsBase = 'Pagamento antecipado de ' + sessoes.length + ' sessões (' + brl_(total) + ') em ' + fmtData_(dpg) + (d.nfNumero ? ' · NF ' + String(d.nfNumero).trim() : '') + (d.observacao ? ' · ' + String(d.observacao).trim() : '');
+    sessoes.forEach(function (x, i) {
+      var s = abaMes_(x.data), h = garantirColunas_(s, [HM.LOG]).h, linha = proximaLinha_(s, h[HM.PACIENTE] || 3), id = novoId_('A'), pr = {};
+      pr[HM.DATA] = x.data; pr[HM.HORA] = x.hora; pr[HM.PACIENTE] = paciente; pr[HM.PROFISSIONAL] = x.profissional; pr[HM.PROCEDIMENTO] = procedimento;
+      pr[HM.OQUE] = 'Atendido'; pr[HM.VALOR] = valor; pr[HM.PAGO] = 'Sim'; pr[HM.DATA_PAG] = dpg; pr[HM.FORMA] = forma;
+      pr[HM.QUEM] = (quem && quem !== (pac.pagador || '') && quem !== paciente) ? quem : '';
+      pr[HM.NF] = String(d.nf || 'Não'); pr[HM.NF_N] = String(d.nfNumero || '').trim();
+      pr[HM.OBS] = obsBase + ' · sessão ' + (i + 1) + ' de ' + sessoes.length + ' (lançada antes de acontecer: se faltar, corrija)'; pr[HM.ID] = id; pr[HM.LOG] = carimbo;
+      gravarCelulas_(s, linha, h, pr);
+      [HM.DATA, HM.DATA_PAG].forEach(function (k) { if (h[k]) s.getRange(linha, h[k]).setNumberFormat('dd/MM/yyyy'); });
+      if (h[HM.VALOR]) s.getRange(linha, h[HM.VALOR]).setNumberFormat('#,##0.00');
+      ids.push({ id: id, aba: s.getName(), linha: linha, data: fmtData_(x.data) });
+    });
+    SpreadsheetApp.flush();
+    return { ok: true, total: total, lancadas: ids };
+  } finally { lock.releaseLock(); }
+};
+
 /* ---------- Lembrete pra recepção (aba Lembretes: só acrescenta linha; vale o último; os antigos ficam como histórico) ---------- */
 function lembretes_() {
   var s = planilha_().getSheetByName(CONFIG.ABA.LEMBRETES);

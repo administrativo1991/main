@@ -16,6 +16,7 @@ function iniciarAtend() {
     preencherSelect($("#a-pago"), (BOOT.listas.pago || []).concat((BOOT.listas.pago || []).indexOf('Parcial') < 0 ? ['Parcial'] : []), '—');
     preencherSelect($("#a-forma"), BOOT.listas.formas || []);
     preencherSelect($("#a-pk-forma"), BOOT.listas.formas || []);
+    preencherSelect($("#a-ant-forma"), BOOT.listas.formas || []);
     var segO = $("#a-oque-seg"); segO.innerHTML = '';
     (BOOT.listas.oque || []).forEach(function (o) { var b = el('<button type="button" data-v="' + esc(o) + '" aria-pressed="false">' + esc(OQUE_CURTO(o)) + '</button>'); b.addEventListener('click', function () { $("#a-oque").value = o; seg(segO, o); aplicarRegra(); salvarRascunhoAt(); }); segO.appendChild(b); });
     segO.appendChild(el('<span class="muted" id="a-oque-hint" style="flex-basis:100%"></span>'));
@@ -50,7 +51,7 @@ function onPacAt(force) {
   if (force !== true && nome === ultimoPacRender) return; // o 'change' que dispara ao sair do campo não pode refazer a tela (perderia o clique no botão)
   ultimoPacRender = nome;
   cur = AT ? AT.pacientes.filter(function (p) { return p.nome === nome; })[0] || null : null;
-  var box = $("#a-avisos"); box.innerHTML = ''; $("#a-pacotebox").hidden = true; $("#a-extrabox").hidden = true; $("#a-pagador-novo").hidden = true; decisaoPagador = null; $("#a-tornar").checked = false;
+  var box = $("#a-avisos"); box.innerHTML = ''; $("#a-pacotebox").hidden = true; $("#a-extrabox").hidden = true; $("#a-antbox").hidden = true; $("#a-pagador-novo").hidden = true; decisaoPagador = null; $("#a-tornar").checked = false;
   if (cur) { cur._extra = false; cur._avulsa = false; cur._cobrar = false; }
   $("#a-guia").value = 'Não'; $("#a-guia-chk").checked = false; // guia começa como não assinada: a recepção marca quando conferir
   fillTipos();
@@ -77,6 +78,12 @@ function onPacAt(force) {
       box.innerHTML += aviso('laranja', (pk ? (vencido && r > 0 ? 'Plano vencido em ' + esc(pk.validade) + ' · ' + r + ' consulta(s) não usada(s)' : 'Plano encerrado · ' + pk.usadas + ' de ' + pk.n + ' usadas') : 'Sem plano ativo'), 'Esta consulta não está paga. Lançar o plano e receber agora?', '<div class="acoes" style="flex-basis:100%"><button class="btn" type="button" id="a-btn-pacote">Lançar plano de ' + pim.n + ' consultas' + (pim.valor ? ' (R$ ' + brl(pim.valor) + ')' : '') + ' e receber</button><button class="btn ter" type="button" id="a-btn-avulsa">Cobrar consulta individual</button><button class="btn ter" type="button" id="a-btn-extra">Liberar sessão extra</button></div>');
     }
   }
+  if (ehPosterior(cur) || ehAntecipado(cur)) {
+    var vs = valorSessaoCad(cur), vsTxt = vs != null ? 'R$ ' + brl(vs) + ' por sessão' : 'valor por sessão não está no cadastro (Valor combinado, ex.: "R$ 70 por sessão"): o app usa a tabela';
+    if (ehPosterior(cur)) box.innerHTML += aviso('cinza', 'Pagamento posterior · ' + esc(vsTxt), 'A sessão fica lançada com Pago? = Não. No fim do mês o total aparece em Pendências e é recebido por lá.');
+    else box.innerHTML += aviso('cinza', 'Pagamento antecipado · ' + esc(vsTxt), 'Quando a pessoa pagar adiantado, lance as sessões já pagas de uma vez, nas datas da agenda.', '<div class="acoes" style="flex-basis:100%"><button class="btn sec" type="button" id="a-btn-ant">Recebeu adiantado: lançar sessões pagas</button></div>');
+  }
+  var bant = $("#a-btn-ant"); if (bant) bant.addEventListener('click', abrirAntecipado);
   var bc = $("#a-btn-cad"); if (bc) bc.addEventListener('click', function () { go('pacientes', { editar: cur.nome, voltar: 'registrar' }); });
   var bm = $("#a-btn-mens"); if (bm) bm.addEventListener('click', function () { go('mensalistas', { buscar: cur.nome }); });
   var bp = $("#a-btn-pacote"); if (bp) bp.addEventListener('click', function () { var pim = pacoteInfoMod(cur.modalidade, cur, $("#a-prof").value); $("#a-pk-titulo").textContent = 'Lançar plano de ' + pim.n + ' consultas'; $("#a-pk-n").value = pim.n; $("#a-pk-valor").value = brl(pim.valor || ''); $("#a-pk-quem").value = cur.pagador || cur.nome; $("#a-pacotebox").hidden = false; $("#a-pacotebox").scrollIntoView({ behavior: 'smooth', block: 'center' }); });
@@ -114,9 +121,11 @@ function aplicarRegra() {
   else if (ehMensal(cur) || /^Mensalidade/.test(regra)) { v.disabled = true; forma.disabled = true; desc.disabled = true; pago.value = pick(opts, 'Plano') || pick(opts, 'Pacote'); nf.value = 'Não se aplica'; h.textContent = 'já pago na mensalidade'; modo = 'mensal'; }
   else if (pacoteOk) { v.disabled = true; forma.disabled = true; desc.disabled = true; pago.value = pick(opts, 'Plano') || pick(opts, 'Pacote'); nf.value = 'Não se aplica'; h.textContent = 'já pago no plano'; modo = 'plano'; }
   else {
-    if (procV == null) { v.readOnly = false; v.placeholder = 'preencher à mão'; h.textContent = 'procedimento sem valor na tabela'; }
+    if (usaValorSessao(cur)) { v.value = brl(valorSessaoCad(cur)); h.textContent = 'valor por sessão do cadastro'; }
+    else if (procV == null) { v.readOnly = false; v.placeholder = 'preencher à mão'; h.textContent = 'procedimento sem valor na tabela'; }
     else { v.value = brl(procV); h.textContent = 'vem do procedimento (travado)'; }
-    pago.value = pick(opts, 'Sim'); nf.value = 'Não';
+    pago.value = ehPosterior(cur) ? pick(opts, 'Não') : pick(opts, 'Sim'); nf.value = 'Não';
+    if (ehPosterior(cur)) h.textContent += ' · paga no fim do mês';
   }
   baseValor = procV;
   var hintFalta = '';
@@ -274,3 +283,46 @@ $("#a-editcad").addEventListener('click', function () { if (!cur) return; go('pa
 $("#a-hist").addEventListener('click', function () { if (!cur) return; go('mensalistas', { buscar: cur.nome }); });
 ["a-valor", "a-forma", "a-nfn", "a-obs", "a-quem"].forEach(function (id) { $("#" + id).addEventListener('input', atualizarPreview); });
 CAMPOS_AT.forEach(function (id) { $("#" + id).addEventListener('input', salvarRascunhoAt); $("#" + id).addEventListener('change', salvarRascunhoAt); });
+
+/* ---------- pagamento antecipado: lança as N sessões pagas de uma vez (gestão, 07/10) ---------- */
+function linhasAnt() { return $("#a-ant-datas").value.split(/\n/).map(function (l) { return l.trim(); }).filter(Boolean).map(function (l) { var m = l.match(/^(\d{2}\/\d{2}\/\d{4})(?:\s+(\d{1,2}:\d{2}))?/); return m ? { data: m[1], hora: m[2] || '' } : { data: l, hora: '', ruim: true }; }); }
+function totalAnt() { var l = linhasAnt(), v = num($("#a-ant-valor").value) || 0; $("#a-ant-total").innerHTML = l.length + ' sessão(ões) × R$ ' + brl(v) + ' = <b>R$ ' + brl(l.length * v) + '</b> recebidos em ' + esc($("#a-ant-datapag").value || '—'); }
+function buscarDatasAnt() {
+  if (!cur) return; var prof = $("#a-prof").value; if (!prof) return toast('Escolha o profissional primeiro');
+  var b = $("#a-ant-buscar"); b.disabled = true;
+  call('proximasSessoes', { paciente: cur.nome, profissional: prof, de: $("#a-data").value, n: parseInt($("#a-ant-n").value, 10) || 4 }).then(function (r) {
+    b.disabled = false; var l = (r.sessoes || []).map(function (x) { return x.data + (x.hora ? ' ' + x.hora : ''); });
+    $("#a-ant-datas").value = l.join('\n'); totalAnt();
+    if (!l.length) toast('Não achei horários na agenda: escreva as datas à mão'); else if (l.length < (parseInt($("#a-ant-n").value, 10) || 4)) toast('A agenda só tem ' + l.length + ' data(s): complete à mão');
+  }).catch(function (e) { b.disabled = false; toast('Erro: ' + e.message); });
+}
+function abrirAntecipado() {
+  if (!cur) return;
+  $("#a-ant-valor").value = valorSessaoCad(cur) != null ? brl(valorSessaoCad(cur)) : ''; $("#a-ant-datapag").value = hojeStr(); $("#a-ant-quem").value = cur.pagador || cur.nome; $("#a-ant-nfn").value = ''; $("#a-ant-datas").value = '';
+  $("#a-antbox").hidden = false; $("#a-antbox").scrollIntoView({ behavior: 'smooth', block: 'center' }); totalAnt(); buscarDatasAnt();
+}
+$("#a-ant-cancel").addEventListener('click', function () { $("#a-antbox").hidden = true; });
+$("#a-ant-buscar").addEventListener('click', buscarDatasAnt);
+["a-ant-datas", "a-ant-valor", "a-ant-datapag"].forEach(function (id) { $("#" + id).addEventListener('input', totalAnt); });
+$("#a-ant-datapag").addEventListener('input', function () { this.value = mascaraData(this.value); });
+$("#a-ant-salvar").addEventListener('click', function () {
+  if (!cur) return;
+  var l = linhasAnt(), e = [], prof = $("#a-prof").value;
+  if (!prof) e.push('Escolha o profissional.');
+  if (!$("#a-proc").value) e.push('Escolha o tipo de atendimento.');
+  if (!l.length) e.push('Informe as datas das sessões (uma por linha).');
+  l.forEach(function (x) { if (x.ruim || !dataObj(x.data)) e.push('Data inválida: ' + x.data); });
+  if (!(num($("#a-ant-valor").value) > 0)) e.push('Informe o valor por sessão.');
+  if (!dataValida($("#a-ant-datapag").value)) e.push('Data do pagamento inválida.');
+  if (!$("#a-ant-forma").value) e.push('Escolha a forma de pagamento.');
+  if (e.length) { $("#a-erros").innerHTML = erroBox(e); $("#a-erros").scrollIntoView({ behavior: 'smooth', block: 'center' }); return; }
+  var b = this; b.disabled = true; $("#a-erros").innerHTML = '';
+  call('lancarAntecipado', { paciente: cur.nome, profissional: prof, procedimento: $("#a-proc").value, valorSessao: $("#a-ant-valor").value, dataPagamento: $("#a-ant-datapag").value, forma: $("#a-ant-forma").value,
+    quemPagou: $("#a-ant-quem").value.trim(), nf: $("#a-ant-nf").value, nfNumero: $("#a-ant-nfn").value.trim(), sessoes: l.map(function (x) { return { data: x.data, hora: x.hora, profissional: prof }; }) }).then(function (r) {
+    b.disabled = false;
+    if (!r.ok) { $("#a-erros").innerHTML = erroBox(r.erros || [], 'Não gravou'); $("#a-erros").scrollIntoView({ behavior: 'smooth', block: 'center' }); return; }
+    $("#a-antbox").hidden = true; if (typeof invalidarResumo === 'function') invalidarResumo();
+    $("#a-sucesso").innerHTML = aviso('verde', 'Lançado! ' + r.lancadas.length + ' sessões pagas de ' + esc(cur.nome), 'R$ ' + brl(r.total) + ' · ' + r.lancadas.map(function (x) { return x.data; }).join(', ') + '. Nessas datas a sessão já aparece registrada na Agenda.');
+    $("#a-sucesso").hidden = false; $("#a-sucesso").scrollIntoView({ behavior: 'smooth', block: 'center' }); toast('Sessões pagas lançadas');
+  }).catch(function (er) { b.disabled = false; toast('Erro: ' + er.message); });
+});

@@ -802,6 +802,23 @@ button.kpi[aria-pressed="true"] span,.kpi.roxo span{color:#fff;opacity:.9}
       <div class="acoes"><button type="button" class="btn" id="a-extra-ok">Liberar e registrar como já paga</button></div>
     </div>
 
+    <div id="a-antbox" class="painel" hidden>
+      <div class="cab"><h2>Pagamento antecipado · lançar sessões pagas</h2><span class="esp"></span><button type="button" class="btn icone p" id="a-ant-cancel" aria-label="Fechar"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+      <p class="muted" style="margin:0">Lança agora uma linha por sessão, com o valor por sessão e Pago? = Sim, nas datas da agenda. Se o paciente faltar ou remarcar, corrija a sessão depois (Agenda → Corrigir lançamento).</p>
+      <div class="grid">
+        <label class="campo">Sessões<input id="a-ant-n" inputmode="numeric" value="4"></label>
+        <label class="campo">Valor por sessão<div class="campo-wrap"><span class="prefixo">R$</span><input id="a-ant-valor" class="dinheiro" inputmode="decimal"></div></label>
+        <label class="campo">Data do pagamento<input id="a-ant-datapag" inputmode="numeric" maxlength="10"></label>
+        <label class="campo">Forma<select id="a-ant-forma"></select></label>
+        <label class="campo">Quem pagou<input id="a-ant-quem" list="dl-pagadores" autocomplete="off"></label>
+        <label class="campo">NF emitida?<select id="a-ant-nf"><option>Não</option><option>Sim</option></select></label>
+        <label class="campo">Nº da NF<input id="a-ant-nfn" autocomplete="off"></label>
+        <label class="campo c2">Datas das sessões <span class="leg">(uma por linha: dd/mm/aaaa hh:mm)</span><textarea id="a-ant-datas" rows="4" placeholder="15/10/2026 09:30"></textarea></label>
+      </div>
+      <div class="faixa nota" id="a-ant-total"></div>
+      <div class="acoes"><button type="button" class="btn sec" id="a-ant-buscar">Buscar datas na agenda</button><button type="button" class="btn" id="a-ant-salvar">Lançar sessões pagas</button></div>
+    </div>
+
     <section class="card" id="a-passo2" hidden>
       <div class="passo"><span class="num">2</span><h2>O que aconteceu</h2></div>
       <div class="seg solto" id="a-oque-seg" role="group" aria-label="O que aconteceu"></div>
@@ -974,7 +991,7 @@ button.kpi[aria-pressed="true"] span,.kpi.roxo span{color:#fff;opacity:.9}
       </fieldset>
       <div class="grid" id="p-gestao-campos" hidden>
         <label class="campo">Regra de cobrança <span class="leg">(só a gestão)</span><select id="c-regra"></select></label>
-        <label class="campo c2">Valor combinado <span class="leg">ex.: Plano de 4 consultas: R$ 280 · R$ 150/mês</span><input id="c-valor" autocomplete="off"></label>
+        <label class="campo c2">Valor combinado <span class="leg">ex.: R$ 70 por sessão · R$ 150/mês</span><input id="c-valor" autocomplete="off"></label>
         <label class="campo c3">Observação de cobrança <span class="leg">o que a recepção precisa saber na hora de cobrar</span><textarea id="c-obs" rows="2"></textarea></label>
       </div>
       <div class="grid" id="p-quem-informou" hidden>
@@ -1334,24 +1351,26 @@ var mockPacientes = [{ linha: 2, nome: 'Beatriz Almeida Rocha', nasc: '03/05/199
   { linha: 5, nome: 'Lívia Fontes Pereira', nasc: '26/01/2010', modalidade: 'Pro bono', regra: 'Pro bono', obsCobranca: 'Não cobrar. Só registrar o atendimento.', pagador: '', convenio: 'Particular', valorCombinado: '' },
   { linha: 6, nome: 'Pedro Augusto Neves', nasc: '31/07/1980', modalidade: 'Convênio', regra: 'Convênio', obsCobranca: 'Cedplan — guia assinada antes da sessão.', pagador: '', convenio: 'Cedplan', valorCombinado: '' },
   { linha: 7, nome: 'Sofia Ramos Teixeira', nasc: '16/06/1999', modalidade: 'Mensalidade fixa', regra: '', obsCobranca: '', pagador: 'Associação Boa Esperança', convenio: 'Particular', valorCombinado: '' },
-  { linha: 8, nome: 'Ana Luísa Fontes Braga', nasc: '14/02/1996', modalidade: 'Plano de 4 consultas', regra: 'Tabela', obsCobranca: '', pagador: 'Ana Luísa Fontes Braga', convenio: 'Particular', valorCombinado: 'Plano de 4 consultas: R$ 280 por plano' },
-  { linha: 9, nome: 'Luana Castro Figueiredo', nasc: '30/10/1988', modalidade: 'Plano de 4 consultas', regra: 'Tabela', obsCobranca: '', pagador: 'Luana Castro Figueiredo', convenio: 'Particular', valorCombinado: 'Plano de 4 consultas: R$ 320 por plano' },
+  { linha: 8, nome: 'Ana Luísa Fontes Braga', nasc: '14/02/1996', modalidade: 'Pagamento posterior', regra: '', obsCobranca: '', pagador: 'Ana Luísa Fontes Braga', convenio: 'Particular', valorCombinado: 'Pagamento posterior: R$ 70 por sessão' },
+  { linha: 9, nome: 'Luana Castro Figueiredo', nasc: '30/10/1988', modalidade: 'Pagamento antecipado', regra: '', obsCobranca: '', pagador: 'Luana Castro Figueiredo', convenio: 'Particular', valorCombinado: 'Pagamento antecipado: R$ 80 por sessão' },
   { linha: 10, nome: 'Helena Vasconcelos Prado', nasc: '02/02/2024', modalidade: '', regra: '', obsCobranca: '', pagador: 'Renata Vasconcelos Prado', convenio: 'Particular', valorCombinado: '' },
   { linha: 11, nome: 'Marcos Vinícius Tavares', nasc: '08/12/1989', modalidade: 'Consulta individual', regra: 'Valor fixo combinado', obsCobranca: 'Sessão R$ 100 combinado com a Juliana.', pagador: 'Marcos Vinícius Tavares', convenio: 'Particular', valorCombinado: 'Sessão R$ 100' }];
 function mock(nome, d) {
   return new Promise(function (res) { setTimeout(function () {
     if (nome === 'bootstrap') return res({ usuario: { email: 'simulacao@local', perfil: window.__RECEPCAO ? 'recepcao' : 'gestao' }, planilha: '(simulação, sem planilha)', hora: '',
       lembrete: mockLemb[mockLemb.length - 1], lembretes: mockLemb.slice(-5).reverse(),
-      listas: { oque: ["Atendido", "Desmarcou com antecedência (≥ 24h)", "Faltou avisando em cima da hora (< 24h)", "Faltou sem aviso", "Cancelado pela clínica"], pago: ["Sim", "Não", "Convênio (fatura)", "Mensalista (paga no mês seguinte)", "Plano já pago", "Não se aplica (pro bono / permuta)", "Parcial"], formas: ["Pix", "Dinheiro", "Cartão de débito", "Cartão de crédito", "Link de pagamento"], modalidades: ["Consulta individual", "Consulta individual – cartão de parceria", "Plano de 4 consultas", "Plano de 6 consultas", "Plano de 12 consultas", "Mensalidade fixa", "Mensal (valor especial)", "AAPI JF (mensal)", "Convênio", "Por sessão", "Pro bono", "Permuta"],
-        modalidadesEsp: [{ nome: 'Plano de 6 consultas', esp: 'Nutrição' }, { nome: 'Por sessão', esp: 'Psicologia' }, { nome: 'Mensalidade fixa', esp: 'Psicologia' }, { nome: 'Mensal (valor especial)', esp: 'Psicologia' }], regras: ["Tabela", "Paga o que consegue", "Valor fixo combinado", "Mensalidade fixa (independe do nº de sessões)", "Pro bono", "Permuta", "Convênio"],
+      listas: { oque: ["Atendido", "Desmarcou com antecedência (≥ 24h)", "Faltou avisando em cima da hora (< 24h)", "Faltou sem aviso", "Cancelado pela clínica"], pago: ["Sim", "Não", "Convênio (fatura)", "Mensalista (paga no mês seguinte)", "Plano já pago", "Não se aplica (pro bono / permuta)", "Parcial"], formas: ["Pix", "Dinheiro", "Cartão de débito", "Cartão de crédito", "Link de pagamento"], modalidades: ["Pagamento antecipado", "Por sessão", "Pagamento posterior", "Mensalidade fixa", "Mensal (valor especial)", "Pro bono", "Permuta", "Convênio"],
+        modalidadesEsp: [{ nome: 'Mensalidade fixa', esp: 'Psicologia' }, { nome: 'Mensal (valor especial)', esp: 'Psicologia' }], regras: ["Tabela", "Paga o que consegue", "Valor fixo combinado", "Mensalidade fixa (independe do nº de sessões)", "Pro bono", "Permuta", "Convênio"],
         convenios: ["Particular", "Cedplan", "Sabin Sinai", "Unafisco", "AAPI JF", "Plan Minas", "PLASC", "AMIL", "ASSEFAZ", "FUSEX", "IPSM", "Sulamérica", "18 de Julho", "Aeronáutica"] },
       profissionais: mockProfs, pacientes: mockBase.concat(mockPacientes.map(function (p) { return { linha: p.linha + 10, nome: p.nome, cpf: '', nasc: p.nasc, pagador: p.pagador, modalidade: p.modalidade, convenio: p.convenio, ativo: 'Sim' }; })) });
     if (nome === 'bootstrapAtendimento') return res({ hoje: hojeStr(), abaMes: MESES_PT[new Date().getMonth()], abaMesExiste: true, mensalistasInfo: { modeloNovo: true, mes: MESES_PT[new Date().getMonth()].toUpperCase(), coluna: MESES_PT[new Date().getMonth()].toUpperCase() + ' — pago?' },
       procedimentos: [{ nome: 'Consulta pediátrica', especialidade: 'Pediatria', valor: 200 }, { nome: 'Consulta pediátrica – cartão de parceria ou AAPI JF', especialidade: 'Pediatria', valor: 160 }, { nome: 'Retorno pediátrico (com pedido de exames, até 30 dias)', especialidade: 'Pediatria', valor: 0 },
         { nome: 'Anamnese psicologia', especialidade: 'Psicologia', valor: 140 }, { nome: 'Sessão de psicologia', especialidade: 'Psicologia', valor: 120 }, { nome: 'Sessão de psicologia – cartão de parceria', especialidade: 'Psicologia', valor: 100 }, { nome: 'Sessão de psicologia – plano de 4 consultas', especialidade: 'Psicologia', valor: 0 }, { nome: 'Sessão de psicologia – mensalidade fixa', especialidade: 'Psicologia', valor: 0 }, { nome: 'Sessão de psicologia – mensal valor especial', especialidade: 'Psicologia', valor: 0 }, { nome: 'Sessão de psicologia – convênio', especialidade: 'Psicologia', valor: 0 }, { nome: 'Taxa de falta – psicologia', especialidade: 'Psicologia', valor: 120 }, { nome: 'Aplicação de teste – avaliação neuropsicológica', especialidade: 'Psicologia', valor: 0 }, { nome: 'Avaliação neuropsicológica', especialidade: 'Psicologia', valor: null }, { nome: 'Plano de 4 consultas – psicologia (compra)', especialidade: 'Psicologia', valor: 400 }, { nome: 'Plano de 12 consultas – psicologia (compra)', especialidade: 'Psicologia', valor: 960 }],
-      pacotes: { 'Ana Luísa Fontes Braga': { id: 'P-1', n: 4, usadas: 2, compra: '03/11/2026', validade: '29/12/2026', status: 'ativo', pago: 'Não' }, 'Luana Castro Figueiredo': { id: 'P-2', n: 4, usadas: 4, compra: '13/10/2026', validade: '08/12/2026', status: 'encerrado' } },
+      pacotes: {},
       mensalistas: { 'Sofia Ramos Teixeira': { modalidade: 'Mensalidade fixa', valor: 200, pagador: 'Associação Boa Esperança', mes: 'NOVEMBRO', pago: '', dataPago: '' }, 'Theo Barreto Lima': { modalidade: 'Mensal (valor especial)', valor: 150, pagador: 'Daniela Barreto Lima', mes: 'NOVEMBRO', pago: 'Sim', dataPago: '06/11/2026' } },
       pacientes: mockPacientes });
+    if (nome === 'proximasSessoes') { var b0 = dataObj(d.de) || new Date(), ps = []; for (var q = 0; q < (d.n || 4); q++) { var dq = new Date(b0.getTime() + q * 7 * 864e5); ps.push({ data: ('0' + dq.getDate()).slice(-2) + '/' + ('0' + (dq.getMonth() + 1)).slice(-2) + '/' + dq.getFullYear(), hora: '09:30', profissional: d.profissional }); } return res({ ok: true, sessoes: ps }); }
+    if (nome === 'lancarAntecipado') return res({ ok: true, total: num(d.valorSessao) * d.sessoes.length, lancadas: d.sessoes.map(function (x, i) { return { id: 'A-sim-ant' + i, aba: 'Outubro', linha: 50 + i, data: x.data }; }) });
     if (nome === 'salvarLembrete') { var nl = { linha: mockLemb.length + 2, data: hojeStr() + ' ' + agoraHora(), texto: d.encerrar ? '' : d.texto, validoAte: d.encerrar ? '' : (d.validoAte || ''), quem: 'simulacao@local' }; mockLemb.push(nl); return res({ ok: true, linha: nl.linha, lembrete: nl.texto ? nl : null, lembretes: mockLemb.slice(-5).reverse() }); }
     if (nome === 'registrarAtendimento') { var mp = mockPacientes.filter(function (p) { return p.nome === d.paciente; })[0]; mockReg.push({ paciente: d.paciente, profissional: d.profissional, oque: d.oque, hora: d.hora, data: d.data, procedimento: d.procedimento, id: 'A-sim-' + (mockReg.length + 1), valor: num(d.valor) || 0, pago: d.pago || '', forma: d.forma || '', nf: d.nf || '', guia: d.guia || '', convenio: mp ? mp.convenio : '' }); return res({ ok: true, id: 'A-sim-' + mockReg.length, linha: 41 + mockReg.length, aba: MESES_PT[new Date().getMonth()], pacote: d.pacoteId && !d.sessaoExtra ? { usadas: 3, n: 4 } : null }); }
     if (nome === 'listaDoDia') {
@@ -1435,6 +1454,11 @@ function store(k, v) { try { if (v === undefined) return JSON.parse(localStorage
 function pacInfo(nome) { return (AT && AT.pacientes.filter(function (p) { return p.nome === nome; })[0]) || null; }
 function ehMensal(p) { return /^Mensalidade fixa|^Mensal \(valor especial\)|\(mensal\)|\/mês|^Social|preexistente/.test(p.modalidade || '') || /^Mensalidade fixa/.test(p.regra || ''); }
 function ehPacote(p) { return /^(Plano|Pacote) /.test(p.modalidade || '') && !/mensal/.test(p.modalidade || ''); }
+function ehPosterior(p) { return /^Pagamento posterior/i.test(p.modalidade || ''); }
+function ehAntecipado(p) { return /^Pagamento antecipado/i.test(p.modalidade || ''); }
+// valor por sessão combinado no cadastro ("R$ 70 por sessão"): vale pra Por sessão, Pagamento posterior e Pagamento antecipado (gestão, 07/10)
+function valorSessaoCad(p) { var m = String(p && p.valorCombinado || '').match(/R\$\s?([\d.]+(?:,\d{1,2})?)\s*(?:por sess|\/\s*sess|a sess)/i); return m ? num(m[1]) : null; }
+function usaValorSessao(p) { return !!p && (ehPosterior(p) || ehAntecipado(p) || /^Por sessão/i.test(p.modalidade || '')) && valorSessaoCad(p) != null; }
 function ehConvenio(p) { return !!(p.convenio && p.convenio !== 'Particular'); }
 function ehProBono(p) { return /^Pro bono|^Permuta/.test(p.regra || '') || /^Pro bono|^Permuta/.test(p.modalidade || ''); }
 function cadastroIncompleto(p) { return !p.modalidade && !p.regra && !ehConvenio(p); }
@@ -1490,6 +1514,8 @@ function tagsDe(p) {
   if (ehProBono(p)) t.push({ cor: 'lilas', txt: /permuta/i.test(p.regra + p.modalidade) ? 'Permuta' : 'Pro bono' });
   if (ehMensal(p)) { var s = situacaoMensal(p); t.push({ cor: s[0], txt: s[1] }); }
   if (ehPacote(p)) { var pk = AT.pacotes[p.nome]; if (pk && pk.status === 'ativo') { var rr = pk.n - pk.usadas, venc = pk.validade && venceu(pk.validade); t.push({ cor: venc ? 'vermelha' : rr <= 0 ? 'vermelha' : (rr === 1 || planoAPagar(pk)) ? 'amarela' : 'verde', txt: 'Plano ' + pk.usadas + '/' + pk.n + (venc ? ' · vencido' : rr === 1 ? ' · última' : '') + (planoAPagar(pk) ? ' · a pagar' : '') }); } else t.push({ cor: 'vermelha', txt: 'sem plano ativo' }); }
+  if (ehPosterior(p)) t.push({ cor: 'cinza', txt: 'paga no fim do mês' + (valorSessaoCad(p) != null ? ' · R$ ' + brl(valorSessaoCad(p)) + '/sessão' : '') });
+  if (ehAntecipado(p)) t.push({ cor: 'cinza', txt: 'pagamento antecipado' + (valorSessaoCad(p) != null ? ' · R$ ' + brl(valorSessaoCad(p)) + '/sessão' : '') });
   if (ehConvenio(p)) t.push({ cor: 'lilas', txt: 'Convênio ' + p.convenio });
   if (cadastroIncompleto(p)) t.push({ cor: 'laranja', ic: 'alerta', txt: 'sem modalidade · completar cadastro' });
   return t;
@@ -2289,6 +2315,7 @@ function iniciarAtend() {
     preencherSelect($("#a-pago"), (BOOT.listas.pago || []).concat((BOOT.listas.pago || []).indexOf('Parcial') < 0 ? ['Parcial'] : []), '—');
     preencherSelect($("#a-forma"), BOOT.listas.formas || []);
     preencherSelect($("#a-pk-forma"), BOOT.listas.formas || []);
+    preencherSelect($("#a-ant-forma"), BOOT.listas.formas || []);
     var segO = $("#a-oque-seg"); segO.innerHTML = '';
     (BOOT.listas.oque || []).forEach(function (o) { var b = el('<button type="button" data-v="' + esc(o) + '" aria-pressed="false">' + esc(OQUE_CURTO(o)) + '</button>'); b.addEventListener('click', function () { $("#a-oque").value = o; seg(segO, o); aplicarRegra(); salvarRascunhoAt(); }); segO.appendChild(b); });
     segO.appendChild(el('<span class="muted" id="a-oque-hint" style="flex-basis:100%"></span>'));
@@ -2323,7 +2350,7 @@ function onPacAt(force) {
   if (force !== true && nome === ultimoPacRender) return; // o 'change' que dispara ao sair do campo não pode refazer a tela (perderia o clique no botão)
   ultimoPacRender = nome;
   cur = AT ? AT.pacientes.filter(function (p) { return p.nome === nome; })[0] || null : null;
-  var box = $("#a-avisos"); box.innerHTML = ''; $("#a-pacotebox").hidden = true; $("#a-extrabox").hidden = true; $("#a-pagador-novo").hidden = true; decisaoPagador = null; $("#a-tornar").checked = false;
+  var box = $("#a-avisos"); box.innerHTML = ''; $("#a-pacotebox").hidden = true; $("#a-extrabox").hidden = true; $("#a-antbox").hidden = true; $("#a-pagador-novo").hidden = true; decisaoPagador = null; $("#a-tornar").checked = false;
   if (cur) { cur._extra = false; cur._avulsa = false; cur._cobrar = false; }
   $("#a-guia").value = 'Não'; $("#a-guia-chk").checked = false; // guia começa como não assinada: a recepção marca quando conferir
   fillTipos();
@@ -2350,6 +2377,12 @@ function onPacAt(force) {
       box.innerHTML += aviso('laranja', (pk ? (vencido && r > 0 ? 'Plano vencido em ' + esc(pk.validade) + ' · ' + r + ' consulta(s) não usada(s)' : 'Plano encerrado · ' + pk.usadas + ' de ' + pk.n + ' usadas') : 'Sem plano ativo'), 'Esta consulta não está paga. Lançar o plano e receber agora?', '<div class="acoes" style="flex-basis:100%"><button class="btn" type="button" id="a-btn-pacote">Lançar plano de ' + pim.n + ' consultas' + (pim.valor ? ' (R$ ' + brl(pim.valor) + ')' : '') + ' e receber</button><button class="btn ter" type="button" id="a-btn-avulsa">Cobrar consulta individual</button><button class="btn ter" type="button" id="a-btn-extra">Liberar sessão extra</button></div>');
     }
   }
+  if (ehPosterior(cur) || ehAntecipado(cur)) {
+    var vs = valorSessaoCad(cur), vsTxt = vs != null ? 'R$ ' + brl(vs) + ' por sessão' : 'valor por sessão não está no cadastro (Valor combinado, ex.: "R$ 70 por sessão"): o app usa a tabela';
+    if (ehPosterior(cur)) box.innerHTML += aviso('cinza', 'Pagamento posterior · ' + esc(vsTxt), 'A sessão fica lançada com Pago? = Não. No fim do mês o total aparece em Pendências e é recebido por lá.');
+    else box.innerHTML += aviso('cinza', 'Pagamento antecipado · ' + esc(vsTxt), 'Quando a pessoa pagar adiantado, lance as sessões já pagas de uma vez, nas datas da agenda.', '<div class="acoes" style="flex-basis:100%"><button class="btn sec" type="button" id="a-btn-ant">Recebeu adiantado: lançar sessões pagas</button></div>');
+  }
+  var bant = $("#a-btn-ant"); if (bant) bant.addEventListener('click', abrirAntecipado);
   var bc = $("#a-btn-cad"); if (bc) bc.addEventListener('click', function () { go('pacientes', { editar: cur.nome, voltar: 'registrar' }); });
   var bm = $("#a-btn-mens"); if (bm) bm.addEventListener('click', function () { go('mensalistas', { buscar: cur.nome }); });
   var bp = $("#a-btn-pacote"); if (bp) bp.addEventListener('click', function () { var pim = pacoteInfoMod(cur.modalidade, cur, $("#a-prof").value); $("#a-pk-titulo").textContent = 'Lançar plano de ' + pim.n + ' consultas'; $("#a-pk-n").value = pim.n; $("#a-pk-valor").value = brl(pim.valor || ''); $("#a-pk-quem").value = cur.pagador || cur.nome; $("#a-pacotebox").hidden = false; $("#a-pacotebox").scrollIntoView({ behavior: 'smooth', block: 'center' }); });
@@ -2387,9 +2420,11 @@ function aplicarRegra() {
   else if (ehMensal(cur) || /^Mensalidade/.test(regra)) { v.disabled = true; forma.disabled = true; desc.disabled = true; pago.value = pick(opts, 'Plano') || pick(opts, 'Pacote'); nf.value = 'Não se aplica'; h.textContent = 'já pago na mensalidade'; modo = 'mensal'; }
   else if (pacoteOk) { v.disabled = true; forma.disabled = true; desc.disabled = true; pago.value = pick(opts, 'Plano') || pick(opts, 'Pacote'); nf.value = 'Não se aplica'; h.textContent = 'já pago no plano'; modo = 'plano'; }
   else {
-    if (procV == null) { v.readOnly = false; v.placeholder = 'preencher à mão'; h.textContent = 'procedimento sem valor na tabela'; }
+    if (usaValorSessao(cur)) { v.value = brl(valorSessaoCad(cur)); h.textContent = 'valor por sessão do cadastro'; }
+    else if (procV == null) { v.readOnly = false; v.placeholder = 'preencher à mão'; h.textContent = 'procedimento sem valor na tabela'; }
     else { v.value = brl(procV); h.textContent = 'vem do procedimento (travado)'; }
-    pago.value = pick(opts, 'Sim'); nf.value = 'Não';
+    pago.value = ehPosterior(cur) ? pick(opts, 'Não') : pick(opts, 'Sim'); nf.value = 'Não';
+    if (ehPosterior(cur)) h.textContent += ' · paga no fim do mês';
   }
   baseValor = procV;
   var hintFalta = '';
@@ -2548,12 +2583,55 @@ $("#a-hist").addEventListener('click', function () { if (!cur) return; go('mensa
 ["a-valor", "a-forma", "a-nfn", "a-obs", "a-quem"].forEach(function (id) { $("#" + id).addEventListener('input', atualizarPreview); });
 CAMPOS_AT.forEach(function (id) { $("#" + id).addEventListener('input', salvarRascunhoAt); $("#" + id).addEventListener('change', salvarRascunhoAt); });
 
+/* ---------- pagamento antecipado: lança as N sessões pagas de uma vez (gestão, 07/10) ---------- */
+function linhasAnt() { return $("#a-ant-datas").value.split(/\n/).map(function (l) { return l.trim(); }).filter(Boolean).map(function (l) { var m = l.match(/^(\d{2}\/\d{2}\/\d{4})(?:\s+(\d{1,2}:\d{2}))?/); return m ? { data: m[1], hora: m[2] || '' } : { data: l, hora: '', ruim: true }; }); }
+function totalAnt() { var l = linhasAnt(), v = num($("#a-ant-valor").value) || 0; $("#a-ant-total").innerHTML = l.length + ' sessão(ões) × R$ ' + brl(v) + ' = <b>R$ ' + brl(l.length * v) + '</b> recebidos em ' + esc($("#a-ant-datapag").value || '—'); }
+function buscarDatasAnt() {
+  if (!cur) return; var prof = $("#a-prof").value; if (!prof) return toast('Escolha o profissional primeiro');
+  var b = $("#a-ant-buscar"); b.disabled = true;
+  call('proximasSessoes', { paciente: cur.nome, profissional: prof, de: $("#a-data").value, n: parseInt($("#a-ant-n").value, 10) || 4 }).then(function (r) {
+    b.disabled = false; var l = (r.sessoes || []).map(function (x) { return x.data + (x.hora ? ' ' + x.hora : ''); });
+    $("#a-ant-datas").value = l.join('\n'); totalAnt();
+    if (!l.length) toast('Não achei horários na agenda: escreva as datas à mão'); else if (l.length < (parseInt($("#a-ant-n").value, 10) || 4)) toast('A agenda só tem ' + l.length + ' data(s): complete à mão');
+  }).catch(function (e) { b.disabled = false; toast('Erro: ' + e.message); });
+}
+function abrirAntecipado() {
+  if (!cur) return;
+  $("#a-ant-valor").value = valorSessaoCad(cur) != null ? brl(valorSessaoCad(cur)) : ''; $("#a-ant-datapag").value = hojeStr(); $("#a-ant-quem").value = cur.pagador || cur.nome; $("#a-ant-nfn").value = ''; $("#a-ant-datas").value = '';
+  $("#a-antbox").hidden = false; $("#a-antbox").scrollIntoView({ behavior: 'smooth', block: 'center' }); totalAnt(); buscarDatasAnt();
+}
+$("#a-ant-cancel").addEventListener('click', function () { $("#a-antbox").hidden = true; });
+$("#a-ant-buscar").addEventListener('click', buscarDatasAnt);
+["a-ant-datas", "a-ant-valor", "a-ant-datapag"].forEach(function (id) { $("#" + id).addEventListener('input', totalAnt); });
+$("#a-ant-datapag").addEventListener('input', function () { this.value = mascaraData(this.value); });
+$("#a-ant-salvar").addEventListener('click', function () {
+  if (!cur) return;
+  var l = linhasAnt(), e = [], prof = $("#a-prof").value;
+  if (!prof) e.push('Escolha o profissional.');
+  if (!$("#a-proc").value) e.push('Escolha o tipo de atendimento.');
+  if (!l.length) e.push('Informe as datas das sessões (uma por linha).');
+  l.forEach(function (x) { if (x.ruim || !dataObj(x.data)) e.push('Data inválida: ' + x.data); });
+  if (!(num($("#a-ant-valor").value) > 0)) e.push('Informe o valor por sessão.');
+  if (!dataValida($("#a-ant-datapag").value)) e.push('Data do pagamento inválida.');
+  if (!$("#a-ant-forma").value) e.push('Escolha a forma de pagamento.');
+  if (e.length) { $("#a-erros").innerHTML = erroBox(e); $("#a-erros").scrollIntoView({ behavior: 'smooth', block: 'center' }); return; }
+  var b = this; b.disabled = true; $("#a-erros").innerHTML = '';
+  call('lancarAntecipado', { paciente: cur.nome, profissional: prof, procedimento: $("#a-proc").value, valorSessao: $("#a-ant-valor").value, dataPagamento: $("#a-ant-datapag").value, forma: $("#a-ant-forma").value,
+    quemPagou: $("#a-ant-quem").value.trim(), nf: $("#a-ant-nf").value, nfNumero: $("#a-ant-nfn").value.trim(), sessoes: l.map(function (x) { return { data: x.data, hora: x.hora, profissional: prof }; }) }).then(function (r) {
+    b.disabled = false;
+    if (!r.ok) { $("#a-erros").innerHTML = erroBox(r.erros || [], 'Não gravou'); $("#a-erros").scrollIntoView({ behavior: 'smooth', block: 'center' }); return; }
+    $("#a-antbox").hidden = true; if (typeof invalidarResumo === 'function') invalidarResumo();
+    $("#a-sucesso").innerHTML = aviso('verde', 'Lançado! ' + r.lancadas.length + ' sessões pagas de ' + esc(cur.nome), 'R$ ' + brl(r.total) + ' · ' + r.lancadas.map(function (x) { return x.data; }).join(', ') + '. Nessas datas a sessão já aparece registrada na Agenda.');
+    $("#a-sucesso").hidden = false; $("#a-sucesso").scrollIntoView({ behavior: 'smooth', block: 'center' }); toast('Sessões pagas lançadas');
+  }).catch(function (er) { b.disabled = false; toast('Erro: ' + er.message); });
+});
+
 /* ===== 30-pacientes.js ===== */
 /* ================= PACIENTES (novo paciente + editar cadastro) ================= */
 var pModo = 'novo', pVoltar = null, pacIniciado = false, cadNome = '', cadDados = null, dupConfirmada = false, salvandoP = false;
 var CAMPOS_N = ["n-nome", "n-cpf", "n-nasc", "n-pagador", "n-whats", "n-prof", "n-mod", "n-conv", "n-cart", "n-indic", "n-primeira", "n-pag-cpf", "n-resp", "n-resp-par", "n-resp-tel", "n-resp-cpf"];
 var RASCUNHO_N = 'rn-novo-paciente';
-var MOD_TABELA = /^Consulta individual|^Por sessão|^Plano de|^Convênio$/i;
+var MOD_TABELA = /^Consulta individual|^Por sessão|^Plano de|^Pagamento (posterior|antecipado)|^Convênio$/i;
 // convênios de desconto (gestão, 07/10): o paciente paga particular com desconto, então os cartões de modalidade continuam.
 // Os demais convênios são de plano: a modalidade é sempre "Convênio" e os cartões somem. Convênio de desconto novo: acrescentar aqui.
 var CONVENIOS_DESCONTO = ['AAPI JF', 'Plan Minas'];
@@ -2609,6 +2687,8 @@ function descMod(m) {
   if (/cartão de parceria/.test(x)) { var v = base && AT ? procObj(derivarProc(base.nome, { modalidade: m, regra: '' })) : null; return (preco(v) ? preco(v) + ' por sessão' : 'tabela com desconto') + ' · com o cartão'; }
   if (/^consulta individual/.test(x)) return (anam && preco(anam) ? '1ª consulta ' + preco(anam) + ' · depois ' : '') + (preco(base) ? preco(base) + (anam ? '' : ' por consulta') : 'valor da tabela do procedimento');
   if (/^plano de/.test(x)) { var n = parseInt((m.match(/(\d+)/) || [])[1], 10) || 4, c = AT && prof ? procCompra(n, prof) : null; return n + ' consultas · ' + (preco(c) || 'valor combinado na compra') + ' · vale ' + (n >= 12 ? 6 : n >= 6 ? 3 : 2) + ' meses'; }
+  if (/^pagamento posterior/.test(x)) return 'valor por sessão · lança a sessão como não paga · paga o total no fim do mês';
+  if (/^pagamento antecipado/.test(x)) return 'valor por sessão · paga adiantado · as sessões são lançadas pagas no dia do pagamento';
   if (x === 'convênio') return 'guia por sessão · fatura no fim do mês';
   if (/^por sessão/.test(x)) return 'valor por sessão definido pela gestão · regra no cadastro';
   if (/^mensalidade fixa/.test(x)) return 'valor mensal fixo · independe do nº de sessões · sem remarcação';

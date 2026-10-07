@@ -56,6 +56,23 @@
       <div class="acoes"><button type="button" class="btn" id="a-extra-ok">Liberar e registrar como já paga</button></div>
     </div>
 
+    <div id="a-antbox" class="painel" hidden>
+      <div class="cab"><h2>Pagamento antecipado · lançar sessões pagas</h2><span class="esp"></span><button type="button" class="btn icone p" id="a-ant-cancel" aria-label="Fechar"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+      <p class="muted" style="margin:0">Lança agora uma linha por sessão, com o valor por sessão e Pago? = Sim, nas datas da agenda. Se o paciente faltar ou remarcar, corrija a sessão depois (Agenda → Corrigir lançamento).</p>
+      <div class="grid">
+        <label class="campo">Sessões<input id="a-ant-n" inputmode="numeric" value="4"></label>
+        <label class="campo">Valor por sessão<div class="campo-wrap"><span class="prefixo">R$</span><input id="a-ant-valor" class="dinheiro" inputmode="decimal"></div></label>
+        <label class="campo">Data do pagamento<input id="a-ant-datapag" inputmode="numeric" maxlength="10"></label>
+        <label class="campo">Forma<select id="a-ant-forma"></select></label>
+        <label class="campo">Quem pagou<input id="a-ant-quem" list="dl-pagadores" autocomplete="off"></label>
+        <label class="campo">NF emitida?<select id="a-ant-nf"><option>Não</option><option>Sim</option></select></label>
+        <label class="campo">Nº da NF<input id="a-ant-nfn" autocomplete="off"></label>
+        <label class="campo c2">Datas das sessões <span class="leg">(uma por linha: dd/mm/aaaa hh:mm)</span><textarea id="a-ant-datas" rows="4" placeholder="15/10/2026 09:30"></textarea></label>
+      </div>
+      <div class="faixa nota" id="a-ant-total"></div>
+      <div class="acoes"><button type="button" class="btn sec" id="a-ant-buscar">Buscar datas na agenda</button><button type="button" class="btn" id="a-ant-salvar">Lançar sessões pagas</button></div>
+    </div>
+
     <section class="card" id="a-passo2" hidden>
       <div class="passo"><span class="num">2</span><h2>O que aconteceu</h2></div>
       <div class="seg solto" id="a-oque-seg" role="group" aria-label="O que aconteceu"></div>
