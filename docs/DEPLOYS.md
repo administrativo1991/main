@@ -23,7 +23,7 @@ coluna E não afeta o app. Atualizar `E2` faz parte de toda publicação (passo 
 
 | Canal | Deploy | Peças | Commit |
 |---|---|---|---|
-| Real (`arquivos_real`) | **2026-10-07-06** | 33 (duplicatas 1 · server 8 · index 24); ativas = linhas com nome sem prefixo na coluna A (115–146 + duplicatas na 2); `antigoN:` = versões anteriores | branch `claude/magical-dirac-hh3zzs` |
+| Real (`arquivos_real`) | **2026-10-07-07** | 34 (duplicatas 1 · server 8 · index 25); ativas = linhas com nome sem prefixo na coluna A (2; 115–117; 123–128; 147–170); `antigoN:` = versões anteriores | branch `claude/busy-wright-xf0hql` |
 | Teste (`arquivos`) | **2026-10-06-08** (atrás da real: não recebeu o 10, o 11, o 07-01 nem os de 07/10) | 27 | 135de84 |
 | Carregador real | 2026-10-06-02 (`dist/Code.real.gs`, implantado pela Roberta) | — | 4ad0272 |
 | Carregador teste | 2026-10-04-01 + nova versão pendente desde 05/10 (permissão do Drive, ver `COMO-INSTALAR.md`) | — | — |
@@ -48,6 +48,31 @@ Modelo:
 ```
 
 ## Lista
+
+### 2026-10-07-07 · Real (direto) · cobrança por sessão no lugar dos planos + valor da sessão na Agenda
+- **O que mudou**:
+  - **Modalidades** (gestão, 07/10): os planos de 4/6/12 consultas saíram. A lista em `Listas!H2:I9` passou a ser
+    Pagamento antecipado · Por sessão · Pagamento posterior · Mensalidade fixa · Mensal (valor especial) · Pro bono ·
+    Permuta · Convênio (saíram também Consulta individual, Cartão de parceria e AAPI JF (mensal), que não tinham paciente).
+  - **Valor por sessão no cadastro**: "Valor combinado" no formato `R$ 70 por sessão`. O Registrar usa esse valor
+    (travado) em Por sessão, Pagamento posterior e Pagamento antecipado; sem ele, a tabela do procedimento.
+  - **Pagamento posterior**: a sessão sai com Pago? = Não; o total do mês aparece em Pendências.
+  - **Pagamento antecipado**: botão "Recebeu adiantado: lançar sessões pagas" no Registrar. `API.proximasSessoes` busca as
+    próximas datas na agenda; `API.lancarAntecipado` grava uma linha por sessão (Atendido, valor por sessão, Pago? = Sim,
+    data e forma do pagamento, observação "Pagamento antecipado de N sessões…"). Recusa data já lançada e mês sem aba.
+  - **Valor da sessão** ao lado da modalidade no painel do paciente (Agenda) e no cartão do Registrar.
+  - **Corrigir lançamento**: botão "Marcar como lançado por engano" (vira "Cancelado pela clínica"); mudar "O que
+    aconteceu" de uma sessão de plano devolve ou consome a consulta em Planos.
+- **Dados (planilha real)**: 17 pacientes de "Plano de 4 consultas" → "Pagamento posterior" (Valor combinado com
+  `R$ <plano/4> por sessão` e o texto antigo depois de "Antes:"; Naimara ficou "a definir pela gestão"), registrados em
+  "Alterações de cadastro". Davi Maia Marques e Cristina de Andrade: linhas de compra do plano → "Cancelado pela clínica";
+  sessões de 07/10 (Davi, R$ 80) e 06/10 (Cristina, R$ 70) com Pago? = Não; a duplicada da Cristina (A-20261007-193656-j61)
+  → "Cancelado pela clínica"; os dois planos em `Planos` → encerrado.
+- **Peças**: 24 trocadas (server 3–7, index 6–24; index 24 é nova), gravadas nas linhas 147–170 como `novo:`, lidas de
+  volta e conferidas 24/24 contra `dist/pedacos.json`; troca num único update (118–122 e 129–146 viraram `antigo6:`).
+  Pra voltar: inverter os nomes dessas linhas.
+- **Commit**: ver branch `claude/busy-wright-xf0hql` · **Aprovação**: gestão, 07/10 ("pode publicar direto na versão oficial").
+
 
 ### 2026-10-07-06 · Real (direto) · Pendências pra recepção, Lançamentos e recebimento parcial
 - **O que mudou**:
