@@ -367,6 +367,48 @@ button.kpi[aria-pressed="true"] span,.kpi.roxo span{color:#fff;opacity:.9}
 .tabbar{display:none}
 
 /* ---------- impressão ---------- */
+
+/* ---------- Agenda (grade: vagas em branco, ocupados com o nome, intervalo/fechado em cinza) ---------- */
+.seg.mini button{min-height:40px;padding:8px 14px;flex:0 0 auto}
+.ag-card{display:flex;flex-direction:column}
+.ag-legenda{display:flex;flex-wrap:wrap;gap:6px 16px;align-items:center;padding:12px 16px;font-size:12px;color:var(--tx2);border-bottom:1px solid var(--borda-leve)}
+.ag-legenda .lg{display:inline-block;width:14px;height:14px;border-radius:4px;vertical-align:-2px;margin-right:6px;border:1px solid var(--borda-in)}
+.lg.livre{background:#fff;border-style:dashed}.lg.ocup{background:var(--lilas);border-color:var(--lilas-b)}.lg.fechado{background:#E4E0E8}
+.ag-wrap{overflow:auto;max-height:78vh;position:relative}
+.ag{display:grid;min-width:min-content}
+.ag-cab{position:sticky;top:0;z-index:3;background:var(--sup);border-bottom:1px solid var(--borda);border-left:1px solid var(--borda-leve);padding:8px 10px;display:flex;flex-direction:column;gap:2px;font-size:12px;color:var(--tx3);min-height:58px}
+.ag-cab b{font-family:var(--fh);font-weight:600;font-size:13px;color:var(--tx)}
+.ag-cab.hoje b{color:var(--roxo)}
+.ag-cab.aberto{background:var(--lilas)}
+.ag-canto{left:0;z-index:4;border-left:0}
+.ag-semhora{color:var(--am-tx)}
+.ag-semhora button{border:0;background:none;padding:0;font:inherit;color:var(--roxo);text-decoration:underline;cursor:pointer}
+.ag-eixo{position:sticky;left:0;z-index:2;background:var(--sup);border-right:1px solid var(--borda)}
+.ag-eixo span{position:absolute;right:8px;transform:translateY(-50%);font-size:11px;color:var(--tx3);font-variant-numeric:tabular-nums}
+.ag-eixo span:first-child{transform:none}
+.ag-col{position:relative;border-left:1px solid var(--borda-leve);background-color:#E4E0E8;background-image:linear-gradient(to bottom,rgba(84,48,96,.10) 1px,transparent 1px)}
+.ag-col.semexp{background-color:#EDEAF0}
+.ag-aberto{position:absolute;left:0;right:0;background:#fff;background-image:linear-gradient(to bottom,var(--borda-leve) 1px,transparent 1px);background-size:100% 72px}
+.ag-intervalo{position:absolute;left:0;right:0;display:flex;align-items:center;justify-content:center}
+.ag-intervalo span{font-size:11px;color:var(--tx3);text-transform:lowercase}
+.ag-livre{position:absolute;left:3px;right:3px;border:1px dashed var(--borda-in);border-radius:8px;background:transparent;display:flex;align-items:center;gap:8px;padding:0 8px;font-size:12px;color:var(--tx4);text-align:left;overflow:hidden}
+.ag-livre em{font-style:normal;font-weight:700;color:var(--roxo);opacity:0}
+.ag-livre:hover,.ag-livre:focus-visible{border:1px solid var(--roxo);background:#FBF9FC;outline:none}
+.ag-livre:hover em,.ag-livre:focus-visible em{opacity:1}
+.ag-livre.passou{opacity:.45}
+.ag-item{position:absolute;z-index:1;border:1px solid var(--lilas-b);border-left:4px solid var(--roxo);border-radius:8px;background:var(--lilas);color:var(--tx);padding:3px 8px;text-align:left;font-size:12px;line-height:1.25;overflow:hidden;display:flex;flex-direction:column;gap:1px}
+.ag-item b{font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ag-item span{color:var(--tx2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ag-item:hover{box-shadow:var(--sombra)}
+.ag-item.sel{outline:2px solid var(--roxo);outline-offset:1px;z-index:2}
+.ag-item.verde{background:var(--vd-bg);border-color:var(--vd-b);border-left-color:var(--vd-tx)}
+.ag-item.cinza{background:#F1EFF3;border-color:var(--borda-in);border-left-color:var(--tx4)}
+.ag-item.amarela{background:var(--am-bg);border-color:var(--am-b);border-left-color:var(--am-tx)}
+.ag-item.lilas{background:#DCCDE8;border-left-color:var(--roxo-h)}
+.ag-item.vermelha{background:var(--vm-linha);border-color:var(--vm-b);border-left-color:var(--vm-b);opacity:.75}
+.ag-item.fora b{text-decoration:line-through}
+.ag-agora{position:absolute;left:0;right:0;height:0;border-top:2px solid var(--vm-b);z-index:2;pointer-events:none}
+@media print{.ag-wrap{max-height:none;overflow:visible}.ag-livre em{display:none}}
 @media print{
   @page{size:A4 portrait;margin:14mm}
   .lado,.top-cel,.tabbar,.toast,.banner,.btn,.filtros,.lateral,.rodape,.acoes,.mais,.painel,.painel-pac,.toolbar,.tiles,.dois,.no-print,.cpf,.menu-dia,.tabela-rodape,.td-acao,.th-acao{display:none!important}

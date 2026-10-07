@@ -129,13 +129,63 @@ function indicePacientes_() {
   });
   return out;
 }
+// Profissionais: A = nome, B = especialidade; o expediente (horário por dia da semana + duração da sessão) fica em colunas
+// criadas no fim pela tela Agenda → "Horário das profissionais". Formato da célula: "08:00-12:00, 13:00-19:00" (vazio = não atende)
+var EXPEDIENTE = { DIAS: ['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'], DURACAO: 'Duração da sessão (min)', LOG: 'Horário alterado por (app)' };
+function colExpediente_(dia) { return 'Horário ' + dia.toLowerCase(); }
 function profissionais_() {
   var s = aba_(CONFIG.ABA.PROFISSIONAIS), n = s.getLastRow();
   if (n < 2) return [];
-  return s.getRange(2, 1, n - 1, 2).getValues()
-    .map(function (r) { return { nome: String(r[0] || '').trim(), especialidade: String(r[1] || '').trim() }; })
-    .filter(function (p) { return p.nome; });
+  var h = cabecalhos_(s), vals = s.getRange(2, 1, n - 1, s.getLastColumn()).getValues();
+  var txt = function (r, nome) { var c = h[nome]; return c ? String(r[c - 1] == null ? '' : r[c - 1]).trim() : ''; };
+  return vals.map(function (r) {
+    var horarios = {}; EXPEDIENTE.DIAS.forEach(function (d) { horarios[d] = txt(r, colExpediente_(d)); });
+    var dur = parseInt(txt(r, EXPEDIENTE.DURACAO), 10);
+    return { nome: String(r[0] || '').trim(), especialidade: String(r[1] || '').trim(), horarios: horarios, duracao: dur > 0 ? dur : null };
+  }).filter(function (p) { return p.nome; });
 }
+// "08:00-12:00, 13:00-19:00" → [[480,720],[780,1140]]; aceita "8h-12h", "08:00 às 12:00", travessão; null se inválido
+function faixasHorario_(t) {
+  t = String(t || '').trim(); if (!t) return [];
+  var out = [], ok = true;
+  t.split(/[,;]+/).forEach(function (parte) {
+    parte = parte.trim(); if (!parte) return;
+    var m = parte.match(/^(\d{1,2})(?:[:h](\d{2}))?h?\s*(?:-|–|—|a|às|as|até)\s*(\d{1,2})(?:[:h](\d{2}))?h?$/i);
+    if (!m) { ok = false; return; }
+    var a = +m[1] * 60 + +(m[2] || 0), b = +m[3] * 60 + +(m[4] || 0);
+    if (+m[1] > 23 || +m[3] > 24 || +(m[2] || 0) > 59 || +(m[4] || 0) > 59 || b <= a) { ok = false; return; }
+    out.push([a, b]);
+  });
+  if (!ok) return null;
+  out.sort(function (x, y) { return x[0] - y[0]; });
+  for (var i = 1; i < out.length; i++) if (out[i][0] < out[i - 1][1]) return null; // faixas sobrepostas
+  return out;
+}
+function faixasTxt_(f) { var hm = function (m) { return ('0' + Math.floor(m / 60)).slice(-2) + ':' + ('0' + m % 60).slice(-2); }; return f.map(function (x) { return hm(x[0]) + '-' + hm(x[1]); }).join(', '); }
+// Grava o expediente de uma profissional (recepção e gestão). Só escreve nas colunas de expediente da linha dela.
+API.salvarExpediente = function (d) {
+  d = d || {};
+  var nome = String(d.profissional || '').trim(), erros = [], horarios = {};
+  if (!nome) erros.push('Escolha a profissional.');
+  EXPEDIENTE.DIAS.forEach(function (dia) { var f = faixasHorario_((d.horarios || {})[dia]); if (f === null) erros.push(dia + ': horário inválido. Use o formato 08:00-12:00, 13:00-19:00.'); else horarios[dia] = faixasTxt_(f); });
+  var dur = String(d.duracao == null ? '' : d.duracao).trim(), durN = parseInt(dur, 10);
+  if (dur && !(durN >= 10 && durN <= 240)) erros.push('Duração da sessão: informe os minutos (entre 10 e 240).');
+  if (erros.length) return { ok: false, erros: erros };
+  var lock = LockService.getScriptLock(); lock.waitLock(20000);
+  try {
+    var s = aba_(CONFIG.ABA.PROFISSIONAIS), n = s.getLastRow(), linha = 0;
+    var nomes = n >= 2 ? s.getRange(2, 1, n - 1, 1).getValues() : [];
+    for (var i = 0; i < nomes.length; i++) if (String(nomes[i][0] || '').trim() === nome) { linha = i + 2; break; }
+    if (!linha) return { ok: false, erros: ['Profissional não está na aba Profissionais.'] };
+    var g = garantirColunas_(s, EXPEDIENTE.DIAS.map(colExpediente_).concat([EXPEDIENTE.DURACAO, EXPEDIENTE.LOG])), h = g.h, u = usuario_(), pares = {};
+    EXPEDIENTE.DIAS.forEach(function (dia) { pares[colExpediente_(dia)] = horarios[dia]; s.getRange(linha, h[colExpediente_(dia)]).setNumberFormat('@'); });
+    pares[EXPEDIENTE.DURACAO] = dur ? durN : '';
+    pares[EXPEDIENTE.LOG] = (u.email || 'app') + ' · ' + agora_();
+    gravarCelulas_(s, linha, h, pares);
+    SpreadsheetApp.flush();
+    return { ok: true, linha: linha, colunasCriadas: g.criadas, profissionais: profissionais_() };
+  } finally { lock.releaseLock(); }
+};
 
 API.ping = function () { return { ok: true, hora: agora_(), usuario: usuario_(), planilha: planilha_().getName() }; };
 
@@ -613,12 +663,15 @@ API.acrescentarAoDia = function (d) {
   } finally { lock.releaseLock(); }
 };
 // Monta o dia: agenda fixa do dia da semana (vigente) + acréscimos do dia + o que já foi registrado na aba do mês
-API.listaDoDia = function (d) {
-  d = d || {};
-  var data = parseData_(d.data) || new Date();
+// cache (opcional) guarda as abas já lidas, pra semana da Agenda ler cada aba uma vez só
+function montarDia_(data, cache) {
+  cache = cache || {};
+  if (!cache.agenda) cache.agenda = API.agendaFixa();
+  if (!cache.dia) cache.dia = linhasComo_(planilha_().getSheetByName(CONFIG.ABA.DIA));
+  if (!cache.mes) cache.mes = {};
   var chave = fmtData_(data), diaSemana = CONFIG.DIAS[data.getDay()];
   var itens = [], vistos = {};
-  API.agendaFixa().forEach(function (r) {
+  cache.agenda.forEach(function (r) {
     if (r['Dia da semana'] !== diaSemana || String(r['Ativo'] || 'Sim') === 'Não') return;
     var c = r['Começa em'] ? parseData_(r['Começa em']) : null, t = r['Termina em'] ? parseData_(r['Termina em']) : null;
     if ((c && data < c) || (t && data > t)) return;
@@ -627,7 +680,7 @@ API.listaDoDia = function (d) {
     }
     itens.push({ hora: r['Hora'], paciente: r['Paciente'], profissional: r['Profissional'], origem: /quinzen/i.test(String(r['Frequência'] || '')) ? 'Quinzenal' : 'Semanal', agendaId: r['ID'], obs: r['Observação'] || '' });
   });
-  linhasComo_(planilha_().getSheetByName(CONFIG.ABA.DIA)).forEach(function (r) {
+  cache.dia.forEach(function (r) {
     if (r['Data'] !== chave || !r['Paciente']) return;
     var origem = String(r['Origem'] || 'Avulso');
     if (/^Removido/i.test(origem)) return; // agendamento removido pela recepção (duplicado, engano): a linha fica, mas sai da lista
@@ -647,9 +700,11 @@ API.listaDoDia = function (d) {
     itens.push({ hora: horaTxt_(r['Hora']), paciente: r['Paciente'], profissional: r['Profissional'], origem: origem, listaId: r['ID'], obs: r['Observação'] || '' });
   });
   // registros do dia na aba do mês
-  var reg = {}, sm = planilha_().getSheetByName(nomeAbaMes_(data));
-  if (sm && sm.getLastRow() >= 2) {
-    var h = cabecalhos_(sm), HM = CONFIG.HM, vals = sm.getRange(2, 1, sm.getLastRow() - 1, sm.getLastColumn()).getValues();
+  var reg = {}, nm = nomeAbaMes_(data);
+  if (!cache.mes[nm]) { var sm0 = planilha_().getSheetByName(nm); cache.mes[nm] = { existe: !!sm0, h: sm0 ? cabecalhos_(sm0) : {}, vals: sm0 && sm0.getLastRow() >= 2 ? sm0.getRange(2, 1, sm0.getLastRow() - 1, sm0.getLastColumn()).getValues() : [] }; }
+  var cm = cache.mes[nm];
+  if (cm.vals.length) {
+    var h = cm.h, HM = CONFIG.HM, vals = cm.vals;
     vals.forEach(function (r) {
       var dt = r[h[HM.DATA] - 1]; if (fmtData_(dt) !== chave) return;
       var pac = String(r[h[HM.PACIENTE] - 1] || '').trim(); if (!pac) return;
@@ -668,7 +723,18 @@ API.listaDoDia = function (d) {
     if (!itens.some(function (it) { return it.paciente === pac && it.profissional === prof; })) itens.push({ hora: reg[k].hora || '', paciente: pac, profissional: prof, origem: 'Registrado', registro: reg[k] });
   });
   itens.sort(function (a, b) { return (a.profissional + a.hora).localeCompare(b.profissional + b.hora); });
-  return { data: chave, diaSemana: diaSemana, itens: itens, abaMes: nomeAbaMes_(data), abaMesExiste: !!sm };
+  return { data: chave, diaSemana: diaSemana, itens: itens, abaMes: nomeAbaMes_(data), abaMesExiste: cm.existe };
+}
+API.listaDoDia = function (d) { d = d || {}; return montarDia_(parseData_(d.data) || new Date()); };
+// Agenda (visão semana): os 7 dias da semana da data (segunda a domingo), opcionalmente de uma profissional só
+API.agendaSemana = function (d) {
+  d = d || {};
+  var base = parseData_(d.data) || new Date(), seg = dataMais_(base, -((base.getDay() + 6) % 7)), prof = String(d.profissional || '').trim(), cache = {}, dias = [];
+  for (var i = 0; i < 7; i++) {
+    var r = montarDia_(dataMais_(seg, i), cache);
+    dias.push({ data: r.data, diaSemana: r.diaSemana, itens: prof ? r.itens.filter(function (it) { return it.profissional === prof; }) : r.itens });
+  }
+  return { inicio: fmtData_(seg), profissional: prof, dias: dias };
 };
 // Remarcar uma sessão: ausência no dia original + acréscimo no novo dia (o horário fixo não muda)
 API.remarcar = function (d) {

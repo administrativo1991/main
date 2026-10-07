@@ -376,6 +376,48 @@ button.kpi[aria-pressed="true"] span,.kpi.roxo span{color:#fff;opacity:.9}
 .tabbar{display:none}
 
 /* ---------- impressão ---------- */
+
+/* ---------- Agenda (grade: vagas em branco, ocupados com o nome, intervalo/fechado em cinza) ---------- */
+.seg.mini button{min-height:40px;padding:8px 14px;flex:0 0 auto}
+.ag-card{display:flex;flex-direction:column}
+.ag-legenda{display:flex;flex-wrap:wrap;gap:6px 16px;align-items:center;padding:12px 16px;font-size:12px;color:var(--tx2);border-bottom:1px solid var(--borda-leve)}
+.ag-legenda .lg{display:inline-block;width:14px;height:14px;border-radius:4px;vertical-align:-2px;margin-right:6px;border:1px solid var(--borda-in)}
+.lg.livre{background:#fff;border-style:dashed}.lg.ocup{background:var(--lilas);border-color:var(--lilas-b)}.lg.fechado{background:#E4E0E8}
+.ag-wrap{overflow:auto;max-height:78vh;position:relative}
+.ag{display:grid;min-width:min-content}
+.ag-cab{position:sticky;top:0;z-index:3;background:var(--sup);border-bottom:1px solid var(--borda);border-left:1px solid var(--borda-leve);padding:8px 10px;display:flex;flex-direction:column;gap:2px;font-size:12px;color:var(--tx3);min-height:58px}
+.ag-cab b{font-family:var(--fh);font-weight:600;font-size:13px;color:var(--tx)}
+.ag-cab.hoje b{color:var(--roxo)}
+.ag-cab.aberto{background:var(--lilas)}
+.ag-canto{left:0;z-index:4;border-left:0}
+.ag-semhora{color:var(--am-tx)}
+.ag-semhora button{border:0;background:none;padding:0;font:inherit;color:var(--roxo);text-decoration:underline;cursor:pointer}
+.ag-eixo{position:sticky;left:0;z-index:2;background:var(--sup);border-right:1px solid var(--borda)}
+.ag-eixo span{position:absolute;right:8px;transform:translateY(-50%);font-size:11px;color:var(--tx3);font-variant-numeric:tabular-nums}
+.ag-eixo span:first-child{transform:none}
+.ag-col{position:relative;border-left:1px solid var(--borda-leve);background-color:#E4E0E8;background-image:linear-gradient(to bottom,rgba(84,48,96,.10) 1px,transparent 1px)}
+.ag-col.semexp{background-color:#EDEAF0}
+.ag-aberto{position:absolute;left:0;right:0;background:#fff;background-image:linear-gradient(to bottom,var(--borda-leve) 1px,transparent 1px);background-size:100% 72px}
+.ag-intervalo{position:absolute;left:0;right:0;display:flex;align-items:center;justify-content:center}
+.ag-intervalo span{font-size:11px;color:var(--tx3);text-transform:lowercase}
+.ag-livre{position:absolute;left:3px;right:3px;border:1px dashed var(--borda-in);border-radius:8px;background:transparent;display:flex;align-items:center;gap:8px;padding:0 8px;font-size:12px;color:var(--tx4);text-align:left;overflow:hidden}
+.ag-livre em{font-style:normal;font-weight:700;color:var(--roxo);opacity:0}
+.ag-livre:hover,.ag-livre:focus-visible{border:1px solid var(--roxo);background:#FBF9FC;outline:none}
+.ag-livre:hover em,.ag-livre:focus-visible em{opacity:1}
+.ag-livre.passou{opacity:.45}
+.ag-item{position:absolute;z-index:1;border:1px solid var(--lilas-b);border-left:4px solid var(--roxo);border-radius:8px;background:var(--lilas);color:var(--tx);padding:3px 8px;text-align:left;font-size:12px;line-height:1.25;overflow:hidden;display:flex;flex-direction:column;gap:1px}
+.ag-item b{font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ag-item span{color:var(--tx2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ag-item:hover{box-shadow:var(--sombra)}
+.ag-item.sel{outline:2px solid var(--roxo);outline-offset:1px;z-index:2}
+.ag-item.verde{background:var(--vd-bg);border-color:var(--vd-b);border-left-color:var(--vd-tx)}
+.ag-item.cinza{background:#F1EFF3;border-color:var(--borda-in);border-left-color:var(--tx4)}
+.ag-item.amarela{background:var(--am-bg);border-color:var(--am-b);border-left-color:var(--am-tx)}
+.ag-item.lilas{background:#DCCDE8;border-left-color:var(--roxo-h)}
+.ag-item.vermelha{background:var(--vm-linha);border-color:var(--vm-b);border-left-color:var(--vm-b);opacity:.75}
+.ag-item.fora b{text-decoration:line-through}
+.ag-agora{position:absolute;left:0;right:0;height:0;border-top:2px solid var(--vm-b);z-index:2;pointer-events:none}
+@media print{.ag-wrap{max-height:none;overflow:visible}.ag-livre em{display:none}}
 @media print{
   @page{size:A4 portrait;margin:14mm}
   .lado,.top-cel,.tabbar,.toast,.banner,.btn,.filtros,.lateral,.rodape,.acoes,.mais,.painel,.painel-pac,.toolbar,.tiles,.dois,.no-print,.cpf,.menu-dia,.tabela-rodape,.td-acao,.th-acao{display:none!important}
@@ -499,7 +541,7 @@ button.kpi[aria-pressed="true"] span,.kpi.roxo span{color:#fff;opacity:.9}
 <div class="banner" id="banner" hidden></div>
 <div class="app">
 <nav class="lado" aria-label="Principal">
-  <a class="logo" href="#" id="logo-link" aria-label="Recepção Nascente — Hoje"><svg xmlns="http://www.w3.org/2000/svg" viewBox="234 423 2133 354" class="logo-h" role="img" aria-label="Clínica Nascente" focusable="false">
+  <a class="logo" href="#" id="logo-link" aria-label="Recepção Nascente — Agenda"><svg xmlns="http://www.w3.org/2000/svg" viewBox="234 423 2133 354" class="logo-h" role="img" aria-label="Clínica Nascente" focusable="false">
 <defs>
 <clipPath id="clip_1">
 <path transform="matrix(8.29226,0,0,-8.29226,234,776.23959)" d="M0 0H257.1073V42.50702H0Z"/>
@@ -529,7 +571,7 @@ button.kpi[aria-pressed="true"] span,.kpi.roxo span{color:#fff;opacity:.9}
 </g>
 </g>
 </svg></a>
-  <button type="button" data-go="hoje" aria-current="page"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>Hoje</button>
+  <button type="button" data-go="hoje" aria-current="page"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>Agenda</button>
   <button type="button" data-go="registrar"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>Registrar</button>
   <button type="button" data-go="pacientes"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0116 0"/></svg>Pacientes</button>
   <button type="button" data-go="mensalistas"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="6" width="18" height="12" rx="2"/><path d="M3 10h18"/></svg>Mensalistas</button>
@@ -543,7 +585,7 @@ button.kpi[aria-pressed="true"] span,.kpi.roxo span{color:#fff;opacity:.9}
 
 <div class="conteudo">
 <header class="top-cel">
-  <a class="logo" href="#" id="logo-link-cel" aria-label="Recepção Nascente — Hoje"><svg xmlns="http://www.w3.org/2000/svg" viewBox="505 625 990 750" class="simbolo" role="img" aria-label="Clínica Nascente" focusable="false">
+  <a class="logo" href="#" id="logo-link-cel" aria-label="Recepção Nascente — Agenda"><svg xmlns="http://www.w3.org/2000/svg" viewBox="505 625 990 750" class="simbolo" role="img" aria-label="Clínica Nascente" focusable="false">
 <defs>
 <clipPath id="sclip_1">
 <path transform="matrix(4.80391,0,0,-4.80391,-1068.1763,2015.2678)" d="M316.02906 121.982318H545.00906V300.70133H316.02906Z"/>
@@ -573,13 +615,16 @@ button.kpi[aria-pressed="true"] span,.kpi.roxo span{color:#fff;opacity:.9}
       </div>
       <input type="date" id="d-data" class="sr" aria-label="Data da lista" tabindex="-1">
       <button type="button" class="btn ter roxo" id="d-ir-hoje">Hoje</button>
+      <div class="seg mini" id="d-visao" role="group" aria-label="Ver como"><button type="button" data-v="lista" aria-pressed="true">Lista</button><button type="button" data-v="agenda" aria-pressed="false">Agenda</button></div>
+      <div class="seg mini" id="d-agvisao" role="group" aria-label="Período da agenda" hidden><button type="button" data-v="dia" aria-pressed="true">Dia</button><button type="button" data-v="semana" aria-pressed="false">Semana</button></div>
       <select id="d-prof" aria-label="Profissional" class="auto"><option value="">Todas as profissionais</option></select>
-      <div class="campo-wrap busca">
+      <div class="campo-wrap busca" id="d-busca-wrap">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
         <input type="search" id="d-busca" placeholder="Buscar paciente (nome ou pagador)" aria-label="Buscar paciente" autocomplete="off">
       </div>
       <button type="button" class="btn ter so-pc" id="d-print"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9V3h12v6"/><rect x="3" y="9" width="18" height="9" rx="2"/><path d="M6 14h12v7H6z"/></svg> Imprimir</button>
       <button type="button" class="btn ter" id="d-rec-topo" title="Ver, mudar ou incluir horários fixos (semanal ou quinzenal)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg> Horários fixos</button>
+      <button type="button" class="btn ter" id="d-exp-topo" hidden title="Dias e horários de atendimento de cada profissional + duração da sessão">Horário das profissionais</button>
       <button type="button" class="btn" id="d-add"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg> Encaixe no dia</button>
     </div>
     <h1 class="so-print" id="d-titulo-print">Lista do dia</h1>
@@ -593,7 +638,7 @@ button.kpi[aria-pressed="true"] span,.kpi.roxo span{color:#fff;opacity:.9}
     <div class="faixa pessego lembrete" id="d-lembrete" hidden><div class="corpo"><div class="t">Lembrete da gestão</div><span id="d-lembrete-txt"></span><small id="d-lembrete-meta"></small></div></div>
 
     <div id="d-addbox" class="painel" hidden>
-      <div class="cab"><h2>Encaixe no dia</h2><span class="muted">paciente sem horário fixo: retorno, avaliação, reposição</span><span class="esp"></span><button type="button" class="btn icone p" id="d-add-cancel" aria-label="Fechar"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+      <div class="cab"><h2>Encaixe no dia</h2><span class="tag lilas" id="d-add-dia"></span><span class="muted">paciente sem horário fixo: retorno, avaliação, reposição</span><span class="esp"></span><button type="button" class="btn icone p" id="d-add-cancel" aria-label="Fechar"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
       <div class="grid g4">
         <label class="campo c2">Paciente<input id="d-add-pac" list="dl-pacientes" autocomplete="off" placeholder="Comece a digitar o nome…"><span class="hint" id="d-add-pac-info"></span></label>
         <label class="campo">Profissional<select id="d-add-prof"></select></label>
@@ -602,6 +647,19 @@ button.kpi[aria-pressed="true"] span,.kpi.roxo span{color:#fff;opacity:.9}
         <label class="campo c3">Observação<input id="d-add-obs"></label>
       </div>
       <div class="acoes"><button type="button" class="btn" id="d-add-ok">Agendar no dia</button><button type="button" class="btn ter" id="d-add-rec">Tornar recorrente (toda semana)</button></div>
+    </div>
+
+    <div id="d-expbox" class="painel" hidden>
+      <div class="cab"><h2>Horário das profissionais</h2><span class="muted">dias e horários de atendimento + duração da sessão · é o que a Agenda usa pra mostrar as vagas</span><span class="esp"></span><button type="button" class="btn icone p" id="d-exp-fechar" aria-label="Fechar"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+      <div class="grid g4">
+        <label class="campo c2">Profissional<select id="e-prof"></select></label>
+        <label class="campo">Duração da sessão (min)<input id="e-dur" inputmode="numeric" maxlength="3" placeholder="ex.: 30"></label>
+      </div>
+      <div class="grid g3" id="e-dias"></div>
+      <div class="dica">Vazio = não atende nesse dia. Pausa de almoço: escreva duas faixas separadas por vírgula, ex.: <b>08:00-12:00, 13:00-19:00</b>. O intervalo aparece em cinza na Agenda.</div>
+      <div id="e-erros"></div>
+      <div class="acoes"><button type="button" class="btn" id="e-salvar">Salvar horário</button><span class="muted" id="e-hint"></span></div>
+      <div class="tabela-card"><div class="tabela-wrap"><table><thead><tr><th>Profissional</th><th>Seg</th><th>Ter</th><th>Qua</th><th>Qui</th><th>Sex</th><th>Sáb</th><th>Sessão</th><th></th></tr></thead><tbody id="e-lista"></tbody></table></div></div>
     </div>
 
     <div id="d-recbox" class="painel" hidden>
@@ -622,7 +680,7 @@ button.kpi[aria-pressed="true"] span,.kpi.roxo span{color:#fff;opacity:.9}
     </div>
 
     <div id="d-carregando" class="carregando">Carregando a lista…</div>
-    <div class="tabela-card dia-card">
+    <div class="tabela-card dia-card" id="d-lista-card">
       <div class="tabela-wrap">
         <table class="dia">
           <thead><tr><th class="th-hora">Hora</th><th>Paciente</th><th class="th-prof">Profissional · modalidade</th><th>Cobrança</th><th>Situação</th><th class="th-acao no-print"></th></tr></thead>
@@ -630,6 +688,12 @@ button.kpi[aria-pressed="true"] span,.kpi.roxo span{color:#fff;opacity:.9}
         </table>
       </div>
       <div class="tabela-rodape no-print"><span id="d-rodape-n"></span><span class="esp"></span><button type="button" class="link-discreto" id="d-rec">Agenda recorrente (horários fixos)</button></div>
+    </div>
+
+    <div class="tabela-card ag-card" id="d-agenda" hidden>
+      <div class="ag-legenda no-print"><span><i class="lg livre"></i>vaga</span><span><i class="lg ocup"></i>ocupado</span><span><i class="lg fechado"></i>intervalo / fechado</span><span class="muted">clique numa vaga pra encaixar · clique num nome pra abrir o paciente</span></div>
+      <div class="ag-wrap" id="d-ag-grade"></div>
+      <div class="tabela-rodape no-print"><span id="d-ag-rodape"></span><span class="esp"></span><button type="button" class="link-discreto" id="d-exp">Horário das profissionais</button></div>
     </div>
 
     <div class="dois no-print">
@@ -1017,7 +1081,7 @@ button.kpi[aria-pressed="true"] span,.kpi.roxo span{color:#fff;opacity:.9}
 </div>
 
 <nav class="tabbar" aria-label="Principal (celular)">
-  <button type="button" data-go="hoje" aria-current="page"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>Hoje</button>
+  <button type="button" data-go="hoje" aria-current="page"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>Agenda</button>
   <button type="button" data-go="registrar"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>Registrar</button>
   <button type="button" data-go="pacientes"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0116 0"/></svg>Pacientes</button>
   <button type="button" data-go="mensalistas"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="6" width="18" height="12" rx="2"/><path d="M3 10h18"/></svg>Mensalistas</button>
@@ -1218,6 +1282,10 @@ function call(nome, dados) {
 }
 /*__MOCK_INICIO__*/ // simulação local (dist/index.html); o build tira este bloco da versão publicada
 var mockReg = [], mockDia = [];
+var mockProfs = [{ nome: "Juliana Ribeiro", especialidade: "Psicologia", horarios: { Segunda: '08:00-12:00, 13:00-19:00', 'Terça': '08:00-12:00', Quarta: '13:00-19:00', Quinta: '08:00-12:00, 13:00-18:00', Sexta: '', 'Sábado': '' }, duracao: 30 },
+  { nome: "Giovana Grossi", especialidade: "Psicologia (estágio)", horarios: { Segunda: '10:00-12:00, 13:00-16:00', 'Terça': '', Quarta: '', Quinta: '', Sexta: '', 'Sábado': '' }, duracao: null },
+  { nome: "Dr. Victor Cunha", especialidade: "Pediatria", horarios: { Segunda: '14:00-18:00', 'Terça': '', Quarta: '', Quinta: '14:00-18:00', Sexta: '', 'Sábado': '' }, duracao: 45 },
+  { nome: "Marileia Rodrigues", especialidade: "Psicanálise e ABA", horarios: {}, duracao: null }];
 var mockLemb = [{ linha: 2, data: '03/10/2026 18:10', texto: 'Semana que vem a Dra. Luciana não atende na quinta.', validoAte: '03/10/2026', quem: 'simulacao@local' }, { linha: 3, data: hojeStr() + ' 08:00', texto: 'Hoje a Dra. Luciana atende só até 16h: remarcar quem está de 16h30 em diante.', validoAte: '', quem: 'simulacao@local' }];
 var mockAgenda = [{ ID: 'F-1', Paciente: 'Beatriz Almeida Rocha', Profissional: 'Juliana Ribeiro', 'Dia da semana': 'Segunda', Hora: '08:00', 'Frequência': 'Semanal', 'Começa em': '01/09/2026', 'Termina em': '', Ativo: 'Sim', 'Observação': '' },
   { ID: 'F-2', Paciente: 'Carlos Henrique Dias', Profissional: 'Juliana Ribeiro', 'Dia da semana': 'Segunda', Hora: '09:00', 'Frequência': 'Quinzenal', 'Começa em': '07/09/2026', 'Termina em': '', Ativo: 'Sim', 'Observação': '' },
@@ -1249,7 +1317,7 @@ function mock(nome, d) {
       listas: { oque: ["Atendido", "Desmarcou com antecedência (≥ 24h)", "Faltou avisando em cima da hora (< 24h)", "Faltou sem aviso", "Cancelado pela clínica"], pago: ["Sim", "Não", "Convênio (fatura)", "Mensalista (paga no mês seguinte)", "Plano já pago", "Não se aplica (pro bono / permuta)"], formas: ["Pix", "Dinheiro", "Cartão de débito", "Cartão de crédito", "Link de pagamento"], modalidades: ["Consulta individual", "Consulta individual – cartão de parceria", "Plano de 4 consultas", "Plano de 6 consultas", "Plano de 12 consultas", "Mensalidade fixa", "Mensal (valor especial)", "AAPI JF (mensal)", "Convênio", "Por sessão", "Pro bono", "Permuta"],
         modalidadesEsp: [{ nome: 'Plano de 6 consultas', esp: 'Nutrição' }, { nome: 'Por sessão', esp: 'Psicologia' }, { nome: 'Mensalidade fixa', esp: 'Psicologia' }, { nome: 'Mensal (valor especial)', esp: 'Psicologia' }], regras: ["Tabela", "Paga o que consegue", "Valor fixo combinado", "Mensalidade fixa (independe do nº de sessões)", "Pro bono", "Permuta", "Convênio"],
         convenios: ["Particular", "Cedplan", "Sabin Sinai", "Unafisco", "AAPI JF", "Plan Minas", "PLASC", "AMIL", "ASSEFAZ", "FUSEX", "IPSM", "Sulamérica", "18 de Julho", "Aeronáutica"] },
-      profissionais: [{ nome: "Juliana Ribeiro", especialidade: "Psicologia" }, { nome: "Giovana Grossi", especialidade: "Psicologia (estágio)" }, { nome: "Dr. Victor Cunha", especialidade: "Pediatria" }, { nome: "Marileia Rodrigues", especialidade: "Psicanálise e ABA" }], pacientes: mockBase.concat(mockPacientes.map(function (p) { return { linha: p.linha + 10, nome: p.nome, cpf: '', nasc: p.nasc, pagador: p.pagador, modalidade: p.modalidade, convenio: p.convenio, ativo: 'Sim' }; })) });
+      profissionais: mockProfs, pacientes: mockBase.concat(mockPacientes.map(function (p) { return { linha: p.linha + 10, nome: p.nome, cpf: '', nasc: p.nasc, pagador: p.pagador, modalidade: p.modalidade, convenio: p.convenio, ativo: 'Sim' }; })) });
     if (nome === 'bootstrapAtendimento') return res({ hoje: hojeStr(), abaMes: MESES_PT[new Date().getMonth()], abaMesExiste: true, mensalistasInfo: { modeloNovo: true, mes: MESES_PT[new Date().getMonth()].toUpperCase(), coluna: MESES_PT[new Date().getMonth()].toUpperCase() + ' — pago?' },
       procedimentos: [{ nome: 'Consulta pediátrica', especialidade: 'Pediatria', valor: 200 }, { nome: 'Consulta pediátrica – cartão de parceria ou AAPI JF', especialidade: 'Pediatria', valor: 160 }, { nome: 'Retorno pediátrico (com pedido de exames, até 30 dias)', especialidade: 'Pediatria', valor: 0 },
         { nome: 'Anamnese psicologia', especialidade: 'Psicologia', valor: 140 }, { nome: 'Sessão de psicologia', especialidade: 'Psicologia', valor: 120 }, { nome: 'Sessão de psicologia – cartão de parceria', especialidade: 'Psicologia', valor: 100 }, { nome: 'Sessão de psicologia – plano de 4 consultas', especialidade: 'Psicologia', valor: 0 }, { nome: 'Sessão de psicologia – mensalidade fixa', especialidade: 'Psicologia', valor: 0 }, { nome: 'Sessão de psicologia – mensal valor especial', especialidade: 'Psicologia', valor: 0 }, { nome: 'Sessão de psicologia – convênio', especialidade: 'Psicologia', valor: 0 }, { nome: 'Taxa de falta – psicologia', especialidade: 'Psicologia', valor: 120 }, { nome: 'Aplicação de teste – avaliação neuropsicológica', especialidade: 'Psicologia', valor: 0 }, { nome: 'Avaliação neuropsicológica', especialidade: 'Psicologia', valor: null }, { nome: 'Plano de 4 consultas – psicologia (compra)', especialidade: 'Psicologia', valor: 400 }, { nome: 'Plano de 12 consultas – psicologia (compra)', especialidade: 'Psicologia', valor: 960 }],
@@ -1263,6 +1331,13 @@ function mock(nome, d) {
       itens.forEach(function (it) { var r = mockReg.filter(function (x) { return x.paciente === it.paciente && x.profissional === it.profissional && x.data === d.data; })[0]; it.registro = r ? { oque: r.oque, id: r.id, procedimento: r.procedimento, hora: r.hora, valor: r.valor, pago: r.pago, forma: r.forma, nf: r.nf, guia: r.guia, convenio: r.convenio } : null; var nv = mockDia.filter(function (x) { return x.data === d.data && /^Não vem/.test(x.origem) && x.paciente === it.paciente; })[0]; if (nv) it.naoVem = nv.origem; var cf = mockDia.filter(function (x) { return x.data === d.data && x.origem === 'Confirmado' && x.paciente === it.paciente; })[0]; if (cf) it.confirmado = { por: 'simulacao@local', quando: 'ontem 17:40' }; });
       return res({ data: d.data, diaSemana: DIAS_PT[(dataObj(d.data) || new Date()).getDay()], itens: itens, abaMes: MESES_PT[new Date().getMonth()], abaMesExiste: true }); }
     if (nome === 'agendaFixa') return res(mockAgenda);
+    if (nome === 'agendaSemana') { var b0 = dataObj(d.data) || new Date(), seg0 = new Date(b0.getFullYear(), b0.getMonth(), b0.getDate() - ((b0.getDay() + 6) % 7)), dias0 = [];
+      for (var i0 = 0; i0 < 7; i0++) { var dt0 = new Date(seg0.getFullYear(), seg0.getMonth(), seg0.getDate() + i0), ds0 = ('0' + dt0.getDate()).slice(-2) + '/' + ('0' + (dt0.getMonth() + 1)).slice(-2) + '/' + dt0.getFullYear(), dn0 = DIAS_PT[dt0.getDay()];
+        var it0 = mockAgenda.filter(function (a) { return a['Dia da semana'] === dn0; }).map(function (a) { return { hora: a['Hora'], paciente: a['Paciente'], profissional: a['Profissional'], origem: a['Frequência'], agendaId: a['ID'], obs: '', registro: null }; })
+          .concat(mockDia.filter(function (x) { return x.data === ds0 && !/^Não vem|^Confirmado|^Removido/.test(x.origem); }).map(function (x) { return { hora: x.hora, paciente: x.paciente, profissional: x.profissional, origem: x.origem, listaId: x.id, registro: null }; }));
+        dias0.push({ data: ds0, diaSemana: dn0, itens: d.profissional ? it0.filter(function (x) { return x.profissional === d.profissional; }) : it0 }); }
+      return res({ inicio: dias0[0].data, profissional: d.profissional || '', dias: dias0 }); }
+    if (nome === 'salvarExpediente') { var pf = mockProfs.filter(function (x) { return x.nome === d.profissional; })[0]; if (!pf) return res({ ok: false, erros: ['Profissional não está na aba Profissionais.'] }); pf.horarios = d.horarios; pf.duracao = parseInt(d.duracao, 10) || null; return res({ ok: true, colunasCriadas: [], profissionais: mockProfs }); }
     if (nome === 'salvarAgendaFixa') { var id = d.id || ('F-' + (mockAgenda.length + 1)); var ex = mockAgenda.filter(function (a) { return a.ID === id; })[0]; var row = { ID: id, Paciente: d.paciente, Profissional: d.profissional, 'Dia da semana': d.diaSemana, Hora: d.hora, 'Frequência': d.frequencia || 'Semanal', 'Começa em': d.comecaEm || '', 'Termina em': d.terminaEm || '', Ativo: d.ativo === false ? 'Não' : 'Sim', 'Observação': d.observacao || '' }; if (ex) Object.assign(ex, row); else mockAgenda.push(row); return res({ ok: true, id: id }); }
     if (nome === 'acrescentarAoDia') { var nid = 'D-' + (mockDia.length + 1); mockDia.push({ id: nid, data: d.data, hora: d.hora, paciente: d.paciente, profissional: d.profissional, origem: d.origem || 'Avulso' }); return res({ ok: true, id: nid }); }
     if (nome === 'remarcar') { mockDia.push({ id: 'D-x' + mockDia.length, data: d.de, hora: d.horaDe, paciente: d.paciente, profissional: d.profissional, origem: 'Não vem · remarcado para ' + d.para }); mockDia.push({ id: 'D-y' + mockDia.length, data: d.para, hora: d.horaPara || d.horaDe, paciente: d.paciente, profissional: d.profissional, origem: 'Remarcação de ' + d.de }); return res({ ok: true }); }
@@ -1425,7 +1500,7 @@ function corrigirCampos(box, reg) {
 function corrigirValidar(c, reg) { var e = []; if (c.pago === 'Sim' && !(Number(reg.valor) > 0)) e.push('Pago? = Sim exige um valor na linha; o valor se corrige na planilha.'); if (c.dataPagamento && !dataValida(c.dataPagamento)) e.push('Data do pagamento inválida (dd/mm/aaaa).'); if (!Object.keys(c).length) e.push('Nada pra corrigir: mude algum campo ou escreva na observação.'); return e; }
 
 var TELAS = { hoje: 's-hoje', registrar: 's-registrar', pacientes: 's-pacientes', mensalistas: 's-mensalistas', gestao: 's-gestao' };
-var TITULOS = { hoje: 'Hoje', registrar: 'Registrar atendimento', pacientes: 'Pacientes', mensalistas: 'Mensalistas', gestao: 'Gestão' };
+var TITULOS = { hoje: 'Agenda', registrar: 'Registrar atendimento', pacientes: 'Pacientes', mensalistas: 'Mensalistas', gestao: 'Gestão' };
 var telaAtual = 'hoje';
 var INICIAR = {};
 function go(id, extra) {
@@ -1474,17 +1549,17 @@ function carregar() {
 }
 
 /* ===== 10-hoje.js ===== */
-/* ================= HOJE (lista do dia) ================= */
+/* ================= AGENDA (antiga tela Hoje: lista do dia; a grade fica em 15-agenda.js) ================= */
 var DIA = null, diaFiltro = 'todos', diaProf = '', diaBusca = '', AGENDA = [], recEdit = null, resumoMes = {}, selecionado = null, formAberto = null;
 function diaEscolhido() { return isoParaBR($("#d-data").value); }
 function chaveItem(it) { return it.paciente + '|' + it.profissional; }
-function chegadas() { return store('rn-chegou:' + diaEscolhido()) || {}; }
+function chegadas(data) { return store('rn-chegou:' + (data || diaEscolhido())) || {}; }
 function marcarChegou(it, on) { var c = chegadas(); if (on) c[chaveItem(it)] = agoraHora(); else delete c[chaveItem(it)]; store('rn-chegou:' + diaEscolhido(), c); }
 // situações possíveis de uma linha (não existe "Em atendimento"): o registro é feito inteiro na chegada
-function statusItem(it) {
+function statusItem(it, data) {
   if (it.registro) return /^Atendido/.test(it.registro.oque) ? 'atendido' : 'falta';
   if (it.naoVem) return 'naovem';
-  if (chegadas()[chaveItem(it)]) return 'chegou';
+  if (chegadas(data)[chaveItem(it)]) return 'chegou';
   if (it.confirmado) return 'aguardando';
   return 'aconfirmar';
 }
@@ -1511,15 +1586,20 @@ function mostrarLembrete() {
   $("#d-lembrete-txt").textContent = l.texto;
   $("#d-lembrete-meta").textContent = 'Gestão · ' + String(l.data || '').slice(0, 5) + (l.validoAte ? ' · vale até ' + l.validoAte : '');
 }
-function carregarDia() {
-  var data = diaEscolhido(); if (!dataObj(data)) return;
+// forcarSemana === false: reaproveita a semana já carregada (só trocou o dia dentro dela)
+function carregarDia(forcarSemana) {
+  var data = diaEscolhido(); if (!dataObj(data)) return Promise.resolve();
   $("#d-carregando").hidden = false; fecharPainel();
   var dt = dataObj(data), hoje = data === hojeStr();
-  $("#d-titulo").textContent = tituloDia(dt);
+  if (emSemana()) { var sg = segundaDe(data), sb = new Date(sg.getFullYear(), sg.getMonth(), sg.getDate() + 5); $("#d-titulo").textContent = 'Semana de ' + sg.getDate() + (sg.getMonth() !== sb.getMonth() ? ' de ' + MESES_PT[sg.getMonth()].toLowerCase() : '') + ' a ' + sb.getDate() + ' de ' + MESES_PT[sb.getMonth()].toLowerCase(); }
+  else $("#d-titulo").textContent = tituloDia(dt);
+  $("#d-add-dia").textContent = tituloDiaCurto(dt);
   $("#d-titulo-print").textContent = 'Lista do dia · ' + tituloDia(dt) + ' · ' + data;
   $("#d-ir-hoje").disabled = hoje;
   $("#titulo-cel").textContent = tituloDiaCurto(dt);
-  call('listaDoDia', { data: data }).then(function (r) {
+  if (emSemana()) { profSemana(); if (forcarSemana !== false) AGS = null; }
+  return Promise.all([call('listaDoDia', { data: data }), emSemana() ? carregarSemana(forcarSemana !== false) : null]).then(function (rr) {
+    var r = rr[0];
     if (r.data !== diaEscolhido()) return; // mudou de dia enquanto carregava
     DIA = r; $("#d-carregando").hidden = true;
     $("#d-aviso-aba").hidden = r.abaMesExiste; if (!r.abaMesExiste) $("#d-aviso-aba").textContent = 'A aba "' + r.abaMes + '" ainda não existe na planilha. Peça à gestão para criar em Gestão → Virada do mês.';
@@ -1529,8 +1609,10 @@ function carregarDia() {
   }).catch(function (e) { $("#d-carregando").textContent = 'Não consegui carregar a lista: ' + e.message; });
 }
 function preencherProfs() {
-  var sel = $("#d-prof"), profs = []; DIA.itens.forEach(function (i) { if (profs.indexOf(i.profissional) < 0) profs.push(i.profissional); }); profs.sort();
-  sel.innerHTML = '<option value="">Todas as profissionais</option>';
+  var sel = $("#d-prof"), profs = []; DIA.itens.forEach(function (i) { if (profs.indexOf(i.profissional) < 0) profs.push(i.profissional); });
+  if (emAgenda()) (BOOT.profissionais || []).forEach(function (p) { if (profs.indexOf(p.nome) < 0) profs.push(p.nome); }); // na Agenda dá pra escolher quem não tem ninguém marcado (ver as vagas)
+  profs.sort();
+  sel.innerHTML = emSemana() ? '' : '<option value="">Todas as profissionais</option>';
   profs.forEach(function (p) { var o = document.createElement('option'); o.value = p; o.textContent = profCurto(p); sel.appendChild(o); });
   if (profs.indexOf(diaProf) < 0) diaProf = ''; sel.value = diaProf;
 }
@@ -1570,6 +1652,7 @@ function renderDia() {
   $("#d-rodape-n").textContent = lista.length === r.itens.length ? r.itens.length + ' na lista' : 'Mostrando ' + lista.length + ' de ' + r.itens.length;
   renderPend(todos);
   renderPainel();
+  if (emAgenda()) renderAgenda();
 }
 function pillSituacao(it, s) {
   return { atendido: '<span class="pill verde">' + ic('check', 14, 3) + 'Atendido</span>', falta: '<span class="pill cinza">' + esc((it.registro && it.registro.oque || '').split(' (')[0]) + '</span>', naovem: '<span class="pill vermelha">Não vem</span>', chegou: '<span class="pill lilas">Chegou ' + esc(chegadas()[chaveItem(it)] || '') + '</span>', aguardando: '<span class="pill cinza">Aguardando</span>', aconfirmar: '<span class="pill amarela">A confirmar</span>' }[s];
@@ -1645,9 +1728,10 @@ function fecharPainel() { selecionado = null; formAberto = null; if (DIA) render
 function renderPainel() {
   var it = itemSelecionado(), aside = $("#d-painel");
   $("#pp-vazio").hidden = !!it; $("#pp-pac").hidden = !it; aside.classList.toggle('aberto', !!it);
-  if (!it) { selecionado = null; return; }
+  if (!it) { selecionado = null; $$('#d-ag-grade .ag-item.sel').forEach(function (b) { b.classList.remove('sel'); }); return; }
   var p = pacInfo(it.paciente), s = statusItem(it), reg = !!it.registro;
   $$('#d-list tr').forEach(function (tr) { tr.classList.toggle('sel', tr.dataset.k === selecionado); });
+  $$('#d-ag-grade .ag-item').forEach(function (b) { b.classList.toggle('sel', b.dataset.k === DIA.data + '|' + selecionado); });
   $("#pp-av").textContent = it.paciente.charAt(0).toUpperCase();
   $("#pp-nome").textContent = it.paciente;
   var sub = []; if (p && p.nasc) { var i = idade(p.nasc); if (i) sub.push(i); sub.push('nasc. ' + p.nasc); } if (p && p.pagador && p.pagador !== p.nome) sub.push('pagador: ' + p.pagador); if (!p) sub.push('não está em Pacientes');
@@ -1790,19 +1874,19 @@ $("#fd-fechar").addEventListener('click', function () {
   else { gravarFimDia(true); toast('Dia fechado. Bom descanso.'); }
 });
 /* navegação de data, filtros, busca, impressão */
-function mudarDia(n) { var dt = dataObj(diaEscolhido()) || new Date(); dt.setDate(dt.getDate() + n); $("#d-data").value = dataParaISO(dt); carregarDia(); }
+function mudarDia(n) { var dt = dataObj(diaEscolhido()) || new Date(); dt.setDate(dt.getDate() + n * (emSemana() ? 7 : 1)); $("#d-data").value = dataParaISO(dt); carregarDia(); }
 $("#d-ant").addEventListener('click', function () { mudarDia(-1); });
 $("#d-prox").addEventListener('click', function () { mudarDia(1); });
 $("#d-ir-hoje").addEventListener('click', function () { $("#d-data").value = dataParaISO(new Date()); carregarDia(); });
 $("#d-cal").addEventListener('click', function () { var i = $("#d-data"); if (i.showPicker) { try { i.showPicker(); return; } catch (e) { } } i.classList.remove('sr'); i.focus(); });
 $("#d-data").addEventListener('change', function () { this.classList.add('sr'); if (dataObj(diaEscolhido())) carregarDia(); });
-$("#d-prof").addEventListener('change', function () { diaProf = this.value; if (DIA) renderDia(); });
+$("#d-prof").addEventListener('change', function () { diaProf = this.value; if (emSemana()) carregarDia(false); else if (DIA) renderDia(); });
 $("#d-busca").addEventListener('input', function () { diaBusca = this.value.trim(); if (DIA) renderDia(); });
 $("#d-print").addEventListener('click', function () { window.print(); });
 /* encaixe no dia */
 function infoPaciente(nome) { var p = pacInfo(nome); if (!p) return nome.trim() ? 'Não está em Pacientes. Cadastre antes em "Pacientes".' : ''; if (cadastroIncompleto(p)) return 'Cadastro incompleto: sem modalidade nem convênio. Confira como paga.'; var partes = []; if (ehConvenio(p)) partes.push('Convênio ' + p.convenio); else if (p.convenio) partes.push('Particular'); if (p.modalidade && !(ehConvenio(p) && /^Conv[êe]nio$/i.test(p.modalidade))) partes.push(p.modalidade); if (regraRelevante(p)) partes.push(modCurta(p.regra)); return 'Cadastro: ' + partes.join(' · '); }
 function mostrarInfo(elHint, nome) { var p = pacInfo(nome); elHint.innerHTML = esc(infoPaciente(nome)) + (p ? ' <a href="#">' + (cadastroIncompleto(p) ? 'Completar cadastro' : 'editar cadastro') + '</a>' : ''); var a = elHint.querySelector('a'); if (a) a.addEventListener('click', function (e) { e.preventDefault(); go('pacientes', { editar: nome, voltar: 'hoje' }); }); }
-$("#d-add").addEventListener('click', function () { $("#d-addbox").hidden = !$("#d-addbox").hidden; $("#d-recbox").hidden = true; if (!$("#d-addbox").hidden) $("#d-add-pac").focus(); });
+$("#d-add").addEventListener('click', function () { $("#d-addbox").hidden = !$("#d-addbox").hidden; $("#d-recbox").hidden = true; $("#d-expbox").hidden = true; if (!$("#d-addbox").hidden) $("#d-add-pac").focus(); });
 $("#d-add-cancel").addEventListener('click', function () { $("#d-addbox").hidden = true; });
 $("#d-add-hora").addEventListener('input', function () { this.value = mascaraHora(this.value); });
 $("#d-add-pac").addEventListener('input', function () { mostrarInfo($("#d-add-pac-info"), this.value); });
@@ -1826,7 +1910,7 @@ function renderRec() {
   });
 }
 function limparRec() { recEdit = null; ['r-pac', 'r-hora', 'r-ini', 'r-fim', 'r-obs'].forEach(function (id) { $("#" + id).value = ''; }); $("#r-pac-info").textContent = ''; $("#r-freq").value = 'Semanal'; $("#r-ativo").value = 'Sim'; $("#r-hint").textContent = 'Nova recorrência.'; }
-function alternarRec() { $("#d-recbox").hidden = !$("#d-recbox").hidden; $("#d-addbox").hidden = true; if (!$("#d-recbox").hidden) { carregarRec(); $("#d-recbox").scrollIntoView({ behavior: 'smooth', block: 'start' }); } }
+function alternarRec() { $("#d-recbox").hidden = !$("#d-recbox").hidden; $("#d-addbox").hidden = true; $("#d-expbox").hidden = true; if (!$("#d-recbox").hidden) { carregarRec(); $("#d-recbox").scrollIntoView({ behavior: 'smooth', block: 'start' }); } }
 $("#d-rec").addEventListener('click', alternarRec);
 $("#d-rec-topo").addEventListener('click', alternarRec); // botão visível no topo (gestão, 06/10): a recepção mantém os horários fixos
 $("#d-rec-fechar").addEventListener('click', function () { $("#d-recbox").hidden = true; });
@@ -1845,6 +1929,230 @@ $("#r-salvar").addEventListener('click', function () {
   salvarRec(d);
 });
 function salvarRec(d) { $("#r-salvar").disabled = true; call('salvarAgendaFixa', d).then(function (r) { if (!r.ok) return toast((r.erros || ['Não gravou']).join(' ')); toast('Recorrência salva'); limparRec(); carregarRec(); carregarDia(); }).catch(function (e) { toast('Erro: ' + e.message); }).finally(function () { $("#r-salvar").disabled = false; }); }
+
+/* ===== 15-agenda.js ===== */
+/* ================= AGENDA (grade de horários na tela Agenda) =================
+   Visão Lista | Agenda; na Agenda, Dia (todas as profissionais lado a lado) ou Semana (uma profissional).
+   O expediente de cada profissional (aba Profissionais, colunas "Horário segunda"… e "Duração da sessão (min)")
+   define o que é vaga (branco) e o que é intervalo/fechado (cinza). Clicar numa vaga abre o Encaixe no dia já preenchido. */
+var diaVisao = store('rn-visao') === 'agenda' ? 'agenda' : 'lista', agVisao = store('rn-agvisao') === 'semana' ? 'semana' : 'dia', AGS = null;
+var AG_PPM = 1.2, AG_DIAS = ['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
+function emAgenda() { return diaVisao === 'agenda'; }
+function emSemana() { return emAgenda() && agVisao === 'semana'; }
+// "08:00-12:00, 13:00-19:00" → [[480,720],[780,1140]] (minutos); [] se vazio; null se inválido (mesma regra do servidor)
+function faixasHorario(t) {
+  t = String(t || '').trim(); if (!t) return [];
+  var out = [], ok = true;
+  t.split(/[,;]+/).forEach(function (parte) {
+    parte = parte.trim(); if (!parte) return;
+    var m = parte.match(/^(\d{1,2})(?:[:h](\d{2}))?h?\s*(?:-|–|—|a|às|as|até)\s*(\d{1,2})(?:[:h](\d{2}))?h?$/i);
+    if (!m) { ok = false; return; }
+    var a = +m[1] * 60 + +(m[2] || 0), b = +m[3] * 60 + +(m[4] || 0);
+    if (+m[1] > 23 || +m[3] > 24 || +(m[2] || 0) > 59 || +(m[4] || 0) > 59 || b <= a) { ok = false; return; }
+    out.push([a, b]);
+  });
+  if (!ok) return null;
+  out.sort(function (x, y) { return x[0] - y[0]; });
+  for (var i = 1; i < out.length; i++) if (out[i][0] < out[i - 1][1]) return null;
+  return out;
+}
+function hm(m) { return ('0' + Math.floor(m / 60)).slice(-2) + ':' + ('0' + m % 60).slice(-2); }
+function minutos(h) { var m = String(h || '').match(/^(\d{1,2}):(\d{2})/); return m ? +m[1] * 60 + +m[2] : null; }
+function profPorNome(n) { return (BOOT.profissionais || []).filter(function (p) { return p.nome === n; })[0] || null; }
+function faixasDe(prof, diaSemana) { var p = profPorNome(prof); return (p && p.horarios && faixasHorario(p.horarios[diaSemana])) || []; }
+function duracaoDe(prof) { var p = profPorNome(prof); return (p && p.duracao) || 30; }
+function temExpediente(p) { return !!(p && p.horarios && AG_DIAS.some(function (d) { return (faixasHorario(p.horarios[d]) || []).length; })); }
+function segundaDe(data) { var d = dataObj(data) || new Date(); d.setDate(d.getDate() - ((d.getDay() + 6) % 7)); return d; }
+function brData(d) { return ('0' + d.getDate()).slice(-2) + '/' + ('0' + (d.getMonth() + 1)).slice(-2) + '/' + d.getFullYear(); }
+
+/* ---------- carga da semana (uma profissional) ---------- */
+function profSemana() {
+  if (diaProf) return diaProf;
+  var com = (BOOT.profissionais || []).filter(temExpediente)[0] || (BOOT.profissionais || [])[0];
+  diaProf = com ? com.nome : ''; return diaProf;
+}
+function carregarSemana(forcar) {
+  var prof = profSemana(), ini = brData(segundaDe(diaEscolhido())), chave = ini + '|' + prof;
+  if (!forcar && AGS && AGS.chave === chave) return Promise.resolve(AGS);
+  return call('agendaSemana', { data: ini, profissional: prof }).then(function (r) { r.chave = chave; AGS = r; return r; });
+}
+
+/* ---------- desenho da grade ---------- */
+// colunas: [{ titulo, sub, data, diaSemana, prof, faixas, dur, itens, semExp }]
+function colunasDia() {
+  var data = DIA.data, ds = DIA.diaSemana, profs = [];
+  (BOOT.profissionais || []).forEach(function (p) {
+    if (diaProf && p.nome !== diaProf) return;
+    var tem = DIA.itens.some(function (i) { return i.profissional === p.nome; });
+    if (faixasDe(p.nome, ds).length || tem) profs.push(p.nome);
+  });
+  DIA.itens.forEach(function (i) { if (profs.indexOf(i.profissional) < 0 && (!diaProf || i.profissional === diaProf)) profs.push(i.profissional); }); // nome fora da aba Profissionais
+  return profs.map(function (n) {
+    var f = faixasDe(n, ds), p = profPorNome(n);
+    return { titulo: profCurto(n), sub: f.length ? f.map(function (x) { return hm(x[0]) + '–' + hm(x[1]); }).join(' · ') + ' · ' + duracaoDe(n) + ' min' : (p ? 'sem horário cadastrado' : 'não está em Profissionais'), data: data, diaSemana: ds, prof: n, faixas: f, dur: duracaoDe(n), itens: DIA.itens.filter(function (i) { return i.profissional === n; }), semExp: !f.length };
+  });
+}
+function colunasSemana() {
+  var prof = AGS.profissional, cols = [];
+  AGS.dias.forEach(function (d) {
+    var f = faixasDe(prof, d.diaSemana);
+    if (d.diaSemana === 'Domingo' && !d.itens.length && !f.length) return;
+    var dt = dataObj(d.data), itens = d.data === DIA.data ? DIA.itens.filter(function (i) { return i.profissional === prof; }) : d.itens; // o dia aberto usa a lista já carregada (situações atualizadas)
+    cols.push({ titulo: DIAS_PT[dt.getDay()].slice(0, 3) + ' ' + d.data.slice(0, 5), sub: f.length ? f.map(function (x) { return hm(x[0]) + '–' + hm(x[1]); }).join(' · ') : 'não atende', data: d.data, diaSemana: d.diaSemana, prof: prof, faixas: f, dur: duracaoDe(prof), itens: itens, semExp: !f.length, hoje: d.data === hojeStr() });
+  });
+  return cols;
+}
+function classeAg(s) { return { atendido: 'verde', falta: 'cinza', naovem: 'vermelha', chegou: 'lilas', aguardando: 'roxo', aconfirmar: 'amarela' }[s] || 'roxo'; }
+// itens que se sobrepõem no tempo dividem a largura da coluna
+function raias(itens, dur) {
+  var l = itens.map(function (it) { var a = minutos(it.hora); return { it: it, a: a, b: a + dur }; }).sort(function (x, y) { return x.a - y.a; }), grupo = [], fim = -1, out = [];
+  var fecha = function () { var n = 0; grupo.forEach(function (g) { n = Math.max(n, g.raia + 1); }); grupo.forEach(function (g) { g.n = n; out.push(g); }); grupo = []; };
+  l.forEach(function (x) {
+    if (x.a >= fim && grupo.length) fecha();
+    var usadas = grupo.filter(function (g) { return g.b > x.a; }).map(function (g) { return g.raia; }), r = 0; while (usadas.indexOf(r) >= 0) r++;
+    x.raia = r; grupo.push(x); fim = Math.max(fim, x.b);
+  });
+  if (grupo.length) fecha();
+  return out;
+}
+function renderAgenda() {
+  var box = $("#d-ag-grade"); box.innerHTML = '';
+  if (!DIA) return;
+  if (emSemana() && !AGS) { box.innerHTML = '<div class="carregando">Carregando a semana…</div>'; return; }
+  var cols = emSemana() ? colunasSemana() : colunasDia();
+  if (!cols.length) { box.innerHTML = '<div class="vazio" style="padding:24px">' + (diaProf ? esc(profCurto(diaProf)) + ' não atende neste dia e não tem ninguém marcado.' : 'Nenhuma profissional com horário neste dia.') + ' Os horários de cada profissional ficam em <b>Horário das profissionais</b>.</div>'; $("#d-ag-rodape").textContent = ''; return; }
+  // faixa de horas mostrada: do primeiro início ao último fim (expediente ou paciente marcado), em horas cheias
+  var ini = 24 * 60, fim = 0;
+  cols.forEach(function (c) {
+    c.faixas.forEach(function (f) { ini = Math.min(ini, f[0]); fim = Math.max(fim, f[1]); });
+    c.itens.forEach(function (it) { var m = minutos(it.hora); if (m != null) { ini = Math.min(ini, m); fim = Math.max(fim, m + c.dur); } });
+  });
+  if (fim <= ini) { ini = 8 * 60; fim = 19 * 60; }
+  ini = Math.floor(ini / 60) * 60; fim = Math.ceil(fim / 60) * 60;
+  var H = (fim - ini) * AG_PPM, px = function (m) { return Math.round((m - ini) * AG_PPM); };
+  var grade = el('<div class="ag" style="grid-template-columns:56px repeat(' + cols.length + ',minmax(' + (emSemana() ? 130 : 150) + 'px,1fr))"></div>');
+  grade.appendChild(el('<div class="ag-cab ag-canto"></div>'));
+  cols.forEach(function (c) {
+    var semHora = c.itens.filter(function (it) { return minutos(it.hora) == null; });
+    var cab = el('<div class="ag-cab' + (c.hoje ? ' hoje' : '') + (c.data === DIA.data && emSemana() ? ' aberto' : '') + '"><b>' + esc(c.titulo) + '</b><span>' + esc(c.sub) + '</span>' + (semHora.length ? '<span class="ag-semhora">sem hora: ' + semHora.map(function (it) { return '<button type="button" data-k="' + esc(chaveItem(it)) + '">' + esc(primeiroNome(it.paciente)) + '</button>'; }).join(', ') + '</span>' : '') + '</div>');
+    $$('.ag-semhora button', cab).forEach(function (b) { var it = semHora.filter(function (x) { return chaveItem(x) === b.dataset.k; })[0]; b.addEventListener('click', function () { abrirItemAg(it, c.data); }); });
+    if (emSemana()) cab.addEventListener('click', function (e) { if (e.target.closest('button')) return; irParaDia(c.data); });
+    grade.appendChild(cab);
+  });
+  var eixo = el('<div class="ag-eixo" style="height:' + H + 'px"></div>');
+  for (var t = ini; t < fim; t += 60) eixo.appendChild(el('<span style="top:' + px(t) + 'px">' + hm(t) + '</span>'));
+  grade.appendChild(eixo);
+  var agora = new Date(), mAgora = agora.getHours() * 60 + agora.getMinutes();
+  cols.forEach(function (c) {
+    var col = el('<div class="ag-col' + (c.semExp ? ' semexp' : '') + '" style="height:' + H + 'px;background-size:100% ' + (60 * AG_PPM) + 'px"></div>');
+    c.faixas.forEach(function (f, i) {
+      col.appendChild(el('<div class="ag-aberto" style="top:' + px(f[0]) + 'px;height:' + (px(f[1]) - px(f[0])) + 'px"></div>'));
+      var prox = c.faixas[i + 1]; if (prox && prox[0] - f[1] >= 20) col.appendChild(el('<div class="ag-intervalo" style="top:' + px(f[1]) + 'px;height:' + (px(prox[0]) - px(f[1])) + 'px"><span>intervalo</span></div>'));
+    });
+    // vagas: horários do expediente, no passo da duração da sessão, sem ninguém marcado (quem "não vem" libera o horário)
+    var ocupa = c.itens.filter(function (it) { return minutos(it.hora) != null && statusItem(it, c.data) !== 'naovem'; }).map(function (it) { var a = minutos(it.hora); return [a, a + c.dur]; });
+    var passado = c.data === hojeStr() ? mAgora : ((dataObj(c.data) < dataObj(hojeStr())) ? 24 * 60 : -1);
+    c.faixas.forEach(function (f) {
+      for (var s = f[0]; s + c.dur <= f[1]; s += c.dur) {
+        var e = s + c.dur; if (ocupa.some(function (o) { return o[0] < e && o[1] > s; })) continue;
+        var b = el('<button type="button" class="ag-livre' + (s + c.dur <= passado ? ' passou' : '') + '" style="top:' + (px(s) + 1) + 'px;height:' + (px(e) - px(s) - 2) + 'px" aria-label="Vaga ' + hm(s) + ' ' + esc(c.prof) + ' ' + c.data + '"><span>' + hm(s) + '</span><em>+ encaixe</em></button>');
+        (function (hora) { b.addEventListener('click', function () { abrirEncaixe(c.prof, c.data, hora); }); })(hm(s));
+        col.appendChild(b);
+      }
+    });
+    raias(c.itens.filter(function (it) { return minutos(it.hora) != null; }), c.dur).forEach(function (g) {
+      var it = g.it, s = statusItem(it, c.data), k = c.data + '|' + chaveItem(it), alt = Math.max(px(g.b) - px(g.a) - 2, 20);
+      var b = el('<button type="button" class="ag-item ' + classeAg(s) + (s === 'naovem' ? ' fora' : '') + (selecionado && c.data === DIA.data && selecionado === chaveItem(it) ? ' sel' : '') + '" data-k="' + esc(k) + '" style="top:' + (px(g.a) + 1) + 'px;height:' + alt + 'px;left:calc(' + (100 * g.raia / g.n) + '% + 3px);width:calc(' + (100 / g.n) + '% - 6px)" title="' + esc(it.hora + ' · ' + it.paciente + ' · ' + it.profissional + (it.origem ? ' · ' + it.origem : '')) + '"><b>' + esc(it.hora) + ' ' + esc(it.paciente) + '</b>' + (alt >= 34 ? '<span>' + esc(rotuloAg(it, s)) + '</span>' : '') + '</button>');
+      b.addEventListener('click', function () { abrirItemAg(it, c.data); });
+      col.appendChild(b);
+    });
+    if (c.data === hojeStr() && mAgora > ini && mAgora < fim) col.appendChild(el('<div class="ag-agora" style="top:' + px(mAgora) + 'px"></div>'));
+    grade.appendChild(col);
+  });
+  box.appendChild(grade);
+  var vagas = $$('.ag-livre:not(.passou)', grade).length, ocup = $$('.ag-item:not(.fora)', grade).length;
+  $("#d-ag-rodape").textContent = ocup + ' marcado' + (ocup === 1 ? '' : 's') + ' · ' + vagas + ' vaga' + (vagas === 1 ? '' : 's') + (emSemana() ? ' na semana' : '') + (cols.some(function (c) { return c.semExp && c.itens.length; }) && !emSemana() ? ' · coluna sem horário cadastrado não mostra vagas' : '');
+}
+function rotuloAg(it, s) {
+  var t = { atendido: 'atendido', falta: (it.registro && it.registro.oque || 'falta').split(' (')[0], naovem: 'não vem', chegou: 'chegou', aconfirmar: 'a confirmar', aguardando: 'confirmado' }[s] || '';
+  var o = it.origem && !/Semanal|Quinzenal|Registrado|Confirmado/.test(it.origem) ? it.origem : (it.origem === 'Quinzenal' ? 'quinzenal' : '');
+  return [t, o].filter(Boolean).join(' · ');
+}
+/* ---------- cliques ---------- */
+function irParaDia(data, depois) {
+  if (data === diaEscolhido() && DIA && DIA.data === data) { if (depois) depois(); return; }
+  $("#d-data").value = dataParaISO(dataObj(data));
+  carregarDia(false).then(function () { if (depois) depois(); });
+}
+function abrirItemAg(it, data) {
+  irParaDia(data, function () { var k = chaveItem(it), alvo = DIA.itens.filter(function (i) { return chaveItem(i) === k; })[0]; selecionar(alvo || it); if (emAgenda()) renderAgenda(); });
+}
+function abrirEncaixe(prof, data, hora) {
+  irParaDia(data, function () {
+    $("#d-addbox").hidden = false; $("#d-recbox").hidden = true; $("#d-expbox").hidden = true;
+    if ([].some.call($("#d-add-prof").options, function (o) { return o.value === prof; })) $("#d-add-prof").value = prof;
+    $("#d-add-hora").value = hora;
+    $("#d-addbox").scrollIntoView({ behavior: 'smooth', block: 'start' });
+    $("#d-add-pac").focus();
+  });
+}
+/* ---------- alternância Lista | Agenda e Dia | Semana ---------- */
+function aplicarVisao() {
+  $$('#d-visao button').forEach(function (b) { b.setAttribute('aria-pressed', String(b.dataset.v === diaVisao)); });
+  $$('#d-agvisao button').forEach(function (b) { b.setAttribute('aria-pressed', String(b.dataset.v === agVisao)); });
+  $("#d-agvisao").hidden = !emAgenda();
+  $("#d-agenda").hidden = !emAgenda(); $("#d-lista-card").hidden = emAgenda();
+  $("#d-busca-wrap").hidden = emAgenda(); $("#d-exp-topo").hidden = !emAgenda();
+  $("#d-ant").setAttribute('aria-label', emSemana() ? 'Semana anterior' : 'Dia anterior');
+  $("#d-prox").setAttribute('aria-label', emSemana() ? 'Próxima semana' : 'Próximo dia');
+}
+$$('#d-visao button').forEach(function (b) { b.addEventListener('click', function () { if (diaVisao === b.dataset.v) return; diaVisao = b.dataset.v; store('rn-visao', diaVisao); aplicarVisao(); carregarDia(false); }); });
+$$('#d-agvisao button').forEach(function (b) { b.addEventListener('click', function () { if (agVisao === b.dataset.v) return; agVisao = b.dataset.v; store('rn-agvisao', agVisao); aplicarVisao(); carregarDia(false); }); });
+aplicarVisao();
+
+/* ---------- Horário das profissionais (recepção mantém; grava na aba Profissionais) ---------- */
+function alternarExp() {
+  var box = $("#d-expbox"); box.hidden = !box.hidden; $("#d-addbox").hidden = true; $("#d-recbox").hidden = true;
+  if (box.hidden) return;
+  if (!$("#e-dias").children.length) AG_DIAS.forEach(function (d, i) { $("#e-dias").appendChild(el('<label class="campo">' + d + '<input id="e-d' + i + '" placeholder="ex.: 08:00-12:00, 13:00-19:00" autocomplete="off"></label>')); });
+  preencherSelect($("#e-prof"), BOOT.profissionais);
+  if (diaProf && profPorNome(diaProf)) $("#e-prof").value = diaProf;
+  lerExp(); renderExp();
+  box.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+function lerExp() {
+  var p = profPorNome($("#e-prof").value) || {}; $("#e-erros").innerHTML = '';
+  AG_DIAS.forEach(function (d, i) { $("#e-d" + i).value = (p.horarios || {})[d] || ''; });
+  $("#e-dur").value = p.duracao || '';
+  $("#e-hint").textContent = temExpediente(p) ? '' : 'Sem horário cadastrado ainda.';
+}
+function renderExp() {
+  var tb = $("#e-lista"); tb.innerHTML = '';
+  (BOOT.profissionais || []).forEach(function (p) {
+    var tr = el('<tr><td><b>' + esc(p.nome) + '</b><div class="sub muted">' + esc(p.especialidade) + '</div></td>' + AG_DIAS.map(function (d) { var v = (p.horarios || {})[d] || ''; return '<td>' + (v ? esc(v.replace(/, /g, '\n')).replace(/\n/g, '<br>') : '<span class="muted">—</span>') + '</td>'; }).join('') + '<td>' + (p.duracao ? p.duracao + ' min' : '<span class="muted">—</span>') + '</td><td><button type="button" class="btn ter mini">Editar</button></td></tr>');
+    $('button', tr).addEventListener('click', function () { $("#e-prof").value = p.nome; lerExp(); $("#d-expbox").scrollIntoView({ behavior: 'smooth', block: 'start' }); });
+    tb.appendChild(tr);
+  });
+}
+$("#e-prof").addEventListener('change', lerExp);
+$("#e-dur").addEventListener('input', function () { this.value = this.value.replace(/\D/g, ''); });
+$("#e-salvar").addEventListener('click', function () {
+  var horarios = {}, erros = [];
+  AG_DIAS.forEach(function (d, i) { var v = $("#e-d" + i).value; if (faixasHorario(v) === null) erros.push(d + ': não entendi “' + v + '”. Use o formato 08:00-12:00, 13:00-19:00.'); horarios[d] = v.trim(); });
+  var dur = $("#e-dur").value.trim(); if (dur && !(+dur >= 10 && +dur <= 240)) erros.push('Duração da sessão: minutos entre 10 e 240.');
+  $("#e-erros").innerHTML = erroBox(erros); if (erros.length) return;
+  var b = this, nome = $("#e-prof").value; b.disabled = true;
+  call('salvarExpediente', { profissional: nome, horarios: horarios, duracao: dur }).then(function (r) {
+    if (!r.ok) { $("#e-erros").innerHTML = erroBox(r.erros || [], 'Não gravou'); return; }
+    BOOT.profissionais = r.profissionais; renderExp(); lerExp();
+    $("#e-hint").textContent = 'Salvo: ' + nome + ' · já vale na Agenda.';
+    toast('Horário de ' + profCurto(nome) + ' salvo');
+    if (emAgenda()) { if (emSemana()) AGS = null; carregarDia(false); }
+  }).catch(function (e) { toast('Erro: ' + e.message); }).finally(function () { b.disabled = false; });
+});
+$("#d-exp").addEventListener('click', alternarExp);
+$("#d-exp-topo").addEventListener('click', alternarExp);
+$("#d-exp-fechar").addEventListener('click', function () { $("#d-expbox").hidden = true; });
 
 /* ===== 20-registrar.js ===== */
 /* ================= REGISTRAR ATENDIMENTO ================= */

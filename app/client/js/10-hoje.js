@@ -1,14 +1,14 @@
-/* ================= HOJE (lista do dia) ================= */
+/* ================= AGENDA (antiga tela Hoje: lista do dia; a grade fica em 15-agenda.js) ================= */
 var DIA = null, diaFiltro = 'todos', diaProf = '', diaBusca = '', AGENDA = [], recEdit = null, resumoMes = {}, selecionado = null, formAberto = null;
 function diaEscolhido() { return isoParaBR($("#d-data").value); }
 function chaveItem(it) { return it.paciente + '|' + it.profissional; }
-function chegadas() { return store('rn-chegou:' + diaEscolhido()) || {}; }
+function chegadas(data) { return store('rn-chegou:' + (data || diaEscolhido())) || {}; }
 function marcarChegou(it, on) { var c = chegadas(); if (on) c[chaveItem(it)] = agoraHora(); else delete c[chaveItem(it)]; store('rn-chegou:' + diaEscolhido(), c); }
 // situações possíveis de uma linha (não existe "Em atendimento"): o registro é feito inteiro na chegada
-function statusItem(it) {
+function statusItem(it, data) {
   if (it.registro) return /^Atendido/.test(it.registro.oque) ? 'atendido' : 'falta';
   if (it.naoVem) return 'naovem';
-  if (chegadas()[chaveItem(it)]) return 'chegou';
+  if (chegadas(data)[chaveItem(it)]) return 'chegou';
   if (it.confirmado) return 'aguardando';
   return 'aconfirmar';
 }
@@ -35,15 +35,20 @@ function mostrarLembrete() {
   $("#d-lembrete-txt").textContent = l.texto;
   $("#d-lembrete-meta").textContent = 'Gestão · ' + String(l.data || '').slice(0, 5) + (l.validoAte ? ' · vale até ' + l.validoAte : '');
 }
-function carregarDia() {
-  var data = diaEscolhido(); if (!dataObj(data)) return;
+// forcarSemana === false: reaproveita a semana já carregada (só trocou o dia dentro dela)
+function carregarDia(forcarSemana) {
+  var data = diaEscolhido(); if (!dataObj(data)) return Promise.resolve();
   $("#d-carregando").hidden = false; fecharPainel();
   var dt = dataObj(data), hoje = data === hojeStr();
-  $("#d-titulo").textContent = tituloDia(dt);
+  if (emSemana()) { var sg = segundaDe(data), sb = new Date(sg.getFullYear(), sg.getMonth(), sg.getDate() + 5); $("#d-titulo").textContent = 'Semana de ' + sg.getDate() + (sg.getMonth() !== sb.getMonth() ? ' de ' + MESES_PT[sg.getMonth()].toLowerCase() : '') + ' a ' + sb.getDate() + ' de ' + MESES_PT[sb.getMonth()].toLowerCase(); }
+  else $("#d-titulo").textContent = tituloDia(dt);
+  $("#d-add-dia").textContent = tituloDiaCurto(dt);
   $("#d-titulo-print").textContent = 'Lista do dia · ' + tituloDia(dt) + ' · ' + data;
   $("#d-ir-hoje").disabled = hoje;
   $("#titulo-cel").textContent = tituloDiaCurto(dt);
-  call('listaDoDia', { data: data }).then(function (r) {
+  if (emSemana()) { profSemana(); if (forcarSemana !== false) AGS = null; }
+  return Promise.all([call('listaDoDia', { data: data }), emSemana() ? carregarSemana(forcarSemana !== false) : null]).then(function (rr) {
+    var r = rr[0];
     if (r.data !== diaEscolhido()) return; // mudou de dia enquanto carregava
     DIA = r; $("#d-carregando").hidden = true;
     $("#d-aviso-aba").hidden = r.abaMesExiste; if (!r.abaMesExiste) $("#d-aviso-aba").textContent = 'A aba "' + r.abaMes + '" ainda não existe na planilha. Peça à gestão para criar em Gestão → Virada do mês.';
@@ -53,8 +58,10 @@ function carregarDia() {
   }).catch(function (e) { $("#d-carregando").textContent = 'Não consegui carregar a lista: ' + e.message; });
 }
 function preencherProfs() {
-  var sel = $("#d-prof"), profs = []; DIA.itens.forEach(function (i) { if (profs.indexOf(i.profissional) < 0) profs.push(i.profissional); }); profs.sort();
-  sel.innerHTML = '<option value="">Todas as profissionais</option>';
+  var sel = $("#d-prof"), profs = []; DIA.itens.forEach(function (i) { if (profs.indexOf(i.profissional) < 0) profs.push(i.profissional); });
+  if (emAgenda()) (BOOT.profissionais || []).forEach(function (p) { if (profs.indexOf(p.nome) < 0) profs.push(p.nome); }); // na Agenda dá pra escolher quem não tem ninguém marcado (ver as vagas)
+  profs.sort();
+  sel.innerHTML = emSemana() ? '' : '<option value="">Todas as profissionais</option>';
   profs.forEach(function (p) { var o = document.createElement('option'); o.value = p; o.textContent = profCurto(p); sel.appendChild(o); });
   if (profs.indexOf(diaProf) < 0) diaProf = ''; sel.value = diaProf;
 }
@@ -94,6 +101,7 @@ function renderDia() {
   $("#d-rodape-n").textContent = lista.length === r.itens.length ? r.itens.length + ' na lista' : 'Mostrando ' + lista.length + ' de ' + r.itens.length;
   renderPend(todos);
   renderPainel();
+  if (emAgenda()) renderAgenda();
 }
 function pillSituacao(it, s) {
   return { atendido: '<span class="pill verde">' + ic('check', 14, 3) + 'Atendido</span>', falta: '<span class="pill cinza">' + esc((it.registro && it.registro.oque || '').split(' (')[0]) + '</span>', naovem: '<span class="pill vermelha">Não vem</span>', chegou: '<span class="pill lilas">Chegou ' + esc(chegadas()[chaveItem(it)] || '') + '</span>', aguardando: '<span class="pill cinza">Aguardando</span>', aconfirmar: '<span class="pill amarela">A confirmar</span>' }[s];
@@ -169,9 +177,10 @@ function fecharPainel() { selecionado = null; formAberto = null; if (DIA) render
 function renderPainel() {
   var it = itemSelecionado(), aside = $("#d-painel");
   $("#pp-vazio").hidden = !!it; $("#pp-pac").hidden = !it; aside.classList.toggle('aberto', !!it);
-  if (!it) { selecionado = null; return; }
+  if (!it) { selecionado = null; $$('#d-ag-grade .ag-item.sel').forEach(function (b) { b.classList.remove('sel'); }); return; }
   var p = pacInfo(it.paciente), s = statusItem(it), reg = !!it.registro;
   $$('#d-list tr').forEach(function (tr) { tr.classList.toggle('sel', tr.dataset.k === selecionado); });
+  $$('#d-ag-grade .ag-item').forEach(function (b) { b.classList.toggle('sel', b.dataset.k === DIA.data + '|' + selecionado); });
   $("#pp-av").textContent = it.paciente.charAt(0).toUpperCase();
   $("#pp-nome").textContent = it.paciente;
   var sub = []; if (p && p.nasc) { var i = idade(p.nasc); if (i) sub.push(i); sub.push('nasc. ' + p.nasc); } if (p && p.pagador && p.pagador !== p.nome) sub.push('pagador: ' + p.pagador); if (!p) sub.push('não está em Pacientes');
@@ -314,19 +323,19 @@ $("#fd-fechar").addEventListener('click', function () {
   else { gravarFimDia(true); toast('Dia fechado. Bom descanso.'); }
 });
 /* navegação de data, filtros, busca, impressão */
-function mudarDia(n) { var dt = dataObj(diaEscolhido()) || new Date(); dt.setDate(dt.getDate() + n); $("#d-data").value = dataParaISO(dt); carregarDia(); }
+function mudarDia(n) { var dt = dataObj(diaEscolhido()) || new Date(); dt.setDate(dt.getDate() + n * (emSemana() ? 7 : 1)); $("#d-data").value = dataParaISO(dt); carregarDia(); }
 $("#d-ant").addEventListener('click', function () { mudarDia(-1); });
 $("#d-prox").addEventListener('click', function () { mudarDia(1); });
 $("#d-ir-hoje").addEventListener('click', function () { $("#d-data").value = dataParaISO(new Date()); carregarDia(); });
 $("#d-cal").addEventListener('click', function () { var i = $("#d-data"); if (i.showPicker) { try { i.showPicker(); return; } catch (e) { } } i.classList.remove('sr'); i.focus(); });
 $("#d-data").addEventListener('change', function () { this.classList.add('sr'); if (dataObj(diaEscolhido())) carregarDia(); });
-$("#d-prof").addEventListener('change', function () { diaProf = this.value; if (DIA) renderDia(); });
+$("#d-prof").addEventListener('change', function () { diaProf = this.value; if (emSemana()) carregarDia(false); else if (DIA) renderDia(); });
 $("#d-busca").addEventListener('input', function () { diaBusca = this.value.trim(); if (DIA) renderDia(); });
 $("#d-print").addEventListener('click', function () { window.print(); });
 /* encaixe no dia */
 function infoPaciente(nome) { var p = pacInfo(nome); if (!p) return nome.trim() ? 'Não está em Pacientes. Cadastre antes em "Pacientes".' : ''; if (cadastroIncompleto(p)) return 'Cadastro incompleto: sem modalidade nem convênio. Confira como paga.'; var partes = []; if (ehConvenio(p)) partes.push('Convênio ' + p.convenio); else if (p.convenio) partes.push('Particular'); if (p.modalidade && !(ehConvenio(p) && /^Conv[êe]nio$/i.test(p.modalidade))) partes.push(p.modalidade); if (regraRelevante(p)) partes.push(modCurta(p.regra)); return 'Cadastro: ' + partes.join(' · '); }
 function mostrarInfo(elHint, nome) { var p = pacInfo(nome); elHint.innerHTML = esc(infoPaciente(nome)) + (p ? ' <a href="#">' + (cadastroIncompleto(p) ? 'Completar cadastro' : 'editar cadastro') + '</a>' : ''); var a = elHint.querySelector('a'); if (a) a.addEventListener('click', function (e) { e.preventDefault(); go('pacientes', { editar: nome, voltar: 'hoje' }); }); }
-$("#d-add").addEventListener('click', function () { $("#d-addbox").hidden = !$("#d-addbox").hidden; $("#d-recbox").hidden = true; if (!$("#d-addbox").hidden) $("#d-add-pac").focus(); });
+$("#d-add").addEventListener('click', function () { $("#d-addbox").hidden = !$("#d-addbox").hidden; $("#d-recbox").hidden = true; $("#d-expbox").hidden = true; if (!$("#d-addbox").hidden) $("#d-add-pac").focus(); });
 $("#d-add-cancel").addEventListener('click', function () { $("#d-addbox").hidden = true; });
 $("#d-add-hora").addEventListener('input', function () { this.value = mascaraHora(this.value); });
 $("#d-add-pac").addEventListener('input', function () { mostrarInfo($("#d-add-pac-info"), this.value); });
@@ -350,7 +359,7 @@ function renderRec() {
   });
 }
 function limparRec() { recEdit = null; ['r-pac', 'r-hora', 'r-ini', 'r-fim', 'r-obs'].forEach(function (id) { $("#" + id).value = ''; }); $("#r-pac-info").textContent = ''; $("#r-freq").value = 'Semanal'; $("#r-ativo").value = 'Sim'; $("#r-hint").textContent = 'Nova recorrência.'; }
-function alternarRec() { $("#d-recbox").hidden = !$("#d-recbox").hidden; $("#d-addbox").hidden = true; if (!$("#d-recbox").hidden) { carregarRec(); $("#d-recbox").scrollIntoView({ behavior: 'smooth', block: 'start' }); } }
+function alternarRec() { $("#d-recbox").hidden = !$("#d-recbox").hidden; $("#d-addbox").hidden = true; $("#d-expbox").hidden = true; if (!$("#d-recbox").hidden) { carregarRec(); $("#d-recbox").scrollIntoView({ behavior: 'smooth', block: 'start' }); } }
 $("#d-rec").addEventListener('click', alternarRec);
 $("#d-rec-topo").addEventListener('click', alternarRec); // botão visível no topo (gestão, 06/10): a recepção mantém os horários fixos
 $("#d-rec-fechar").addEventListener('click', function () { $("#d-recbox").hidden = true; });
