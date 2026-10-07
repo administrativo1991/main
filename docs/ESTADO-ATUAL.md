@@ -37,6 +37,12 @@ Git: branch `claude/lucid-einstein-gd6x5l`, tudo commitado e enviado.
 
 ## Feito e publicado
 
+- **Cobrança por sessão no lugar dos planos (07/10, deploy 2026-10-07-07, real)**: modalidades Pagamento antecipado ·
+  Por sessão · Pagamento posterior · Mensalidade fixa · Mensal (valor especial) · Pro bono · Permuta · Convênio. Valor por
+  sessão no cadastro ("R$ 70 por sessão"); posterior lança com Pago? = Não; antecipado lança as N sessões pagas nas datas
+  da agenda. 17 ex-planos viraram Pagamento posterior. Valor da sessão aparece na Agenda e no Registrar. Ver `docs/DEPLOYS.md`.
+  Último branch: `claude/busy-wright-xf0hql`. Falta da gestão: valor por sessão da Naimara.
+
 - **Ajustes de 06/10 (deploy 2026-10-06-10, só na real)**: Novo paciente com profissional primeiro; "Registrado!" + "ver na lista de hoje";
   Mensalistas no mês atual + faixa do mês anterior; Agenda recorrente carregada (28 horários semanais da Juliana). Ver `docs/DEPLOYS.md`.
   Faltam da gestão: horários da Giovana (semanais × aplicação de teste), quinzenais da Juliana, e 3 pacientes ainda sem cadastro
