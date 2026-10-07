@@ -23,7 +23,7 @@ coluna E não afeta o app. Atualizar `E2` faz parte de toda publicação (passo 
 
 | Canal | Deploy | Peças | Commit |
 |---|---|---|---|
-| Real (`arquivos_real`) | **2026-10-07-05** | 31 (duplicatas 1 · server 7 · index 23); ativas = linhas com nome sem prefixo na coluna A; `antigo:` 07-01, `antigo2:`/`antigo3:` peças substituídas depois | branch `claude/magical-dirac-hh3zzs` |
+| Real (`arquivos_real`) | **2026-10-07-06** | 33 (duplicatas 1 · server 8 · index 24); ativas = linhas com nome sem prefixo na coluna A (115–146 + duplicatas na 2); `antigoN:` = versões anteriores | branch `claude/magical-dirac-hh3zzs` |
 | Teste (`arquivos`) | **2026-10-06-08** (atrás da real: não recebeu o 10, o 11, o 07-01 nem os de 07/10) | 27 | 135de84 |
 | Carregador real | 2026-10-06-02 (`dist/Code.real.gs`, implantado pela Roberta) | — | 4ad0272 |
 | Carregador teste | 2026-10-04-01 + nova versão pendente desde 05/10 (permissão do Drive, ver `COMO-INSTALAR.md`) | — | — |
@@ -48,6 +48,24 @@ Modelo:
 ```
 
 ## Lista
+
+### 2026-10-07-06 · Real (direto) · Pendências pra recepção, Lançamentos e recebimento parcial
+- **O que mudou**:
+  - Tela "Gestão" virou **Pendências** e abre pra recepção (menu lateral e do celular). Exportar, virada do mês, lembrete e
+    regras de cobrança continuam só da gestão. `gestaoResumo` não exige mais perfil gestão.
+  - **Lançamentos** (em Pendências): `API.lancamentos` busca por paciente no mês ou em todos os meses; clicar abre a correção
+    ampla (data no mesmo mês, hora, paciente, profissional, procedimento, o que aconteceu, valor, valor recebido, cobrança).
+    Mudança desses campos exige "quem informou / motivo", vai pra observação da linha e pra aba nova **Alterações de lançamento**.
+    O painel da Agenda ("Corrigir lançamento") usa a mesma correção. "+ Lançar sessão que faltou" abre o Registrar
+    (a data define a aba; o Registrar mostra "Grava na aba …").
+  - **Recebimento parcial**: "Parcial" acrescentado em Listas!B8 (a validação da coluna Pago? já cobria B2:B8). Coluna nova
+    **Valor recebido (R$)** criada no fim da aba do mês quando precisa. Registrar ganhou o botão Parcial + "Recebido agora";
+    Receber (Agenda e Pendências) recebe total ou parte (soma ao recebido; completa vira "Sim"); cada pagamento fica na
+    observação (data, valor, forma, NF) e o Nº da NF acumula ("101, 102"). Pendências, recebido do mês e "a receber" usam o saldo.
+- **Peças**: 32 trocadas (server 0–7, index 0–23), gravadas nas linhas 115–146 como `novo:`, conferidas 32/32, troca num update
+  (as substituídas viraram `antigo5:`).
+- **Conferência**: remontado como o carregador: index = `dist/index.publicado.html`, server e duplicatas = fonte.
+- **Aprovação**: gestão, 07/10 ("recepção também… mudar o nome para pendências"; "nf sobre o valor recebido a cada pagamento").
 
 ### 2026-10-07-05 · Real (direto) · responsável legal e CPF do pagador
 - **O que mudou**: Pacientes ganhou "CPF do pagador" (Quem paga) e o bloco **Responsável** (nome, parentesco com sugestões,
