@@ -17,7 +17,7 @@ Menu de cima: **Hoje · Registrar · Pacientes · Mensalistas · Gestão** (Gest
 
 **No dia**
 1. Hoje (abre no dia de hoje). Paciente chegou → botão **Chegou** na linha (ela fica destacada em roxo) → **Registrar atendimento**: a tela Registrar abre preenchida com paciente, profissional, data e hora. Confira os avisos, o passo 2 (o que aconteceu) e o passo 3 (cobrança), e **Salvar atendimento** (volta pra Hoje) ou **Salvar e registrar outro**. O "Chegou" é uma marcação deste computador, pra organizar a fila; o que vai pra planilha é o registro do atendimento.
-2. Paciente sem horário (encaixe, retorno, avaliação): **+ Encaixe no dia**, escolha o paciente, profissional, hora e tipo. Se for toda semana, **Tornar recorrente**.
+2. Paciente sem horário (encaixe, retorno, avaliação): **+ Agendamento**, escolha o paciente, profissional, hora e tipo. Se for toda semana, **Tornar recorrente**.
 3. Quem não apareceu nem avisou: **⋯** → **Não vem hoje** → "Faltou sem aviso". Remarcar e Remover da lista também ficam no **⋯**.
 4. Precisa imprimir a lista (A4): botão **Imprimir**.
 

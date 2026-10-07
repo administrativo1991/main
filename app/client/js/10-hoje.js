@@ -61,7 +61,7 @@ function preencherProfs() {
   var sel = $("#d-prof"), profs = []; DIA.itens.forEach(function (i) { if (profs.indexOf(i.profissional) < 0) profs.push(i.profissional); });
   if (emAgenda()) (BOOT.profissionais || []).forEach(function (p) { if (profs.indexOf(p.nome) < 0) profs.push(p.nome); }); // na Agenda dá pra escolher quem não tem ninguém marcado (ver as vagas)
   profs.sort();
-  sel.innerHTML = emSemana() ? '' : '<option value="">Todas as profissionais</option>';
+  sel.innerHTML = emSemana() ? '' : '<option value="">Todos os profissionais</option>';
   profs.forEach(function (p) { var o = document.createElement('option'); o.value = p; o.textContent = profCurto(p); sel.appendChild(o); });
   if (profs.indexOf(diaProf) < 0) diaProf = ''; sel.value = diaProf;
 }
@@ -95,7 +95,7 @@ function renderDia() {
   // tabela
   var tb = $("#d-list"); tb.innerHTML = '';
   var lista = todos.filter(passaFiltro);
-  if (!r.itens.length) tb.innerHTML = '<tr class="vazia"><td colspan="6">Ninguém na lista deste dia. Use <b>Encaixe no dia</b> ou cadastre os horários fixos em <b>Agenda recorrente</b>.</td></tr>';
+  if (!r.itens.length) tb.innerHTML = '<tr class="vazia"><td colspan="6">Ninguém na lista deste dia. Use <b>Agendamento</b> ou cadastre os horários fixos em <b>Agenda recorrente</b>.</td></tr>';
   else if (!lista.length) tb.innerHTML = '<tr class="vazia"><td colspan="6">Ninguém ' + (diaBusca ? 'com “' + esc(diaBusca) + '”' : 'neste filtro') + '.</td></tr>';
   lista.forEach(function (it) { tb.appendChild(linhaDia(it)); });
   $("#d-rodape-n").textContent = lista.length === r.itens.length ? r.itens.length + ' na lista' : 'Mostrando ' + lista.length + ' de ' + r.itens.length;
@@ -332,7 +332,7 @@ $("#d-data").addEventListener('change', function () { this.classList.add('sr'); 
 $("#d-prof").addEventListener('change', function () { diaProf = this.value; if (emSemana()) carregarDia(false); else if (DIA) renderDia(); });
 $("#d-busca").addEventListener('input', function () { diaBusca = this.value.trim(); if (DIA) renderDia(); });
 $("#d-print").addEventListener('click', function () { window.print(); });
-/* encaixe no dia */
+/* agendamento (antigo "encaixe no dia") */
 function infoPaciente(nome) { var p = pacInfo(nome); if (!p) return nome.trim() ? 'Não está em Pacientes. Cadastre antes em "Pacientes".' : ''; if (cadastroIncompleto(p)) return 'Cadastro incompleto: sem modalidade nem convênio. Confira como paga.'; var partes = []; if (ehConvenio(p)) partes.push('Convênio ' + p.convenio); else if (p.convenio) partes.push('Particular'); if (p.modalidade && !(ehConvenio(p) && /^Conv[êe]nio$/i.test(p.modalidade))) partes.push(p.modalidade); if (regraRelevante(p)) partes.push(modCurta(p.regra)); return 'Cadastro: ' + partes.join(' · '); }
 function mostrarInfo(elHint, nome) { var p = pacInfo(nome); elHint.innerHTML = esc(infoPaciente(nome)) + (p ? ' <a href="#">' + (cadastroIncompleto(p) ? 'Completar cadastro' : 'editar cadastro') + '</a>' : ''); var a = elHint.querySelector('a'); if (a) a.addEventListener('click', function (e) { e.preventDefault(); go('pacientes', { editar: nome, voltar: 'hoje' }); }); }
 $("#d-add").addEventListener('click', function () { $("#d-addbox").hidden = !$("#d-addbox").hidden; $("#d-recbox").hidden = true; $("#d-expbox").hidden = true; if (!$("#d-addbox").hidden) $("#d-add-pac").focus(); });

@@ -599,15 +599,15 @@ table.mens .td-acao .btn.link{padding-left:0}
 <button type="button" class="btn ter roxo" id="d-ir-hoje">Hoje</button>
 <div class="seg mini" id="d-visao" role="group" aria-label="Ver como"><button type="button" data-v="lista" aria-pressed="true">Lista</button><button type="button" data-v="agenda" aria-pressed="false">Agenda</button></div>
 <div class="seg mini" id="d-agvisao" role="group" aria-label="Período da agenda" hidden><button type="button" data-v="dia" aria-pressed="true">Dia</button><button type="button" data-v="semana" aria-pressed="false">Semana</button></div>
-<select id="d-prof" aria-label="Profissional" class="auto"><option value="">Todas as profissionais</option></select>
+<select id="d-prof" aria-label="Profissional" class="auto"><option value="">Todos os profissionais</option></select>
 <div class="campo-wrap busca" id="d-busca-wrap">
 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
 <input type="search" id="d-busca" placeholder="Buscar paciente (nome ou pagador)" aria-label="Buscar paciente" autocomplete="off">
 </div>
 <button type="button" class="btn ter so-pc" id="d-print"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9V3h12v6"/><rect x="3" y="9" width="18" height="9" rx="2"/><path d="M6 14h12v7H6z"/></svg> Imprimir</button>
 <button type="button" class="btn ter" id="d-rec-topo" title="Ver, mudar ou incluir horários fixos (semanal ou quinzenal)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg> Horários fixos</button>
-<button type="button" class="btn ter" id="d-exp-topo" hidden title="Dias e horários de atendimento de cada profissional + duração da sessão">Horário das profissionais</button>
-<button type="button" class="btn" id="d-add"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg> Encaixe no dia</button>
+<button type="button" class="btn ter" id="d-exp-topo" hidden title="Dias e horários de atendimento de cada profissional + duração da sessão">Horário dos profissionais</button>
+<button type="button" class="btn" id="d-add"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg> Agendamento</button>
 </div>
 <h1 class="so-print" id="d-titulo-print">Lista do dia</h1>
 <div class="tiles no-print">
@@ -617,7 +617,7 @@ table.mens .td-acao .btn.link{padding-left:0}
 <div id="d-aviso-aba" class="faixa amarela" hidden></div>
 <div class="faixa pessego lembrete" id="d-lembrete" hidden><div class="corpo"><div class="t">Lembrete da gestão</div><span id="d-lembrete-txt"></span><small id="d-lembrete-meta"></small></div></div>
 <div id="d-addbox" class="painel" hidden>
-<div class="cab"><h2>Encaixe no dia</h2><span class="tag lilas" id="d-add-dia"></span><span class="muted">paciente sem horário fixo: retorno, avaliação, reposição</span><span class="esp"></span><button type="button" class="btn icone p" id="d-add-cancel" aria-label="Fechar"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+<div class="cab"><h2>Agendamento</h2><span class="tag lilas" id="d-add-dia"></span><span class="muted">paciente sem horário fixo: retorno, avaliação, reposição</span><span class="esp"></span><button type="button" class="btn icone p" id="d-add-cancel" aria-label="Fechar"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
 <div class="grid g4">
 <label class="campo c2">Paciente<input id="d-add-pac" list="dl-pacientes" autocomplete="off" placeholder="Comece a digitar o nome…"><span class="hint" id="d-add-pac-info"></span></label>
 <label class="campo">Profissional<select id="d-add-prof"></select></label>
@@ -628,7 +628,7 @@ table.mens .td-acao .btn.link{padding-left:0}
 <div class="acoes"><button type="button" class="btn" id="d-add-ok">Agendar no dia</button><button type="button" class="btn ter" id="d-add-rec">Tornar recorrente (toda semana)</button></div>
 </div>
 <div id="d-expbox" class="painel" hidden>
-<div class="cab"><h2>Horário das profissionais</h2><span class="muted">dias e horários de atendimento + duração da sessão · é o que a Agenda usa pra mostrar as vagas</span><span class="esp"></span><button type="button" class="btn icone p" id="d-exp-fechar" aria-label="Fechar"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+<div class="cab"><h2>Horário dos profissionais</h2><span class="muted">dias e horários de atendimento + duração da sessão · é o que a Agenda usa pra mostrar as vagas</span><span class="esp"></span><button type="button" class="btn icone p" id="d-exp-fechar" aria-label="Fechar"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
 <div class="grid g4">
 <label class="campo c2">Profissional<select id="e-prof"></select></label>
 <label class="campo">Duração da sessão (min)<input id="e-dur" inputmode="numeric" maxlength="3" placeholder="ex.: 30"></label>
@@ -666,9 +666,9 @@ table.mens .td-acao .btn.link{padding-left:0}
 <div class="tabela-rodape no-print"><span id="d-rodape-n"></span><span class="esp"></span><button type="button" class="link-discreto" id="d-rec">Agenda recorrente (horários fixos)</button></div>
 </div>
 <div class="tabela-card ag-card" id="d-agenda" hidden>
-<div class="ag-legenda no-print"><span><i class="lg livre"></i>vaga</span><span><i class="lg ocup"></i>ocupado</span><span><i class="lg fechado"></i>intervalo / fechado</span><span class="muted">clique numa vaga pra encaixar · clique num nome pra abrir o paciente</span></div>
+<div class="ag-legenda no-print"><span><i class="lg livre"></i>vaga</span><span><i class="lg ocup"></i>ocupado</span><span><i class="lg fechado"></i>intervalo / fechado</span><span class="muted">clique numa vaga pra agendar · clique num nome pra abrir o paciente</span></div>
 <div class="ag-wrap" id="d-ag-grade"></div>
-<div class="tabela-rodape no-print"><span id="d-ag-rodape"></span><span class="esp"></span><button type="button" class="link-discreto" id="d-exp">Horário das profissionais</button></div>
+<div class="tabela-rodape no-print"><span id="d-ag-rodape"></span><span class="esp"></span><button type="button" class="link-discreto" id="d-exp">Horário dos profissionais</button></div>
 </div>
 <div class="dois no-print">
 <section class="card compacto" id="d-pend-card">
@@ -1326,7 +1326,7 @@ function preencherProfs() {
 var sel = $("#d-prof"), profs = []; DIA.itens.forEach(function (i) { if (profs.indexOf(i.profissional) < 0) profs.push(i.profissional); });
 if (emAgenda()) (BOOT.profissionais || []).forEach(function (p) { if (profs.indexOf(p.nome) < 0) profs.push(p.nome); }); // na Agenda dá pra escolher quem não tem ninguém marcado (ver as vagas)
 profs.sort();
-sel.innerHTML = emSemana() ? '' : '<option value="">Todas as profissionais</option>';
+sel.innerHTML = emSemana() ? '' : '<option value="">Todos os profissionais</option>';
 profs.forEach(function (p) { var o = document.createElement('option'); o.value = p; o.textContent = profCurto(p); sel.appendChild(o); });
 if (profs.indexOf(diaProf) < 0) diaProf = ''; sel.value = diaProf;
 }
@@ -1360,7 +1360,7 @@ renderResumo(cont);
 // tabela
 var tb = $("#d-list"); tb.innerHTML = '';
 var lista = todos.filter(passaFiltro);
-if (!r.itens.length) tb.innerHTML = '<tr class="vazia"><td colspan="6">Ninguém na lista deste dia. Use <b>Encaixe no dia</b> ou cadastre os horários fixos em <b>Agenda recorrente</b>.</td></tr>';
+if (!r.itens.length) tb.innerHTML = '<tr class="vazia"><td colspan="6">Ninguém na lista deste dia. Use <b>Agendamento</b> ou cadastre os horários fixos em <b>Agenda recorrente</b>.</td></tr>';
 else if (!lista.length) tb.innerHTML = '<tr class="vazia"><td colspan="6">Ninguém ' + (diaBusca ? 'com “' + esc(diaBusca) + '”' : 'neste filtro') + '.</td></tr>';
 lista.forEach(function (it) { tb.appendChild(linhaDia(it)); });
 $("#d-rodape-n").textContent = lista.length === r.itens.length ? r.itens.length + ' na lista' : 'Mostrando ' + lista.length + ' de ' + r.itens.length;
@@ -1597,7 +1597,7 @@ $("#d-data").addEventListener('change', function () { this.classList.add('sr'); 
 $("#d-prof").addEventListener('change', function () { diaProf = this.value; if (emSemana()) carregarDia(false); else if (DIA) renderDia(); });
 $("#d-busca").addEventListener('input', function () { diaBusca = this.value.trim(); if (DIA) renderDia(); });
 $("#d-print").addEventListener('click', function () { window.print(); });
-/* encaixe no dia */
+/* agendamento (antigo "encaixe no dia") */
 function infoPaciente(nome) { var p = pacInfo(nome); if (!p) return nome.trim() ? 'Não está em Pacientes. Cadastre antes em "Pacientes".' : ''; if (cadastroIncompleto(p)) return 'Cadastro incompleto: sem modalidade nem convênio. Confira como paga.'; var partes = []; if (ehConvenio(p)) partes.push('Convênio ' + p.convenio); else if (p.convenio) partes.push('Particular'); if (p.modalidade && !(ehConvenio(p) && /^Conv[êe]nio$/i.test(p.modalidade))) partes.push(p.modalidade); if (regraRelevante(p)) partes.push(modCurta(p.regra)); return 'Cadastro: ' + partes.join(' · '); }
 function mostrarInfo(elHint, nome) { var p = pacInfo(nome); elHint.innerHTML = esc(infoPaciente(nome)) + (p ? ' <a href="#">' + (cadastroIncompleto(p) ? 'Completar cadastro' : 'editar cadastro') + '</a>' : ''); var a = elHint.querySelector('a'); if (a) a.addEventListener('click', function (e) { e.preventDefault(); go('pacientes', { editar: nome, voltar: 'hoje' }); }); }
 $("#d-add").addEventListener('click', function () { $("#d-addbox").hidden = !$("#d-addbox").hidden; $("#d-recbox").hidden = true; $("#d-expbox").hidden = true; if (!$("#d-addbox").hidden) $("#d-add-pac").focus(); });
@@ -1645,9 +1645,9 @@ salvarRec(d);
 function salvarRec(d) { $("#r-salvar").disabled = true; call('salvarAgendaFixa', d).then(function (r) { if (!r.ok) return toast((r.erros || ['Não gravou']).join(' ')); toast('Recorrência salva'); limparRec(); carregarRec(); carregarDia(); }).catch(function (e) { toast('Erro: ' + e.message); }).finally(function () { $("#r-salvar").disabled = false; }); }
 /* ===== 15-agenda.js ===== */
 /* ================= AGENDA (grade de horários na tela Agenda) =================
-Visão Lista | Agenda; na Agenda, Dia (todas as profissionais lado a lado) ou Semana (uma profissional).
+Visão Lista | Agenda; na Agenda, Dia (todos os profissionais lado a lado) ou Semana (um profissional).
 O expediente de cada profissional (aba Profissionais, colunas "Horário segunda"… e "Duração da sessão (min)")
-define o que é vaga (branco) e o que é intervalo/fechado (cinza). Clicar numa vaga abre o Encaixe no dia já preenchido. */
+define o que é vaga (branco) e o que é intervalo/fechado (cinza). Clicar numa vaga abre o Agendamento já preenchido. */
 var diaVisao = store('rn-visao') === 'agenda' ? 'agenda' : 'lista', agVisao = store('rn-agvisao') === 'semana' ? 'semana' : 'dia', AGS = null;
 var AG_PPM = 1.2, AG_DIAS = ['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
 function emAgenda() { return diaVisao === 'agenda'; }
@@ -1677,7 +1677,7 @@ function duracaoDe(prof) { var p = profPorNome(prof); return (p && p.duracao) ||
 function temExpediente(p) { return !!(p && p.horarios && AG_DIAS.some(function (d) { return (faixasHorario(p.horarios[d]) || []).length; })); }
 function segundaDe(data) { var d = dataObj(data) || new Date(); d.setDate(d.getDate() - ((d.getDay() + 6) % 7)); return d; }
 function brData(d) { return ('0' + d.getDate()).slice(-2) + '/' + ('0' + (d.getMonth() + 1)).slice(-2) + '/' + d.getFullYear(); }
-/* ---------- carga da semana (uma profissional) ---------- */
+/* ---------- carga da semana (um profissional) ---------- */
 function profSemana() {
 if (diaProf) return diaProf;
 var com = (BOOT.profissionais || []).filter(temExpediente)[0] || (BOOT.profissionais || [])[0];
@@ -1731,7 +1731,7 @@ var box = $("#d-ag-grade"); box.innerHTML = '';
 if (!DIA) return;
 if (emSemana() && !AGS) { box.innerHTML = '<div class="carregando">Carregando a semana…</div>'; return; }
 var cols = emSemana() ? colunasSemana() : colunasDia();
-if (!cols.length) { box.innerHTML = '<div class="vazio" style="padding:24px">' + (diaProf ? esc(profCurto(diaProf)) + ' não atende neste dia e não tem ninguém marcado.' : 'Nenhuma profissional com horário neste dia.') + ' Os horários de cada profissional ficam em <b>Horário das profissionais</b>.</div>'; $("#d-ag-rodape").textContent = ''; return; }
+if (!cols.length) { box.innerHTML = '<div class="vazio" style="padding:24px">' + (diaProf ? esc(profCurto(diaProf)) + ' não atende neste dia e não tem ninguém marcado.' : 'Nenhum profissional com horário neste dia.') + ' Os horários de cada profissional ficam em <b>Horário dos profissionais</b>.</div>'; $("#d-ag-rodape").textContent = ''; return; }
 // faixa de horas mostrada: do primeiro início ao último fim (expediente ou paciente marcado), em horas cheias
 var ini = 24 * 60, fim = 0;
 cols.forEach(function (c) {
@@ -1766,7 +1766,7 @@ var passado = c.data === hojeStr() ? mAgora : ((dataObj(c.data) < dataObj(hojeSt
 c.faixas.forEach(function (f) {
 for (var s = f[0]; s + c.dur <= f[1]; s += c.dur) {
 var e = s + c.dur; if (ocupa.some(function (o) { return o[0] < e && o[1] > s; })) continue;
-var b = el('<button type="button" class="ag-livre' + (s + c.dur <= passado ? ' passou' : '') + '" style="top:' + (px(s) + 1) + 'px;height:' + (px(e) - px(s) - 2) + 'px" aria-label="Vaga ' + hm(s) + ' ' + esc(c.prof) + ' ' + c.data + '"><span>' + hm(s) + '</span><em>+ encaixe</em></button>');
+var b = el('<button type="button" class="ag-livre' + (s + c.dur <= passado ? ' passou' : '') + '" style="top:' + (px(s) + 1) + 'px;height:' + (px(e) - px(s) - 2) + 'px" aria-label="Vaga ' + hm(s) + ' ' + esc(c.prof) + ' ' + c.data + '"><span>' + hm(s) + '</span><em>+ agendar</em></button>');
 (function (hora) { b.addEventListener('click', function () { abrirEncaixe(c.prof, c.data, hora); }); })(hm(s));
 col.appendChild(b);
 }
@@ -1820,7 +1820,7 @@ $("#d-prox").setAttribute('aria-label', emSemana() ? 'Próxima semana' : 'Próxi
 $$('#d-visao button').forEach(function (b) { b.addEventListener('click', function () { if (diaVisao === b.dataset.v) return; diaVisao = b.dataset.v; store('rn-visao', diaVisao); aplicarVisao(); carregarDia(false); }); });
 $$('#d-agvisao button').forEach(function (b) { b.addEventListener('click', function () { if (agVisao === b.dataset.v) return; agVisao = b.dataset.v; store('rn-agvisao', agVisao); aplicarVisao(); carregarDia(false); }); });
 aplicarVisao();
-/* ---------- Horário das profissionais (recepção mantém; grava na aba Profissionais) ---------- */
+/* ---------- Horário dos profissionais (recepção mantém; grava na aba Profissionais) ---------- */
 function alternarExp() {
 var box = $("#d-expbox"); box.hidden = !box.hidden; $("#d-addbox").hidden = true; $("#d-recbox").hidden = true;
 if (box.hidden) return;

@@ -1,7 +1,7 @@
 /* ================= AGENDA (grade de horários na tela Agenda) =================
-   Visão Lista | Agenda; na Agenda, Dia (todas as profissionais lado a lado) ou Semana (uma profissional).
+   Visão Lista | Agenda; na Agenda, Dia (todos os profissionais lado a lado) ou Semana (um profissional).
    O expediente de cada profissional (aba Profissionais, colunas "Horário segunda"… e "Duração da sessão (min)")
-   define o que é vaga (branco) e o que é intervalo/fechado (cinza). Clicar numa vaga abre o Encaixe no dia já preenchido. */
+   define o que é vaga (branco) e o que é intervalo/fechado (cinza). Clicar numa vaga abre o Agendamento já preenchido. */
 var diaVisao = store('rn-visao') === 'agenda' ? 'agenda' : 'lista', agVisao = store('rn-agvisao') === 'semana' ? 'semana' : 'dia', AGS = null;
 var AG_PPM = 1.2, AG_DIAS = ['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
 function emAgenda() { return diaVisao === 'agenda'; }
@@ -32,7 +32,7 @@ function temExpediente(p) { return !!(p && p.horarios && AG_DIAS.some(function (
 function segundaDe(data) { var d = dataObj(data) || new Date(); d.setDate(d.getDate() - ((d.getDay() + 6) % 7)); return d; }
 function brData(d) { return ('0' + d.getDate()).slice(-2) + '/' + ('0' + (d.getMonth() + 1)).slice(-2) + '/' + d.getFullYear(); }
 
-/* ---------- carga da semana (uma profissional) ---------- */
+/* ---------- carga da semana (um profissional) ---------- */
 function profSemana() {
   if (diaProf) return diaProf;
   var com = (BOOT.profissionais || []).filter(temExpediente)[0] || (BOOT.profissionais || [])[0];
@@ -87,7 +87,7 @@ function renderAgenda() {
   if (!DIA) return;
   if (emSemana() && !AGS) { box.innerHTML = '<div class="carregando">Carregando a semana…</div>'; return; }
   var cols = emSemana() ? colunasSemana() : colunasDia();
-  if (!cols.length) { box.innerHTML = '<div class="vazio" style="padding:24px">' + (diaProf ? esc(profCurto(diaProf)) + ' não atende neste dia e não tem ninguém marcado.' : 'Nenhuma profissional com horário neste dia.') + ' Os horários de cada profissional ficam em <b>Horário das profissionais</b>.</div>'; $("#d-ag-rodape").textContent = ''; return; }
+  if (!cols.length) { box.innerHTML = '<div class="vazio" style="padding:24px">' + (diaProf ? esc(profCurto(diaProf)) + ' não atende neste dia e não tem ninguém marcado.' : 'Nenhum profissional com horário neste dia.') + ' Os horários de cada profissional ficam em <b>Horário dos profissionais</b>.</div>'; $("#d-ag-rodape").textContent = ''; return; }
   // faixa de horas mostrada: do primeiro início ao último fim (expediente ou paciente marcado), em horas cheias
   var ini = 24 * 60, fim = 0;
   cols.forEach(function (c) {
@@ -122,7 +122,7 @@ function renderAgenda() {
     c.faixas.forEach(function (f) {
       for (var s = f[0]; s + c.dur <= f[1]; s += c.dur) {
         var e = s + c.dur; if (ocupa.some(function (o) { return o[0] < e && o[1] > s; })) continue;
-        var b = el('<button type="button" class="ag-livre' + (s + c.dur <= passado ? ' passou' : '') + '" style="top:' + (px(s) + 1) + 'px;height:' + (px(e) - px(s) - 2) + 'px" aria-label="Vaga ' + hm(s) + ' ' + esc(c.prof) + ' ' + c.data + '"><span>' + hm(s) + '</span><em>+ encaixe</em></button>');
+        var b = el('<button type="button" class="ag-livre' + (s + c.dur <= passado ? ' passou' : '') + '" style="top:' + (px(s) + 1) + 'px;height:' + (px(e) - px(s) - 2) + 'px" aria-label="Vaga ' + hm(s) + ' ' + esc(c.prof) + ' ' + c.data + '"><span>' + hm(s) + '</span><em>+ agendar</em></button>');
         (function (hora) { b.addEventListener('click', function () { abrirEncaixe(c.prof, c.data, hora); }); })(hm(s));
         col.appendChild(b);
       }
@@ -177,7 +177,7 @@ $$('#d-visao button').forEach(function (b) { b.addEventListener('click', functio
 $$('#d-agvisao button').forEach(function (b) { b.addEventListener('click', function () { if (agVisao === b.dataset.v) return; agVisao = b.dataset.v; store('rn-agvisao', agVisao); aplicarVisao(); carregarDia(false); }); });
 aplicarVisao();
 
-/* ---------- Horário das profissionais (recepção mantém; grava na aba Profissionais) ---------- */
+/* ---------- Horário dos profissionais (recepção mantém; grava na aba Profissionais) ---------- */
 function alternarExp() {
   var box = $("#d-expbox"); box.hidden = !box.hidden; $("#d-addbox").hidden = true; $("#d-recbox").hidden = true;
   if (box.hidden) return;
