@@ -2419,6 +2419,7 @@ function cartaoPaciente() {
   $("#a-editcad").hidden = !p; $("#a-hist").hidden = !(p && ehMensal(p));
 }
 // Regras de cobrança: idênticas ao app anterior. Só muda o que aparece na tela (layoutCobranca).
+// sem cobrança: modalidade OU regra Pro bono/Permuta (gestão, 08/10)
 function aplicarRegra() {
   var v = $("#a-valor"), h = $("#a-valor-hint"), pago = $("#a-pago"), forma = $("#a-forma"), nf = $("#a-nf"), desc = $("#a-desc-sel"), opts = BOOT.listas.pago || [];
   var p = procObj($("#a-proc").value), procV = p ? p.valor : null;
@@ -2431,7 +2432,7 @@ function aplicarRegra() {
   if (cur._extra) { v.disabled = true; forma.disabled = true; desc.disabled = true; pago.value = pick(opts, 'Plano') || pick(opts, 'Pacote'); nf.value = 'Não se aplica'; h.textContent = 'sessão extra liberada'; modo = 'extra'; }
   else if (/^Paga o que/.test(regra)) { v.readOnly = false; v.placeholder = 'valor que pagou'; h.textContent = 'livre — o que pagar quita'; pago.value = pick(opts, 'Sim'); nf.value = 'Não'; modo = 'paga'; }
   else if (/^Valor fixo/.test(regra)) { var vc = num((cur.valorCombinado || '').match(/[\d.]+,?\d*/) || ''); if (vc != null) { v.value = brl(vc); h.textContent = 'valor combinado do cadastro'; } else { v.readOnly = false; h.textContent = 'combinado: preencher à mão (não achei o número no cadastro)'; } pago.value = pick(opts, 'Sim'); nf.value = 'Não'; modo = 'fixo'; }
-  else if (/^Pro bono|^Permuta/.test(regra) && !cur._cobrar) { v.disabled = true; forma.disabled = true; desc.disabled = true; pago.value = pick(opts, 'Não se aplica'); nf.value = 'Não se aplica'; h.textContent = 'sem cobrança'; modo = 'probono'; }
+  else if (ehProBono(cur) && !cur._cobrar) { v.disabled = true; forma.disabled = true; desc.disabled = true; pago.value = pick(opts, 'Não se aplica'); nf.value = 'Não se aplica'; h.textContent = 'sem cobrança'; modo = 'probono'; }
   else if ((regra === 'Convênio' || (ehConvenio(cur) && (!cur.modalidade || cur.modalidade === 'Convênio'))) && !cur._cobrar) { v.value = brl(0); v.disabled = true; forma.disabled = true; desc.disabled = true; pago.value = pick(opts, 'Convênio'); nf.value = 'Não se aplica'; h.textContent = 'faturado no convênio'; modo = 'convenio'; }
   else if (ehMensal(cur) || /^Mensalidade/.test(regra)) { v.disabled = true; forma.disabled = true; desc.disabled = true; pago.value = pick(opts, 'Plano') || pick(opts, 'Pacote'); nf.value = 'Não se aplica'; h.textContent = 'já pago na mensalidade'; modo = 'mensal'; }
   else if (pacoteOk) { v.disabled = true; forma.disabled = true; desc.disabled = true; pago.value = pick(opts, 'Plano') || pick(opts, 'Pacote'); nf.value = 'Não se aplica'; h.textContent = 'já pago no plano'; modo = 'plano'; }
@@ -2447,7 +2448,7 @@ function aplicarRegra() {
   }
   baseValor = procV;
   var hintFalta = '';
-  if (falta) { v.value = ''; v.disabled = true; forma.disabled = true; desc.disabled = true; pago.value = ''; nf.value = 'Não se aplica'; hintFalta = (/sem aviso|em cima da hora/.test(oque) && !ehMensal(cur) && !ehConvenio(cur) && !/^Pro bono|^Permuta/.test(regra)) ? (pacoteOk ? 'Consome 1 consulta do plano.' : 'Falta: vira pendência de taxa pra gestão decidir.') : 'Sem cobrança nesta linha.'; }
+  if (falta) { v.value = ''; v.disabled = true; forma.disabled = true; desc.disabled = true; pago.value = ''; nf.value = 'Não se aplica'; hintFalta = (/sem aviso|em cima da hora/.test(oque) && !ehMensal(cur) && !ehConvenio(cur) && !ehProBono(cur)) ? (pacoteOk ? 'Consome 1 consulta do plano.' : 'Falta: vira pendência de taxa pra gestão decidir.') : 'Sem cobrança nesta linha.'; }
   $("#a-oque-hint").textContent = hintFalta;
   mostrarPagParcial();
   layoutCobranca(modo, falta);
