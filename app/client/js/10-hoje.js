@@ -17,7 +17,7 @@ function tituloDia(dt) { return DIAS_PT[dt.getDay()] + ', ' + dt.getDate() + ' d
 function tituloDiaCurto(dt) { return DIAS_PT[dt.getDay()].slice(0, 3) + ', ' + dt.getDate() + ' ' + MESES_PT[dt.getMonth()].slice(0, 3).toLowerCase(); }
 function semAcento(s) { return String(s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, ''); }
 // o que vai na coluna "Profissional · modalidade" e no painel
-function modalidadeCurta(p) { if (!p) return 'não está em Pacientes'; if (ehConvenio(p)) return 'Convênio ' + p.convenio; if (p.modalidade) return modCurta(p.modalidade); return 'sem modalidade'; }
+function modalidadeCurta(p) { if (!p) return 'não está em Pacientes'; if (cobConvenio(p)) return 'Convênio ' + p.convenio; if (p.modalidade) return modCurta(cobDe(p)); return 'cobrança em branco'; }
 function idadeCurta(p) { if (!p || !p.nasc) return ''; var i = idade(p.nasc); if (!i) return ''; var n = parseInt(i, 10); return n >= 18 ? 'adulto' : i; }
 
 INICIAR.hoje = function () {
@@ -195,11 +195,11 @@ function renderPainel() {
   var sub = []; if (p && p.nasc) { var i = idade(p.nasc); if (i) sub.push(i); sub.push('nasc. ' + p.nasc); } if (p && p.pagador && p.pagador !== p.nome) sub.push('pagador: ' + p.pagador); if (!p) sub.push('não está em Pacientes');
   $("#pp-sub").textContent = sub.join(' · ');
   var tipo = it.origem && !/Semanal|Quinzenal|Registrado/.test(it.origem) ? it.origem : 'sessão';
-  $("#pp-dl").innerHTML = '<div><dt>Hoje</dt><dd>' + esc((it.hora || '—') + ' · ' + tipo) + '</dd></div><div><dt>Profissional</dt><dd>' + esc(it.profissional) + '</dd></div><div><dt>Modalidade</dt><dd>' + esc(p && p.modalidade ? modCurta(p.modalidade) : (p ? 'sem modalidade' : '—')) + '</dd></div><div><dt>Valor da sessão</dt><dd>' + esc(valorSessaoTxt(p, it.profissional)) + '</dd></div><div><dt>Convênio</dt><dd>' + esc(p ? (p.convenio || 'Particular') : '—') + '</dd></div>' + (p && p.resp ? '<div><dt>Responsável</dt><dd>' + esc(p.resp + (p.respPar ? ' (' + p.respPar.toLowerCase() + ')' : '') + (p.respTel ? ' · ' + p.respTel : '')) + '</dd></div>' : '');
+  $("#pp-dl").innerHTML = '<div><dt>Hoje</dt><dd>' + esc((it.hora || '—') + ' · ' + tipo) + '</dd></div><div><dt>Profissional</dt><dd>' + esc(it.profissional) + '</dd></div><div><dt>Cobrança</dt><dd>' + esc(p ? resumoCob(p, it.profissional)[1] : '—') + '</dd></div><div><dt>Valor da sessão</dt><dd>' + esc(valorSessaoTxt(p, it.profissional)) + '</dd></div><div><dt>Convênio</dt><dd>' + esc(p ? (p.convenio || 'Particular') : '—') + '</dd></div>' + (p && p.resp ? '<div><dt>Responsável</dt><dd>' + esc(p.resp + (p.respPar ? ' (' + p.respPar.toLowerCase() + ')' : '') + (p.respTel ? ' · ' + p.respTel : '')) + '</dd></div>' : '');
   var avisoHtml = '';
-  if (p && (regraRelevante(p) || p.obsCobranca) && !ehProBono(p) && !ehConvenio(p) && !ehMensal(p)) avisoHtml = aviso('laranja', 'Atenção na cobrança · ' + esc(modCurta(p.regra || 'ver observação')), esc(p.obsCobranca || ''));
-  else if (p && cadastroIncompleto(p)) avisoHtml = aviso('laranja', 'Cadastro incompleto', 'Sem modalidade nem convênio. Confira como paga antes de registrar.');
-  else if (p && ehProBono(p) && p.obsCobranca) avisoHtml = aviso('lilas', /permuta/i.test(p.regra + p.modalidade) ? 'Permuta' : 'Pro bono', esc(p.obsCobranca));
+  if (p && cadastroIncompleto(p)) avisoHtml = aviso('laranja', 'Cadastro incompleto', 'Cobrança em branco. Confira como paga antes de registrar.');
+  else if (p && ehPacoteCob(p) && pagDe(p) === 'Antecipado' && estPacote(p).disponiveis <= 0) avisoHtml = aviso('vermelha', 'Pacote esgotado — renovar antes de atender', esc(p.obsCobranca || ''));
+  else if (p && p.obsCobranca && !cobConvenio(p)) avisoHtml = aviso(ehProBono(p) ? 'lilas' : 'laranja', ehProBono(p) ? cobDe(p) : 'Observação de cobrança', esc(p.obsCobranca));
   $("#pp-aviso").innerHTML = avisoHtml;
   // sessões anteriores em aberto: a recepção vê na chegada e resolve ali mesmo (grava na linha antiga, como a Gestão)
   var pendHtml = pendDe(it.paciente).map(function (x, i) {
@@ -243,8 +243,9 @@ function renderForm(it) {
     preencherSelect($("#d-nv-motivo", pn), (BOOT.listas.oque || []).filter(function (x) { return !/^Atendido/.test(x); }));
     $("#d-nv-ok", pn).addEventListener('click', function () {
       var p = pacInfo(it.paciente), esps = espsDoProf(it.profissional), base = tiposDe(esps)[0], oque = $("#d-nv-motivo", pn).value;
-      var d = { paciente: it.paciente, profissional: it.profissional, data: DIA.data, hora: it.hora || '', procedimento: base ? derivarProc(base.nome, p || {}) : '', oque: oque, pago: '', valor: '', forma: '', dataPagamento: '', quemPagou: '', nf: 'Não se aplica', nfNumero: '', guia: '', observacao: $("#d-nv-obs", pn).value.trim(), pacoteId: '', sessaoExtra: false, tornarPagadorHabitual: false };
-      var pk = p && AT.pacotes[p.nome]; if (p && ehPacote(p) && pk && pk.status === 'ativo' && /sem aviso|em cima da hora/.test(oque)) d.pacoteId = pk.id;
+      var d = { paciente: it.paciente, profissional: it.profissional, data: DIA.data, hora: it.hora || '', procedimento: base ? derivarProc(base.nome, p || {}) : '', oque: oque, pago: '', valor: '', forma: '', dataPagamento: '', quemPagou: '', nf: 'Não se aplica', nfNumero: '', guia: '', observacao: $("#d-nv-obs", pn).value.trim(), tornarPagadorHabitual: false };
+      // pacote no Posterior: a falta que gasta sessão fica lançada com o valor da sessão do pacote, não paga
+      if (p && ehPacoteCob(p) && pagDe(p) !== 'Antecipado' && consumoPacote(oque, d.procedimento, false, estPacote(p).faltasAvisadasMes || 0).delta < 0 && valorSessaoPacote(p) != null) { d.valor = brl(valorSessaoPacote(p)); d.pago = 'Não'; }
       this.disabled = true;
       call('registrarAtendimento', d).then(function (r) { if (!r.ok) return toast((r.erros || ['Não gravou']).join(' ')); toast('Gravado: ' + oque); invalidarResumo(); carregarDia(); }).catch(function (e) { toast('Erro: ' + e.message); });
     });
@@ -309,10 +310,10 @@ function renderResumo(cont) {
 /* ---------- pendências de hoje (linhas clicáveis) ---------- */
 function renderPend(itens) {
   var dia = DIA.data, g = resumoMes[DIA.abaMes], out = [];
-  var mens = itens.filter(function (i) { var p = pacInfo(i.paciente); return p && ehMensal(p) && /amarela|vermelha/.test(situacaoMensal(p)[0]); });
-  if (mens.length) out.push(['amarela', mens.length, 'mensalista' + (mens.length > 1 ? 's' : '') + ' de hoje com mês em aberto · ' + mens.map(function (i) { return primeiroNome(i.paciente); }).join(', '), 'mensalistas']);
+  var pacs = itens.filter(function (i) { var p = pacInfo(i.paciente); return p && ehPacoteCob(p) && pagDe(p) === 'Antecipado' && estPacote(p).disponiveis <= 1; });
+  if (pacs.length) out.push(['amarela', pacs.length, 'de hoje com pacote esgotado ou na última sessão · ' + pacs.map(function (i) { return primeiroNome(i.paciente); }).join(', '), 'pacotes']);
   var incompl = itens.filter(function (i) { var p = pacInfo(i.paciente); return p && cadastroIncompleto(p); });
-  if (incompl.length) out.push(['laranja', incompl.length, 'cadastro sem modalidade · ' + incompl.map(function (i) { return primeiroNome(i.paciente); }).join(', '), 'pacientes', incompl[0].paciente]);
+  if (incompl.length) out.push(['laranja', incompl.length, 'cadastro com cobrança em branco · ' + incompl.map(function (i) { return primeiroNome(i.paciente); }).join(', '), 'pacientes', incompl[0].paciente]);
   var fora = itens.filter(function (i) { return !pacInfo(i.paciente); });
   if (fora.length) out.push(['laranja', fora.length, 'não está em Pacientes · ' + fora.map(function (i) { return primeiroNome(i.paciente); }).join(', '), 'pacientes']);
   var devem = itens.filter(function (i) { return pendDe(i.paciente).some(function (x) { return x.tipo === 'pag'; }); });
@@ -364,7 +365,7 @@ $("#d-prof").addEventListener('change', function () { diaProf = this.value; if (
 $("#d-busca").addEventListener('input', function () { diaBusca = this.value.trim(); if (DIA) renderDia(); });
 $("#d-print").addEventListener('click', function () { window.print(); });
 /* agendamento (antigo "encaixe no dia") */
-function infoPaciente(nome) { var p = pacInfo(nome); if (!p) return nome.trim() ? 'Não está em Pacientes. Cadastre antes em "Pacientes".' : ''; if (cadastroIncompleto(p)) return 'Cadastro incompleto: sem modalidade nem convênio. Confira como paga.'; var partes = []; if (ehConvenio(p)) partes.push('Convênio ' + p.convenio); else if (p.convenio) partes.push('Particular'); if (p.modalidade && !(ehConvenio(p) && /^Conv[êe]nio$/i.test(p.modalidade))) partes.push(p.modalidade); if (regraRelevante(p)) partes.push(modCurta(p.regra)); return 'Cadastro: ' + partes.join(' · '); }
+function infoPaciente(nome) { var p = pacInfo(nome); if (!p) return nome.trim() ? 'Não está em Pacientes. Cadastre antes em "Pacientes".' : ''; if (cadastroIncompleto(p)) return 'Cadastro incompleto: cobrança em branco. Confira como paga.'; return 'Cobrança: ' + resumoCob(p)[1]; }
 function mostrarInfo(elHint, nome) { var p = pacInfo(nome); elHint.innerHTML = esc(infoPaciente(nome)) + (p ? ' <a href="#">' + (cadastroIncompleto(p) ? 'Completar cadastro' : 'editar cadastro') + '</a>' : ''); var a = elHint.querySelector('a'); if (a) a.addEventListener('click', function (e) { e.preventDefault(); go('pacientes', { editar: nome, voltar: 'hoje' }); }); }
 $("#d-add").addEventListener('click', function () { $("#d-addbox").hidden = !$("#d-addbox").hidden; $("#d-recbox").hidden = true; $("#d-expbox").hidden = true; if (!$("#d-addbox").hidden) $("#d-add-pac").focus(); });
 $("#d-add-cancel").addEventListener('click', function () { $("#d-addbox").hidden = true; });
