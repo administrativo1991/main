@@ -43,6 +43,7 @@ function call(nome, dados) {
   });
 }
 /*__MOCK_INICIO__*/ // simulação local (dist/index.html); o build tira este bloco da versão publicada
+window.__ev = function (s) { return eval(s); }; // testes da simulação enxergam o escopo do app
 var mockReg = [], mockDia = [], mockPendOk = [];
 var mockProfs = [{ nome: "Juliana Ribeiro", especialidade: "Psicologia", horarios: { Segunda: '08:00-12:00, 13:00-19:00', 'Terça': '08:00-12:00', Quarta: '13:00-19:00', Quinta: '08:00-12:00, 13:00-18:00', Sexta: '', 'Sábado': '' }, duracao: 30 },
   { nome: "Giovana Grossi", especialidade: "Psicologia (estágio)", horarios: { Segunda: '10:00-12:00, 13:00-16:00', 'Terça': '', Quarta: '', Quinta: '', Sexta: '', 'Sábado': '' }, duracao: null },
@@ -119,8 +120,6 @@ function mock(nome, d) {
     if (nome === 'aplicarAlteracoesLote') return res({ ok: true, feitos: (d.itens || []).map(function (i) { return i.nome; }), erros: [] });
     if (nome === 'atualizarCadastro') return res({ ok: true, alterados: Object.keys(d.campos || {}).slice(0, 2) });
     if (nome === 'removerDoDia') { mockDia = mockDia.filter(function (x) { return x.id !== d.id; }); return res({ ok: true }); }
-    if (nome === 'mensalistasPainel') return res({ itens: [{ linha: 2, paciente: 'Sofia Ramos Teixeira', modalidade: 'Mensalidade social', valor: 200, pagador: 'Associação Boa Esperança', pago: '', dataPago: '', obs: '', sessoes: 3 }, { linha: 3, paciente: 'Theo Barreto Lima', modalidade: 'Mensal (valor especial)', valor: 150, pagador: 'Daniela Barreto Lima', pago: 'Sim', dataPago: '06/11/2026 — R$ 150,00 Pix · NF 67 · app', obs: '', sessoes: 5 }, { linha: 4, paciente: 'Adirlene Rufino Rodrigues', modalidade: 'Plano de 4 consultas · mensalista só até outubro', valor: 280, pagador: '', pago: 'Não', dataPago: 'deve R$ 280 (recepção 03/10)', obs: '', sessoes: 2 }], colunas: ['SETEMBRO (paga em outubro) — pago?', 'OUTUBRO — pago?', 'NOVEMBRO — pago?'], coluna: d.coluna || 'NOVEMBRO — pago?', mes: 'NOVEMBRO', anterior: { coluna: 'OUTUBRO — pago?', mes: 'OUTUBRO', pendentes: 26 }, modeloNovo: true, abaMes: MESES_PT[new Date().getMonth()], hoje: hojeStr() });
-    if (nome === 'registrarMensalidade') return res({ ok: true, id: 'A-sim-m', linha: 50, aba: MESES_PT[new Date().getMonth()] });
     if (nome === 'criarColunasMes') return res({ ok: true, coluna: d.mes.toUpperCase() + ' — pago?' });
     if (nome === 'criarAbaMes') return res({ ok: true, aba: d.nome, modelo: 'Outubro' });
     if (nome === 'exportarMes') return res({ ok: true, nome: 'OUT 26 - Recepção atendimentos (app)', url: '#drive', xlsx: '#xlsx', linhas: 12, pasta: 'Controle Financeiro/2026/10 Out_26/2_Atendimentos', criadas: [], aviso: '', atualizado: '05/10/2026 12:00' });
@@ -239,14 +238,14 @@ function resumoCob(p, prof) {
   if (!cob) partes.push('Tabela (cadastro sem cobrança definida)');
   else if (ehPacoteCob(p)) {
     var k = pacoteDe(p), e = estPacote(p);
-    partes.push((cob === 'Pacote social' ? 'Pacote social de ' : 'Pacote de ') + sessoesTxt(k.n) + (k.valor ? ' · R$ ' + brl(k.valor) : ''));
+    partes.push((cob === 'Pacote social' ? 'Pacote social de ' : 'Pacote de ') + sessoesTxt(k.n) + (k.valor ? ' · ' + brlCurto(k.valor) : ''));
     if (pg === 'Antecipado') {
       partes.push(disponiveisTxt(e.disponiveis));
       if (e.validade && e.disponiveis > 0) partes.push((e.vencido ? 'venceram em ' : 'válidas até ') + diaMes(e.validade));
       cor = e.disponiveis <= 0 || e.vencido ? 'vermelha' : e.disponiveis === 1 ? 'amarela' : 'verde';
     } else if (valorSessaoPacote(p) != null) partes.push('R$ ' + brl(valorSessaoPacote(p)) + ' por sessão');
   }
-  else if (cob === 'Por sessão (combinado)') partes.push('Por sessão (combinado) · ' + (valorComb(p) != null ? 'R$ ' + brl(valorComb(p)) : 'valor não informado'));
+  else if (cob === 'Por sessão (combinado)') partes.push('Por sessão (combinado) · ' + (valorComb(p) != null ? brlCurto(valorComb(p)) : 'valor não informado'));
   else if (cob === 'Convênio') partes.push('Convênio ' + (p.convenio && p.convenio !== 'Particular' ? p.convenio : '(escolher)'));
   else if (cob === 'Pro bono' || cob === 'Permuta') partes.push(cob + ' · sem cobrança');
   else partes.push('Tabela' + (prof ? ' · ' + valorTabelaTxt(p, prof) : ''));
@@ -389,8 +388,8 @@ function corrigirValidar(c, reg) {
   return e;
 }
 
-var TELAS = { hoje: 's-hoje', registrar: 's-registrar', pacientes: 's-pacientes', mensalistas: 's-mensalistas', gestao: 's-gestao' };
-var TITULOS = { hoje: 'Agenda', registrar: 'Registrar atendimento', pacientes: 'Pacientes', mensalistas: 'Mensalistas', gestao: 'Pendências' };
+var TELAS = { hoje: 's-hoje', registrar: 's-registrar', pacientes: 's-pacientes', pacotes: 's-pacotes', gestao: 's-gestao' };
+var TITULOS = { hoje: 'Agenda', registrar: 'Registrar atendimento', pacientes: 'Pacientes', pacotes: 'Pacotes', gestao: 'Pendências' };
 var telaAtual = 'hoje';
 var INICIAR = {};
 function go(id, extra) {

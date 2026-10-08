@@ -105,7 +105,7 @@ function consumoAtual() { return consumoPacote($("#a-oque").value, $("#a-proc").
 function consumoTxt(c) {
   if (!c) return '';
   var e = estPacote(cur), ant = pagDe(cur) === 'Antecipado', motivo = c.nota ? c.nota.split(':')[0] : '';
-  if (c.delta < 0) return 'Gasta 1 sessão do pacote' + (motivo ? ' (' + motivo + ')' : '') + (ant ? (e.disponiveis > 0 ? ' · ficam ' + disponiveisTxt(e.disponiveis - 1) : ' · pacote esgotado: fica devendo para a próxima renovação') : ' · R$ ' + brl(valorSessaoPacote(cur) || 0) + ' a pagar no fim do mês') + '.';
+  if (c.delta < 0) return 'Gasta 1 sessão do pacote' + (motivo ? ' (' + motivo + ')' : '') + (ant ? (e.disponiveis > 0 ? (e.disponiveis - 1 === 1 ? ' · fica ' : ' · ficam ') + disponiveisTxt(e.disponiveis - 1) : ' · pacote esgotado: fica devendo para a próxima renovação') : ' · R$ ' + brl(valorSessaoPacote(cur) || 0) + ' a pagar no fim do mês') + '.';
   return 'Não gasta sessão do pacote' + (motivo ? ': ' + motivo : '') + '.';
 }
 // Regras de cobrança pela Cobrança + Pagamento do cadastro. Só muda o que aparece na tela (layoutCobranca).

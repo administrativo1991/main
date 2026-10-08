@@ -82,17 +82,17 @@ function renderGestao() {
   else if (gesAberto === 'lanc') { if (LANC) lista.appendChild(tabelaLanc()); }
   else if (gesAberto) { var item = PEND.filter(function (p) { return p.k === gesAberto; })[0] || { tabela: (DISC.filter(function (x) { return x[0] === gesAberto; })[0] || [])[2] }; if (item.tabela) lista.appendChild(item.tabela()); }
   // virada do mês
-  var prox = MESES_PT[(MESES_PT.indexOf(r.mes) + 1) % 12], temAba = (r.mesesExistentes || []).indexOf(prox) >= 0, temCol = (r.colunasMensalistas || []).indexOf(prox.toUpperCase()) >= 0;
+  var prox = MESES_PT[(MESES_PT.indexOf(r.mes) + 1) % 12], temAba = (r.mesesExistentes || []).indexOf(prox) >= 0;
   var vir = $("#g-virada"); vir.innerHTML = '';
   var li = function (ok, html) { return el('<li><span class="' + (ok ? 'ok' : 'falta') + '">' + (ok ? ic('check', 12, 3.5) : '') + '</span><span>' + html + '</span></li>'); };
   var l1 = li(temAba, 'Aba <strong>' + esc(prox) + '</strong> ' + (temAba ? 'criada' : 'ainda não existe <button type="button" class="btn ter mini" id="g-aba" data-mes="' + esc(prox) + '">criar</button>'));
-  var l2 = li(temCol, 'Colunas de ' + esc(prox.toLowerCase()) + ' em <strong>Mensalistas</strong>' + (temCol ? '' : ' <button type="button" class="btn ter mini" id="g-cols" data-mes="' + esc(prox) + '">criar</button>'));
-  var l3 = li(false, 'Recorrências dos mensalistas renovadas <small class="muted">(conferir na Agenda recorrente)</small>');
+  var l2 = li(false, 'Renovações dos pacotes antecipados <small class="muted">(tela <a href="#" id="g-ir-pacotes">Pacotes</a>)</small>');
+  var l3 = li(false, 'Recorrências renovadas <small class="muted">(conferir na Agenda recorrente)</small>');
   var l4 = li(false, 'Exportar ' + esc(r.mes.toLowerCase()) + ' → pasta do Financeiro <small class="muted">(botão no topo)</small>');
   [l1, l2, l3, l4].forEach(function (x) { vir.appendChild(x); });
   var ba = $("#g-aba"); if (ba) ba.addEventListener('click', function () { var b = this, m = b.dataset.mes; doisCliques(b, 'Confirmar: criar ' + m + '?', function () { b.disabled = true; call('criarAbaMes', { nome: m }).then(function (r2) { if (!r2.ok) return toast((r2.erros || ['Não criou']).join(' ')); toast('Aba ' + m + ' criada a partir de ' + r2.modelo); carregarGestao(); }).catch(function (e) { toast('Erro: ' + e.message); }); }); });
-  var bcl = $("#g-cols"); if (bcl) bcl.addEventListener('click', function () { var b = this, m = b.dataset.mes; doisCliques(b, 'Confirmar: criar colunas de ' + m + '?', function () { b.disabled = true; call('criarColunasMes', { mes: m }).then(function (r2) { if (!r2.ok) return toast((r2.erros || ['Não criou']).join(' ')); toast('Colunas criadas: ' + r2.coluna); carregarGestao(); }).catch(function (e) { toast('Erro: ' + e.message); }); }); });
-  var comRegra = (AT ? AT.pacientes : []).filter(function (p) { return regraRelevante(p) || p.obsCobranca; }).length; $("#g-regras-n").textContent = comRegra || '';
+  var gip = $("#g-ir-pacotes"); if (gip) gip.addEventListener('click', function (e) { e.preventDefault(); go('pacotes'); });
+  var comRegra = (AT ? AT.pacientes : []).filter(function (p) { return !!p.obsCobranca; }).length; $("#g-regras-n").textContent = comRegra || '';
 }
 /* ---------- Lançamentos: achar qualquer linha (mês mostrado ou todos) e corrigir tudo ---------- */
 function buscarLanc() {
@@ -148,3 +148,25 @@ function salvarLembrete(encerrar) {
 $("#g-lemb-salvar").addEventListener('click', function () { salvarLembrete(false); });
 $("#g-lemb-encerrar").addEventListener('click', function () { salvarLembrete(true); });
 $("#g-lemb-ate").addEventListener('input', function () { this.value = mascaraData(this.value); });
+
+/* ---------- Virada de novembro (gestão, 08/10): propõe as trocas de cobrança; aplica só as marcadas ---------- */
+$("#g-vnov-ver").addEventListener('click', function () {
+  var b = this, box = $("#g-vnov-lista"); b.disabled = true; box.innerHTML = '<div class="carregando">Buscando…</div>';
+  call('viradaPropostas').then(function (r) {
+    if (!r.ok) { box.innerHTML = ''; return toast((r.erros || ['Não consegui']).join(' ')); }
+    if (!r.itens.length) { box.innerHTML = '<div class="muted" style="font-size:13px">Nenhuma troca pendente.</div>'; return; }
+    box.innerHTML = '<ul style="list-style:none;margin:8px 0;padding:0;display:flex;flex-direction:column;gap:6px;font-size:13px">' + r.itens.map(function (it, i) { return '<li><label class="check"><input type="checkbox" data-vn="' + i + '" checked> <span><b>' + esc(it.nome) + '</b><br><span class="muted">' + esc(it.de) + ' → </span>' + esc(it.para) + '</span></label></li>'; }).join('') + '</ul>' +
+      '<label class="campo">Quem decidiu<input id="g-vnov-quem" autocomplete="off" value="Gestão (virada de novembro)"></label><div class="acoes"><button type="button" class="btn" id="g-vnov-ok">Aplicar marcadas</button></div>';
+    $("#g-vnov-ok").addEventListener('click', function () {
+      var b2 = this, sel = $$('[data-vn]', box).filter(function (c) { return c.checked; }).map(function (c) { return r.itens[+c.dataset.vn]; });
+      if (!sel.length) return toast('Nenhuma marcada');
+      doisCliques(b2, 'Confirmar: trocar ' + sel.length + ' cadastro(s)?', function () {
+        b2.disabled = true;
+        call('aplicarAlteracoesLote', { itens: sel, quemInformou: $("#g-vnov-quem").value.trim() || 'Gestão (virada de novembro)' }).then(function (r2) {
+          (r2.feitos || []).forEach(function (nome) { var it = sel.filter(function (x) { return x.nome === nome; })[0], p = pacInfo(nome); if (p && it) Object.keys(it.campos).forEach(function (k) { p[k] = it.campos[k]; }); });
+          box.innerHTML = aviso((r2.erros || []).length ? 'laranja' : 'verde', (r2.feitos || []).length + ' cadastro(s) trocado(s)', esc((r2.erros || []).join(' · ')) + ' Registrado em “Alterações de cadastro”.');
+        }).catch(function (e) { b2.disabled = false; toast('Erro: ' + e.message); });
+      });
+    });
+  }).catch(function (e) { box.innerHTML = ''; toast('Erro: ' + e.message); }).finally(function () { b.disabled = false; });
+});
