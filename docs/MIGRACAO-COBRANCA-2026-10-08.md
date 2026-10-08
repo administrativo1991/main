@@ -1,4 +1,6 @@
-# Migração Modalidade + Regra → Cobrança + Pagamento + pacotes (v2) — relatório (SIMULAÇÃO, nada gravado)
+# Migração Modalidade + Regra → Cobrança + Pagamento + pacotes (v2) — relatório
+
+**Aplicada na planilha real em 08/10/2026 (deploy 2026-10-08-06).** Diferença da simulação: ninguém começa com sessões disponíveis (decisão da gestão, 08/10): a seção "Sessões disponíveis iniciais" abaixo não foi aplicada. Item 2: valores atuais até fevereiro (4 × sessão). Item 3: 1ª falta avisada do mês não gasta; mesma semana não gasta.
 
 Lido da planilha real em 08/10/2026 (Pacientes 530 linhas; Outubro 22 lançamentos; Mensalistas 43 linhas).
 Pedido da gestão v2 de 07/10 (pacotes de sessões). Substitui a versão anterior deste relatório.

@@ -23,7 +23,7 @@ coluna E não afeta o app. Atualizar `E2` faz parte de toda publicação (passo 
 
 | Canal | Deploy | Peças | Commit |
 |---|---|---|---|
-| Real (`arquivos_real`) | **2026-10-08-05** | 34 (duplicatas 1 · server 8 · index 25); ativas = linhas com nome sem prefixo na coluna A (2; 115–117; 123–128; 147–152; 156–162; 175; 177–178; 180–181; 183; 186–190); `antigoN:` = versões anteriores | branch `claude/busy-wright-xf0hql` |
+| Real (`arquivos_real`) | **2026-10-08-06** | 36 (duplicatas 1 · server 10 · index 25); ativas = linhas 2, 123–125 e 191–222; `antigo12:` = versão 2026-10-08-05 | branch `claude/busy-wright-xf0hql` |
 | Teste (`arquivos`) | **2026-10-06-08** (atrás da real: não recebeu o 10, o 11, o 07-01 nem os de 07/10) | 27 | 135de84 |
 | Carregador real | 2026-10-06-02 (`dist/Code.real.gs`, implantado pela Roberta) | — | 4ad0272 |
 | Carregador teste | 2026-10-04-01 + nova versão pendente desde 05/10 (permissão do Drive, ver `COMO-INSTALAR.md`) | — | — |
@@ -48,6 +48,28 @@ Modelo:
 ```
 
 ## Lista
+
+### 2026-10-08-06 · Real (direto, de madrugada) · Cobrança + Pagamento + pacotes de sessões
+- **O que mudou**: cadastro com **Cobrança** (Tabela · Por sessão (combinado) · Pacote de sessões · Pacote social · Convênio ·
+  Pro bono · Permuta) e **Pagamento** (Na sessão · Antecipado · Posterior · Não se aplica), com Valor combinado (R$), Sessões
+  por pacote e Valor do pacote (R$) numéricos; Registrar com a linha-resumo da cobrança, consumo do pacote (1ª falta avisada
+  do mês não gasta, mesma semana não gasta), pacote esgotado (renovar ou cobrar avulsa pela Tabela) e pacote no Posterior
+  lançado não pago (pacote ÷ sessões); tela **Pacotes** no lugar de Mensalistas; aba **Renovações** (criada na 1ª
+  renovação); **Virada de novembro** em Pendências (só gestão). Ninguém começa com sessões.
+- **Dados (planilha real)**: backup em `_migracao_07-10` (Pacientes) e `_migracao_07-10 Listas`; Pacientes F → "Cobrança",
+  N → "Histórico de cobrança (antigo)", colunas novas AE–AH, R (Regra) limpa, S sem as frases do modelo antigo
+  ("Mensalidade fixa de R$ 200/mês, sem remarcação de faltas" etc.); conversão feita por fórmulas na aba `_calc` e colada
+  como valores: 7 Por sessão · Na sessão, 15 Por sessão · Posterior (com Naimara R$ 120), 22 Pacote social · Posterior
+  (com Paulo Henrique Souza e Silva), 3 Pacote de sessões · Posterior (Borchert 2 × 4/150, Oziel 4/250), 34 Convênio,
+  8 Pro bono, 5 Permuta, 2 Tabela. Listas: H = Cobrança, J = Pagamento (nova), B (Pago?) troca "Mensalista…" e "Plano já
+  pago" por "Pacote (sessão já paga)".
+- **Peças**: 36; gravadas as 32 que mudaram nas linhas 191–222 (server 0–9, index 3–24); index 0–2 (123–125) e
+  duplicatas (2) iguais; 30 linhas da versão anterior viraram `antigo12:`.
+- **Conferência**: 32/32 lidas de volta iguais ao build; ativas = 1 + 10 + 25, sem repetição; `tests/servidor-pacotes.test.js`
+  (servidor contra planilha falsa) passa.
+- **Voltar**: renomear `antigo12:` → nome (linhas 115–117, 126–128, 147–152, 156–162, 175, 177–178, 180–181, 183, 186–190)
+  e 191–222 → `antigo13:`; dados: copiar F, N, R, S de `_migracao_07-10` e Listas de `_migracao_07-10 Listas`.
+- **Aprovação**: gestão, 08/10 ("direto no oficial, à noite"; "pode gravar a conversão nos cadastros dos pacientes").
 
 ### 2026-10-08-05 · Real (direto) · modalidade Pro bono/Permuta basta pra não cobrar
 - **O que mudou**: o Registrar deixa de cobrar quando a modalidade é Pro bono ou Permuta, mesmo com a regra de cobrança em
