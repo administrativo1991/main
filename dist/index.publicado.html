@@ -2132,11 +2132,14 @@ else if (regra === 'Convênio' || (ehConvenio(cur) && (!cur.modalidade || cur.mo
 else if (ehMensal(cur) || /^Mensalidade/.test(regra)) { v.disabled = true; forma.disabled = true; desc.disabled = true; pago.value = pick(opts, 'Plano') || pick(opts, 'Pacote'); nf.value = 'Não se aplica'; h.textContent = 'já pago na mensalidade'; modo = 'mensal'; }
 else if (pacoteOk) { v.disabled = true; forma.disabled = true; desc.disabled = true; pago.value = pick(opts, 'Plano') || pick(opts, 'Pacote'); nf.value = 'Não se aplica'; h.textContent = 'já pago no plano'; modo = 'plano'; }
 else {
-if (usaValorSessao(cur)) { v.value = brl(valorSessaoCad(cur)); h.textContent = 'valor por sessão do cadastro'; }
+// procedimento R$ 0 na tabela (aplicação de teste, retorno): sem cobrança, mesmo com valor por sessão no cadastro
+var semCobranca = procV === 0, sessao = p && /^(Sessão|Consulta|Terapia)/.test(p.nome);
+if (semCobranca) { v.value = brl(0); h.textContent = 'procedimento sem cobrança (R$ 0 na tabela)'; }
+else if (usaValorSessao(cur) && sessao) { v.value = brl(valorSessaoCad(cur)); h.textContent = 'valor por sessão do cadastro'; }
 else if (procV == null) { v.readOnly = false; v.placeholder = 'preencher à mão'; h.textContent = 'procedimento sem valor na tabela'; }
 else { v.value = brl(procV); h.textContent = 'vem do procedimento (travado)'; }
-pago.value = ehPosterior(cur) ? pick(opts, 'Não') : pick(opts, 'Sim'); nf.value = 'Não';
-if (ehPosterior(cur)) h.textContent += ' · paga no fim do mês';
+pago.value = semCobranca ? pick(opts, 'Não se aplica') : ehPosterior(cur) ? pick(opts, 'Não') : pick(opts, 'Sim'); nf.value = semCobranca ? 'Não se aplica' : 'Não';
+if (ehPosterior(cur) && !semCobranca) h.textContent += ' · paga no fim do mês';
 }
 baseValor = procV;
 var hintFalta = '';
