@@ -26,16 +26,8 @@
       <div class="grid">
         <label class="campo">CPF <span class="req">*</span><input id="n-cpf" inputmode="numeric" autocomplete="off" placeholder="000.000.000-00" maxlength="14" class="cpf"><span class="hint" id="n-cpf-hint">Da criança também. CPF repetido bloqueia.</span></label>
         <label class="campo">Data de nascimento <span class="req">*</span><input id="n-nasc" inputmode="numeric" autocomplete="off" placeholder="dd/mm/aaaa" maxlength="10"></label>
+        <label class="campo">Telefone do paciente <span class="leg">— se tiver</span><input id="n-tel-pac" inputmode="tel" autocomplete="off" placeholder="(32) 9" maxlength="16"></label>
         <label class="campo">Quem indicou<input id="n-indic" autocomplete="off" placeholder="escola, pediatra, Instagram…"></label>
-      </div>
-    </section>
-
-    <section class="card">
-      <h2>Quem paga</h2>
-      <div class="grid">
-        <label class="campo c2">Responsável financeiro <span class="leg">— nome como aparece no Pix; vai na NF</span><input id="n-pagador" list="dl-pagadores" autocomplete="off" placeholder="ex.: Maria Aparecida Santos"></label>
-        <label class="campo">WhatsApp do pagador<input id="n-whats" inputmode="tel" autocomplete="off" placeholder="(32) 9" maxlength="16"></label>
-        <label class="campo">CPF do pagador <span class="leg">— se souber</span><input id="n-pag-cpf" inputmode="numeric" autocomplete="off" placeholder="000.000.000-00" maxlength="14"></label>
       </div>
     </section>
 
@@ -49,6 +41,16 @@
       </div>
       <datalist id="dl-parentesco"><option value="Mãe"><option value="Pai"><option value="Avó"><option value="Avô"><option value="Tia"><option value="Tio"><option value="Irmã"><option value="Irmão"><option value="Madrasta"><option value="Padrasto"><option value="Tutor(a) legal"></datalist>
     </section>
+
+    <section class="card">
+      <h2>Quem paga</h2>
+      <div class="grid">
+        <label class="campo c2">Responsável financeiro <span class="leg">— nome como aparece no Pix; vai na NF</span><input id="n-pagador" list="dl-pagadores" autocomplete="off" placeholder="ex.: Maria Aparecida Santos"></label>
+        <label class="campo">WhatsApp do pagador<input id="n-whats" inputmode="tel" autocomplete="off" placeholder="(32) 9" maxlength="16"></label>
+        <label class="campo">CPF do pagador <span class="leg">— se souber</span><input id="n-pag-cpf" inputmode="numeric" autocomplete="off" placeholder="000.000.000-00" maxlength="14"></label>
+      </div>
+    </section>
+
 
     <section class="card">
       <div class="titulo" style="align-items:baseline;gap:10px"><h2>Atendimento</h2><span class="muted">A <strong>cobrança</strong> diz <em>como</em> se calcula o valor; o <strong>pagamento</strong> diz <em>quando</em> se paga.</span></div>

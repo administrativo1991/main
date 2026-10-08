@@ -111,8 +111,9 @@ let c = API.atualizarCadastro({ nome: 'Beatriz Tabela', quemInformou: 'teste', c
 assert.strictEqual(c.ok, false);
 c = ok(API.atualizarCadastro({ nome: 'Beatriz Tabela', quemInformou: 'teste', campos: { modalidade: 'Por sessão (combinado)', valorNum: 90, pagamento: 'Na sessão' } }), 'cad');
 const lc = ok(API.lerCadastro({ nome: 'Beatriz Tabela' }), 'ler'); assert.strictEqual(String(lc.campos.valorNum), '90');
-const np = ok(API.criarPaciente({ nome: 'Joana Teste da Silva', cpf: '390.533.447-05', nasc: '01/01/1990', modalidade: 'Tabela', pagamento: '', convenio: 'Particular' }), 'criar');
-const jo = API.bootstrapAtendimento().pacientes.filter(p => p.nome === 'Joana Teste da Silva')[0]; assert.strictEqual(jo.pagamento, 'Na sessão');
+const np = ok(API.criarPaciente({ nome: 'Joana Teste da Silva', cpf: '390.533.447-05', nasc: '01/01/1990', modalidade: 'Tabela', pagamento: '', convenio: 'Particular', telPaciente: '(32) 9 8888-7777' }), 'criar');
+const jo = API.bootstrapAtendimento().pacientes.filter(p => p.nome === 'Joana Teste da Silva')[0]; assert.strictEqual(jo.pagamento, 'Na sessão'); assert.strictEqual(jo.telPac, '(32) 9 8888-7777');
+ok(API.atualizarCadastro({ nome: 'Beatriz Tabela', quemInformou: 'teste', campos: { telPac: '(32) 3333-4444' } }), 'tel'); assert.strictEqual(ok(API.lerCadastro({ nome: 'Beatriz Tabela' }), 'ler2').campos.telPac, '(32) 3333-4444');
 // recepção não roda a virada
 email = 'atendimento@clinicanascente.com.br'; assert.strictEqual(API.viradaPropostas().ok, false);
 console.log('cadastro ok · todos os testes do servidor passaram');

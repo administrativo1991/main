@@ -175,7 +175,7 @@ var CONFIG = {
     CONVENIO: 'Convênio', REGRA: 'Regra de cobrança',
     OBS_COBRANCA: 'Observação de cobrança (a recepção lê — diz O QUE cobrar, nunca o porquê)',
     // novas (criadas pelo app, sempre no fim)
-    LOG: 'Registrado por (app)', WHATS: 'WhatsApp do pagador', CARTEIRINHA: 'Nº da carteirinha',
+    LOG: 'Registrado por (app)', WHATS: 'WhatsApp do pagador', TEL_PAC: 'Telefone do paciente', CARTEIRINHA: 'Nº da carteirinha',
     INDICACAO: 'Quem indicou', PRIMEIRA: 'Data da 1ª consulta', PROF_REF: 'Profissional de referência',
     // responsável legal (quem traz; pode ser diferente de quem paga) e CPF do pagador (gestão, 07/10)
     PAGADOR_CPF: 'CPF do pagador', RESP: 'Responsável (nome)', RESP_PAR: 'Parentesco do responsável', RESP_TEL: 'Telefone do responsável', RESP_CPF: 'CPF do responsável',
@@ -184,7 +184,7 @@ var CONFIG = {
   },
   LISTAS: { OQUE: 'O que aconteceu', PAGO: 'Pago?', FORMA: 'Forma de pagamento', CONVENIO: 'Convênio', REGRA: 'Regra de cobrança', MODALIDADE: 'Cobrança', PAGAMENTO: 'Pagamento', MODALIDADE_ESP: 'Especialidade (modalidade)', GESTAO: 'Gestão' }
 };
-var COLS_NOVAS_PACIENTES = ['LOG', 'WHATS', 'CARTEIRINHA', 'INDICACAO', 'PRIMEIRA', 'PROF_REF', 'PAGADOR_CPF', 'RESP', 'RESP_PAR', 'RESP_TEL', 'RESP_CPF', 'VALOR_NUM', 'PCT_N', 'PCT_V', 'PAGAMENTO'];
+var COLS_NOVAS_PACIENTES = ['LOG', 'WHATS', 'TEL_PAC', 'CARTEIRINHA', 'INDICACAO', 'PRIMEIRA', 'PROF_REF', 'PAGADOR_CPF', 'RESP', 'RESP_PAR', 'RESP_TEL', 'RESP_CPF', 'VALOR_NUM', 'PCT_N', 'PCT_V', 'PAGAMENTO'];
 // nomes antigos das colunas (antes da migração de 08/10): lidos como se fossem os novos
 var ALIAS_COLUNAS = { 'Cobrança': 'Modalidade', 'Histórico de cobrança (antigo)': 'Valor combinado / observação de modalidade' };
 
@@ -265,7 +265,7 @@ function indicePacientes_() {
   var H = CONFIG.H, col = function (k) { return h[H[k]] ? h[H[k]] - 1 : -1; };
   var cNome = col('NOME'), cCpf = col('CPF'), cNasc = col('NASC'), cAtivo = col('ATIVO'), cMod = col('MODALIDADE'),
       cPag = col('PAGADOR'), cConv = col('CONVENIO'), cRegra = col('REGRA'), cObs = col('OBS_COBRANCA'), cVal = col('VALOR_COMB'),
-      cResp = col('RESP'), cRespPar = col('RESP_PAR'), cRespTel = col('RESP_TEL'),
+      cResp = col('RESP'), cTel = col('TEL_PAC'), cRespPar = col('RESP_PAR'), cRespTel = col('RESP_TEL'),
       cVN = col('VALOR_NUM'), cPN = col('PCT_N'), cPV = col('PCT_V'), cPg = col('PAGAMENTO');
   var numOu = function (r, c) { if (c < 0) return null; var v = r[c]; if (v === '' || v == null) return null; var n = numBR_(v); return isNaN(n) ? null : n; };
   var out = [];
@@ -284,7 +284,7 @@ function indicePacientes_() {
       obsCobranca: cObs >= 0 ? String(r[cObs] || '').trim() : '',
       valorCombinado: cVal >= 0 ? String(r[cVal] || '').trim() : '',
       valorNum: numOu(r, cVN), pctN: numOu(r, cPN), pctV: numOu(r, cPV), pagamento: cPg >= 0 ? String(r[cPg] || '').trim() : '',
-      resp: cResp >= 0 ? String(r[cResp] || '').trim() : '', respPar: cRespPar >= 0 ? String(r[cRespPar] || '').trim() : '', respTel: cRespTel >= 0 ? String(r[cRespTel] || '').trim() : ''
+      telPac: cTel >= 0 ? String(r[cTel] || '').trim() : '', resp: cResp >= 0 ? String(r[cResp] || '').trim() : '', respPar: cRespPar >= 0 ? String(r[cRespPar] || '').trim() : '', respTel: cRespTel >= 0 ? String(r[cRespTel] || '').trim() : ''
     });
   });
   return out;
@@ -457,6 +457,7 @@ API.criarPaciente = function (d) {
     put('PAGADOR_EXTRATO', pagador);
     put('CONVENIO', convenio);
     put('WHATS', String(d.whatsapp || '').trim());
+    put('TEL_PAC', String(d.telPaciente || '').trim());
     put('CARTEIRINHA', String(d.carteirinha || '').trim());
     put('INDICACAO', String(d.indicacao || '').trim());
     put('PRIMEIRA', primeira || '');
@@ -1268,7 +1269,7 @@ API.confirmar = function (d) {
 };
 
 /* ---------- Editar cadastro (recepção e gestão; toda alteração vai pro log) ---------- */
-var CAMPOS_CADASTRO = { modalidade: 'MODALIDADE', convenio: 'CONVENIO', carteirinha: 'CARTEIRINHA', regra: 'REGRA', valorCombinado: 'VALOR_COMB', valorNum: 'VALOR_NUM', pctN: 'PCT_N', pctV: 'PCT_V', pagamento: 'PAGAMENTO', obsCobranca: 'OBS_COBRANCA', pagador: 'PAGADOR', whats: 'WHATS', profRef: 'PROF_REF',
+var CAMPOS_CADASTRO = { modalidade: 'MODALIDADE', convenio: 'CONVENIO', carteirinha: 'CARTEIRINHA', regra: 'REGRA', valorCombinado: 'VALOR_COMB', valorNum: 'VALOR_NUM', pctN: 'PCT_N', pctV: 'PCT_V', pagamento: 'PAGAMENTO', obsCobranca: 'OBS_COBRANCA', pagador: 'PAGADOR', whats: 'WHATS', telPac: 'TEL_PAC', profRef: 'PROF_REF',
   pagadorCpf: 'PAGADOR_CPF', respNome: 'RESP', respPar: 'RESP_PAR', respTel: 'RESP_TEL', respCpf: 'RESP_CPF' };
 function linhaPaciente_(nome) {
   var alvo = Duplicatas.normalizar(String(nome || ''));
