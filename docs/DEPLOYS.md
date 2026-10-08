@@ -23,7 +23,7 @@ coluna E não afeta o app. Atualizar `E2` faz parte de toda publicação (passo 
 
 | Canal | Deploy | Peças | Commit |
 |---|---|---|---|
-| Real (`arquivos_real`) | **2026-10-08-02** | 34 (duplicatas 1 · server 8 · index 25); ativas = linhas com nome sem prefixo na coluna A (2; 115–117; 123–128; 147–162; 175–182); `antigoN:` = versões anteriores | branch `claude/busy-wright-xf0hql` |
+| Real (`arquivos_real`) | **2026-10-08-03** | 34 (duplicatas 1 · server 8 · index 25); ativas = linhas com nome sem prefixo na coluna A (2; 115–117; 123–128; 147–152; 155–162; 175–181; 183–185); `antigoN:` = versões anteriores | branch `claude/busy-wright-xf0hql` |
 | Teste (`arquivos`) | **2026-10-06-08** (atrás da real: não recebeu o 10, o 11, o 07-01 nem os de 07/10) | 27 | 135de84 |
 | Carregador real | 2026-10-06-02 (`dist/Code.real.gs`, implantado pela Roberta) | — | 4ad0272 |
 | Carregador teste | 2026-10-04-01 + nova versão pendente desde 05/10 (permissão do Drive, ver `COMO-INSTALAR.md`) | — | — |
@@ -48,6 +48,13 @@ Modelo:
 ```
 
 ## Lista
+
+### 2026-10-08-03 · Real (direto) · Novo paciente com profissional opcional
+- **O que mudou**: "Profissional de referência" deixou de ser obrigatório no Novo paciente (paciente pode ser atendido por
+  mais de um profissional); sem profissional, aparecem todas as modalidades.
+- **Peças**: 3 (index 7, 8, 20) nas linhas 183–185, conferidas 3/3; 153, 154 e 182 viraram `antigo9:`.
+- **Aprovação**: gestão, 08/10.
+
 
 ### 2026-10-08-02 · Real (direto) · aplicação de teste nunca é cobrada
 - **O que mudou**: aplicação de teste sai sem cobrança ("já paga na avaliação neuropsicológica · só controle das sessões de
