@@ -23,7 +23,7 @@ coluna E não afeta o app. Atualizar `E2` faz parte de toda publicação (passo 
 
 | Canal | Deploy | Peças | Commit |
 |---|---|---|---|
-| Real (`arquivos_real`) | **2026-10-08-07** | 36 (duplicatas 1 · server 10 · index 25); ativas = linhas 2, 123–125, 201–203, 223, 235, 243–269; `antigo14:` = versão 2026-10-08-06 | branch `claude/busy-wright-xf0hql` |
+| Real (`arquivos_real`) | **2026-10-08-08** | 36 (duplicatas 1 · server 10 · index 25); ativas = 2, 123–125, 201–203, 223, 235, 244–252, 255–261, 270–280; `antigo15:` = trocadas neste deploy | branch `claude/busy-wright-xf0hql` |
 | Teste (`arquivos`) | **2026-10-06-08** (atrás da real: não recebeu o 10, o 11, o 07-01 nem os de 07/10) | 27 | 135de84 |
 | Carregador real | 2026-10-06-02 (`dist/Code.real.gs`, implantado pela Roberta) | — | 4ad0272 |
 | Carregador teste | 2026-10-04-01 + nova versão pendente desde 05/10 (permissão do Drive, ver `COMO-INSTALAR.md`) | — | — |
@@ -48,6 +48,16 @@ Modelo:
 ```
 
 ## Lista
+
+### 2026-10-08-08 · Real (direto) · cobrança "a definir"
+- **O que mudou**: Por sessão (combinado) com valor em branco é aceito ("valor a definir": no Registrar o valor abre pra
+  digitar, faixa laranja; etiqueta "valor a definir · completar cadastro" na Agenda); paciente novo sem cobrança escolhida
+  é aceito (= Tabela, com o aviso de cadastro incompleto). Dados: Inglidy e Luccas Fagundes Cassemiro → Pacote de sessões
+  2 / R$ 120 · Posterior (gestão, 08/10: R$ 120/mês, quinzenal), com registro em "Alterações de cadastro".
+- **Peças**: 11 novas (270 server 1; 271–280 index 7, 9, 17–24); trocadas viraram `antigo15:` (243, 253, 254, 262–269).
+- **Conferência**: 11/11 iguais ao build; ativas = 1 + 10 + 25; `tests/servidor-pacotes.test.js` passa.
+- **Voltar**: `antigo15:` → nome e 270–280 → `antigo16:`.
+- **Aprovação**: gestão, 08/10.
 
 ### 2026-10-08-07 · Real (direto) · telefone do paciente, Responsável acima do pagador, CPF/nascimento opcionais
 - **O que mudou**: campo "Telefone do paciente" no cadastro (coluna nova em Pacientes, criada no 1º cadastro salvo) e no
