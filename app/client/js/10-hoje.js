@@ -122,7 +122,8 @@ function pendDe(nome) { return (DIA && DIA.pendencias && DIA.pendencias[nome]) |
 function tagsPend(nome) {
   var l = pendDe(nome), pag = l.filter(function (x) { return x.tipo === 'pag'; }), guia = l.filter(function (x) { return x.tipo === 'guia'; }), t = [];
   if (pag.length) t.push({ cor: 'amarela', ic: 'alerta', txt: 'deve ' + (pag.length > 1 ? pag.length + ' sessões' : 'sessão de ' + pag[0].data.slice(0, 5)) + (pag.some(function (x) { return x.valor; }) ? ' · R$ ' + brl(pag.reduce(function (a, x) { return a + saldoReg(x); }, 0)).replace(',00', '') : '') });
-  if (guia.length) t.push({ cor: 'lilas', ic: 'alerta', txt: 'guia a assinar · ' + guia.map(function (x) { return x.data.slice(0, 5); }).join(', ') });
+  // muitas guias: resume em "N sessões (de a até b)" pra coluna não alargar a tabela (os 3 pontinhos sumiam na tela da recepção)
+  if (guia.length) t.push({ cor: 'lilas', ic: 'alerta', txt: 'guia a assinar · ' + (guia.length > 2 ? guia.length + ' sessões (' + guia[0].data.slice(0, 5) + ' a ' + guia[guia.length - 1].data.slice(0, 5) + ')' : guia.map(function (x) { return x.data.slice(0, 5); }).join(', ')) });
   return t;
 }
 function cobrancaHtml(it, p) {

@@ -228,6 +228,9 @@ table.dia .td-cob .tags{display:flex;flex-wrap:wrap;gap:4px;max-width:260px}
 table.dia .td-cob .tag{white-space:normal;text-align:left}
 table.dia .td-quem{min-width:150px}
 table.dia .td-acao{text-align:right;white-space:nowrap}
+/* ações presas na borda direita: em tela estreita a tabela rola, mas "Confirmou" e os 3 pontinhos ficam sempre à vista */
+table.dia th.th-acao,table.dia td.td-acao{position:sticky;right:0;background:var(--sup);z-index:1}
+table.dia thead th.th-acao{background:#F8F5FA}
 table.dia .td-acao .mais{display:inline-block;vertical-align:middle;margin-left:6px}
 table.dia .td-acao .btn.icone.p{width:32px;height:32px;min-height:32px;border-radius:8px;color:var(--tx3)}
 table.dia .td-acao .btn.mini{min-height:34px;padding:7px 14px;font-size:13px;border-radius:10px}
@@ -423,9 +426,10 @@ thead tr{background:#eee;color:#000}
 h1{font-size:18px}
 }
 /* ---------- telas estreitas ---------- */
-@media (max-width:1400px){
+@media (max-width:1600px){
 table.dia .td-prof,table.dia .th-prof{display:none}
 .so-cel{display:inline}
+.painel-pac{flex-basis:300px;min-width:280px;padding:20px 18px}
 }
 @media (max-width:900px){
 .grid,.grid.g4,.grid.g5{grid-template-columns:repeat(2,minmax(0,1fr))}
@@ -475,6 +479,7 @@ table.dia tbody{display:flex;flex-direction:column;gap:10px}
 table.dia tbody tr{display:grid;grid-template-columns:52px 1fr auto;grid-template-areas:"hora quem sit" "cob cob cob" "acao acao acao";align-items:center;gap:6px 10px;background:var(--sup);border:1px solid var(--borda);border-radius:14px;padding:12px 14px}
 table.dia tbody tr.vazia{display:block}
 table.dia td{display:block;padding:0;border:0;background:none!important;box-shadow:none!important}
+table.dia td.td-acao{position:static}
 table.dia .td-hora{grid-area:hora;width:auto}
 table.dia .td-quem{grid-area:quem;min-width:0}
 table.dia .td-quem .nome{font-size:15px}
@@ -1522,7 +1527,8 @@ function pendDe(nome) { return (DIA && DIA.pendencias && DIA.pendencias[nome]) |
 function tagsPend(nome) {
 var l = pendDe(nome), pag = l.filter(function (x) { return x.tipo === 'pag'; }), guia = l.filter(function (x) { return x.tipo === 'guia'; }), t = [];
 if (pag.length) t.push({ cor: 'amarela', ic: 'alerta', txt: 'deve ' + (pag.length > 1 ? pag.length + ' sessões' : 'sessão de ' + pag[0].data.slice(0, 5)) + (pag.some(function (x) { return x.valor; }) ? ' · R$ ' + brl(pag.reduce(function (a, x) { return a + saldoReg(x); }, 0)).replace(',00', '') : '') });
-if (guia.length) t.push({ cor: 'lilas', ic: 'alerta', txt: 'guia a assinar · ' + guia.map(function (x) { return x.data.slice(0, 5); }).join(', ') });
+// muitas guias: resume em "N sessões (de a até b)" pra coluna não alargar a tabela (os 3 pontinhos sumiam na tela da recepção)
+if (guia.length) t.push({ cor: 'lilas', ic: 'alerta', txt: 'guia a assinar · ' + (guia.length > 2 ? guia.length + ' sessões (' + guia[0].data.slice(0, 5) + ' a ' + guia[guia.length - 1].data.slice(0, 5) + ')' : guia.map(function (x) { return x.data.slice(0, 5); }).join(', ')) });
 return t;
 }
 function cobrancaHtml(it, p) {
