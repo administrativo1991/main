@@ -45,8 +45,8 @@ Git: branch `claude/lucid-einstein-gd6x5l`, tudo commitado e enviado.
   Conferência da lista da Juliana (08/10): 13 cadastros completados (Convênio Sabin Sinai/Cedplan), Isaac e Michele com
   "R$ 120 por sessão"; Rafaella Aguiar Torres continua social (Mensalidade fixa). A cadastrar pela recepção:
   Izamara Adão Assis (Cedplan), Vinicius Elias Ribeiro de Almeida (Permuta), Julia Borrajo Xavier, Samantha Hadassa
-  Oliveira dos Santos (Mensalidade fixa, social R$ 200) e Alice Oliveira Mendes de Souza (Mensal (valor especial), R$ 150/mês);
-  as duas já têm linha em Mensalistas (43–44). Aplicação de teste de paciente de convênio continua "Convênio (fatura)" (pacote Sabin; gestão confirmou 08/10). Em 01/11: Erica Casemiro Alves passa de Pro bono a Mensalidade fixa
+  Oliveira dos Santos (Mensalidade social, R$ 200) e Alice Oliveira Mendes de Souza (Mensal (valor especial), R$ 150/mês);
+  as duas já têm linha em Mensalistas (43–44). Aplicação de teste de paciente de convênio continua "Convênio (fatura)" (pacote Sabin; gestão confirmou 08/10). Em 01/11: Erica Casemiro Alves passa de Pro bono a Mensalidade social
   (R$ 200). Davi Daniel de Oliveira Silva: valor da aplicação de teste particular a definir. Oziel pode ir pro antecipado R$ 280 em nov.
 
 - **Ajustes de 06/10 (deploy 2026-10-06-10, só na real)**: Novo paciente com profissional primeiro; "Registrado!" + "ver na lista de hoje";

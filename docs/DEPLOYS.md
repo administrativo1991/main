@@ -23,7 +23,7 @@ coluna E não afeta o app. Atualizar `E2` faz parte de toda publicação (passo 
 
 | Canal | Deploy | Peças | Commit |
 |---|---|---|---|
-| Real (`arquivos_real`) | **2026-10-08-03** | 34 (duplicatas 1 · server 8 · index 25); ativas = linhas com nome sem prefixo na coluna A (2; 115–117; 123–128; 147–152; 155–162; 175–181; 183–185); `antigoN:` = versões anteriores | branch `claude/busy-wright-xf0hql` |
+| Real (`arquivos_real`) | **2026-10-08-04** | 34 (duplicatas 1 · server 8 · index 25); ativas = linhas com nome sem prefixo na coluna A (2; 115–117; 123–128; 147–152; 156–162; 175; 177–181; 183; 186–189); `antigoN:` = versões anteriores | branch `claude/busy-wright-xf0hql` |
 | Teste (`arquivos`) | **2026-10-06-08** (atrás da real: não recebeu o 10, o 11, o 07-01 nem os de 07/10) | 27 | 135de84 |
 | Carregador real | 2026-10-06-02 (`dist/Code.real.gs`, implantado pela Roberta) | — | 4ad0272 |
 | Carregador teste | 2026-10-04-01 + nova versão pendente desde 05/10 (permissão do Drive, ver `COMO-INSTALAR.md`) | — | — |
@@ -48,6 +48,16 @@ Modelo:
 ```
 
 ## Lista
+
+### 2026-10-08-04 · Real (direto) · "Mensalidade fixa" vira "Mensalidade social"
+- **O que mudou**: o app aceita "Mensalidade social" (e ainda "Mensalidade fixa") como mensalidade; cartão do cadastro
+  diz "social · valor mensal fixo (R$ 200)". Procedimento "Sessão de psicologia – mensalidade fixa" e a regra
+  "Mensalidade fixa (independe do nº de sessões)" mantêm o nome.
+- **Dados**: Listas!H5, 21 cadastros em Pacientes (log em "Alterações de cadastro" A113:G134), 22 linhas de Mensalistas e a
+  observação da Erica renomeados.
+- **Peças**: 4 (index 8, 9, 20, 22) nas linhas 186–189, conferidas 4/4; 155, 176, 184 e 185 viraram `antigo10:`.
+- **Aprovação**: gestão, 08/10.
+
 
 ### 2026-10-08-03 · Real (direto) · Novo paciente com profissional opcional
 - **O que mudou**: "Profissional de referência" deixou de ser obrigatório no Novo paciente (paciente pode ser atendido por
