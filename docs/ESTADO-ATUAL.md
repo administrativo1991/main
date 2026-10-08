@@ -42,6 +42,9 @@ Git: branch `claude/lucid-einstein-gd6x5l`, tudo commitado e enviado.
   sessão no cadastro ("R$ 70 por sessão"); posterior lança com Pago? = Não; antecipado lança as N sessões pagas nas datas
   da agenda. 17 ex-planos viraram Pagamento posterior. Valor da sessão aparece na Agenda e no Registrar. Ver `docs/DEPLOYS.md`.
   Último branch: `claude/busy-wright-xf0hql`. Falta da gestão: valor por sessão da Naimara.
+  Conferência da lista da Juliana (08/10): 13 cadastros completados (Convênio Sabin Sinai/Cedplan), Isaac e Michele com
+  "R$ 120 por sessão"; Rafaella Aguiar Torres continua social (Mensalidade fixa). A cadastrar pela recepção:
+  Izamara Adão Assis (Cedplan) e Vinicius Elias Ribeiro de Almeida (Permuta).
 
 - **Ajustes de 06/10 (deploy 2026-10-06-10, só na real)**: Novo paciente com profissional primeiro; "Registrado!" + "ver na lista de hoje";
   Mensalistas no mês atual + faixa do mês anterior; Agenda recorrente carregada (28 horários semanais da Juliana). Ver `docs/DEPLOYS.md`.
