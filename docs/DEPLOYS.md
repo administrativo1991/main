@@ -23,7 +23,7 @@ coluna E não afeta o app. Atualizar `E2` faz parte de toda publicação (passo 
 
 | Canal | Deploy | Peças | Commit |
 |---|---|---|---|
-| Real (`arquivos_real`) | **2026-10-07-07** | 34 (duplicatas 1 · server 8 · index 25); ativas = linhas com nome sem prefixo na coluna A (2; 115–117; 123–128; 147–170); `antigoN:` = versões anteriores | branch `claude/busy-wright-xf0hql` |
+| Real (`arquivos_real`) | **2026-10-08-01** | 34 (duplicatas 1 · server 8 · index 25); ativas = linhas com nome sem prefixo na coluna A (2; 115–117; 123–128; 147–162; 171–178); `antigoN:` = versões anteriores | branch `claude/busy-wright-xf0hql` |
 | Teste (`arquivos`) | **2026-10-06-08** (atrás da real: não recebeu o 10, o 11, o 07-01 nem os de 07/10) | 27 | 135de84 |
 | Carregador real | 2026-10-06-02 (`dist/Code.real.gs`, implantado pela Roberta) | — | 4ad0272 |
 | Carregador teste | 2026-10-04-01 + nova versão pendente desde 05/10 (permissão do Drive, ver `COMO-INSTALAR.md`) | — | — |
@@ -48,6 +48,16 @@ Modelo:
 ```
 
 ## Lista
+
+### 2026-10-08-01 · Real (direto) · aplicação de teste sem cobrança + exceção ao convênio na avaliação
+- **O que mudou**: no Registrar, o valor por sessão do cadastro só vale pra procedimento de sessão (Sessão/Consulta/Terapia);
+  procedimento R$ 0 na tabela (aplicação de teste, retorno) sai sem cobrança (Pago? = Não se aplica). Paciente de convênio:
+  na avaliação neuropsicológica (avaliação e aplicação de teste) aparece "Cobrar à parte como particular" (valor à mão).
+- **Dados (08/10)**: listas da Juliana e da Giovana conferidas; cadastros completados e corrigidos, tudo em "Alterações de
+  cadastro" (linhas 50–110). Mensalistas: Oziel (Mensal valor especial R$ 250), Lays (por sessão R$ 25), Erica (pro bono até 31/10).
+- **Peças**: 8 (index 17–24) gravadas nas linhas 171–178 como `novo:`, conferidas 8/8; 163–170 viraram `antigo7:`.
+- **Aprovação**: gestão, 08/10.
+
 
 ### 2026-10-07-07 · Real (direto) · cobrança por sessão no lugar dos planos + valor da sessão na Agenda
 - **O que mudou**:
