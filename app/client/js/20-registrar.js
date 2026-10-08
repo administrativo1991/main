@@ -15,7 +15,6 @@ function iniciarAtend() {
     preencherSelect($("#a-oque"), BOOT.listas.oque || []);
     preencherSelect($("#a-pago"), (BOOT.listas.pago || []).concat((BOOT.listas.pago || []).indexOf('Parcial') < 0 ? ['Parcial'] : []), '—');
     preencherSelect($("#a-forma"), BOOT.listas.formas || []);
-    preencherSelect($("#a-pk-forma"), BOOT.listas.formas || []);
     preencherSelect($("#a-ant-forma"), BOOT.listas.formas || []);
     var segO = $("#a-oque-seg"); segO.innerHTML = '';
     (BOOT.listas.oque || []).forEach(function (o) { var b = el('<button type="button" data-v="' + esc(o) + '" aria-pressed="false">' + esc(OQUE_CURTO(o)) + '</button>'); b.addEventListener('click', function () { $("#a-oque").value = o; seg(segO, o); aplicarRegra(); salvarRascunhoAt(); }); segO.appendChild(b); });
@@ -162,14 +161,12 @@ function layoutCobranca(modo, falta) {
   pb.hidden = true; p3.hidden = true; $("#a-convbox").hidden = true; $("#a-pagbox").hidden = false; $("#a-cob-aviso").innerHTML = '';
   if (!cur || falta) { if (cur && !falta) p3.hidden = false; atualizarPreview(); return; }
   if (modo === 'probono') { pb.hidden = false; $("#a-probono-txt").innerHTML = '<strong>Sem cobrança</strong> · ' + esc(cur.regra || cur.modalidade) + (cur.obsCobranca ? ' (' + esc(cur.obsCobranca) + ')' : '') + '. “Pago?” fica como <em>Não se aplica</em>. Nenhuma NF.'; }
-  else if (modo === 'mensal' || modo === 'plano' || modo === 'extra') { /* a faixa de aviso já explica; nada de dinheiro na tela */ }
+  else if (modo === 'pacote') { /* a faixa de aviso já explica; nada de dinheiro na tela */ }
   else {
     p3.hidden = false;
     if (modo === 'convenio') { $("#a-convbox").hidden = false; $("#a-pagbox").hidden = true; $("#a-conv-txt").innerHTML = '<strong>' + esc(cur.convenio || 'Convênio') + '</strong> · vai para a fatura do convênio, valor R$ 0. Nenhuma cobrança ao paciente.' + (excecaoConv() ? ' <button type="button" class="btn link" id="a-conv-cobrar">Cobrar à parte como particular</button>' : '');
       var bcv = $("#a-conv-cobrar"); if (bcv) bcv.addEventListener('click', function () { cur._cobrar = true; aplicarTipo(); toast('Exceção: cobrando à parte. Preencha o valor e anote o motivo na Observação'); }); $("#a-guia-chk").checked = $("#a-guia").value === 'Sim'; }
-    else if (modo === 'paga') { var ref = refValor(cur); $("#a-cob-aviso").innerHTML = '<div class="faixa nota">Valor livre. <strong>O que for pago quita a sessão</strong> — nada fica em aberto.' + (ref ? ' Referência: R$ ' + esc(ref % 1 ? brl(ref) : ref) + '.' : '') + '</div>'; }
     else if (cur._cobrar && ehConvenio(cur) && excecaoConv()) { $("#a-cob-aviso").innerHTML = '<div class="faixa nota">Exceção ao convênio: este atendimento é cobrado à parte, como particular, com o valor combinado. <button type="button" class="btn link" id="a-conv-voltar">Voltar para o convênio</button></div>'; $("#a-conv-voltar").addEventListener('click', function () { cur._cobrar = false; aplicarTipo(); }); }
-    else if (modo === 'fixo') $("#a-cob-aviso").innerHTML = '<div class="faixa nota">Valor combinado com a gestão' + (cur.valorCombinado ? ': <strong>' + esc(cur.valorCombinado) + '</strong>' : '') + '. Não negociar na recepção.</div>';
   }
   seg($("#a-pago-seg"), $("#a-pago").value); seg($("#a-nf-seg"), $("#a-nf").value === 'Sim' ? 'Sim' : 'Não');
   var pagoVal = $("#a-pago").value; $("#a-pago-outro").hidden = false; if (pagoVal && pagoVal !== 'Sim' && pagoVal !== 'Não' && pagoVal !== 'Parcial') { $("#a-pago").classList.remove('sr'); } else $("#a-pago").classList.add('sr');
@@ -178,14 +175,14 @@ function layoutCobranca(modo, falta) {
 }
 function resumoCobranca() {
   if (!cur) return '—';
-  var oque = $("#a-oque").value; if (!/^Atendido/.test(oque)) return 'sem cobrança (' + OQUE_CURTO(oque).toLowerCase() + ')';
-  if (cur._extra) return 'sessão extra liberada · sem cobrança';
+  var oque = $("#a-oque").value, pac = pacoteNoAt(), cons = pac ? consumoAtual() : null, suf = pac ? ' · ' + (cons.delta < 0 ? 'gasta 1 sessão do pacote' : 'não gasta sessão do pacote') : '';
   var pago = $("#a-pago").value, v = $("#a-valor").value, forma = $("#a-forma").value;
-  if (/^Não se aplica/.test(pago)) return 'não se aplica (' + modCurta(cur.regra || cur.modalidade).toLowerCase() + ')';
+  if (!/^Atendido/.test(oque)) return (pago === 'Não' && v ? OQUE_CURTO(oque).toLowerCase() + ' · R$ ' + v + ' a pagar no fim do mês' : 'sem cobrança (' + OQUE_CURTO(oque).toLowerCase() + ')') + suf;
+  if (/^Não se aplica/.test(pago)) return 'não se aplica (' + (ehProBono(cur) ? cobDe(cur).toLowerCase() : 'sem cobrança') + ')' + suf;
   if (/^Convênio/.test(pago)) return 'convênio ' + (cur.convenio || '') + ' · R$ 0 · guia ' + ($("#a-guia").value === 'Sim' ? 'assinada' : 'não assinada');
-  if (/^Plano|^Pacote|^Mensalista/.test(pago)) return ehMensal(cur) ? 'mensalidade (já paga) · sem cobrança' : 'plano · sem cobrança';
-  if (pago === 'Sim') return 'pago · R$ ' + (v || '…') + ' · ' + forma + ($("#a-nf").value === 'Sim' ? ' · NF ' + ($("#a-nfn").value || 'emitida') : ' · NF depois');
-  if (pago === 'Não') return 'não pago · ' + (v ? 'R$ ' + v + ' em aberto' : 'valor em aberto');
+  if (/^Pacote|^Plano/.test(pago)) return 'pacote · sessão já paga' + suf;
+  if (pago === 'Sim') return 'pago · R$ ' + (v || '…') + ' · ' + forma + ($("#a-nf").value === 'Sim' ? ' · NF ' + ($("#a-nfn").value || 'emitida') : ' · NF depois') + suf;
+  if (pago === 'Não') return 'não pago · ' + (v ? 'R$ ' + v + ' em aberto' : 'valor em aberto') + suf;
   if (pago === 'Parcial') { var rc = num($("#a-recebido").value) || 0, vt = num(v) || 0; return 'pago em parte · R$ ' + brl(rc) + ' de R$ ' + (v || '…') + ' · ' + forma + ' · em aberto R$ ' + brl(Math.max(0, vt - rc)) + ($("#a-nf").value === 'Sim' ? ' · NF ' + ($("#a-nfn").value || 'emitida') + ' sobre o recebido' : ' · NF depois'); }
   return pago || 'Pago? em branco';
 }
@@ -203,12 +200,11 @@ function calcDescAt() { var raw = $("#a-desc-val").value.trim(), fin = baseValor
 function dadosAt() {
   var obs = $("#a-obs").value.trim();
   if (!$("#a-descbox").hidden && $("#a-desc-val").value.trim()) obs = ('Desconto: R$ ' + $("#a-desc-final").value + ' (tabela R$ ' + brl(baseValor) + ') — ' + $("#a-desc-motivo").value.trim() + '. ' + obs).trim();
-  if (cur && cur._extra) obs = ('Sessão extra liberada por ' + cur._extraQuem + ' — ' + cur._extraMotivo + '. ' + obs).trim();
-  var pk = cur ? AT.pacotes[cur.nome] : null, usaPacote = cur && ehPacote(cur) && pk && (cur._extra || (pk.status === 'ativo' && (pk.n - pk.usadas) > 0 && !cur._avulsa));
+  if (cur && cur._avulsa && ehPacoteCob(cur)) obs = ('Pacote esgotado: sessão cobrada avulsa pela Tabela. ' + obs).trim();
   return { paciente: $("#a-pac").value.trim(), profissional: $("#a-prof").value, data: $("#a-data").value, hora: $("#a-hora").value, procedimento: $("#a-proc").value,
     oque: $("#a-oque").value, pago: $("#a-pago").value, valorRecebido: $("#a-pago").value === 'Parcial' ? $("#a-recebido").value : '', valor: $("#a-valor").disabled ? '' : $("#a-valor").value, forma: $("#a-forma").value, dataPagamento: $("#a-datapag").value,
     quemPagou: $("#a-quem").value.trim(), nf: $("#a-nf").value, nfNumero: $("#a-nfn").value.trim(), guia: $("#a-convbox").hidden && !(cur && ehConvenio(cur)) ? '' : $("#a-guia").value, observacao: obs,
-    pacoteId: usaPacote ? pk.id : '', sessaoExtra: !!(cur && cur._extra), tornarPagadorHabitual: $("#a-tornar").checked };
+    mesmaSemana: !$("#l-mesma-semana").hidden && $("#a-mesma-semana").checked, cobrarAvulsa: !!(cur && cur._avulsa && ehPacoteCob(cur)), tornarPagadorHabitual: $("#a-tornar").checked };
 }
 function pagadorDiferente() { var q = $("#a-quem").value.trim(); return !!(cur && q && q !== (cur.pagador || cur.nome)); }
 function validarAt() {
@@ -232,7 +228,7 @@ function salvarAt(voltar) {
   var d = dadosAt();
   call('registrarAtendimento', d).then(function (r) {
     if (!r.ok) { $("#a-erros").innerHTML = erroBox(r.erros || [], 'Não gravou'); return; }
-    if (r.pacote && AT.pacotes[d.paciente]) { AT.pacotes[d.paciente].usadas = r.pacote.usadas; if (r.pacote.usadas >= r.pacote.n) AT.pacotes[d.paciente].status = 'encerrado'; }
+    if (r.consumo) { var ps = AT.pacotesSessoes = AT.pacotesSessoes || {}, ep = ps[d.paciente] = ps[d.paciente] || estPacote({ nome: d.paciente }); if (r.disponiveis != null) ep.disponiveis = r.disponiveis; if (/^1ª falta/.test(r.consumo.nota || '')) ep.faltasAvisadasMes = (ep.faltasAvisadasMes || 0) + 1; }
     if (d.tornarPagadorHabitual && cur) { cur.pagador = d.quemPagou; }
     if (typeof invalidarResumo === 'function') invalidarResumo();
     var msg = d.paciente + ' · ' + OQUE_CURTO(d.oque) + ' · gravado na aba ' + r.aba + ', linha ' + r.linha;
@@ -241,7 +237,7 @@ function salvarAt(voltar) {
     else {
       // linha verde "Registrado!" + atalho pra lista do dia do atendimento (Roberta, 06/10)
       var dataReg = d.data, ehHoje = dataReg === hojeStr();
-      $("#a-sucesso").innerHTML = aviso('verde', 'Registrado! ' + esc(msg), esc(d.procedimento) + (d.valor ? ' · R$ ' + esc(d.valor) : '') + (d.pago ? ' · Pago? ' + esc(d.pago) : '') + (r.pacote ? ' · plano ' + r.pacote.usadas + '/' + r.pacote.n + ' usadas' : '') + '. <a href="#" id="a-ver-lista">' + (ehHoje ? 'ver na lista de hoje' : 'ver na lista de ' + esc(dataReg.slice(0, 5))) + '</a>');
+      $("#a-sucesso").innerHTML = aviso('verde', 'Registrado! ' + esc(msg), esc(d.procedimento) + (d.valor ? ' · R$ ' + esc(d.valor) : '') + (d.pago ? ' · Pago? ' + esc(d.pago) : '') + (r.consumo ? ' · ' + (r.consumo.delta < 0 ? 'gastou 1 sessão do pacote' : 'não gastou sessão do pacote') + (r.disponiveis != null ? ' (' + disponiveisTxt(r.disponiveis) + ')' : '') : '') + '. <a href="#" id="a-ver-lista">' + (ehHoje ? 'ver na lista de hoje' : 'ver na lista de ' + esc(dataReg.slice(0, 5))) + '</a>');
       $("#a-ver-lista").addEventListener('click', function (e) { e.preventDefault(); var dt = dataObj(dataReg); if (dt) $("#d-data").value = dataParaISO(dt); go('hoje'); });
       toast('Registrado!'); $("#a-pac").focus();
     }
@@ -249,24 +245,10 @@ function salvarAt(voltar) {
     .finally(function () { salvandoAt = false; $("#a-salvar").disabled = false; $("#a-salvar-outro").disabled = false; });
 }
 function limparAt(apagaSucesso, semFoco) {
-  $("#a-pac").value = ''; cur = null; $("#a-oque").selectedIndex = 0; seg($("#a-oque-seg"), $("#a-oque").value); $("#a-obs").value = ''; $("#a-nfn").value = ''; $("#a-desc-val").value = ''; $("#a-desc-motivo").value = ''; $("#a-desc-sel").value = ''; $("#a-descbox").hidden = true; $("#a-extra-motivo").value = ''; $("#a-tornar").checked = false; $("#a-pagador-novo").hidden = true; $("#l-proc").hidden = true; decisaoPagador = null;
+  $("#a-pac").value = ''; cur = null; $("#a-oque").selectedIndex = 0; seg($("#a-oque-seg"), $("#a-oque").value); $("#a-obs").value = ''; $("#a-nfn").value = ''; $("#a-desc-val").value = ''; $("#a-desc-motivo").value = ''; $("#a-desc-sel").value = ''; $("#a-descbox").hidden = true; $("#a-mesma-semana").checked = false; $("#a-tornar").checked = false; $("#a-pagador-novo").hidden = true; $("#l-proc").hidden = true; decisaoPagador = null;
   $("#a-data").value = hojeStr(); $("#a-hora").value = agoraHora(); $("#a-datapag").value = hojeStr(); $("#a-erros").innerHTML = ''; $("#a-aba-nome").textContent = 'Grava na aba ' + AT.abaMes;
   if (apagaSucesso !== false) $("#a-sucesso").innerHTML = '';
   limparRascunhoAt(); ultimoPacRender = null; onPacAt(true); if (!semFoco) $("#a-pac").focus();
-}
-function lancarPacoteAt() {
-  if (!cur) return;
-  var n = parseInt($("#a-pk-n").value, 10) || 4, compra = procCompra(n, $("#a-prof").value);
-  var d = { paciente: cur.nome, sessoes: n, valor: $("#a-pk-valor").value, data: $("#a-data").value, hora: $("#a-hora").value, profissional: $("#a-prof").value, modalidade: cur.modalidade,
-    validadeMeses: n >= 12 ? 6 : (n >= 6 ? 3 : 2), pago: $("#a-pk-pago").value === 'Não' ? 'Não' : 'Sim', forma: $("#a-pk-forma").value, quemPagou: $("#a-pk-quem").value.trim(), nf: $("#a-pk-nf").value, nfNumero: $("#a-pk-nfn").value.trim(), procedimentoCompra: compra ? compra.nome : ('Plano de ' + n + ' consultas (compra)') };
-  if (d.pago === 'Não') { d.forma = ''; d.nf = 'Não'; d.nfNumero = ''; } // a receber: forma e NF entram quando pagar (correção da linha)
-  if (!(num(d.valor) > 0)) return toast('Informe o valor do plano');
-  $("#a-pk-salvar").disabled = true;
-  call('lancarPacote', d).then(function (r) {
-    if (!r.ok) { toast((r.erros || ['Não gravou']).join(' ')); return; }
-    AT.pacotes[cur.nome] = { id: r.id, n: n, usadas: 0, compra: d.data, validade: r.validade, status: 'ativo', pago: d.pago }; cur._avulsa = false;
-    $("#a-pacotebox").hidden = true; toast(d.pago === 'Não' ? 'Plano lançado · R$ ' + brl(num(d.valor)) + ' a receber (linha na aba ' + r.aba + ')' : 'Plano lançado · recebimento de R$ ' + brl(num(d.valor)) + ' gravado na aba ' + r.aba); if (typeof invalidarResumo === 'function') invalidarResumo(); onPacAt(true);
-  }).catch(function (e) { toast('Erro: ' + e.message); }).finally(function () { $("#a-pk-salvar").disabled = false; });
 }
 /* eventos */
 $("#a-pac").addEventListener('change', function () { onPacAt(); });
@@ -282,11 +264,6 @@ $$("#a-nf-seg button").forEach(function (b) { b.addEventListener('click', functi
 $("#a-guia-chk").addEventListener('change', function () { $("#a-guia").value = this.checked ? 'Sim' : 'Não'; atualizarPreview(); });
 $("#a-desc-sel").addEventListener('change', function () { $("#a-descbox").hidden = this.value !== 'sim'; if ($("#a-descbox").hidden) aplicarRegra(); else { calcDescAt(); $("#a-desc-val").focus(); } });
 $("#a-desc-val").addEventListener('input', calcDescAt);
-$("#a-extra-cancel").addEventListener('click', function () { $("#a-extrabox").hidden = true; });
-$("#a-extra-ok").addEventListener('click', function () { if (!$("#a-extra-motivo").value.trim()) return toast('Informe o motivo'); cur._extra = true; cur._extraQuem = $("#a-extra-quem").value; cur._extraMotivo = $("#a-extra-motivo").value.trim(); $("#a-extrabox").hidden = true; aplicarTipo(); toast('Sessão extra liberada · não consome nem cobra'); });
-$("#a-pk-cancel").addEventListener('click', function () { $("#a-pacotebox").hidden = true; });
-$("#a-pk-pago").addEventListener('change', function () { var depois = this.value === 'Não'; $$('[data-pk-pago]').forEach(function (l) { l.hidden = depois; }); $("#a-pk-depois").hidden = !depois; $("#a-pk-salvar").textContent = depois ? 'Salvar plano a receber' : 'Salvar plano e recebimento'; });
-$("#a-pk-salvar").addEventListener('click', lancarPacoteAt);
 $("#a-cobrar-assim").addEventListener('click', function () { if (!cur) return; cur._cobrar = true; aplicarTipo(); toast('Cobrando mesmo assim: anote o motivo na Observação'); });
 $("#a-quem").addEventListener('change', function () { decisaoPagador = null; $("#a-tornar").checked = false; var dif = pagadorDiferente(); $("#a-pagador-novo").hidden = !dif; if (dif) $("#a-pagador-nome").textContent = this.value.trim(); $("#a-quem-tag").hidden = dif || !cur; });
 $("#a-tornar-sim").addEventListener('click', function () { decisaoPagador = true; $("#a-tornar").checked = true; $("#a-pagador-novo").hidden = true; toast('Vai virar o pagador habitual ao salvar'); });
@@ -304,7 +281,8 @@ $("#a-salvar").addEventListener('click', function () { salvarAt(true); });
 $("#a-salvar-outro").addEventListener('click', function () { salvarAt(false); });
 $("#a-novo").addEventListener('click', function () { go('pacientes', { novo: true, voltar: 'registrar', nome: pacInfo($("#a-pac").value.trim()) ? '' : $("#a-pac").value.trim() }); });
 $("#a-editcad").addEventListener('click', function () { if (!cur) return; go('pacientes', { editar: cur.nome, voltar: 'registrar' }); });
-$("#a-hist").addEventListener('click', function () { if (!cur) return; go('mensalistas', { buscar: cur.nome }); });
+$("#a-hist").addEventListener('click', function () { if (!cur) return; go('pacotes', { buscar: cur.nome }); });
+$("#a-mesma-semana").addEventListener('change', function () { aplicarRegra(); });
 ["a-valor", "a-forma", "a-nfn", "a-obs", "a-quem"].forEach(function (id) { $("#" + id).addEventListener('input', atualizarPreview); });
 CAMPOS_AT.forEach(function (id) { $("#" + id).addEventListener('input', salvarRascunhoAt); $("#" + id).addEventListener('change', salvarRascunhoAt); });
 
@@ -322,7 +300,7 @@ function buscarDatasAnt() {
 }
 function abrirAntecipado() {
   if (!cur) return;
-  $("#a-ant-valor").value = valorSessaoCad(cur) != null ? brl(valorSessaoCad(cur)) : ''; $("#a-ant-datapag").value = hojeStr(); $("#a-ant-quem").value = cur.pagador || cur.nome; $("#a-ant-nfn").value = ''; $("#a-ant-datas").value = '';
+  $("#a-ant-valor").value = valorComb(cur) != null ? brl(valorComb(cur)) : ''; $("#a-ant-datapag").value = hojeStr(); $("#a-ant-quem").value = cur.pagador || cur.nome; $("#a-ant-nfn").value = ''; $("#a-ant-datas").value = '';
   $("#a-antbox").hidden = false; $("#a-antbox").scrollIntoView({ behavior: 'smooth', block: 'center' }); totalAnt(); buscarDatasAnt();
 }
 $("#a-ant-cancel").addEventListener('click', function () { $("#a-antbox").hidden = true; });
