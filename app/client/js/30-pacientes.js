@@ -78,14 +78,14 @@ function modDaEsp(m, esps) {
 function renderCards() {
   var mods = BOOT.listas.modalidades || [], atual = $("#n-mod").value, tab = $("#n-mods-tabela"), ant = $("#n-mods-antigo");
   tab.innerHTML = ''; ant.innerHTML = '';
-  // Novo paciente: profissional primeiro (Roberta, 06/10). Sem profissional, os cartões ficam escondidos; com ele, só os da especialidade dele.
-  var prof = $("#n-prof").value, semProf = pModo === 'novo' && !prof, esps = prof ? espsDoProf(prof) : [];
+  // Profissional é opcional (gestão, 08/10: paciente pode ser atendido por mais de um). Sem profissional, mostra todas as modalidades; com ele, só as da especialidade dele.
+  var prof = $("#n-prof").value, semProf = false, esps = prof ? espsDoProf(prof) : [];
   var conv = $("#n-conv").value, plano = convenioDePlano(conv);
   if (plano) { $("#n-mod").value = 'Convênio'; atual = 'Convênio'; } // convênio de plano: modalidade é sempre Convênio
   else if (atual === 'Convênio' && pModo === 'novo') { $("#n-mod").value = ''; atual = ''; } // paciente novo voltou pra particular/desconto: escolher de novo (no editar, mantém o que está gravado)
   var esconde = semProf || plano;
   $("#n-mod-guia").textContent = plano ? 'Convênio ' + conv + ': a modalidade fica “Convênio” (o convênio paga). Só preencher a carteirinha.' : 'Escolha o profissional: a modalidade diz como cobra, o profissional diz qual tabela.';
-  $("#n-mod-guia").hidden = !esconde; tab.hidden = esconde; ant.hidden = esconde; $("#n-mods-antigo-t").hidden = esconde; $("#n-prof-req").hidden = pModo !== 'novo';
+  $("#n-mod-guia").hidden = !esconde; tab.hidden = esconde; ant.hidden = esconde; $("#n-mods-antigo-t").hidden = esconde; $("#n-prof-req").hidden = true;
   if (esconde) return;
   if (pModo === 'novo') mods = mods.filter(function (m) { return m === atual || modDaEsp(m, esps); });
   var card = function (m, classe, etiqueta, desab) {
@@ -157,7 +157,6 @@ function validarN() {
   if (!Duplicatas.cpfValido($("#n-cpf").value)) e.push('CPF obrigatório e válido.');
   if (!dataValida($("#n-nasc").value)) e.push('Data de nascimento obrigatória, no formato dd/mm/aaaa.');
   if ($("#n-primeira").value && !dataValida($("#n-primeira").value)) e.push('Data da 1ª consulta inválida.');
-  if (!$("#n-prof").value) e.push('Escolha o profissional (a modalidade depende dele).');
   if (!$("#n-mod").value) e.push('Escolha a modalidade.');
   if ($("#n-mod").value === 'Convênio' && $("#n-conv").value === 'Particular') e.push('Modalidade "Convênio": escolha o convênio.');
   return e.concat(errosCpfsExtras());
