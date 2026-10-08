@@ -41,9 +41,9 @@ function setModo(m) {
   $("#p-quem-informou").hidden = !edit;
   $("#p-so-salvar").hidden = edit;
   $("#p-salvar").innerHTML = edit ? 'Salvar cadastro' : 'Salvar e registrar atendimento ' + ic('seta', 16);
-  $("#p-rodape-nota").textContent = edit ? 'Atualiza a linha em Pacientes · toda alteração fica em “Alterações de cadastro”, com quem informou' : 'Grava uma linha na aba Pacientes · CPF e nascimento obrigatórios';
-  ["n-nome", "n-cpf", "n-nasc"].forEach(function (id) { $("#" + id).readOnly = edit; });
-  $("#n-nome-req").hidden = edit; $("#n-cpf-hint").textContent = edit ? 'Só os últimos dígitos, pra conferir. O CPF não muda por aqui.' : 'Da criança também. CPF repetido bloqueia.';
+  $("#p-rodape-nota").textContent = edit ? 'Atualiza a linha em Pacientes · toda alteração fica em “Alterações de cadastro”, com quem informou' : 'Grava uma linha na aba Pacientes · sem CPF ou nascimento agora? Complete depois';
+  ["n-nome", "n-cpf", "n-nasc"].forEach(function (id) { $("#" + id).readOnly = edit; }); // no editar, CPF e nascimento em branco destravam ao carregar (completar)
+  $("#n-nome-req").hidden = edit; $("#n-cpf-hint").textContent = edit ? 'Só os últimos dígitos, pra conferir. O CPF não muda por aqui.' : 'Da criança também. CPF repetido bloqueia. Sem CPF agora? Complete depois.';
   $("#n-dup").innerHTML = ''; $("#n-erros").innerHTML = ''; $("#n-confirma").innerHTML = ''; $("#n-sucesso").innerHTML = '';
   if (!edit) { cadDados = null; cadNome = ''; limparFormN(false); $("#p-form").hidden = false; renderCards(); }
   else { $("#p-form").hidden = !cadDados; $("#c-pac").focus(); }
@@ -150,7 +150,7 @@ function atualizarBotaoN() {
   var cpf = $("#n-cpf").value, ok = true, hint = $("#n-cpf-hint");
   if (pModo === 'novo') {
     if (Duplicatas.digitos(cpf).length === 11) { if (Duplicatas.cpfValido(cpf)) { hint.textContent = 'CPF válido'; $("#n-cpf").classList.remove('erro'); } else { hint.textContent = 'CPF inválido: confira os dígitos'; $("#n-cpf").classList.add('erro'); ok = false; } }
-    else { hint.textContent = 'Da criança também. CPF repetido bloqueia.'; $("#n-cpf").classList.remove('erro'); }
+    else { hint.textContent = 'Da criança também. CPF repetido bloqueia. Sem CPF agora? Complete depois.'; $("#n-cpf").classList.remove('erro'); }
     if ($("#n-dup .faixa.vermelha")) ok = false;
   }
   $("#p-salvar").disabled = !ok; $("#p-so-salvar").disabled = !ok;
@@ -164,8 +164,9 @@ function dadosN(confirmou) {
 function validarN() {
   var e = [];
   if (Duplicatas.tokens($("#n-nome").value).length < 2) e.push('Informe o nome completo.');
-  if (!Duplicatas.cpfValido($("#n-cpf").value)) e.push('CPF obrigatório e válido.');
-  if (!dataValida($("#n-nasc").value)) e.push('Data de nascimento obrigatória, no formato dd/mm/aaaa.');
+  // CPF e nascimento opcionais (gestão, 08/10); preenchidos, têm de ser válidos
+  if (Duplicatas.digitos($("#n-cpf").value) && !Duplicatas.cpfValido($("#n-cpf").value)) e.push('CPF inválido: confira os 11 dígitos ou deixe em branco.');
+  if ($("#n-nasc").value.trim() && !dataValida($("#n-nasc").value)) e.push('Data de nascimento inválida (dd/mm/aaaa) ou deixe em branco.');
   if ($("#n-primeira").value && !dataValida($("#n-primeira").value)) e.push('Data da 1ª consulta inválida.');
   if (!$("#n-mod").value) e.push('Escolha a cobrança.');
   return e.concat(errosCob(), errosCpfsExtras());
@@ -195,14 +196,14 @@ function salvarNovo(confirmou, registrarDepois) {
     }
     if (!r.ok) { $("#n-erros").innerHTML = erroBox(r.erros || ['Não foi possível gravar.']); return; }
     BOOT.pacientes.push({ linha: r.linha, nome: d.nome, cpf: d.cpf, nasc: d.nasc, pagador: d.pagador, modalidade: d.modalidade, convenio: d.convenio, ativo: 'Sim' });
-    var cf = cobDoForm(), novoAT = { linha: r.linha, nome: d.nome, nasc: d.nasc, modalidade: d.modalidade, pagamento: cf.pagamento, valorNum: cf.valorNum === '' ? null : cf.valorNum, pctN: cf.pctN === '' ? null : cf.pctN, pctV: cf.pctV === '' ? null : cf.pctV, regra: '', obsCobranca: '', pagador: d.pagador, convenio: d.convenio, valorCombinado: '' };
+    var cf = cobDoForm(), novoAT = { linha: r.linha, nome: d.nome, cpf: d.cpf, nasc: d.nasc, modalidade: d.modalidade, pagamento: cf.pagamento, valorNum: cf.valorNum === '' ? null : cf.valorNum, pctN: cf.pctN === '' ? null : cf.pctN, pctV: cf.pctV === '' ? null : cf.pctV, regra: '', obsCobranca: '', pagador: d.pagador, convenio: d.convenio, valorCombinado: '' };
     if (AT) { AT.pacientes.push(novoAT); var o = document.createElement('option'); o.value = d.nome; $("#dl-pacientes").appendChild(o); }
     limparRascunhoN();
     // gestão: a observação de cobrança não entra na criação; vai pela atualização do cadastro (mesma função da tela Editar)
     var extras = ehGestao() ? { obsCobranca: $("#c-obs").value.trim() } : null;
     var p2 = (extras && extras.obsCobranca) ? call('atualizarCadastro', { nome: d.nome, quemInformou: quemSou() + ' (no cadastro)', campos: extras }).then(function (r2) { if (r2.ok) { novoAT.obsCobranca = extras.obsCobranca; } }) : Promise.resolve();
     return p2.then(function () {
-      $("#n-sucesso").innerHTML = aviso('verde', esc(r.nome) + ' cadastrado(a) na linha ' + r.linha + ' de Pacientes', 'Agora cadastre no ControleOdonto. ' + (r.colunasCriadas && r.colunasCriadas.length ? 'Colunas novas criadas na planilha: ' + esc(r.colunasCriadas.join(', ')) + '. ' : ''));
+      $("#n-sucesso").innerHTML = (faltasDoc(novoAT).length ? aviso('laranja', 'Falta ' + esc(faltasDocTxt(novoAT)), 'Peça o documento e complete em Pacientes → Editar cadastro.') : '') + aviso('verde', esc(r.nome) + ' cadastrado(a) na linha ' + r.linha + ' de Pacientes', 'Agora cadastre no ControleOdonto. ' + (r.colunasCriadas && r.colunasCriadas.length ? 'Colunas novas criadas na planilha: ' + esc(r.colunasCriadas.join(', ')) + '. ' : ''));
       limparFormN(false); toast('Cadastrado em Pacientes');
       if (registrarDepois || pVoltar === 'registrar') { var v = pVoltar; pVoltar = null; go('registrar', { paciente: d.nome }); if (v !== 'registrar') toast('Agora registre o atendimento de ' + primeiroNome(d.nome)); }
     });
@@ -233,6 +234,9 @@ function carregarCad() {
     if (r.nome !== cadNome) return;
     cadDados = r; var c = r.campos || {};
     $("#n-nome").value = r.nome; $("#n-cpf").value = r.cpfFinal ? '···' + r.cpfFinal : ''; $("#n-nasc").value = r.nasc || '';
+    // em branco: a recepção completa aqui; preenchido: só leitura (correção é com a gestão)
+    $("#n-cpf").readOnly = !!r.cpfFinal; $("#n-nasc").readOnly = !!r.nasc;
+    $("#n-cpf-hint").textContent = r.cpfFinal ? 'Só os últimos dígitos, pra conferir. O CPF não muda por aqui.' : 'Sem CPF no cadastro: digite pra completar.';
     $("#n-indic").value = r.indicacao || ''; $("#n-primeira").value = r.primeira || '';
     $("#n-pagador").value = c.pagador || ''; $("#n-whats").value = c.whats || ''; $("#n-tel-pac").value = c.telPac || '';
     $("#n-pag-cpf").value = c.pagadorCpf || ''; $("#n-resp").value = c.respNome || ''; $("#n-resp-par").value = c.respPar || ''; $("#n-resp-tel").value = c.respTel || ''; $("#n-resp-cpf").value = c.respCpf || '';
@@ -252,18 +256,21 @@ function salvarEdicao() {
   var nome = cadNome, erros = []; if (!pacInfo(nome) || !cadDados) erros.push('Escolha um paciente da lista.');
   var quem = $("#c-quem").value.trim(); if (!quem) erros.push('Informe quem passou a informação.');
   erros = erros.concat(errosCob());
+  var cpfC = !$("#n-cpf").readOnly ? $("#n-cpf").value.trim() : '', nascC = !$("#n-nasc").readOnly ? $("#n-nasc").value.trim() : '';
+  if (cpfC && !Duplicatas.cpfValido(cpfC)) erros.push('CPF inválido: confira os 11 dígitos.');
+  if (nascC && !dataValida(nascC)) erros.push('Data de nascimento inválida (dd/mm/aaaa).');
   if ($("#n-primeira").value && !dataValida($("#n-primeira").value)) erros.push('Data da 1ª consulta inválida.');
   erros = erros.concat(errosCpfsExtras());
   $("#n-erros").innerHTML = erroBox(erros); if (erros.length) return;
   var c0 = cadDados.campos || {};
   var cf = cobDoForm();
-  var campos = { modalidade: cf.modalidade, pagamento: cf.pagamento, valorNum: cf.valorNum, pctN: cf.pctN, pctV: cf.pctV, convenio: $("#n-conv").value, carteirinha: $("#n-cart").value.trim(), pagador: $("#n-pagador").value.trim(), whats: $("#n-whats").value.trim(), telPac: $("#n-tel-pac").value.trim(), profRef: $("#n-prof").value,
+  var campos = { cpf: cpfC || null, nasc: nascC || null, modalidade: cf.modalidade, pagamento: cf.pagamento, valorNum: cf.valorNum, pctN: cf.pctN, pctV: cf.pctV, convenio: $("#n-conv").value, carteirinha: $("#n-cart").value.trim(), pagador: $("#n-pagador").value.trim(), whats: $("#n-whats").value.trim(), telPac: $("#n-tel-pac").value.trim(), profRef: $("#n-prof").value,
     obsCobranca: ehGestao() ? $("#c-obs").value.trim() : (c0.obsCobranca || ''),
     pagadorCpf: $("#n-pag-cpf").value.trim(), respNome: $("#n-resp").value.trim(), respPar: $("#n-resp-par").value.trim(), respTel: $("#n-resp-tel").value.trim(), respCpf: $("#n-resp-cpf").value.trim() };
   salvandoP = true; $("#p-salvar").disabled = true;
   call('atualizarCadastro', { nome: nome, quemInformou: quem, campos: campos }).then(function (r) {
     if (!r.ok) { $("#n-erros").innerHTML = erroBox(r.erros || [], 'Não gravou'); return; }
-    [AT && AT.pacientes, BOOT && BOOT.pacientes].forEach(function (l) { (l || []).filter(function (p) { return p.nome === nome; }).forEach(function (p) { p.modalidade = campos.modalidade; p.pagamento = campos.pagamento; p.valorNum = campos.valorNum === '' ? null : campos.valorNum; p.pctN = campos.pctN === '' ? null : campos.pctN; p.pctV = campos.pctV === '' ? null : campos.pctV; p.convenio = campos.convenio; p.obsCobranca = campos.obsCobranca; p.pagador = campos.pagador; p.telPac = campos.telPac; p.resp = campos.respNome; p.respPar = campos.respPar; p.respTel = campos.respTel; }); });
+    [AT && AT.pacientes, BOOT && BOOT.pacientes].forEach(function (l) { (l || []).filter(function (p) { return p.nome === nome; }).forEach(function (p) { if (cpfC) p.cpf = cpfC; if (nascC) p.nasc = nascC; p.modalidade = campos.modalidade; p.pagamento = campos.pagamento; p.valorNum = campos.valorNum === '' ? null : campos.valorNum; p.pctN = campos.pctN === '' ? null : campos.pctN; p.pctV = campos.pctV === '' ? null : campos.pctV; p.convenio = campos.convenio; p.obsCobranca = campos.obsCobranca; p.pagador = campos.pagador; p.telPac = campos.telPac; p.resp = campos.respNome; p.respPar = campos.respPar; p.respTel = campos.respTel; }); });
     var mudou = r.alterados && r.alterados.length;
     toast(mudou ? 'Cadastro atualizado' : 'Nada mudou');
     $("#n-sucesso").innerHTML = aviso('verde', esc(nome) + ' · ' + (mudou ? 'cadastro atualizado' : 'nada mudou'), mudou ? 'Alterado: ' + esc(r.alterados.map(function (c) { return c.split(' (')[0]; }).join(', ')) + '. Registrado em “Alterações de cadastro”.' : 'Nenhum campo mudou.');
@@ -271,7 +278,7 @@ function salvarEdicao() {
   }).catch(function (e) { toast('Erro: ' + e.message); }).finally(function () { salvandoP = false; $("#p-salvar").disabled = false; });
 }
 /* ---------- eventos ---------- */
-$("#n-cpf").addEventListener('input', function () { if (pModo === 'novo') this.value = mascaraCPF(this.value); });
+$("#n-cpf").addEventListener('input', function () { if (!this.readOnly) this.value = mascaraCPF(this.value); });
 $("#n-nasc").addEventListener('input', function () { this.value = mascaraData(this.value); });
 $("#n-primeira").addEventListener('input', function () { this.value = mascaraData(this.value); });
 ["n-whats", "n-tel-pac"].forEach(function (id) { $("#" + id).addEventListener('input', function () { this.value = mascaraFone(this.value); }); });

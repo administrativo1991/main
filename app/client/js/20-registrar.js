@@ -78,6 +78,8 @@ function onPacAt(force) {
     box.innerHTML += aviso(cobConvenio(cur) || ehProBono(cur) ? 'lilas' : 'cinza', 'Cobrança: ' + esc(rc[1]), extra + obsHtml,
       pg === 'Antecipado' && !ehPacoteCob(cur) ? '<div class="acoes" style="flex-basis:100%"><button class="btn sec" type="button" id="a-btn-ant">Recebeu adiantado: lançar sessões pagas</button></div>' : '');
   }
+  if (faltasDoc(cur).length) box.innerHTML += aviso('laranja', 'Cadastro incompleto · falta ' + esc(faltasDocTxt(cur)), 'Peça o documento e complete o cadastro (dá pra registrar o atendimento mesmo assim).', '<button class="btn sec" type="button" id="a-btn-cad-doc">Completar cadastro</button>');
+  var bcd = $("#a-btn-cad-doc"); if (bcd) bcd.addEventListener('click', function () { go('pacientes', { editar: cur.nome, voltar: 'registrar' }); });
   var bant = $("#a-btn-ant"); if (bant) bant.addEventListener('click', abrirAntecipado);
   var bc = $("#a-btn-cad"); if (bc) bc.addEventListener('click', function () { go('pacientes', { editar: cur.nome, voltar: 'registrar' }); });
   var br = $("#a-btn-renovar"); if (br) br.addEventListener('click', function () { abrirRenovacao($("#a-renbox"), cur, function () { cur._avulsa = false; onPacAt(true); }); });

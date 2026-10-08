@@ -197,7 +197,7 @@ function renderPainel() {
   var tipo = it.origem && !/Semanal|Quinzenal|Registrado/.test(it.origem) ? it.origem : 'sessão';
   $("#pp-dl").innerHTML = '<div><dt>Hoje</dt><dd>' + esc((it.hora || '—') + ' · ' + tipo) + '</dd></div><div><dt>Profissional</dt><dd>' + esc(it.profissional) + '</dd></div><div><dt>Cobrança</dt><dd>' + esc(p ? resumoCob(p, it.profissional)[1] : '—') + '</dd></div><div><dt>Valor da sessão</dt><dd>' + esc(valorSessaoTxt(p, it.profissional)) + '</dd></div><div><dt>Convênio</dt><dd>' + esc(p ? (p.convenio || 'Particular') : '—') + '</dd></div>' + (p && p.telPac ? '<div><dt>Telefone do paciente</dt><dd>' + esc(p.telPac) + '</dd></div>' : '') + (p && p.resp ? '<div><dt>Responsável</dt><dd>' + esc(p.resp + (p.respPar ? ' (' + p.respPar.toLowerCase() + ')' : '') + (p.respTel ? ' · ' + p.respTel : '')) + '</dd></div>' : '');
   var avisoHtml = '';
-  if (p && cadastroIncompleto(p)) avisoHtml = aviso('laranja', 'Cadastro incompleto', 'Cobrança em branco. Confira como paga antes de registrar.');
+  if (p && (cadastroIncompleto(p) || faltasDoc(p).length)) avisoHtml = aviso('laranja', 'Cadastro incompleto', esc([cadastroIncompleto(p) ? 'Cobrança em branco: confira como paga antes de registrar.' : '', faltasDoc(p).length ? 'Falta ' + faltasDocTxt(p) + ': peça o documento e complete.' : ''].filter(Boolean).join(' ')));
   else if (p && ehPacoteCob(p) && pagDe(p) === 'Antecipado' && estPacote(p).disponiveis <= 0) avisoHtml = aviso('vermelha', 'Pacote esgotado — renovar antes de atender', esc(p.obsCobranca || ''));
   else if (p && p.obsCobranca && !cobConvenio(p)) avisoHtml = aviso(ehProBono(p) ? 'lilas' : 'laranja', ehProBono(p) ? cobDe(p) : 'Observação de cobrança', esc(p.obsCobranca));
   $("#pp-aviso").innerHTML = avisoHtml;
@@ -312,8 +312,8 @@ function renderPend(itens) {
   var dia = DIA.data, g = resumoMes[DIA.abaMes], out = [];
   var pacs = itens.filter(function (i) { var p = pacInfo(i.paciente); return p && ehPacoteCob(p) && pagDe(p) === 'Antecipado' && estPacote(p).disponiveis <= 1; });
   if (pacs.length) out.push(['amarela', pacs.length, 'de hoje com pacote esgotado ou na última sessão · ' + pacs.map(function (i) { return primeiroNome(i.paciente); }).join(', '), 'pacotes']);
-  var incompl = itens.filter(function (i) { var p = pacInfo(i.paciente); return p && cadastroIncompleto(p); });
-  if (incompl.length) out.push(['laranja', incompl.length, 'cadastro com cobrança em branco · ' + incompl.map(function (i) { return primeiroNome(i.paciente); }).join(', '), 'pacientes', incompl[0].paciente]);
+  var incompl = itens.filter(function (i) { var p = pacInfo(i.paciente); return p && (cadastroIncompleto(p) || faltasDoc(p).length); });
+  if (incompl.length) out.push(['laranja', incompl.length, 'cadastro incompleto (cobrança, CPF ou nascimento) · ' + incompl.map(function (i) { return primeiroNome(i.paciente); }).join(', '), 'pacientes', incompl[0].paciente]);
   var fora = itens.filter(function (i) { return !pacInfo(i.paciente); });
   if (fora.length) out.push(['laranja', fora.length, 'não está em Pacientes · ' + fora.map(function (i) { return primeiroNome(i.paciente); }).join(', '), 'pacientes']);
   var devem = itens.filter(function (i) { return pendDe(i.paciente).some(function (x) { return x.tipo === 'pag'; }); });

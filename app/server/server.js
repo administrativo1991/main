@@ -268,11 +268,13 @@ API.criarPaciente = function (d) {
   var erros = [];
   var nome = String(d.nome || '').replace(/\s+/g, ' ').trim();
   if (Duplicatas.tokens(nome).length < 2) erros.push('Informe o nome completo (nome e sobrenome).');
+  // CPF e nascimento são opcionais (gestão, 08/10: há pacientes no ControleOdonto sem eles); se vierem, têm de ser válidos.
+  // Faltando, o app avisa a recepção pra completar depois (Editar cadastro).
   var cpf = Duplicatas.digitos(d.cpf);
-  if (!Duplicatas.cpfValido(cpf)) erros.push('CPF inválido. Confira os 11 dígitos.');
-  var nasc = parseData_(d.nasc);
-  if (!nasc) erros.push('Data de nascimento inválida (use dd/mm/aaaa).');
-  else if (nasc > new Date()) erros.push('Data de nascimento no futuro.');
+  if (cpf && !Duplicatas.cpfValido(cpf)) erros.push('CPF inválido. Confira os 11 dígitos (ou deixe em branco e complete depois).');
+  var nasc = String(d.nasc || '').trim() ? parseData_(d.nasc) : '';
+  if (nasc === null) erros.push('Data de nascimento inválida (use dd/mm/aaaa, ou deixe em branco e complete depois).');
+  else if (nasc && nasc > new Date()) erros.push('Data de nascimento no futuro.');
   var modalidades = colunaLista_(CONFIG.LISTAS.MODALIDADE);
   var modalidade = String(d.modalidade || '').trim();
   if (modalidades.length && modalidades.indexOf(modalidade) < 0) erros.push('Modalidade fora da lista.');
@@ -306,7 +308,7 @@ API.criarPaciente = function (d) {
     var u = usuario_();
     var pagador = String(d.pagador || '').replace(/\s+/g, ' ').trim();
     put('NOME', nome);
-    put('CPF', cpf.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4'));
+    put('CPF', cpf ? cpf.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4') : '');
     put('NASC', nasc);
     put('ATIVO', 'Sim');
     put('MODALIDADE', modalidade);
@@ -1159,6 +1161,10 @@ API.atualizarCadastro = function (d) {
   erros = erros.concat(errosCpfsExtras_(campos));
   if (campos.pagadorCpf != null) campos.pagadorCpf = cpfFmt_(campos.pagadorCpf);
   if (campos.respCpf != null) campos.respCpf = cpfFmt_(campos.respCpf);
+  // completar CPF e nascimento que faltavam (recepção); trocar um valor já preenchido só a gestão
+  var cpfNovo = campos.cpf != null ? Duplicatas.digitos(campos.cpf) : '', nascNovo = campos.nasc != null && String(campos.nasc).trim() ? parseData_(campos.nasc) : '';
+  if (cpfNovo && !Duplicatas.cpfValido(cpfNovo)) erros.push('CPF inválido. Confira os 11 dígitos.');
+  if (nascNovo === null) erros.push('Data de nascimento inválida (use dd/mm/aaaa).'); else if (nascNovo && nascNovo > new Date()) erros.push('Data de nascimento no futuro.');
   if (erros.length) return { ok: false, erros: erros };
   var lock = LockService.getScriptLock(); lock.waitLock(20000);
   try {
@@ -1167,6 +1173,24 @@ API.atualizarCadastro = function (d) {
     var g = garantirColunasPacientes_(), s = aba_(CONFIG.ABA.PACIENTES), h = g.h, H = CONFIG.H, u = usuario_();
     var atual = s.getRange(p.linha, 1, 1, s.getLastColumn()).getValues()[0];
     var mudancas = [];
+    if (cpfNovo && h[H.CPF]) {
+      var cpfAtual = Duplicatas.digitos(atual[h[H.CPF] - 1]);
+      if (cpfAtual !== cpfNovo) {
+        if (cpfAtual && u.perfil !== 'gestao') return { ok: false, erros: ['O CPF já está preenchido: só a gestão corrige.'] };
+        var outro = indicePacientes_().filter(function (x) { return x.linha !== p.linha && Duplicatas.digitos(x.cpf) === cpfNovo; })[0];
+        if (outro) return { ok: false, erros: ['CPF já cadastrado: ' + outro.nome + '.'] };
+        s.getRange(p.linha, h[H.CPF]).setValue(cpfFmt_(cpfNovo));
+        mudancas.push({ campo: H.CPF, de: cpfAtual ? '···' + cpfAtual.slice(-4) : '', para: '···' + cpfNovo.slice(-4) });
+      }
+    }
+    if (nascNovo && h[H.NASC]) {
+      var nascAtual = fmtData_(atual[h[H.NASC] - 1]);
+      if (nascAtual !== fmtData_(nascNovo)) {
+        if (nascAtual && u.perfil !== 'gestao') return { ok: false, erros: ['A data de nascimento já está preenchida: só a gestão corrige.'] };
+        s.getRange(p.linha, h[H.NASC]).setValue(nascNovo).setNumberFormat('dd/MM/yyyy');
+        mudancas.push({ campo: H.NASC, de: nascAtual, para: fmtData_(nascNovo) });
+      }
+    }
     Object.keys(CAMPOS_CADASTRO).forEach(function (k) {
       if (!(k in campos) || campos[k] == null) return; // só grava o que a tela mandou
       var c = h[H[CAMPOS_CADASTRO[k]]]; if (!c) return;

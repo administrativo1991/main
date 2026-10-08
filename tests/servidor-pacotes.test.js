@@ -114,6 +114,13 @@ const lc = ok(API.lerCadastro({ nome: 'Beatriz Tabela' }), 'ler'); assert.strict
 const np = ok(API.criarPaciente({ nome: 'Joana Teste da Silva', cpf: '390.533.447-05', nasc: '01/01/1990', modalidade: 'Tabela', pagamento: '', convenio: 'Particular', telPaciente: '(32) 9 8888-7777' }), 'criar');
 const jo = API.bootstrapAtendimento().pacientes.filter(p => p.nome === 'Joana Teste da Silva')[0]; assert.strictEqual(jo.pagamento, 'Na sessão'); assert.strictEqual(jo.telPac, '(32) 9 8888-7777');
 ok(API.atualizarCadastro({ nome: 'Beatriz Tabela', quemInformou: 'teste', campos: { telPac: '(32) 3333-4444' } }), 'tel'); assert.strictEqual(ok(API.lerCadastro({ nome: 'Beatriz Tabela' }), 'ler2').campos.telPac, '(32) 3333-4444');
+// CPF e nascimento opcionais; completar depois; recepção não troca o que já existe
+const semDoc = ok(API.criarPaciente({ nome: 'Pedro Sem Documento', cpf: '', nasc: '', modalidade: 'Tabela', convenio: 'Particular' }), 'sem doc');
+assert.strictEqual(API.criarPaciente({ nome: 'Paula Cpf Errado', cpf: '123', nasc: '', modalidade: 'Tabela' }).ok, false);
+ok(API.atualizarCadastro({ nome: 'Pedro Sem Documento', quemInformou: 'mãe', campos: { cpf: '529.982.247-25', nasc: '02/03/2015' } }), 'completar');
+const pd = API.bootstrapAtendimento().pacientes.filter(p => p.nome === 'Pedro Sem Documento')[0]; assert.strictEqual(pd.cpf, '529.982.247-25'); assert.strictEqual(pd.nasc, '02/03/2015');
+assert.strictEqual(API.atualizarCadastro({ nome: 'Joana Teste da Silva', quemInformou: 'x', campos: { cpf: '529.982.247-25' } }).ok, false); // CPF de outro paciente
 // recepção não roda a virada
 email = 'atendimento@clinicanascente.com.br'; assert.strictEqual(API.viradaPropostas().ok, false);
+assert.strictEqual(API.atualizarCadastro({ nome: 'Pedro Sem Documento', quemInformou: 'x', campos: { nasc: '03/03/2015' } }).ok, false);
 console.log('cadastro ok · todos os testes do servidor passaram');
