@@ -23,7 +23,7 @@ coluna E não afeta o app. Atualizar `E2` faz parte de toda publicação (passo 
 
 | Canal | Deploy | Peças | Commit |
 |---|---|---|---|
-| Real (`arquivos_real`) | **2026-10-08-06** | 36 (duplicatas 1 · server 10 · index 25); ativas = linhas 2, 123–125 e 191–222; `antigo12:` = versão 2026-10-08-05 | branch `claude/busy-wright-xf0hql` |
+| Real (`arquivos_real`) | **2026-10-08-07** | 36 (duplicatas 1 · server 10 · index 25); ativas = linhas 2, 123–125, 201–203, 223, 235, 243–269; `antigo14:` = versão 2026-10-08-06 | branch `claude/busy-wright-xf0hql` |
 | Teste (`arquivos`) | **2026-10-06-08** (atrás da real: não recebeu o 10, o 11, o 07-01 nem os de 07/10) | 27 | 135de84 |
 | Carregador real | 2026-10-06-02 (`dist/Code.real.gs`, implantado pela Roberta) | — | 4ad0272 |
 | Carregador teste | 2026-10-04-01 + nova versão pendente desde 05/10 (permissão do Drive, ver `COMO-INSTALAR.md`) | — | — |
@@ -48,6 +48,21 @@ Modelo:
 ```
 
 ## Lista
+
+### 2026-10-08-07 · Real (direto) · telefone do paciente, Responsável acima do pagador, CPF/nascimento opcionais
+- **O que mudou**: campo "Telefone do paciente" no cadastro (coluna nova em Pacientes, criada no 1º cadastro salvo) e no
+  painel da Agenda; card Responsável acima de "Quem paga"; CPF e data de nascimento deixam de ser obrigatórios (gestão:
+  há pacientes no ControleOdonto sem eles) — se preenchidos, são validados e CPF repetido bloqueia; faltando, etiqueta
+  laranja na Agenda, faixa no Registrar e item em "Pendências de hoje"; no Editar, os campos vazios destravam pra
+  completar (trocar um valor já preenchido só a gestão).
+- **Dados**: 15 linhas "Pagamento de setembro (valor do mês)" na aba Setembro (401–415, IDs SETABERTO-01…15), Pago? = Não,
+  com o valor que a aba Mensalistas diz que cada um deve; Lays fora (as 3 sessões já estavam "Não"); Maria Clara e Lucas
+  Adryan com "CONFERIR antes de cobrar".
+- **Peças**: 36; novas nas linhas 243–269 (server 1–9, index 6, 7, 9–24) mais 223 (server 0) e 235 (index 8) gravadas
+  na rodada do telefone; 191–200 e 204–222 viraram `antigo14:`; sobras da rodada do telefone = `antigo13:`.
+- **Conferência**: 29/29 lidas de volta iguais ao build; ativas = 1 + 10 + 25, sem repetição; `tests/servidor-pacotes.test.js` passa.
+- **Voltar**: `antigo14:` → nome nas linhas 191–200 e 204–222; 223, 235 e 243–269 → `antigo15:`.
+- **Aprovação**: gestão, 08/10.
 
 ### 2026-10-08-06 · Real (direto, de madrugada) · Cobrança + Pagamento + pacotes de sessões
 - **O que mudou**: cadastro com **Cobrança** (Tabela · Por sessão (combinado) · Pacote de sessões · Pacote social · Convênio ·
