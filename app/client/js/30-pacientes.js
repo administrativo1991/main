@@ -62,7 +62,7 @@ function descMod(m) {
   if (/^pagamento antecipado/.test(x)) return 'valor por sessão · paga adiantado · as sessões são lançadas pagas no dia do pagamento';
   if (x === 'convênio') return 'guia por sessão · fatura no fim do mês';
   if (/^por sessão/.test(x)) return 'valor por sessão definido pela gestão · regra no cadastro';
-  if (/^mensalidade fixa/.test(x)) return 'valor mensal fixo · independe do nº de sessões · sem remarcação';
+  if (/^mensalidade (fixa|social)/.test(x)) return 'social · valor mensal fixo (R$ 200) · independe do nº de sessões · sem remarcação';
   if (/valor especial/.test(x)) return 'valor mensal combinado pela gestão';
   if (/aapi/.test(x)) return 'mensal pelo convênio AAPI JF';
   if (/pro bono/.test(x)) return 'sem cobrança · a psicóloga ou a gestão decide';

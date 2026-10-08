@@ -1132,7 +1132,7 @@ res(r.dados);
 function mock() { return Promise.reject(new Error('Simulação indisponível no app publicado.')); }
 /* ---------- estado global ---------- */
 var BOOT = null, AT = null;
-var MOD_RESTRITA = ["Mensalidade fixa", "Mensal (valor especial)", "AAPI JF (mensal)"];
+var MOD_RESTRITA = ["Mensalidade social", "Mensalidade fixa", "Mensal (valor especial)", "AAPI JF (mensal)"];
 var DIAS_PT = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
 var MESES_PT = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
 var ESP_KEYS = [['psicopedagog', 'Psicopedagogia'], ['psican', 'Psicanálise'], ['psicolog', 'Psicologia'], ['pediatr', 'Pediatria'], ['gineco', 'Ginecologia e obstetrícia'], ['clinic', 'Clínica geral'], ['clínic', 'Clínica geral'], ['nutri', 'Nutrição'], ['aba', 'Terapia ABA']];
@@ -1162,7 +1162,7 @@ function primeiroNome(n) { return String(n || '').replace(/^Dra?\. /, '').split(
 function store(k, v) { try { if (v === undefined) return JSON.parse(localStorage.getItem(k) || 'null'); if (v === null) localStorage.removeItem(k); else localStorage.setItem(k, JSON.stringify(v)); } catch (e) { return null; } }
 /* ---------- cadastro: leitura das regras (iguais ao app anterior) ---------- */
 function pacInfo(nome) { return (AT && AT.pacientes.filter(function (p) { return p.nome === nome; })[0]) || null; }
-function ehMensal(p) { return /^Mensalidade fixa|^Mensal \(valor especial\)|\(mensal\)|\/mês|^Social|preexistente/.test(p.modalidade || '') || /^Mensalidade fixa/.test(p.regra || ''); }
+function ehMensal(p) { return /^Mensalidade (fixa|social)|^Mensal \(valor especial\)|\(mensal\)|\/mês|^Social|preexistente/.test(p.modalidade || '') || /^Mensalidade fixa/.test(p.regra || ''); }
 function ehPacote(p) { return /^(Plano|Pacote) /.test(p.modalidade || '') && !/mensal/.test(p.modalidade || ''); }
 function ehPosterior(p) { return /^Pagamento posterior/i.test(p.modalidade || ''); }
 function ehAntecipado(p) { return /^Pagamento antecipado/i.test(p.modalidade || ''); }
@@ -1211,7 +1211,7 @@ else if (m.indexOf('cartão') >= 0) chaves.push('cartão');
 else if (/^(plano de|pacote) 4/.test(m) || /psicopedagogia 4|aba 4/.test(m)) chaves.push('plano de 4');
 else if (/^(plano de|pacote) 12|nutrição 12/.test(m)) chaves.push('plano de 12');
 else if (/^plano de 6|nutrição 6/.test(m)) chaves.push('plano de 6');
-else if (/^mensalidade fixa|^social|preexistente/.test(m)) chaves.push('mensalidade fixa');
+else if (/^mensalidade (fixa|social)|^social|preexistente/.test(m)) chaves.push('mensalidade fixa'); // "Mensalidade social" (ex-fixa, 08/10) usa o procedimento "– mensalidade fixa"
 else if (/valor especial/.test(m)) chaves.push('mensal valor especial');
 else if (/aapi jf/.test(m)) chaves.push('aapi jf');
 for (var i = 0; i < chaves.length; i++) { var c = cands.filter(function (q) { return q.nome.toLowerCase().indexOf(chaves[i]) >= 0; })[0]; if (c) return c.nome; }
@@ -2408,7 +2408,7 @@ if (/^pagamento posterior/.test(x)) return 'valor por sessão · lança a sessã
 if (/^pagamento antecipado/.test(x)) return 'valor por sessão · paga adiantado · as sessões são lançadas pagas no dia do pagamento';
 if (x === 'convênio') return 'guia por sessão · fatura no fim do mês';
 if (/^por sessão/.test(x)) return 'valor por sessão definido pela gestão · regra no cadastro';
-if (/^mensalidade fixa/.test(x)) return 'valor mensal fixo · independe do nº de sessões · sem remarcação';
+if (/^mensalidade (fixa|social)/.test(x)) return 'social · valor mensal fixo (R$ 200) · independe do nº de sessões · sem remarcação';
 if (/valor especial/.test(x)) return 'valor mensal combinado pela gestão';
 if (/aapi/.test(x)) return 'mensal pelo convênio AAPI JF';
 if (/pro bono/.test(x)) return 'sem cobrança · a psicóloga ou a gestão decide';
@@ -2636,7 +2636,7 @@ if (s[0] === 'vermelha') return '<span class="tag vermelha">' + esc(tituloCol(ME
 if (s[1] === 'pendente') return '<span class="tag amarela">em aberto' + (/deve/i.test(it.dataPago) ? ' · ' + esc(it.dataPago.split('(')[0].trim()) : '') + '</span>';
 return '<span class="tag amarela">' + (s[1] === 'venceu dia 10' ? 'Venceu dia 10 · tolerância até 15' : s[1] === 'vence dia 10' ? 'Vence dia 10' : 'A receber') + '</span>';
 }
-function ehPacoteMensal(it) { return /pacote mensal|preexistente|^pacote|^plano/i.test(it.modalidade) && !/social|mensalidade fixa/i.test(it.modalidade); }
+function ehPacoteMensal(it) { return /pacote mensal|preexistente|^pacote|^plano/i.test(it.modalidade) && !/social|mensalidade (fixa|social)/i.test(it.modalidade); }
 function horarioDe(nome) { var l = agendaPorPac[nome]; if (!l || !l.length) return ''; var a = l[0]; return profCurto(a['Profissional']) + ' · ' + String(a['Dia da semana'] || '').slice(0, 3).toLowerCase() + ' ' + String(a['Hora'] || '').replace(/:00$/, 'h').replace(':', 'h'); }
 function renderMensal() {
 var r = MEN, q = ($("#m-busca").value || '').toLowerCase(), itens = r.itens.map(function (it) { it._s = situacaoMen(it); return it; });
@@ -2657,7 +2657,7 @@ if (!lista.length) { root.innerHTML = '<div class="vazio">Ninguém neste filtro.
 var card = el('<div class="tabela-card mens-card"><div class="tabela-wrap"><table class="mens"><thead><tr><th>Paciente</th><th>Plano</th><th>Pagador</th><th class="num">Valor</th><th>' + esc(tituloCol(r.coluna)) + '</th><th>5ª semana</th><th></th></tr></thead><tbody></tbody></table></div><div class="tabela-rodape"><span>Mostrando ' + lista.length + ' de ' + itens.length + '</span><span>Pagamento antes do dia 10 = mês anterior (competência)</span><span>NF do mensalista: uma por mês, quando paga</span></div></div>');
 var tb = $('tbody', card);
 lista.forEach(function (it) {
-var pm = ehPacoteMensal(it), fixa = /mensalidade fixa/i.test(it.modalidade), antigo = /só até|preexistente|\b280\b/i.test(it.modalidade);
+var pm = ehPacoteMensal(it), fixa = /mensalidade (fixa|social)/i.test(it.modalidade), antigo = /só até|preexistente|\b280\b/i.test(it.modalidade);
 var plano = esc(it.modalidade.split('·')[0].trim()) + (fixa ? ' <span class="tag p laranja">' + ic('alerta', 11, 2.5) + 'sem proporcional</span>' : '') + (antigo ? ' <span class="muted" style="font-size:11px">(antigo, até jan/27)</span>' : '');
 var quinta = pm ? '<label class="check" style="display:inline-flex;font-size:13px"><input type="checkbox" data-extra' + (it._extra ? ' checked' : '') + '> quer · + R$ ' + brl(Math.round(it.valor / 4)) + '</label>' : '<span class="muted">—' + (fixa ? ' (incluída)' : '') + '</span>';
 var acao = it._s[0] === 'verde' ? '<button type="button" class="btn link" data-ver>Ver</button>' : it._s[0] === 'vermelha' ? '<button type="button" class="btn vermelho" data-reg>Chamar a gestão</button>' : '<button type="button" class="btn" data-reg>Registrar pagamento</button>';

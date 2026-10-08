@@ -17,7 +17,7 @@ function pillMes(it) {
   if (s[1] === 'pendente') return '<span class="tag amarela">em aberto' + (/deve/i.test(it.dataPago) ? ' · ' + esc(it.dataPago.split('(')[0].trim()) : '') + '</span>';
   return '<span class="tag amarela">' + (s[1] === 'venceu dia 10' ? 'Venceu dia 10 · tolerância até 15' : s[1] === 'vence dia 10' ? 'Vence dia 10' : 'A receber') + '</span>';
 }
-function ehPacoteMensal(it) { return /pacote mensal|preexistente|^pacote|^plano/i.test(it.modalidade) && !/social|mensalidade fixa/i.test(it.modalidade); }
+function ehPacoteMensal(it) { return /pacote mensal|preexistente|^pacote|^plano/i.test(it.modalidade) && !/social|mensalidade (fixa|social)/i.test(it.modalidade); }
 function horarioDe(nome) { var l = agendaPorPac[nome]; if (!l || !l.length) return ''; var a = l[0]; return profCurto(a['Profissional']) + ' · ' + String(a['Dia da semana'] || '').slice(0, 3).toLowerCase() + ' ' + String(a['Hora'] || '').replace(/:00$/, 'h').replace(':', 'h'); }
 function renderMensal() {
   var r = MEN, q = ($("#m-busca").value || '').toLowerCase(), itens = r.itens.map(function (it) { it._s = situacaoMen(it); return it; });
@@ -38,7 +38,7 @@ function renderMensal() {
   var card = el('<div class="tabela-card mens-card"><div class="tabela-wrap"><table class="mens"><thead><tr><th>Paciente</th><th>Plano</th><th>Pagador</th><th class="num">Valor</th><th>' + esc(tituloCol(r.coluna)) + '</th><th>5ª semana</th><th></th></tr></thead><tbody></tbody></table></div><div class="tabela-rodape"><span>Mostrando ' + lista.length + ' de ' + itens.length + '</span><span>Pagamento antes do dia 10 = mês anterior (competência)</span><span>NF do mensalista: uma por mês, quando paga</span></div></div>');
   var tb = $('tbody', card);
   lista.forEach(function (it) {
-    var pm = ehPacoteMensal(it), fixa = /mensalidade fixa/i.test(it.modalidade), antigo = /só até|preexistente|\b280\b/i.test(it.modalidade);
+    var pm = ehPacoteMensal(it), fixa = /mensalidade (fixa|social)/i.test(it.modalidade), antigo = /só até|preexistente|\b280\b/i.test(it.modalidade);
     var plano = esc(it.modalidade.split('·')[0].trim()) + (fixa ? ' <span class="tag p laranja">' + ic('alerta', 11, 2.5) + 'sem proporcional</span>' : '') + (antigo ? ' <span class="muted" style="font-size:11px">(antigo, até jan/27)</span>' : '');
     var quinta = pm ? '<label class="check" style="display:inline-flex;font-size:13px"><input type="checkbox" data-extra' + (it._extra ? ' checked' : '') + '> quer · + R$ ' + brl(Math.round(it.valor / 4)) + '</label>' : '<span class="muted">—' + (fixa ? ' (incluída)' : '') + '</span>';
     var acao = it._s[0] === 'verde' ? '<button type="button" class="btn link" data-ver>Ver</button>' : it._s[0] === 'vermelha' ? '<button type="button" class="btn vermelho" data-reg>Chamar a gestão</button>' : '<button type="button" class="btn" data-reg>Registrar pagamento</button>';
