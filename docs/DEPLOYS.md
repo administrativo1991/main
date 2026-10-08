@@ -23,7 +23,7 @@ coluna E não afeta o app. Atualizar `E2` faz parte de toda publicação (passo 
 
 | Canal | Deploy | Peças | Commit |
 |---|---|---|---|
-| Real (`arquivos_real`) | **2026-10-08-04** | 34 (duplicatas 1 · server 8 · index 25); ativas = linhas com nome sem prefixo na coluna A (2; 115–117; 123–128; 147–152; 156–162; 175; 177–181; 183; 186–189); `antigoN:` = versões anteriores | branch `claude/busy-wright-xf0hql` |
+| Real (`arquivos_real`) | **2026-10-08-05** | 34 (duplicatas 1 · server 8 · index 25); ativas = linhas com nome sem prefixo na coluna A (2; 115–117; 123–128; 147–152; 156–162; 175; 177–178; 180–181; 183; 186–190); `antigoN:` = versões anteriores | branch `claude/busy-wright-xf0hql` |
 | Teste (`arquivos`) | **2026-10-06-08** (atrás da real: não recebeu o 10, o 11, o 07-01 nem os de 07/10) | 27 | 135de84 |
 | Carregador real | 2026-10-06-02 (`dist/Code.real.gs`, implantado pela Roberta) | — | 4ad0272 |
 | Carregador teste | 2026-10-04-01 + nova versão pendente desde 05/10 (permissão do Drive, ver `COMO-INSTALAR.md`) | — | — |
@@ -48,6 +48,13 @@ Modelo:
 ```
 
 ## Lista
+
+### 2026-10-08-05 · Real (direto) · modalidade Pro bono/Permuta basta pra não cobrar
+- **O que mudou**: o Registrar deixa de cobrar quando a modalidade é Pro bono ou Permuta, mesmo com a regra de cobrança em
+  branco (antes só olhava a regra).
+- **Peças**: 1 (index 17) na linha 190, conferida; 179 virou `antigo11:`.
+- **Aprovação**: gestão, 08/10.
+
 
 ### 2026-10-08-04 · Real (direto) · "Mensalidade fixa" vira "Mensalidade social"
 - **O que mudou**: o app aceita "Mensalidade social" (e ainda "Mensalidade fixa") como mensalidade; cartão do cadastro
