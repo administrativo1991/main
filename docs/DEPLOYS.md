@@ -23,7 +23,7 @@ coluna E não afeta o app. Atualizar `E2` faz parte de toda publicação (passo 
 
 | Canal | Deploy | Peças | Commit |
 |---|---|---|---|
-| Real (`arquivos_real`) | **2026-10-08-08** | 36 (duplicatas 1 · server 10 · index 25); ativas = 2, 123–125, 201–203, 223, 235, 244–252, 255–261, 270–280; `antigo15:` = trocadas neste deploy | branch `claude/busy-wright-xf0hql` |
+| Real (`arquivos_real`) | **2026-10-08-09** | 36 (duplicatas 1 · server 10 · index 25); ativas = 2, 123, 223, 244–251, 258–261, 270, 273–292; `antigo16:` = trocadas neste deploy | branch `claude/busy-wright-xf0hql` |
 | Teste (`arquivos`) | **2026-10-06-08** (atrás da real: não recebeu o 10, o 11, o 07-01 nem os de 07/10) | 27 | 135de84 |
 | Carregador real | 2026-10-06-02 (`dist/Code.real.gs`, implantado pela Roberta) | — | 4ad0272 |
 | Carregador teste | 2026-10-04-01 + nova versão pendente desde 05/10 (permissão do Drive, ver `COMO-INSTALAR.md`) | — | — |
@@ -48,6 +48,16 @@ Modelo:
 ```
 
 ## Lista
+
+### 2026-10-08-09 · Real (direto) · Agenda: ações sempre visíveis
+- **O que mudou**: na tabela da Agenda a coluna de ações ("Confirmou" e ⋯) fica presa na borda direita (no computador da
+  recepção os 3 pontinhos sumiam); "guia a assinar" com mais de 2 datas vira "N sessões (dd/mm a dd/mm)"; até 1600 px a
+  coluna "Profissional · modalidade" vai pra baixo do nome e o painel da direita fica com 300 px. Francisco Luiz Freitas
+  do Couto: observação de cobrança da avaliação (2 × R$ 1.050; 2ª ao fim dos testes).
+- **Peças**: 12 novas (281–292, index 1–12); trocadas viraram `antigo16:` (124, 125, 201–203, 235, 252, 255–257, 271, 272).
+- **Conferência**: 12/12 iguais ao build; ativas = 1 + 10 + 25.
+- **Voltar**: `antigo16:` → nome e 281–292 → `antigo17:`.
+- **Aprovação**: gestão, 08/10.
 
 ### 2026-10-08-08 · Real (direto) · cobrança "a definir"
 - **O que mudou**: Por sessão (combinado) com valor em branco é aceito ("valor a definir": no Registrar o valor abre pra
