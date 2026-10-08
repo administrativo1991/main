@@ -30,31 +30,7 @@
 
     <div id="a-avisos"></div>
 
-    <div id="a-pacotebox" class="painel" hidden>
-      <div class="cab"><h2 id="a-pk-titulo">Lançar plano</h2><span class="esp"></span><button type="button" class="btn icone p" id="a-pk-cancel" aria-label="Fechar"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
-      <p class="muted" style="margin:0">Cria uma linha em <b>Planos</b> e uma linha de recebimento na aba do mês. A consulta de hoje já conta como 1. Validade: 4 consultas = 2 meses, 6 = 3 meses, 12 = 6 meses.</p>
-      <div class="grid">
-        <label class="campo">Consultas<input id="a-pk-n" inputmode="numeric"></label>
-        <label class="campo">Valor (R$)<input id="a-pk-valor" inputmode="decimal"></label>
-        <label class="campo">Pagamento<select id="a-pk-pago"><option value="Sim">Pagou agora</option><option value="Não">Vai pagar depois</option></select></label>
-        <label class="campo" data-pk-pago>Forma<select id="a-pk-forma"></select></label>
-        <label class="campo">Quem paga<input id="a-pk-quem" list="dl-pagadores" autocomplete="off"></label>
-        <label class="campo" data-pk-pago>NF emitida?<select id="a-pk-nf"><option>Sim</option><option>Não</option></select></label>
-        <label class="campo" data-pk-pago>Nº da NF<input id="a-pk-nfn" autocomplete="off"></label>
-      </div>
-      <div class="faixa nota" id="a-pk-depois" hidden>O plano fica <b>a receber</b>: as consultas são contadas normalmente e a compra aparece em "Particulares sem Pago?" na tela Pendências até alguém registrar o pagamento (Pendências ou Agenda → Receber).</div>
-      <div class="acoes"><button type="button" class="btn" id="a-pk-salvar">Salvar plano e recebimento</button></div>
-    </div>
-
-    <div id="a-extrabox" class="painel" hidden>
-      <div class="cab"><h2>Liberar sessão extra (sem cobrar)</h2><span class="esp"></span><button type="button" class="btn icone p" id="a-extra-cancel" aria-label="Fechar"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
-      <p class="muted" style="margin:0">Fica registrada na linha do atendimento e na lista da gestão. Não consome consulta do plano.</p>
-      <div class="grid">
-        <label class="campo">Quem liberou<select id="a-extra-quem"><option>Recepção</option><option>Gestão</option><option>Psicóloga</option></select></label>
-        <label class="campo c2">Motivo (obrigatório)<input id="a-extra-motivo" placeholder="ex.: paciente em crise, Juliana pediu pra atender"></label>
-      </div>
-      <div class="acoes"><button type="button" class="btn" id="a-extra-ok">Liberar e registrar como já paga</button></div>
-    </div>
+    <div id="a-renbox" class="painel" hidden></div>
 
     <div id="a-antbox" class="painel" hidden>
       <div class="cab"><h2>Pagamento antecipado · lançar sessões pagas</h2><span class="esp"></span><button type="button" class="btn icone p" id="a-ant-cancel" aria-label="Fechar"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
@@ -77,6 +53,7 @@
       <div class="passo"><span class="num">2</span><h2>O que aconteceu</h2></div>
       <div class="seg solto" id="a-oque-seg" role="group" aria-label="O que aconteceu"></div>
       <select id="a-oque" class="sr" tabindex="-1" aria-hidden="true"></select>
+      <label class="check forte" id="l-mesma-semana" hidden><input type="checkbox" id="a-mesma-semana"> Remarcada na mesma semana <span class="leg">(não gasta sessão do pacote)</span></label>
     </section>
 
     <section class="card" id="a-passo3" hidden>
@@ -154,13 +131,14 @@
         <div style="min-width:0"><div id="a-pc-nome" style="font-family:var(--fh);font-weight:600;font-size:16px">Escolha o paciente</div><div class="muted" id="a-pc-nasc"></div></div>
       </div>
       <dl style="margin:0;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px 12px;font-size:13px">
-        <div><dt class="muted">Modalidade</dt><dd style="margin:0;font-weight:700" id="a-pc-mod">—</dd></div>
+        <div><dt class="muted">Cobrança</dt><dd style="margin:0;font-weight:700" id="a-pc-mod">—</dd></div>
         <div><dt class="muted">Valor da sessão</dt><dd style="margin:0;font-weight:700" id="a-pc-valor">—</dd></div>
         <div><dt class="muted">Convênio</dt><dd style="margin:0;font-weight:700" id="a-pc-conv">—</dd></div>
         <div><dt class="muted">Pagador habitual</dt><dd style="margin:0;font-weight:700" id="a-pc-pag">—</dd></div>
+        <div><dt class="muted">Pagamento</dt><dd style="margin:0;font-weight:700" id="a-pc-quando">—</dd></div>
         <div><dt class="muted">Profissional</dt><dd style="margin:0;font-weight:700" id="a-pc-prof">—</dd></div>
       </dl>
-      <div style="display:flex;gap:14px;font-size:13px;font-weight:700"><button type="button" class="btn link" id="a-editcad" style="padding:0;min-height:0">Ver cadastro</button><button type="button" class="btn link" id="a-hist" style="padding:0;min-height:0">Histórico do mês</button></div>
+      <div style="display:flex;gap:14px;font-size:13px;font-weight:700"><button type="button" class="btn link" id="a-editcad" style="padding:0;min-height:0">Ver cadastro</button><button type="button" class="btn link" id="a-hist" style="padding:0;min-height:0">Ver pacotes</button></div>
     </div>
     <div class="card compacto">
       <div class="eyebrow">Vai ser gravado</div>
