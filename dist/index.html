@@ -966,7 +966,7 @@ button.kpi[aria-pressed="true"] span,.kpi.roxo span{color:#fff;opacity:.9}
         <select id="n-mod" class="sr" tabindex="-1" aria-hidden="true"></select>
         <div id="n-modwarn"></div>
         <div class="grid" id="n-cob-campos">
-          <label class="campo" id="l-valor-num" hidden>Valor combinado por sessão<div class="campo-wrap"><span class="prefixo">R$</span><input id="n-valor-num" class="dinheiro" inputmode="decimal" autocomplete="off"></div></label>
+          <label class="campo" id="l-valor-num" hidden>Valor combinado por sessão <span class="leg">— em branco = a definir</span><div class="campo-wrap"><span class="prefixo">R$</span><input id="n-valor-num" class="dinheiro" inputmode="decimal" autocomplete="off" placeholder="a definir"></div></label>
           <label class="campo" id="l-pct-n" hidden>Sessões por pacote<input id="n-pct-n" inputmode="numeric" autocomplete="off" placeholder="4"></label>
           <label class="campo" id="l-pct-v" hidden>Valor do pacote<div class="campo-wrap"><span class="prefixo">R$</span><input id="n-pct-v" class="dinheiro" inputmode="decimal" autocomplete="off"></div></label>
           <label class="campo" id="l-pagamento">Pagamento <span class="leg" id="n-pag-leg">quando paga</span><select id="n-pagamento"></select></label>
@@ -1505,7 +1505,7 @@ function resumoCob(p, prof) {
       cor = e.disponiveis <= 0 || e.vencido ? 'vermelha' : e.disponiveis === 1 ? 'amarela' : 'verde';
     } else if (valorSessaoPacote(p) != null) partes.push('R$ ' + brl(valorSessaoPacote(p)) + ' por sessão');
   }
-  else if (cob === 'Por sessão (combinado)') partes.push('Por sessão (combinado) · ' + (valorComb(p) != null ? brlCurto(valorComb(p)) : 'valor não informado'));
+  else if (cob === 'Por sessão (combinado)') partes.push('Por sessão (combinado) · ' + (valorComb(p) != null ? brlCurto(valorComb(p)) : 'valor a definir'));
   else if (cob === 'Convênio') partes.push('Convênio ' + (p.convenio && p.convenio !== 'Particular' ? p.convenio : '(escolher)'));
   else if (cob === 'Pro bono' || cob === 'Permuta') partes.push(cob + ' · sem cobrança');
   else partes.push('Tabela' + (prof ? ' · ' + valorTabelaTxt(p, prof) : ''));
@@ -1529,7 +1529,7 @@ function valorSessaoTxt(p, prof) {
   if (cobConvenio(p)) return 'convênio (R$ 0)';
   var pg = pagDe(p), quando = pg === 'Posterior' ? ' · paga no fim do mês' : pg === 'Antecipado' ? ' · pago adiantado' : '';
   if (ehPacoteCob(p)) { var vp = valorSessaoPacote(p); return pg === 'Antecipado' ? 'já paga no pacote' + (vp != null ? ' (R$ ' + brl(vp) + ')' : '') : (vp != null ? 'R$ ' + brl(vp) + ' (pacote ÷ sessões)' : 'pacote sem valor no cadastro') + quando; }
-  if (cobDe(p) === 'Por sessão (combinado)' && valorComb(p) != null) return 'R$ ' + brl(valorComb(p)) + ' (combinado)' + quando;
+  if (cobDe(p) === 'Por sessão (combinado)') return valorComb(p) != null ? 'R$ ' + brl(valorComb(p)) + ' (combinado)' + quando : 'a definir (preencher à mão)';
   return valorTabelaTxt(p, prof) + (prof && AT ? ' (tabela)' : '') + quando;
 }
 // sessões de pacote/convênio não entram nas pendências de pagamento; as de pacote no Posterior entram (Pago? = Não)
@@ -1552,7 +1552,8 @@ function tagsDe(p) {
   if (ehPacoteCob(p)) {
     if (pg === 'Antecipado') { var e = estPacote(p); t.push({ cor: e.disponiveis <= 0 || e.vencido ? 'vermelha' : e.disponiveis === 1 ? 'amarela' : 'verde', txt: e.disponiveis <= 0 ? 'pacote esgotado' : e.vencido ? 'pacote vencido' : 'pacote · ' + disponiveisTxt(e.disponiveis) }); }
     else t.push({ cor: 'cinza', txt: (cob === 'Pacote social' ? 'pacote social' : 'pacote') + ' · paga no fim do mês' });
-  } else if (cob === 'Por sessão (combinado)') t.push({ cor: 'cinza', txt: (valorComb(p) != null ? 'R$ ' + brl(valorComb(p)) + '/sessão' : 'por sessão') + (pg === 'Posterior' ? ' · paga no fim do mês' : pg === 'Antecipado' ? ' · antecipado' : '') });
+  } else if (cob === 'Por sessão (combinado)' && valorComb(p) == null) t.push({ cor: 'laranja', ic: 'alerta', txt: 'valor a definir · completar cadastro' });
+  else if (cob === 'Por sessão (combinado)') t.push({ cor: 'cinza', txt: (valorComb(p) != null ? 'R$ ' + brl(valorComb(p)) + '/sessão' : 'por sessão') + (pg === 'Posterior' ? ' · paga no fim do mês' : pg === 'Antecipado' ? ' · antecipado' : '') });
   else if (cob === 'Tabela' && pg === 'Posterior') t.push({ cor: 'cinza', txt: 'paga no fim do mês' });
   if (ehConvenio(p)) t.push({ cor: 'lilas', txt: 'Convênio ' + p.convenio });
   if (cadastroIncompleto(p)) t.push({ cor: 'laranja', ic: 'alerta', txt: 'cobrança em branco · completar cadastro' });
@@ -2414,7 +2415,7 @@ function onPacAt(force) {
     var extra = '';
     if (ehPacoteCob(cur) && pg === 'Posterior') extra = '<div>Cada sessão fica lançada com Pago? = Não. No fim do mês o total aparece em Pendências. Este mês: ' + sessoesTxt(ep.sessoesMes || 0) + (ep.aPagarMes ? ', R$ ' + brl(ep.aPagarMes) + ' a pagar' : '') + '.</div>';
     else if (pg === 'Posterior' && !cobConvenio(cur)) extra = '<div>A sessão fica lançada com Pago? = Não. No fim do mês o total aparece em Pendências e é recebido por lá.</div>';
-    box.innerHTML += aviso(cobConvenio(cur) || ehProBono(cur) ? 'lilas' : 'cinza', 'Cobrança: ' + esc(rc[1]), extra + obsHtml,
+    box.innerHTML += aviso(cobConvenio(cur) || ehProBono(cur) ? 'lilas' : (cobDe(cur) === 'Por sessão (combinado)' && valorComb(cur) == null) ? 'laranja' : 'cinza', 'Cobrança: ' + esc(rc[1]), extra + obsHtml,
       pg === 'Antecipado' && !ehPacoteCob(cur) ? '<div class="acoes" style="flex-basis:100%"><button class="btn sec" type="button" id="a-btn-ant">Recebeu adiantado: lançar sessões pagas</button></div>' : '');
   }
   if (faltasDoc(cur).length) box.innerHTML += aviso('laranja', 'Cadastro incompleto · falta ' + esc(faltasDocTxt(cur)), 'Peça o documento e complete o cadastro (dá pra registrar o atendimento mesmo assim).', '<button class="btn sec" type="button" id="a-btn-cad-doc">Completar cadastro</button>');
@@ -2476,6 +2477,7 @@ function aplicarRegra() {
     var sessao = p && /^(Sessão|Consulta|Terapia)/.test(p.nome), vc = cob === 'Por sessão (combinado)' ? valorComb(cur) : null;
     if (semCobranca) { v.value = brl(0); h.textContent = ehAplicacaoTeste() ? 'já paga na avaliação neuropsicológica · só controle das sessões de teste' : 'procedimento sem cobrança (R$ 0 na tabela)'; }
     else if (vc != null && sessao) { v.value = brl(vc); h.textContent = 'valor combinado do cadastro'; }
+    else if (cob === 'Por sessão (combinado)' && sessao) { v.readOnly = false; v.placeholder = 'valor a definir'; h.textContent = 'valor combinado a definir no cadastro: preencha e avise a gestão'; }
     else if (procV == null || (cur._cobrar && procV === 0)) { v.readOnly = false; v.placeholder = 'preencher à mão'; h.textContent = cur._cobrar ? 'exceção: cobrado à parte, valor à mão' : 'procedimento sem valor na tabela'; }
     else { v.value = brl(procV); h.textContent = cur._avulsa ? 'avulsa pela Tabela (travado)' : 'vem do procedimento (travado)'; }
     pago.value = semCobranca ? pick(opts, 'Não se aplica') : (pg === 'Posterior' && !cur._avulsa) ? pick(opts, 'Não') : pick(opts, 'Sim'); nf.value = semCobranca ? 'Não se aplica' : 'Não';
@@ -2841,13 +2843,13 @@ function validarN() {
   if (Duplicatas.digitos($("#n-cpf").value) && !Duplicatas.cpfValido($("#n-cpf").value)) e.push('CPF inválido: confira os 11 dígitos ou deixe em branco.');
   if ($("#n-nasc").value.trim() && !dataValida($("#n-nasc").value)) e.push('Data de nascimento inválida (dd/mm/aaaa) ou deixe em branco.');
   if ($("#n-primeira").value && !dataValida($("#n-primeira").value)) e.push('Data da 1ª consulta inválida.');
-  if (!$("#n-mod").value) e.push('Escolha a cobrança.');
+  // cobrança em branco é aceita (vira Tabela, com aviso "completar cadastro"); valor combinado em branco = a definir
   return e.concat(errosCob(), errosCpfsExtras());
 }
 function errosCob() {
   var e = [], m = $("#n-mod").value;
   if (m === 'Convênio' && (!$("#n-conv").value || $("#n-conv").value === 'Particular')) e.push('Cobrança "Convênio": escolha o convênio.');
-  if (m === 'Por sessão (combinado)' && !(num($("#n-valor-num").value) > 0)) e.push('Por sessão (combinado): informe o valor combinado por sessão.');
+  var vtx = $("#n-valor-num").value.trim(); if (m === 'Por sessão (combinado)' && vtx && !/^a definir$/i.test(vtx) && !(num(vtx) > 0)) e.push('Valor combinado: use só o número (ex.: 90) ou deixe em branco se ainda está a definir.');
   if (m === 'Pacote de sessões' && !(num($("#n-pct-n").value) > 0 && num($("#n-pct-v").value) > 0)) e.push('Pacote de sessões: informe quantas sessões e o valor do pacote.');
   if (m && !$("#n-pagamento").value) e.push('Escolha o Pagamento (quando paga).');
   return e;

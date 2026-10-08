@@ -107,8 +107,7 @@ assert.strictEqual(c2.modalidade, 'Pacote de sessões'); assert.strictEqual(c2.p
 assert.strictEqual(e2.modalidade, 'Pacote social'); assert.strictEqual(e2.pctV, 200); assert.strictEqual(e2.pagamento, 'Antecipado');
 console.log('virada ok');
 // cadastro: validações e novo paciente
-let c = API.atualizarCadastro({ nome: 'Beatriz Tabela', quemInformou: 'teste', campos: { modalidade: 'Por sessão (combinado)', valorNum: '', pagamento: 'Na sessão' } });
-assert.strictEqual(c.ok, false);
+let c;
 c = ok(API.atualizarCadastro({ nome: 'Beatriz Tabela', quemInformou: 'teste', campos: { modalidade: 'Por sessão (combinado)', valorNum: 90, pagamento: 'Na sessão' } }), 'cad');
 const lc = ok(API.lerCadastro({ nome: 'Beatriz Tabela' }), 'ler'); assert.strictEqual(String(lc.campos.valorNum), '90');
 const np = ok(API.criarPaciente({ nome: 'Joana Teste da Silva', cpf: '390.533.447-05', nasc: '01/01/1990', modalidade: 'Tabela', pagamento: '', convenio: 'Particular', telPaciente: '(32) 9 8888-7777' }), 'criar');
@@ -120,6 +119,9 @@ assert.strictEqual(API.criarPaciente({ nome: 'Paula Cpf Errado', cpf: '123', nas
 ok(API.atualizarCadastro({ nome: 'Pedro Sem Documento', quemInformou: 'mãe', campos: { cpf: '529.982.247-25', nasc: '02/03/2015' } }), 'completar');
 const pd = API.bootstrapAtendimento().pacientes.filter(p => p.nome === 'Pedro Sem Documento')[0]; assert.strictEqual(pd.cpf, '529.982.247-25'); assert.strictEqual(pd.nasc, '02/03/2015');
 assert.strictEqual(API.atualizarCadastro({ nome: 'Joana Teste da Silva', quemInformou: 'x', campos: { cpf: '529.982.247-25' } }).ok, false); // CPF de outro paciente
+// cobrança a definir: Por sessão sem valor e cobrança em branco são aceitos
+ok(API.criarPaciente({ nome: 'Valor Adefinir Teste', cpf: '', nasc: '', modalidade: 'Por sessão (combinado)', valorNum: '', convenio: 'Particular' }), 'a definir');
+ok(API.criarPaciente({ nome: 'Cobranca Embranco Teste', cpf: '', nasc: '', modalidade: '', convenio: 'Particular' }), 'em branco');
 // recepção não roda a virada
 email = 'atendimento@clinicanascente.com.br'; assert.strictEqual(API.viradaPropostas().ok, false);
 assert.strictEqual(API.atualizarCadastro({ nome: 'Pedro Sem Documento', quemInformou: 'x', campos: { nasc: '03/03/2015' } }).ok, false);

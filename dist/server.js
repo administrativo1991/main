@@ -386,7 +386,7 @@ function camposCobranca_(c, erros) {
   if (c.pctN != null) out.pctN = num(c.pctN);
   if (c.pctV != null) out.pctV = num(c.pctV);
   if (cob === 'Pacote social') { out.pctN = CONFIG.PACOTE_SOCIAL.sessoes; out.pctV = CONFIG.PACOTE_SOCIAL.valor; }
-  if (cob === 'Por sessão (combinado)' && !(out.valorNum > 0)) erros.push('Por sessão (combinado): informe o valor combinado por sessão.');
+  // Por sessão (combinado) com valor em branco = "valor a definir" (gestão, 08/10): o Registrar pede o valor à mão
   if (cob === 'Pacote de sessões' && !(out.pctN > 0 && out.pctV > 0)) erros.push('Pacote de sessões: informe quantas sessões e o valor do pacote.');
   ['valorNum', 'pctN', 'pctV'].forEach(function (k) { if (typeof out[k] === 'number' && isNaN(out[k])) erros.push('Número inválido em ' + k + '.'); });
   var pg = c.pagamento != null ? String(c.pagamento).trim() : null;
@@ -418,7 +418,7 @@ API.criarPaciente = function (d) {
   else if (nasc && nasc > new Date()) erros.push('Data de nascimento no futuro.');
   var modalidades = colunaLista_(CONFIG.LISTAS.MODALIDADE);
   var modalidade = String(d.modalidade || '').trim();
-  if (modalidades.length && modalidades.indexOf(modalidade) < 0) erros.push('Modalidade fora da lista.');
+  if (modalidade && modalidades.length && modalidades.indexOf(modalidade) < 0) erros.push('Cobrança fora da lista.'); // em branco = Tabela, com aviso pra completar
   var convenios = colunaLista_(CONFIG.LISTAS.CONVENIO);
   var convenio = String(d.convenio || 'Particular').trim();
   if (convenios.length && convenios.indexOf(convenio) < 0) erros.push('Convênio fora da lista.');

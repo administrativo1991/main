@@ -168,13 +168,13 @@ function validarN() {
   if (Duplicatas.digitos($("#n-cpf").value) && !Duplicatas.cpfValido($("#n-cpf").value)) e.push('CPF inválido: confira os 11 dígitos ou deixe em branco.');
   if ($("#n-nasc").value.trim() && !dataValida($("#n-nasc").value)) e.push('Data de nascimento inválida (dd/mm/aaaa) ou deixe em branco.');
   if ($("#n-primeira").value && !dataValida($("#n-primeira").value)) e.push('Data da 1ª consulta inválida.');
-  if (!$("#n-mod").value) e.push('Escolha a cobrança.');
+  // cobrança em branco é aceita (vira Tabela, com aviso "completar cadastro"); valor combinado em branco = a definir
   return e.concat(errosCob(), errosCpfsExtras());
 }
 function errosCob() {
   var e = [], m = $("#n-mod").value;
   if (m === 'Convênio' && (!$("#n-conv").value || $("#n-conv").value === 'Particular')) e.push('Cobrança "Convênio": escolha o convênio.');
-  if (m === 'Por sessão (combinado)' && !(num($("#n-valor-num").value) > 0)) e.push('Por sessão (combinado): informe o valor combinado por sessão.');
+  var vtx = $("#n-valor-num").value.trim(); if (m === 'Por sessão (combinado)' && vtx && !/^a definir$/i.test(vtx) && !(num(vtx) > 0)) e.push('Valor combinado: use só o número (ex.: 90) ou deixe em branco se ainda está a definir.');
   if (m === 'Pacote de sessões' && !(num($("#n-pct-n").value) > 0 && num($("#n-pct-v").value) > 0)) e.push('Pacote de sessões: informe quantas sessões e o valor do pacote.');
   if (m && !$("#n-pagamento").value) e.push('Escolha o Pagamento (quando paga).');
   return e;
