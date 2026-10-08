@@ -118,15 +118,15 @@ function aplicarRegra() {
   else if (/^Paga o que/.test(regra)) { v.readOnly = false; v.placeholder = 'valor que pagou'; h.textContent = 'livre — o que pagar quita'; pago.value = pick(opts, 'Sim'); nf.value = 'Não'; modo = 'paga'; }
   else if (/^Valor fixo/.test(regra)) { var vc = num((cur.valorCombinado || '').match(/[\d.]+,?\d*/) || ''); if (vc != null) { v.value = brl(vc); h.textContent = 'valor combinado do cadastro'; } else { v.readOnly = false; h.textContent = 'combinado: preencher à mão (não achei o número no cadastro)'; } pago.value = pick(opts, 'Sim'); nf.value = 'Não'; modo = 'fixo'; }
   else if (/^Pro bono|^Permuta/.test(regra) && !cur._cobrar) { v.disabled = true; forma.disabled = true; desc.disabled = true; pago.value = pick(opts, 'Não se aplica'); nf.value = 'Não se aplica'; h.textContent = 'sem cobrança'; modo = 'probono'; }
-  else if (regra === 'Convênio' || (ehConvenio(cur) && (!cur.modalidade || cur.modalidade === 'Convênio'))) { v.value = brl(0); v.disabled = true; forma.disabled = true; desc.disabled = true; pago.value = pick(opts, 'Convênio'); nf.value = 'Não se aplica'; h.textContent = 'faturado no convênio'; modo = 'convenio'; }
+  else if ((regra === 'Convênio' || (ehConvenio(cur) && (!cur.modalidade || cur.modalidade === 'Convênio'))) && !cur._cobrar) { v.value = brl(0); v.disabled = true; forma.disabled = true; desc.disabled = true; pago.value = pick(opts, 'Convênio'); nf.value = 'Não se aplica'; h.textContent = 'faturado no convênio'; modo = 'convenio'; }
   else if (ehMensal(cur) || /^Mensalidade/.test(regra)) { v.disabled = true; forma.disabled = true; desc.disabled = true; pago.value = pick(opts, 'Plano') || pick(opts, 'Pacote'); nf.value = 'Não se aplica'; h.textContent = 'já pago na mensalidade'; modo = 'mensal'; }
   else if (pacoteOk) { v.disabled = true; forma.disabled = true; desc.disabled = true; pago.value = pick(opts, 'Plano') || pick(opts, 'Pacote'); nf.value = 'Não se aplica'; h.textContent = 'já pago no plano'; modo = 'plano'; }
   else {
     // procedimento R$ 0 na tabela (aplicação de teste, retorno): sem cobrança, mesmo com valor por sessão no cadastro
-    var semCobranca = procV === 0, sessao = p && /^(Sessão|Consulta|Terapia)/.test(p.nome);
+    var semCobranca = procV === 0 && !cur._cobrar, sessao = p && /^(Sessão|Consulta|Terapia)/.test(p.nome);
     if (semCobranca) { v.value = brl(0); h.textContent = 'procedimento sem cobrança (R$ 0 na tabela)'; }
     else if (usaValorSessao(cur) && sessao) { v.value = brl(valorSessaoCad(cur)); h.textContent = 'valor por sessão do cadastro'; }
-    else if (procV == null) { v.readOnly = false; v.placeholder = 'preencher à mão'; h.textContent = 'procedimento sem valor na tabela'; }
+    else if (procV == null || (cur._cobrar && procV === 0)) { v.readOnly = false; v.placeholder = 'preencher à mão'; h.textContent = cur._cobrar ? 'exceção: cobrado à parte, valor à mão' : 'procedimento sem valor na tabela'; }
     else { v.value = brl(procV); h.textContent = 'vem do procedimento (travado)'; }
     pago.value = semCobranca ? pick(opts, 'Não se aplica') : ehPosterior(cur) ? pick(opts, 'Não') : pick(opts, 'Sim'); nf.value = semCobranca ? 'Não se aplica' : 'Não';
     if (ehPosterior(cur) && !semCobranca) h.textContent += ' · paga no fim do mês';
@@ -138,6 +138,8 @@ function aplicarRegra() {
   mostrarPagParcial();
   layoutCobranca(modo, falta);
 }
+// avaliação neuropsicológica (avaliação e aplicação de teste): o valor varia e pode ser cobrado à parte mesmo de paciente de convênio (gestão, 08/10)
+function excecaoConv() { return /neuropsicol/i.test($("#a-proc").value || ''); }
 // o que aparece no passo 3, pelo modo da regra
 function layoutCobranca(modo, falta) {
   var p3 = $("#a-passo3"), pb = $("#a-probono");
@@ -147,8 +149,10 @@ function layoutCobranca(modo, falta) {
   else if (modo === 'mensal' || modo === 'plano' || modo === 'extra') { /* a faixa de aviso já explica; nada de dinheiro na tela */ }
   else {
     p3.hidden = false;
-    if (modo === 'convenio') { $("#a-convbox").hidden = false; $("#a-pagbox").hidden = true; $("#a-conv-txt").innerHTML = '<strong>' + esc(cur.convenio || 'Convênio') + '</strong> · vai para a fatura do convênio, valor R$ 0. Nenhuma cobrança ao paciente.'; $("#a-guia-chk").checked = $("#a-guia").value === 'Sim'; }
+    if (modo === 'convenio') { $("#a-convbox").hidden = false; $("#a-pagbox").hidden = true; $("#a-conv-txt").innerHTML = '<strong>' + esc(cur.convenio || 'Convênio') + '</strong> · vai para a fatura do convênio, valor R$ 0. Nenhuma cobrança ao paciente.' + (excecaoConv() ? ' <button type="button" class="btn link" id="a-conv-cobrar">Cobrar à parte como particular</button>' : '');
+      var bcv = $("#a-conv-cobrar"); if (bcv) bcv.addEventListener('click', function () { cur._cobrar = true; aplicarTipo(); toast('Exceção: cobrando à parte. Preencha o valor e anote o motivo na Observação'); }); $("#a-guia-chk").checked = $("#a-guia").value === 'Sim'; }
     else if (modo === 'paga') { var ref = refValor(cur); $("#a-cob-aviso").innerHTML = '<div class="faixa nota">Valor livre. <strong>O que for pago quita a sessão</strong> — nada fica em aberto.' + (ref ? ' Referência: R$ ' + esc(ref % 1 ? brl(ref) : ref) + '.' : '') + '</div>'; }
+    else if (cur._cobrar && ehConvenio(cur) && excecaoConv()) { $("#a-cob-aviso").innerHTML = '<div class="faixa nota">Exceção ao convênio: este atendimento é cobrado à parte, como particular, com o valor combinado. <button type="button" class="btn link" id="a-conv-voltar">Voltar para o convênio</button></div>'; $("#a-conv-voltar").addEventListener('click', function () { cur._cobrar = false; aplicarTipo(); }); }
     else if (modo === 'fixo') $("#a-cob-aviso").innerHTML = '<div class="faixa nota">Valor combinado com a gestão' + (cur.valorCombinado ? ': <strong>' + esc(cur.valorCombinado) + '</strong>' : '') + '. Não negociar na recepção.</div>';
   }
   seg($("#a-pago-seg"), $("#a-pago").value); seg($("#a-nf-seg"), $("#a-nf").value === 'Sim' ? 'Sim' : 'Não');
