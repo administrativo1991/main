@@ -1558,6 +1558,106 @@ API.gestaoResumo = function (d) {
   out.colunasMensalistas = sM ? colunasMensalistas_(sM.getRange(1, 1, 1, sM.getLastColumn()).getValues()[0].map(function (x) { return String(x || '').trim(); })).map(function (c) { return c.mes; }) : [];
   return out;
 };
+/* ---------- Repasse (só gestão, 10/10) ----------
+   As regras ficam na aba "Regras de repasse" e a gestão muda na tela Repasse (ou direto na aba). Nada é fixo no código.
+   Uma regra = profissional (ou "Todos") + convênio ("Particular", o nome do convênio ou "Qualquer") + procedimento (trecho, opcional) → %.
+   Vale a regra mais específica: procedimento (exceção) > profissional > convênio; empate fica com a de baixo. "Ativa = Não" desliga sem apagar.
+   "Valor da sessão (convênio)" é a base quando a linha do convênio está sem valor (R$ 0 na aba do mês). */
+var HR_REPASSE = ['Ativa', 'Profissional', 'Convênio', 'Procedimento (contém)', '% repasse', 'Valor da sessão (convênio) (R$)', 'Observação', 'Alterado por (app)'];
+var ABA_REPASSE = 'Regras de repasse';
+function semAcento_(t) { return String(t || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim(); }
+function regrasRepasse_() {
+  var s = planilha_().getSheetByName(ABA_REPASSE);
+  return linhasComo_(s).map(function (r) {
+    var bruto = String(r['% repasse'] == null ? '' : r['% repasse']).trim(), pct = bruto === '' ? null : numBR_(bruto.replace('%', ''));
+    if (typeof r['% repasse'] === 'number' && r['% repasse'] > 0 && r['% repasse'] <= 1) pct = r['% repasse'] * 100; // célula em formato %
+    return { linha: r._linha, ativa: !/^n/i.test(String(r['Ativa'] || 'Sim')), profissional: String(r['Profissional'] || '').trim(), convenio: String(r['Convênio'] || '').trim(),
+      procedimento: String(r['Procedimento (contém)'] || '').trim(), pct: pct, valorRef: numBR_(r['Valor da sessão (convênio) (R$)']), obs: String(r['Observação'] || '').trim() };
+  }).filter(function (g) { return g.profissional || g.convenio; });
+}
+function convenioDaLinha_(l) { var c = String(l.convenio || '').trim(); if (c && !/^Particular$/i.test(c)) return c; return /^Convênio/i.test(l.pago) ? (c || 'Convênio (sem nome)') : 'Particular'; }
+// soValor: procura só o "valor da sessão (convênio)" (regra pode não ter %)
+function regraPara_(regras, prof, conv, proc, soValor) {
+  var melhor = null, nota = -1, P = semAcento_(prof), C = semAcento_(conv), PR = semAcento_(proc);
+  regras.forEach(function (g) {
+    if (!g.ativa || (soValor ? !(g.valorRef > 0) : g.pct == null)) return;
+    var gp = semAcento_(g.profissional), gc = semAcento_(g.convenio), gpr = semAcento_(g.procedimento), n = 0;
+    if (gp && gp !== 'todos') { if (gp !== P) return; n += 4; }
+    if (gc && gc !== 'qualquer') { if (gc !== C) return; n += 2; }
+    if (gpr) { if (PR.indexOf(gpr) < 0) return; n += 8; } // exceção por procedimento (ex.: avaliação neuro 0%) ganha de tudo
+    if (n >= nota) { nota = n; melhor = g; }
+  });
+  return melhor;
+}
+// uma linha da aba do mês → base e repasse. "pago" = o que já entrou (ou o convênio já faturado); "previsto" = inclui o que está em aberto
+function repasseLinha_(l, regras) {
+  var conv = convenioDaLinha_(l), g = regraPara_(regras, l.profissional, conv, l.procedimento), pct = g ? g.pct : null, gv = regraPara_(regras, l.profissional, conv, l.procedimento, true);
+  var sit, basePago = 0, basePrev = 0, v = Number(l.valor) || 0;
+  if (ehPerdido_(l.pago)) sit = 'perdido';
+  else if (/^Não se aplica/i.test(l.pago)) sit = 'sem cobrança';
+  else if (/^(Pacote|Plano|Incluída|Mensalista)/i.test(l.pago) && !v) sit = 'incluída no pacote/mensalidade';
+  else if (/^Convênio/i.test(l.pago) || (conv !== 'Particular' && !l.pago)) { basePrev = v || (gv ? gv.valorRef : 0); sit = 'convênio a receber'; }
+  else if (l.pago === 'Sim') { basePago = basePrev = v; sit = 'pago'; }
+  else if (l.pago === 'Parcial') { basePago = Number(l.recebido) || 0; basePrev = v; sit = 'pago em parte'; }
+  else if (v) { basePrev = v; sit = 'em aberto'; }
+  else sit = 'sem valor';
+  var r2 = function (n) { return Math.round(n * 100) / 100; };
+  return { id: l.id, linha: l.linha, data: l.data, paciente: l.paciente, profissional: l.profissional || '(sem profissional)', procedimento: l.procedimento, oque: l.oque, convenio: conv,
+    valor: v, pago: l.pago, situacao: sit, pct: pct, regra: g ? g.linha : null, basePago: r2(basePago), basePrev: r2(basePrev),
+    repassePago: pct == null ? 0 : r2(basePago * pct / 100), repassePrev: pct == null ? 0 : r2(basePrev * pct / 100), semRegra: pct == null && (basePago > 0 || basePrev > 0) };
+}
+API.repasseMes = function (d) {
+  d = d || {};
+  if (usuario_().perfil !== 'gestao') return { ok: false, erros: ['Só a gestão vê o repasse.'] };
+  var mes = String(d.mes || nomeAbaMes_(new Date())).trim(), m = linhasMes_(mes), regras = regrasRepasse_();
+  var linhas = m.linhas.filter(function (l) { return /^Atendido/.test(l.oque) || (Number(l.valor) > 0 && !/^Cancelado/i.test(l.oque)); }).map(function (l) { return repasseLinha_(l, regras); });
+  var por = {};
+  linhas.forEach(function (x) {
+    var p = por[x.profissional] = por[x.profissional] || { profissional: x.profissional, sessoes: 0, basePago: 0, repassePago: 0, basePrev: 0, repassePrev: 0, semRegra: 0, perdido: 0, porConvenio: {} };
+    if (/^Atendido/.test(x.oque)) p.sessoes++;
+    p.basePago += x.basePago; p.repassePago += x.repassePago; p.basePrev += x.basePrev; p.repassePrev += x.repassePrev;
+    if (x.semRegra) p.semRegra++; if (x.situacao === 'perdido') p.perdido += x.valor;
+    var c = p.porConvenio[x.convenio] = p.porConvenio[x.convenio] || { convenio: x.convenio, pct: x.pct, sessoes: 0, basePrev: 0, repassePrev: 0, repassePago: 0 };
+    if (/^Atendido/.test(x.oque)) c.sessoes++; c.basePrev += x.basePrev; c.repassePrev += x.repassePrev; c.repassePago += x.repassePago; if (c.pct !== x.pct) c.pct = c.pct == null ? x.pct : 'vários';
+  });
+  var r2 = function (n) { return Math.round(n * 100) / 100; };
+  var lista = Object.keys(por).sort().map(function (k) { var p = por[k]; ['basePago', 'repassePago', 'basePrev', 'repassePrev', 'perdido'].forEach(function (f) { p[f] = r2(p[f]); });
+    p.porConvenio = Object.keys(p.porConvenio).sort().map(function (c) { var o = p.porConvenio[c]; o.basePrev = r2(o.basePrev); o.repassePrev = r2(o.repassePrev); o.repassePago = r2(o.repassePago); return o; }); return p; });
+  return { ok: true, mes: mes, abaExiste: m.existe, regras: regras, linhas: linhas, porProfissional: lista, semRegra: linhas.filter(function (x) { return x.semRegra; }).length,
+    atualizado: agora_() };
+};
+// grava as regras: só as linhas que mudaram (célula a célula) e as novas no fim; nunca apaga (desligar = Ativa "Não")
+API.salvarRegrasRepasse = function (d) {
+  d = d || {};
+  var u = usuario_(); if (u.perfil !== 'gestao') return { ok: false, erros: ['Só a gestão muda as regras de repasse.'] };
+  var regras = d.regras || [], erros = [];
+  regras.forEach(function (g, i) {
+    var pct = numBR_(String(g.pct == null ? '' : g.pct).replace('%', ''));
+    if (!String(g.profissional || '').trim()) erros.push('Regra ' + (i + 1) + ': escolha o profissional (ou "Todos").');
+    var semPct = String(g.pct == null ? '' : g.pct).trim() === '';
+    if (semPct && !(numBR_(g.valorRef) > 0)) erros.push('Regra ' + (i + 1) + ': informe o % de repasse (ou só o valor da sessão do convênio).');
+    else if (!semPct && !(pct >= 0 && pct <= 100)) erros.push('Regra ' + (i + 1) + ': % de repasse entre 0 e 100.');
+  });
+  if (erros.length) return { ok: false, erros: erros };
+  var lock = LockService.getScriptLock(); lock.waitLock(20000);
+  try {
+    var s = abaComCabecalho_(ABA_REPASSE, HR_REPASSE), h = cabecalhos_(s), atuais = {}, carimbo = (u.email || 'app') + ' · ' + agora_(), mud = 0;
+    regrasRepasse_().forEach(function (g) { atuais[g.linha] = g; });
+    regras.forEach(function (g) {
+      var novo = { 'Ativa': g.ativa === false ? 'Não' : 'Sim', 'Profissional': String(g.profissional || '').trim(), 'Convênio': String(g.convenio || '').trim() || 'Qualquer',
+        'Procedimento (contém)': String(g.procedimento || '').trim(), '% repasse': String(g.pct == null ? '' : g.pct).trim() === '' ? '' : numBR_(String(g.pct).replace('%', '')), 'Valor da sessão (convênio) (R$)': numBR_(g.valorRef) > 0 ? numBR_(g.valorRef) : '', 'Observação': String(g.obs || '').trim() };
+      var a = g.linha ? atuais[g.linha] : null, pares = {};
+      if (a) {
+        var antes = { 'Ativa': a.ativa ? 'Sim' : 'Não', 'Profissional': a.profissional, 'Convênio': a.convenio || 'Qualquer', 'Procedimento (contém)': a.procedimento, '% repasse': a.pct == null ? '' : a.pct, 'Valor da sessão (convênio) (R$)': a.valorRef || '', 'Observação': a.obs };
+        Object.keys(novo).forEach(function (k) { if (String(novo[k]) !== String(antes[k])) pares[k] = novo[k]; });
+        if (!Object.keys(pares).length) return;
+        pares['Alterado por (app)'] = carimbo; gravarCelulas_(s, a.linha, h, pares); mud++;
+      } else { novo['Alterado por (app)'] = carimbo; gravarCelulas_(s, proximaLinha_(s, h['Profissional']), h, novo); mud++; }
+    });
+    SpreadsheetApp.flush();
+    return { ok: true, alteradas: mud, regras: regrasRepasse_() };
+  } finally { lock.releaseLock(); }
+};
 // Pasta "Controle Financeiro/<ano>/<MM Mês_AA>/2_Atendimentos" no Drive (decisão Roberta 05/10). Cria o mês no padrão "10 Out_26" só se não existir.
 function pastaAtendimentos_(mesIdx, ano) {
   var raiz = DriveApp.getFolderById(CONFIG.PASTA_FINANCEIRO), criadas = [];

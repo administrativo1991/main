@@ -124,6 +124,15 @@ function mock(nome, d) {
       var sit = mens ? (e.mesPago ? 'mês pago' : pg === 'No início do mês' ? (dia >= 16 ? 'mensalidade atrasada' : dia >= 11 ? 'venceu dia 10' : 'vence dia 10') : 'a pagar no fim do mês') : pg === 'No início do mês' ? (e.disponiveis <= 0 ? 'esgotado' : e.disponiveis === 1 ? 'renovar' : 'ok') : (e.aPagarMes > 0 ? 'a pagar no mês' : 'ok');
       return { paciente: p.nome, cobranca: cobDe(p), mensal: mens, sessoes: mens ? 0 : k.n, valor: mens ? valorMensal(p) || 0 : k.valor, pagamento: pg, disponiveis: e.disponiveis, ultima: e.ultima || '', validade: e.validade || '', sessoesMes: e.sessoesMes, aPagarMes: e.aPagarMes, mesPago: !!e.mesPago, mesAnteriorPago: !!e.mesAnteriorPago, situacao: sit, pagador: p.pagador }; }) });
     if (nome === 'viradaPropostas') return res({ ok: true, itens: [{ nome: 'Carlos Henrique Dias', de: 'Por sessão R$ 70 · No mês seguinte', para: 'Pacote 4 sessões · R$ 400 · No início do mês', campos: { modalidade: 'Pacote 4 sessões', pctN: 4, pctV: 400, pagamento: 'No início do mês' } }, { nome: 'Ana Luísa Fontes Braga', de: 'Pacote 4 sessões · No mês seguinte', para: 'Pacote 4 sessões · No início do mês', campos: { pagamento: 'No início do mês' } }, { nome: 'Lívia Fontes Pereira', de: 'Pro bono', para: 'Mensalidade social · R$ 200 · No início do mês', campos: { modalidade: 'Mensalidade social', pagamento: 'No início do mês', regra: '' } }] });
+    if (nome === 'repasseMes') { var RG = window.__mockRegras = window.__mockRegras || [{ linha: 2, ativa: true, profissional: 'Juliana Ribeiro', convenio: 'Particular', procedimento: '', pct: 80, valorRef: 0, obs: '' }, { linha: 3, ativa: true, profissional: 'Juliana Ribeiro', convenio: 'Cedplan', procedimento: '', pct: 40, valorRef: 0, obs: 'direito 80%: 40% retido' }, { linha: 4, ativa: true, profissional: 'Juliana Ribeiro', convenio: 'Sabin Sinai', procedimento: '', pct: 80, valorRef: 40, obs: 'só depois que o Sabin pagar' }, { linha: 5, ativa: true, profissional: 'Giovana Grossi', convenio: 'Qualquer', procedimento: '', pct: 0, valorRef: 0, obs: 'estagiária' }, { linha: 6, ativa: true, profissional: 'Todos', convenio: 'Qualquer', procedimento: 'Avaliação neuropsicológica', pct: 0, valorRef: 0, obs: '0% para todos' }];
+      var LR = [{ data: '02/10/2026', paciente: 'Beatriz Almeida Rocha', profissional: 'Juliana Ribeiro', procedimento: 'Sessão de psicologia', convenio: 'Particular', pago: 'Sim', valor: 120, situacao: 'pago', pct: 80, basePago: 120, basePrev: 120, repassePago: 96, repassePrev: 96, oque: 'Atendido' },
+        { data: '03/10/2026', paciente: 'Carlos Henrique Dias', profissional: 'Juliana Ribeiro', procedimento: 'Sessão de psicologia', convenio: 'Particular', pago: 'Não', valor: 70, situacao: 'em aberto', pct: 80, basePago: 0, basePrev: 70, repassePago: 0, repassePrev: 56, oque: 'Atendido' },
+        { data: '03/10/2026', paciente: 'Pedro Augusto Neves', profissional: 'Juliana Ribeiro', procedimento: 'Sessão de psicologia – convênio', convenio: 'Sabin Sinai', pago: 'Convênio (fatura)', valor: 0, situacao: 'convênio a receber', pct: 80, basePago: 0, basePrev: 40, repassePago: 0, repassePrev: 32, oque: 'Atendido' },
+        { data: '04/10/2026', paciente: 'Sofia Ramos Teixeira', profissional: 'Giovana Grossi', procedimento: 'Sessão de psicologia', convenio: 'Particular', pago: 'Incluída na mensalidade', valor: 0, situacao: 'incluída no pacote/mensalidade', pct: 0, basePago: 0, basePrev: 0, repassePago: 0, repassePrev: 0, oque: 'Atendido' },
+        { data: '05/10/2026', paciente: 'Helena Vasconcelos Prado', profissional: 'Dr. Victor Cunha', procedimento: 'Consulta pediátrica', convenio: 'Particular', pago: 'Sim', valor: 200, situacao: 'pago', pct: null, basePago: 200, basePrev: 200, repassePago: 0, repassePrev: 0, semRegra: true, oque: 'Atendido' }];
+      var POR = {}; LR.forEach(function (x) { var q = POR[x.profissional] = POR[x.profissional] || { profissional: x.profissional, sessoes: 0, basePago: 0, repassePago: 0, basePrev: 0, repassePrev: 0, semRegra: 0, perdido: 0, porConvenio: [] }; q.sessoes++; q.basePago += x.basePago; q.repassePago += x.repassePago; q.basePrev += x.basePrev; q.repassePrev += x.repassePrev; if (x.semRegra) q.semRegra++; var c = q.porConvenio.filter(function (k) { return k.convenio === x.convenio; })[0]; if (!c) q.porConvenio.push(c = { convenio: x.convenio, pct: x.pct, sessoes: 0 }); c.sessoes++; });
+      return res({ ok: true, mes: d.mes, abaExiste: true, regras: RG, linhas: LR, porProfissional: Object.keys(POR).sort().map(function (k) { return POR[k]; }), semRegra: 1, atualizado: hojeStr() + ' ' + agoraHora() }); }
+    if (nome === 'salvarRegrasRepasse') { window.__mockRegras = (d.regras || []).map(function (g, i) { return Object.assign({}, g, { linha: i + 2, pct: g.pct === '' ? null : num(String(g.pct)), valorRef: num(g.valorRef) || 0, ativa: g.ativa !== false }); }); return res({ ok: true, alteradas: d.regras.length, regras: window.__mockRegras }); }
     if (nome === 'aplicarAlteracoesLote') return res({ ok: true, feitos: (d.itens || []).map(function (i) { return i.nome; }), erros: [] });
     if (nome === 'atualizarCadastro') return res({ ok: true, alterados: Object.keys(d.campos || {}).slice(0, 2) });
     if (nome === 'removerDoDia') { mockDia = mockDia.filter(function (x) { return x.id !== d.id; }); return res({ ok: true }); }
@@ -432,8 +441,8 @@ function corrigirValidar(c, reg) {
   return e;
 }
 
-var TELAS = { hoje: 's-hoje', registrar: 's-registrar', pacientes: 's-pacientes', pacotes: 's-pacotes', gestao: 's-gestao' };
-var TITULOS = { hoje: 'Agenda', registrar: 'Registrar atendimento', pacientes: 'Pacientes', pacotes: 'Pacotes', gestao: 'Pendências' };
+var TELAS = { hoje: 's-hoje', registrar: 's-registrar', pacientes: 's-pacientes', pacotes: 's-pacotes', gestao: 's-gestao', repasse: 's-repasse' };
+var TITULOS = { hoje: 'Agenda', registrar: 'Registrar atendimento', pacientes: 'Pacientes', pacotes: 'Pacotes', gestao: 'Pendências', repasse: 'Repasse' };
 var telaAtual = 'hoje';
 var INICIAR = {};
 function go(id, extra) {
@@ -464,6 +473,7 @@ function carregar() {
     $("#chip-mail").textContent = (ehGestao() ? 'gestão' : 'recepção') + (MOCK ? ' · simulação' : '');
     $("#chip-user").title = (email || '') + ' · perfil ' + (ehGestao() ? 'gestão' : 'recepção');
     if (ehGestao()) $("#chip-user").classList.add('gestao');
+    $$('[data-go=repasse]').forEach(function (x) { x.hidden = !ehGestao(); }); // repasse: só gestão
     var dl = $("#dl-pagadores"); dl.innerHTML = ''; var vistos = {};
     b.pacientes.forEach(function (p) { String(p.pagador || '').split(/\s*\/\s*/).forEach(function (n) { n = n.trim(); if (n && !vistos[n]) { vistos[n] = 1; var o = document.createElement('option'); o.value = n; dl.appendChild(o); } }); });
     banner('');

@@ -536,3 +536,13 @@ button.kpi[aria-pressed="true"] span,.kpi.roxo span{color:#fff;opacity:.9}
   table.pct .td-acao .btn{width:100%;min-height:44px}
 }
 @media (prefers-reduced-motion:reduce){ .toast{transition:none} }
+/* repasse (gestão) */
+table.regras td{padding:6px 8px;vertical-align:middle}
+table.regras select,table.regras input{width:100%;min-width:0;font-size:13px}
+table.regras td:nth-child(1) select{min-width:190px}
+table.regras td:nth-child(2) select{min-width:140px}
+table.regras td:nth-child(3) input{min-width:150px}
+table.regras td:nth-child(6) input{min-width:200px}
+table.regras tr.desligada td{opacity:.5}
+#s-repasse tr.clicavel{cursor:pointer}
+#s-repasse tr.sel td{background:#F8F5FA}
