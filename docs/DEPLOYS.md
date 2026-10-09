@@ -23,7 +23,7 @@ coluna E não afeta o app. Atualizar `E2` faz parte de toda publicação (passo 
 
 | Canal | Deploy | Peças | Commit |
 |---|---|---|---|
-| Real (`arquivos_real`) | **2026-10-08-09** | 36 (duplicatas 1 · server 10 · index 25); ativas = 2, 123, 223, 244–251, 258–261, 270, 273–292; `antigo16:` = trocadas neste deploy | branch `claude/busy-wright-xf0hql` |
+| Real (`arquivos_real`) | **2026-10-09-01** | 36 (duplicatas 1 · server 10 · index 25); ativas = 2, 123, 223, 258–261, 270, 273–300; `antigo17:` = trocadas neste deploy | branch `claude/busy-wright-xf0hql` |
 | Teste (`arquivos`) | **2026-10-06-08** (atrás da real: não recebeu o 10, o 11, o 07-01 nem os de 07/10) | 27 | 135de84 |
 | Carregador real | 2026-10-06-02 (`dist/Code.real.gs`, implantado pela Roberta) | — | 4ad0272 |
 | Carregador teste | 2026-10-04-01 + nova versão pendente desde 05/10 (permissão do Drive, ver `COMO-INSTALAR.md`) | — | — |
@@ -48,6 +48,16 @@ Modelo:
 ```
 
 ## Lista
+
+### 2026-10-09-01 · Real (direto) · hora "30/12/1899" na Agenda
+- **O que mudou**: agendamentos avulsos (aba Lista do dia) apareciam com hora "30/12/1899": o app gravava "08:00", a planilha
+  convertia em horário antes do formato texto, e na leitura o horário virava data. Leitura corrigida (horário de 1899 = hora,
+  no fuso da planilha) e, em Lista do dia / Agenda recorrente, a célula vira texto antes de gravar a hora. As abas de mês
+  não mudam.
+- **Peças**: 8 novas (293–300, server 2–9); 244–251 viraram `antigo17:`.
+- **Conferência**: 8/8 iguais ao build; ativas = 1 + 10 + 25; `tests/servidor-pacotes.test.js` passa (caso novo da hora).
+- **Voltar**: `antigo17:` → nome e 293–300 → `antigo18:`.
+- **Aprovação**: gestão, 09/10.
 
 ### 2026-10-08-09 · Real (direto) · Agenda: ações sempre visíveis
 - **O que mudou**: na tabela da Agenda a coluna de ações ("Confirmou" e ⋯) fica presa na borda direita (no computador da
