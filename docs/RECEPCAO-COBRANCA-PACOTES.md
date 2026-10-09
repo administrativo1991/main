@@ -1,41 +1,41 @@
-# Recepção · Cobrança, Pagamento e pacotes de sessões (a partir de 08/10/2026)
+# Recepção · Cobrança, Pagamento, pacotes e mensalidades (a partir de 09/10/2026)
 
 Texto curto para a recepção. Pode ser colado no grupo ou impresso.
 
 ---
 
-**O que mudou no app**
+**Formas de cobrança no cadastro**
 
-No cadastro, "Modalidade" agora se chama **Cobrança** e ganhou um campo ao lado, **Pagamento**.
+Todas podem ser escolhidas pela recepção. A Juliana passa o valor.
 
-- **Cobrança** diz *como* se calcula o valor: Tabela · Por sessão (combinado) · Pacote de sessões · Pacote social ·
-  Convênio · Pro bono · Permuta.
-- **Pagamento** diz *quando* se paga: Na sessão · Antecipado · Posterior · Não se aplica.
+- **Tabela**: valor da tabela do procedimento. É a das outras especialidades (clínica médica, pediatria etc.).
+- **Por sessão (combinado)**: valor por sessão combinado. Em branco = a definir.
+- **Pacote 4 sessões**: R$ 400 por padrão (o valor pode mudar no cadastro). Pago adiantado.
+- **Pacote 12 sessões**: R$ 900 por padrão (o valor pode mudar no cadastro). Pago adiantado.
+- **Mensalidade social**: R$ 200 por mês. Não conta sessões.
+- **Mensalidade especial**: valor fixo do mês combinado (ex.: R$ 150, R$ 120 quinzenal). Não conta sessões.
+- **Convênio** · **Pro bono** · **Permuta**: como antes.
 
-**No Registrar atendimento**, logo que você escolhe o paciente, aparece uma linha assim:
+Ao lado fica o **Pagamento** (quando paga): Na sessão · Antecipado · Posterior · Não se aplica.
 
-> Cobrança: Pacote de 4 sessões · R$ 280 · 2 sessões disponíveis · válidas até 30/11 · Pagamento: Antecipado
+**Mensalidade**
 
-O app já preenche o valor e o "Pago?". Não precisa decidir nada:
+- No Registrar, a sessão de quem tem mensalidade entra como **"Incluída na mensalidade"**. Não precisa digitar valor.
+- Quando a pessoa pagar o mês, clique em **Registrar pagamento da mensalidade** (no Registrar ou na tela **Pacotes**).
+  Escolha o mês (atual ou anterior), o valor e a forma.
+- A mensalidade vence no **dia 10**. Depois disso, a Agenda e a tela Pacotes mostram em vermelho quem está em aberto.
+- Falta não muda o valor da mensalidade.
 
-- **Na sessão**: cobra na hora (Pago? = Sim).
-- **Posterior**: a sessão fica lançada como **não paga**. O total do mês aparece em Pendências, e você recebe pela
-  Agenda → Receber.
-- **Pacote antecipado**: a sessão já está paga no pacote. O app mostra quantas **sessões disponíveis** restam.
-  - Com **1 sessão** disponível, a linha fica amarela: avise que a próxima precisa de renovação.
-  - Com **0 sessões**, a linha fica vermelha: "Pacote esgotado — renovar antes de atender". Use **Registrar renovação**
-    quando a pessoa pagar, ou **Cobrar avulsa pela Tabela**.
+**Pacote (4 ou 12 sessões)**
 
-**O que gasta sessão do pacote**
-
-- Gasta: atendido · faltou sem aviso.
+- No Registrar aparece quantas **sessões disponíveis** restam.
+  - Com **1 sessão**, a linha fica amarela: avise que a próxima precisa de renovação.
+  - Com **0 sessões**, a linha fica vermelha. Use **Registrar renovação** quando a pessoa pagar, ou
+    **Cobrar avulsa pela Tabela**.
+- Gasta sessão: atendido · faltou sem aviso.
 - Não gasta: desmarcou com antecedência · cancelado pela clínica · aplicação de teste · retorno.
 - Faltou avisando em cima da hora:
   - remarcou na mesma semana → não gasta (marque "Remarcada na mesma semana");
   - senão, a 1ª do mês não gasta e a 2ª em diante gasta.
-
-**Renovação do pacote**: quando a pessoa pagar o pacote, clique em **Registrar renovação** (no Registrar ou na tela
-**Pacotes**, que substitui Mensalistas). As sessões entram na hora. Ninguém começa com sessões: elas só entram quando a
-renovação é registrada.
 
 Ficou em dúvida? Siga o que o app mostra e anote na Observação. A gestão confere.
