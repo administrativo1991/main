@@ -285,7 +285,7 @@ function indicePacientes_() {
       regra: cRegra >= 0 ? String(r[cRegra] || '').trim() : '',
       obsCobranca: cObs >= 0 ? String(r[cObs] || '').trim() : '',
       valorCombinado: cVal >= 0 ? String(r[cVal] || '').trim() : '',
-      valorNum: numOu(r, cVN), pctN: numOu(r, cPN), pctV: numOu(r, cPV), pagamento: cPg >= 0 ? String(r[cPg] || '').trim() : '',
+      valorNum: numOu(r, cVN), pctN: numOu(r, cPN), pctV: numOu(r, cPV), pagamento: cPg >= 0 ? pagNorm_(r[cPg]) : '',
       telPac: cTel >= 0 ? String(r[cTel] || '').trim() : '', resp: cResp >= 0 ? String(r[cResp] || '').trim() : '', respPar: cRespPar >= 0 ? String(r[cRespPar] || '').trim() : '', respTel: cRespTel >= 0 ? String(r[cRespTel] || '').trim() : ''
     });
   });
@@ -363,7 +363,7 @@ API.bootstrap = function () {
       modalidadesEsp: modalidadesComEsp_(),
       convenios: colunaLista_(CONFIG.LISTAS.CONVENIO),
       regras: colunaLista_(CONFIG.LISTAS.REGRA),
-      pagamentos: (function () { var l = colunaLista_(CONFIG.LISTAS.PAGAMENTO); return l.length ? l : PAGAMENTOS; })(),
+      pagamentos: (function () { var l = colunaLista_(CONFIG.LISTAS.PAGAMENTO).map(pagNorm_); return l.length ? l : PAGAMENTOS; })(),
       oque: colunaLista_(CONFIG.LISTAS.OQUE),
       pago: colunaLista_(CONFIG.LISTAS.PAGO),
       formas: colunaLista_(CONFIG.LISTAS.FORMA)
@@ -377,9 +377,11 @@ API.bootstrap = function () {
 };
 
 /* ---------- Cobrança + Pagamento (gestão, 07-09/10) ---------- */
-var PAGAMENTOS = ['Na sessão', 'Antecipado', 'Posterior', 'Não se aplica'];
-var PAGAMENTO_SUGERIDO = { 'Tabela': 'Na sessão', 'Por sessão (combinado)': 'Na sessão', 'Pacote 4 sessões': 'Antecipado', 'Pacote 12 sessões': 'Antecipado',
-  'Mensalidade social': 'Antecipado', 'Mensalidade especial': 'Antecipado', 'Convênio': 'Posterior', 'Pro bono': 'Não se aplica', 'Permuta': 'Não se aplica' };
+var PAGAMENTOS = ['Na sessão', 'No início do mês', 'No mês seguinte', 'Não se aplica'];
+// gestão, 09/10: "Antecipado" virou "No início do mês" e "Posterior" virou "No mês seguinte" (os nomes antigos são lidos como os novos)
+function pagNorm_(v) { v = String(v || '').trim(); return v === 'Antecipado' ? 'No início do mês' : v === 'Posterior' ? 'No mês seguinte' : v; }
+var PAGAMENTO_SUGERIDO = { 'Tabela': 'Na sessão', 'Por sessão (combinado)': 'Na sessão', 'Pacote 4 sessões': 'No início do mês', 'Pacote 12 sessões': 'No início do mês',
+  'Mensalidade social': 'No início do mês', 'Mensalidade especial': 'No início do mês', 'Convênio': 'No mês seguinte', 'Pro bono': 'Não se aplica', 'Permuta': 'Não se aplica' };
 // pacote = sessões disponíveis (renovação soma, sessão que gasta tira 1); "Pacote de sessões" é o nome antigo (08/10)
 function ehPacoteCob_(c) { return /^Pacote (\d+ sessões|de sessões)$/.test(String(c || '')); }
 // mensalidade = valor fixo do mês, independe do nº de sessões; a sessão fica "incluída na mensalidade"
@@ -399,7 +401,7 @@ function camposCobranca_(c, erros) {
   if (cob === 'Mensalidade especial') { out.pctN = ''; out.pctV = ''; } // valor do mês em branco = a definir
   // Por sessão (combinado) com valor em branco = "valor a definir" (gestão, 08/10): o Registrar pede o valor à mão
   ['valorNum', 'pctN', 'pctV'].forEach(function (k) { if (typeof out[k] === 'number' && isNaN(out[k])) erros.push('Número inválido em ' + k + '.'); });
-  var pg = c.pagamento != null ? String(c.pagamento).trim() : null;
+  var pg = c.pagamento != null ? pagNorm_(c.pagamento) : null;
   if (pg) { if (PAGAMENTOS.indexOf(pg) < 0) erros.push('Pagamento fora da lista.'); out.pagamento = pg; }
   else if (pg === '' || c.pagamento == null) { if (cob && PAGAMENTO_SUGERIDO[cob] && c.pagamento !== undefined) out.pagamento = PAGAMENTO_SUGERIDO[cob]; }
   return out;
@@ -636,7 +638,7 @@ API.registrarAtendimento = function (d) {
       vv.forEach(function (r) { if (String(r[h[HM.PACIENTE] - 1] || '').trim() === paciente && h[HM.OBS] && String(r[h[HM.OBS] - 1] || '').indexOf(MARCA_FALTA_AVISADA) >= 0) nFA++; });
       consumo = consumoPacote_(oque, procedimento, !!d.mesmaSemana, nFA);
       if (consumo.nota) pares[HM.OBS] = (consumo.nota + (pares[HM.OBS] ? ' | ' + pares[HM.OBS] : ''));
-      if ((pac.pagamento || 'Antecipado') === 'Antecipado') pares[HM.SESSOES] = consumo.delta;
+      if ((pac.pagamento || 'No início do mês') === 'No início do mês') pares[HM.SESSOES] = consumo.delta;
     }
     gravarCelulas_(s, linha, h, pares);
     [HM.DATA, HM.DATA_PAG].forEach(function (k) { if (h[k]) s.getRange(linha, h[k]).setNumberFormat('dd/MM/yyyy'); });
@@ -666,7 +668,7 @@ API.registrarAtendimento = function (d) {
       if (hc[CONFIG.H.LOG]) { var cl = spc.getRange(pac.linha, hc[CONFIG.H.LOG]); cl.setValue((String(cl.getValue() || '') + ' | pagador alterado por ' + (u.email || 'app') + ' · ' + agora_()).replace(/^ \| /, '')); }
     }
     SpreadsheetApp.flush();
-    var dispo = null; if (consumo && (pac.pagamento || 'Antecipado') === 'Antecipado') { SpreadsheetApp.flush(); dispo = (pacotesEstado_(data)[paciente] || {}).disponiveis; }
+    var dispo = null; if (consumo && (pac.pagamento || 'No início do mês') === 'No início do mês') { SpreadsheetApp.flush(); dispo = (pacotesEstado_(data)[paciente] || {}).disponiveis; }
     return { ok: true, id: id, linha: linha, aba: s.getName(), pacote: pk, consumo: consumo, disponiveis: dispo };
   } finally { lock.releaseLock(); }
 };
@@ -1013,10 +1015,10 @@ API.pacotesPainel = function () {
   var est = pacotesEstado_(new Date()), dia = Number(Utilities.formatDate(new Date(), CONFIG.TZ, 'd'));
   var vazio = { disponiveis: 0, ultima: '', validade: '', sessoesMes: 0, aPagarMes: 0, renovouMes: false, vencido: false, mesPago: false, mesAnteriorPago: false };
   var itens = indicePacientes_().filter(function (p) { return (ehPacoteCob_(p.modalidade) || ehMensalidadeCob_(p.modalidade)) && !/^N/i.test(p.ativo || 'Sim'); }).map(function (p) {
-    var e = est[p.nome] || vazio, mensal = ehMensalidadeCob_(p.modalidade), pg = p.pagamento || 'Antecipado', sit;
+    var e = est[p.nome] || vazio, mensal = ehMensalidadeCob_(p.modalidade), pg = p.pagamento || 'No início do mês', sit;
     var pad = CONFIG.PACOTES[p.modalidade] || {}, n = mensal ? 0 : (pad.sessoes || p.pctN || 0), v = mensal ? valorMensalidade_(p) : (pad.valor || p.pctV || 0);
-    if (mensal) sit = e.mesPago ? 'mês pago' : pg === 'Antecipado' ? (dia >= 16 ? 'mensalidade atrasada' : dia >= 11 ? 'venceu dia 10' : 'vence dia 10') : 'a pagar no fim do mês';
-    else if (pg === 'Antecipado') sit = e.vencido ? 'vencido' : e.disponiveis <= 0 ? 'esgotado' : e.disponiveis === 1 ? 'renovar' : (!e.renovouMes && dia > 10 ? 'renovação do mês em aberto' : 'ok');
+    if (mensal) sit = e.mesPago ? 'mês pago' : pg === 'No início do mês' ? (dia >= 16 ? 'mensalidade atrasada' : dia >= 11 ? 'venceu dia 10' : 'vence dia 10') : 'a pagar no fim do mês';
+    else if (pg === 'No início do mês') sit = e.vencido ? 'vencido' : e.disponiveis <= 0 ? 'esgotado' : e.disponiveis === 1 ? 'renovar' : (!e.renovouMes && dia > 10 ? 'renovação do mês em aberto' : 'ok');
     else sit = e.aPagarMes > 0 ? 'a pagar no mês' : 'ok';
     return { paciente: p.nome, cobranca: p.modalidade, mensal: mensal, sessoes: n, valor: v, pagamento: pg, disponiveis: e.disponiveis, ultima: e.ultima, validade: e.validade,
       sessoesMes: e.sessoesMes, aPagarMes: Math.round((e.aPagarMes || 0) * 100) / 100, mesPago: !!e.mesPago, mesAnteriorPago: !!e.mesAnteriorPago, situacao: sit, pagador: p.pagador };
@@ -1032,12 +1034,11 @@ API.viradaPropostas = function () {
   indicePacientes_().forEach(function (p) {
     if (VIRADA_EXCLUIR.indexOf(p.nome) >= 0) return;
     var hist = String(p.valorCombinado || '');
-    if (p.modalidade === 'Por sessão (combinado)' && p.pagamento === 'Posterior' && /era Plano de 4 consultas/i.test(hist) && p.valorNum > 0)
-      out.push({ nome: p.nome, de: 'Por sessão R$ ' + p.valorNum + ' · Posterior', para: 'Pacote 4 sessões · R$ ' + CONFIG.PACOTES['Pacote 4 sessões'].valor + ' · Antecipado', campos: { modalidade: 'Pacote 4 sessões', pctN: 4, pctV: CONFIG.PACOTES['Pacote 4 sessões'].valor, pagamento: 'Antecipado' } });
-    else if ((ehPacoteCob_(p.modalidade) || ehMensalidadeCob_(p.modalidade)) && p.pagamento === 'Posterior')
-      out.push({ nome: p.nome, de: p.modalidade + ' · Posterior', para: p.modalidade + ' · Antecipado', campos: { pagamento: 'Antecipado' } });
+    // ex-planos ficam em Por sessão (combinado) (gestão, 09/10)
+    if ((ehPacoteCob_(p.modalidade) || ehMensalidadeCob_(p.modalidade)) && p.pagamento === 'No mês seguinte')
+      out.push({ nome: p.nome, de: p.modalidade + ' · No mês seguinte', para: p.modalidade + ' · No início do mês', campos: { pagamento: 'No início do mês' } });
     else if (p.modalidade === 'Pro bono' && /a partir de 01\/11: social/i.test(p.obsCobranca + ' ' + hist))
-      out.push({ nome: p.nome, de: 'Pro bono', para: 'Mensalidade social · R$ ' + CONFIG.MENSALIDADE_SOCIAL + ' · Antecipado', campos: { modalidade: 'Mensalidade social', pagamento: 'Antecipado', regra: '' } });
+      out.push({ nome: p.nome, de: 'Pro bono', para: 'Mensalidade social · R$ ' + CONFIG.MENSALIDADE_SOCIAL + ' · No início do mês', campos: { modalidade: 'Mensalidade social', pagamento: 'No início do mês', regra: '' } });
   });
   return { ok: true, itens: out };
 };

@@ -58,7 +58,7 @@ function onPacAt(force) {
   if (!cur) { $("#a-pac-hint").textContent = nome ? 'Não está em Pacientes. Cadastre antes em "+ Novo paciente".' : 'Só quem está em Pacientes.'; aplicarTipo(); return; }
   $("#a-pac-hint").textContent = '';
   // linha-resumo da cobrança + Observação (gestão, 07-08/10)
-  var rc = resumoCob(cur, $("#a-prof").value), ep = estPacote(cur), pg = pagDe(cur), pacAnt = ehPacoteCob(cur) && pg === 'Antecipado';
+  var rc = resumoCob(cur, $("#a-prof").value), ep = estPacote(cur), pg = pagDe(cur), pacAnt = ehPacoteCob(cur) && pg === 'No início do mês';
   var obsHtml = cur.obsCobranca ? '<div>Observação: ' + esc(cur.obsCobranca) + '</div>' : '';
   var btRen = '<button class="btn sec" type="button" id="a-btn-renovar">Registrar renovação</button>';
   if (cadastroIncompleto(cur)) {
@@ -75,15 +75,15 @@ function onPacAt(force) {
     // mensalidade (gestão, 09/10): valor fixo do mês; a sessão fica "incluída na mensalidade"
     var mesNm = MESES_PT[new Date().getMonth()].toLowerCase(), semValor = valorMensal(cur) == null;
     var txtM = ep.mesPago ? '<div>Mensalidade de ' + mesNm + ' já paga. A sessão entra como incluída na mensalidade.</div>'
-      : '<div><b>Mensalidade de ' + mesNm + ' em aberto' + (pg === 'Antecipado' ? (new Date().getDate() > 10 ? ' (venceu dia 10)' : ' (vence dia 10)') : ' (paga no fim do mês)') + '.</b> Quando a pessoa pagar, clique em Registrar pagamento da mensalidade.</div>';
+      : '<div><b>Mensalidade de ' + mesNm + ' em aberto' + (pg === 'No início do mês' ? (new Date().getDate() > 10 ? ' (venceu dia 10)' : ' (vence dia 10)') : ' (paga no fim do mês)') + '.</b> Quando a pessoa pagar, clique em Registrar pagamento da mensalidade.</div>';
     if (semValor) txtM += '<div>Valor da mensalidade em branco: confirme com a gestão e complete o cadastro.</div>';
     box.innerHTML += aviso(rc[0], 'Cobrança: ' + esc(rc[1]), txtM + obsHtml, '<div class="acoes" style="flex-basis:100%"><button class="btn' + (ep.mesPago ? ' sec' : '') + '" type="button" id="a-btn-renovar">Registrar pagamento da mensalidade</button></div>');
   } else {
     var extra = '';
-    if (ehPacoteCob(cur) && pg === 'Posterior') extra = '<div>Cada sessão fica lançada com Pago? = Não. No fim do mês o total aparece em Pendências. Este mês: ' + sessoesTxt(ep.sessoesMes || 0) + (ep.aPagarMes ? ', R$ ' + brl(ep.aPagarMes) + ' a pagar' : '') + '.</div>';
-    else if (pg === 'Posterior' && !cobConvenio(cur)) extra = '<div>A sessão fica lançada com Pago? = Não. No fim do mês o total aparece em Pendências e é recebido por lá.</div>';
+    if (ehPacoteCob(cur) && pg === 'No mês seguinte') extra = '<div>Cada sessão fica lançada com Pago? = Não. No fim do mês o total aparece em Pendências. Este mês: ' + sessoesTxt(ep.sessoesMes || 0) + (ep.aPagarMes ? ', R$ ' + brl(ep.aPagarMes) + ' a pagar' : '') + '.</div>';
+    else if (pg === 'No mês seguinte' && !cobConvenio(cur)) extra = '<div>A sessão fica lançada com Pago? = Não. No fim do mês o total aparece em Pendências e é recebido por lá.</div>';
     box.innerHTML += aviso(cobConvenio(cur) || ehProBono(cur) ? 'lilas' : (cobDe(cur) === 'Por sessão (combinado)' && valorComb(cur) == null) ? 'laranja' : 'cinza', 'Cobrança: ' + esc(rc[1]), extra + obsHtml,
-      pg === 'Antecipado' && !ehPacoteCob(cur) && !ehMensalCob(cur) ? '<div class="acoes" style="flex-basis:100%"><button class="btn sec" type="button" id="a-btn-ant">Recebeu adiantado: lançar sessões pagas</button></div>' : '');
+      pg === 'No início do mês' && !ehPacoteCob(cur) && !ehMensalCob(cur) ? '<div class="acoes" style="flex-basis:100%"><button class="btn sec" type="button" id="a-btn-ant">Recebeu adiantado: lançar sessões pagas</button></div>' : '');
   }
   if (faltasDoc(cur).length) box.innerHTML += aviso('laranja', 'Cadastro incompleto · falta ' + esc(faltasDocTxt(cur)), 'Peça o documento e complete o cadastro (dá pra registrar o atendimento mesmo assim).', '<button class="btn sec" type="button" id="a-btn-cad-doc">Completar cadastro</button>');
   var bcd = $("#a-btn-cad-doc"); if (bcd) bcd.addEventListener('click', function () { go('pacientes', { editar: cur.nome, voltar: 'registrar' }); });
@@ -113,7 +113,7 @@ function pacoteNoAt() { return !!(cur && ehPacoteCob(cur) && !cur._avulsa); }
 function consumoAtual() { return consumoPacote($("#a-oque").value, $("#a-proc").value, !$("#l-mesma-semana").hidden && $("#a-mesma-semana").checked, estPacote(cur).faltasAvisadasMes || 0); }
 function consumoTxt(c) {
   if (!c) return '';
-  var e = estPacote(cur), ant = pagDe(cur) === 'Antecipado', motivo = c.nota ? c.nota.split(':')[0] : '';
+  var e = estPacote(cur), ant = pagDe(cur) === 'No início do mês', motivo = c.nota ? c.nota.split(':')[0] : '';
   if (c.delta < 0) return 'Gasta 1 sessão do pacote' + (motivo ? ' (' + motivo + ')' : '') + (ant ? (e.disponiveis > 0 ? (e.disponiveis - 1 === 1 ? ' · fica ' : ' · ficam ') + disponiveisTxt(e.disponiveis - 1) : ' · pacote esgotado: fica devendo para a próxima renovação') : ' · R$ ' + brl(valorSessaoPacote(cur) || 0) + ' a pagar no fim do mês') + '.';
   return 'Não gasta sessão do pacote' + (motivo ? ': ' + motivo : '') + '.';
 }
@@ -133,12 +133,12 @@ function aplicarRegra() {
   else if (cobConvenio(cur) && !cur._cobrar) { v.value = brl(0); v.disabled = true; forma.disabled = true; desc.disabled = true; pago.value = pick(opts, 'Convênio'); nf.value = 'Não se aplica'; h.textContent = 'faturado no convênio'; modo = 'convenio'; }
   else if (ehMensalCob(cur) && !cur._cobrar && (semCobranca || (p && /^(Sessão|Consulta|Terapia)/.test(p.nome)))) { v.value = semCobranca ? brl(0) : ''; v.disabled = true; forma.disabled = true; desc.disabled = true; pago.value = pick(opts, 'Incluída') || pick(opts, 'Não se aplica'); nf.value = 'Não se aplica'; h.textContent = semCobranca && ehAplicacaoTeste() ? 'já paga na avaliação neuropsicológica · só controle das sessões de teste' : 'incluída na mensalidade'; modo = 'pacote'; }
   else if (pacote && semCobranca) { v.value = brl(0); pago.value = pick(opts, 'Não se aplica'); nf.value = 'Não se aplica'; h.textContent = ehAplicacaoTeste() ? 'já paga na avaliação neuropsicológica · só controle das sessões de teste' : 'procedimento sem cobrança (R$ 0 na tabela)'; }
-  else if (pacote && pg === 'Antecipado') { v.disabled = true; forma.disabled = true; desc.disabled = true; pago.value = pagoPacote; nf.value = 'Não se aplica'; h.textContent = 'já paga no pacote'; modo = 'pacote'; }
+  else if (pacote && pg === 'No início do mês') { v.disabled = true; forma.disabled = true; desc.disabled = true; pago.value = pagoPacote; nf.value = 'Não se aplica'; h.textContent = 'já paga no pacote'; modo = 'pacote'; }
   else if (pacote) {
     var vs = valorSessaoPacote(cur);
     if (vs != null) { v.value = brl(vs); h.textContent = 'valor do pacote ÷ sessões'; } else { v.readOnly = false; v.placeholder = 'preencher à mão'; h.textContent = 'pacote sem valor no cadastro'; }
-    pago.value = pg === 'Posterior' ? pick(opts, 'Não') : pick(opts, 'Sim'); nf.value = 'Não';
-    if (pg === 'Posterior') h.textContent += ' · paga no fim do mês';
+    pago.value = pg === 'No mês seguinte' ? pick(opts, 'Não') : pick(opts, 'Sim'); nf.value = 'Não';
+    if (pg === 'No mês seguinte') h.textContent += ' · paga no fim do mês';
   }
   else {
     // procedimento R$ 0 na tabela (aplicação de teste, retorno): sem cobrança, mesmo com valor combinado no cadastro
@@ -148,13 +148,13 @@ function aplicarRegra() {
     else if (cob === 'Por sessão (combinado)' && sessao) { v.readOnly = false; v.placeholder = 'valor a definir'; h.textContent = 'valor combinado a definir no cadastro: preencha e avise a gestão'; }
     else if (procV == null || (cur._cobrar && procV === 0)) { v.readOnly = false; v.placeholder = 'preencher à mão'; h.textContent = cur._cobrar ? 'exceção: cobrado à parte, valor à mão' : 'procedimento sem valor na tabela'; }
     else { v.value = brl(procV); h.textContent = cur._avulsa ? 'avulsa pela Tabela (travado)' : 'vem do procedimento (travado)'; }
-    pago.value = semCobranca ? pick(opts, 'Não se aplica') : (pg === 'Posterior' && !cur._avulsa) ? pick(opts, 'Não') : pick(opts, 'Sim'); nf.value = semCobranca ? 'Não se aplica' : 'Não';
-    if (pg === 'Posterior' && !semCobranca && !cur._avulsa) h.textContent += ' · paga no fim do mês';
+    pago.value = semCobranca ? pick(opts, 'Não se aplica') : (pg === 'No mês seguinte' && !cur._avulsa) ? pick(opts, 'Não') : pick(opts, 'Sim'); nf.value = semCobranca ? 'Não se aplica' : 'Não';
+    if (pg === 'No mês seguinte' && !semCobranca && !cur._avulsa) h.textContent += ' · paga no fim do mês';
   }
   baseValor = procV;
   var hintFalta = pacote && !semCobranca ? consumoTxt(cons) : '';
   if (falta) {
-    if (pacote && cons.delta < 0 && pg !== 'Antecipado' && v.value) { forma.disabled = true; desc.disabled = true; pago.value = pick(opts, 'Não'); nf.value = 'Não se aplica'; }
+    if (pacote && cons.delta < 0 && pg !== 'No início do mês' && v.value) { forma.disabled = true; desc.disabled = true; pago.value = pick(opts, 'Não'); nf.value = 'Não se aplica'; }
     else { v.value = ''; v.disabled = true; forma.disabled = true; desc.disabled = true; pago.value = pacote && cons.delta < 0 ? pagoPacote : ''; nf.value = 'Não se aplica'; }
     if (!pacote && ehMensalCob(cur)) hintFalta = 'Mensalidade: a falta não muda o valor do mês. Sem cobrança nesta linha.';
     else if (!pacote) hintFalta = (/sem aviso|em cima da hora/.test(oque) && !cobConvenio(cur) && !ehProBono(cur)) ? 'Falta: vira pendência de taxa pra gestão decidir.' : 'Sem cobrança nesta linha.';

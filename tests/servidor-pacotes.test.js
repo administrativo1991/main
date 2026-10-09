@@ -36,18 +36,19 @@ function pac(nome, cob, pag, extra) { const l = HP.map(() => ''); l[0] = nome; l
 const HM = ["Data","Hora","Paciente","Profissional","Procedimento","Convênio (auto)","Modalidade (auto)","⚠ Atenção na cobrança (auto)","O que aconteceu","Valor (R$)","Pago?","Data do pagamento","Forma de pagamento","Pagador habitual (auto)","Quem pagou (só se foi outra pessoa)","NF emitida?","Nº da NF","Guia assinada? (convênio)","Observação","ID","Registrado por (app)","Plano (ID)"];
 const hoje = new Date(), mes = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'][hoje.getMonth()];
 const abas = {
-  Pacientes: [HP, pac('Sofia Social', 'Pacote 4 sessões', 'Antecipado', { 'Sessões por pacote': 4, 'Valor do pacote (R$)': 400 }),
-    pac('Ana Posterior', 'Pacote 4 sessões', 'Posterior', { 'Sessões por pacote': 4, 'Valor do pacote (R$)': 280 }),
-    pac('Mara Mensal', 'Mensalidade especial', 'Antecipado', { 'Valor combinado (R$)': 150 }),
-    pac('Carlos ExPlano', 'Por sessão (combinado)', 'Posterior', { 'Valor combinado (R$)': 70, 'Histórico de cobrança (antigo)': 'Pagamento posterior: R$ 70 por sessão (07/10: era Plano de 4 consultas)' }),
-    pac('Naimara Paula Sa da Silva', 'Por sessão (combinado)', 'Posterior', { 'Valor combinado (R$)': 120, 'Histórico de cobrança (antigo)': 'era Plano de 4 consultas' }),
+  Pacientes: [HP, pac('Sofia Social', 'Pacote 4 sessões', 'No início do mês', { 'Sessões por pacote': 4, 'Valor do pacote (R$)': 400 }),
+    pac('Ana Posterior', 'Pacote 4 sessões', 'No mês seguinte', { 'Sessões por pacote': 4, 'Valor do pacote (R$)': 280 }),
+    pac('Mara Mensal', 'Mensalidade especial', 'No início do mês', { 'Valor combinado (R$)': 150 }),
+    pac('Carlos ExPlano', 'Por sessão (combinado)', 'No mês seguinte', { 'Valor combinado (R$)': 70, 'Histórico de cobrança (antigo)': 'Pagamento posterior: R$ 70 por sessão (07/10: era Plano de 4 consultas)' }),
+    pac('Naimara Paula Sa da Silva', 'Por sessão (combinado)', 'No mês seguinte', { 'Valor combinado (R$)': 120, 'Histórico de cobrança (antigo)': 'era Plano de 4 consultas' }),
     pac('Erica Pro Bono', 'Pro bono', 'Não se aplica', { 'Observação de cobrança (a recepção lê — diz O QUE cobrar, nunca o porquê)': 'Não cobrar até 31/10. A partir de 01/11: social R$ 200/mês' }),
     pac('Beatriz Tabela', '', ''),
-    pac('Igor Social', 'Mensalidade social', 'Posterior')],
+    pac('Igor Social', 'Mensalidade social', 'No mês seguinte'),
+    pac('Lia Antigo', 'Mensalidade especial', 'Antecipado', { 'Valor combinado (R$)': 150 })], // nome antigo do Pagamento
   Listas: [["O que aconteceu","Pago?","Forma de pagamento","Sim/Não","Guia assinada?","Convênio","Regra de cobrança","Cobrança","Especialidade (modalidade)","Pagamento"],
     ["Atendido","Sim","Pix","Sim","Sim","Particular","Tabela","Tabela","Qualquer especialidade","Na sessão"],
-    ["Desmarcou com antecedência (≥ 24h)","Não","Dinheiro","Não","Não","Cedplan","","Por sessão (combinado)","Qualquer especialidade","Antecipado"],
-    ["Faltou avisando em cima da hora (< 24h)","Convênio (fatura)","","","","Sabin Sinai","","Pacote de sessões","Qualquer especialidade","Posterior"],
+    ["Desmarcou com antecedência (≥ 24h)","Não","Dinheiro","Não","Não","Cedplan","","Por sessão (combinado)","Qualquer especialidade","No início do mês"],
+    ["Faltou avisando em cima da hora (< 24h)","Convênio (fatura)","","","","Sabin Sinai","","Pacote de sessões","Qualquer especialidade","No mês seguinte"],
     ["Faltou sem aviso","Pacote (sessão já paga)","","","","","","Pacote 4 sessões","Psicologia","Não se aplica"],
     ["Cancelado pela clínica","Não se aplica (pro bono / permuta)","","","","","","Pacote 12 sessões","",""],
     ["","Parcial","","","","","","Mensalidade social","",""],["","Incluída na mensalidade","","","","","","Mensalidade especial","",""],["","","","","","","","Convênio","",""],["","","","","","","","Pro bono","",""],["","","","","","","","Permuta","",""]],
@@ -68,11 +69,11 @@ const API = (0, eval)(R('duplicatas.js') + '\n' + R('server.js'));
 const ok = (r, msg) => { if (!r || r.ok === false) { console.error(msg, JSON.stringify(r)); process.exit(1); } return r; };
 const hj = fmt(hoje, '', 'dd/MM/yyyy');
 
-const b = API.bootstrap(); assert.deepStrictEqual(b.listas.pagamentos, ['Na sessão', 'Antecipado', 'Posterior', 'Não se aplica']);
+const b = API.bootstrap(); assert.deepStrictEqual(b.listas.pagamentos, ['Na sessão', 'No início do mês', 'No mês seguinte', 'Não se aplica']);
 assert.ok(b.listas.modalidades.indexOf('Mensalidade social') >= 0);
 const at = API.bootstrapAtendimento(); assert.ok(at.pacotesSessoes);
 const sofia = at.pacientes.filter(p => p.nome === 'Sofia Social')[0];
-assert.strictEqual(sofia.pctN, 4); assert.strictEqual(sofia.pagamento, 'Antecipado');
+assert.strictEqual(sofia.pctN, 4); assert.strictEqual(sofia.pagamento, 'No início do mês');
 console.log('bootstrap ok · perfil', b.usuario.perfil);
 
 // ninguém começa com sessões: Sofia atendida sem renovação fica com −1
@@ -106,13 +107,13 @@ console.log('painel ok', painel.itens.map(i => i.paciente + ':' + i.situacao).jo
 // virada de novembro
 const v = ok(API.viradaPropostas(), 'virada');
 const nomes = v.itens.map(i => i.nome).sort();
-assert.deepStrictEqual(nomes, ['Ana Posterior', 'Carlos ExPlano', 'Erica Pro Bono', 'Igor Social']);
-const carlos = v.itens.filter(i => i.nome === 'Carlos ExPlano')[0]; assert.strictEqual(carlos.campos.pctV, 400); assert.strictEqual(carlos.campos.modalidade, 'Pacote 4 sessões');
+assert.deepStrictEqual(nomes, ['Ana Posterior', 'Erica Pro Bono', 'Igor Social']); // ex-planos ficam em Por sessão (combinado)
 const ap = ok(API.aplicarAlteracoesLote({ itens: v.itens, quemInformou: 'teste' }), 'aplicar');
-assert.strictEqual(ap.feitos.length, 4, JSON.stringify(ap));
+assert.strictEqual(ap.feitos.length, 3, JSON.stringify(ap));
 const depois = API.bootstrapAtendimento().pacientes; const c2 = depois.filter(p => p.nome === 'Carlos ExPlano')[0], e2 = depois.filter(p => p.nome === 'Erica Pro Bono')[0];
-assert.strictEqual(c2.modalidade, 'Pacote 4 sessões'); assert.strictEqual(c2.pctN, 4); assert.strictEqual(c2.pctV, 400); assert.strictEqual(c2.pagamento, 'Antecipado');
-assert.strictEqual(e2.modalidade, 'Mensalidade social'); assert.strictEqual(e2.valorNum, 200); assert.strictEqual(e2.pagamento, 'Antecipado');
+assert.strictEqual(c2.modalidade, 'Por sessão (combinado)'); assert.strictEqual(c2.valorNum, 70);
+assert.strictEqual(e2.modalidade, 'Mensalidade social'); assert.strictEqual(e2.valorNum, 200); assert.strictEqual(e2.pagamento, 'No início do mês');
+assert.strictEqual(API.bootstrapAtendimento().pacientes.filter(p => p.nome === 'Lia Antigo')[0].pagamento, 'No início do mês', 'Antecipado é lido como No início do mês');
 console.log('virada ok');
 // cadastro: validações e novo paciente
 let c;

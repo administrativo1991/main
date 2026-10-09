@@ -29,7 +29,7 @@ function renderPacotes() {
   var card = el('<div class="tabela-card pct-card"><div class="tabela-wrap"><table class="pct"><thead><tr><th>Paciente</th><th>Pacote / mensalidade</th><th>Pagamento</th><th>Sessões / mês</th><th>Último pagamento</th><th>Situação</th><th></th></tr></thead><tbody></tbody></table></div><div class="tabela-rodape"><span>Mostrando ' + lista.length + ' de ' + itens.length + '</span><span>Validade: 4 sessões = 2 meses · 12 sessões = 6 meses</span><span>Ninguém começa com sessões: elas entram na renovação</span><span>Mensalidade: paga até o dia 10</span></div></div>');
   var tb = $('tbody', card);
   lista.forEach(function (it) {
-    var s = SIT_PCT[it.situacao] || ['cinza', it.situacao], ant = it.pagamento === 'Antecipado';
+    var s = SIT_PCT[it.situacao] || ['cinza', it.situacao], ant = it.pagamento === 'No início do mês';
     var mes = MESES_PT[new Date().getMonth()].toLowerCase(), mesAnt = MESES_PT[(new Date().getMonth() + 11) % 12].toLowerCase();
     var pacote = it.mensal ? it.cobranca + ' · ' + (it.valor ? 'R$ ' + brl(it.valor) + '/mês' : 'valor a definir') : sessoesTxt(it.sessoes) + (it.valor ? ' · R$ ' + brl(it.valor) : '');
     var sess = it.mensal ? '<b>' + esc(mes + (it.mesPago ? ' pago' : ' em aberto')) + '</b>' + (it.mesAnteriorPago ? '' : '<div class="muted">' + esc(mesAnt) + ' sem pagamento registrado</div>')

@@ -199,8 +199,8 @@ function renderPainel() {
   $("#pp-dl").innerHTML = '<div><dt>Hoje</dt><dd>' + esc((it.hora || '—') + ' · ' + tipo) + '</dd></div><div><dt>Profissional</dt><dd>' + esc(it.profissional) + '</dd></div><div><dt>Cobrança</dt><dd>' + esc(p ? resumoCob(p, it.profissional)[1] : '—') + '</dd></div><div><dt>Valor da sessão</dt><dd>' + esc(valorSessaoTxt(p, it.profissional)) + '</dd></div><div><dt>Convênio</dt><dd>' + esc(p ? (p.convenio || 'Particular') : '—') + '</dd></div>' + (p && p.telPac ? '<div><dt>Telefone do paciente</dt><dd>' + esc(p.telPac) + '</dd></div>' : '') + (p && p.resp ? '<div><dt>Responsável</dt><dd>' + esc(p.resp + (p.respPar ? ' (' + p.respPar.toLowerCase() + ')' : '') + (p.respTel ? ' · ' + p.respTel : '')) + '</dd></div>' : '');
   var avisoHtml = '';
   if (p && (cadastroIncompleto(p) || faltasDoc(p).length)) avisoHtml = aviso('laranja', 'Cadastro incompleto', esc([cadastroIncompleto(p) ? 'Cobrança em branco: confira como paga antes de registrar.' : '', faltasDoc(p).length ? 'Falta ' + faltasDocTxt(p) + ': peça o documento e complete.' : ''].filter(Boolean).join(' ')));
-  else if (p && ehPacoteCob(p) && pagDe(p) === 'Antecipado' && estPacote(p).disponiveis <= 0) avisoHtml = aviso('vermelha', 'Pacote esgotado — renovar antes de atender', esc(p.obsCobranca || ''));
-  else if (p && ehMensalCob(p) && !estPacote(p).mesPago && pagDe(p) === 'Antecipado' && new Date().getDate() > 10) avisoHtml = aviso('vermelha', 'Mensalidade de ' + MESES_PT[new Date().getMonth()].toLowerCase() + ' em aberto (venceu dia 10)', esc(['Receba e registre em Pacotes ou no Registrar: “Registrar pagamento da mensalidade”.', p.obsCobranca || ''].filter(Boolean).join(' ')));
+  else if (p && ehPacoteCob(p) && pagDe(p) === 'No início do mês' && estPacote(p).disponiveis <= 0) avisoHtml = aviso('vermelha', 'Pacote esgotado — renovar antes de atender', esc(p.obsCobranca || ''));
+  else if (p && ehMensalCob(p) && !estPacote(p).mesPago && pagDe(p) === 'No início do mês' && new Date().getDate() > 10) avisoHtml = aviso('vermelha', 'Mensalidade de ' + MESES_PT[new Date().getMonth()].toLowerCase() + ' em aberto (venceu dia 10)', esc(['Receba e registre em Pacotes ou no Registrar: “Registrar pagamento da mensalidade”.', p.obsCobranca || ''].filter(Boolean).join(' ')));
   else if (p && p.obsCobranca && !cobConvenio(p)) avisoHtml = aviso(ehProBono(p) ? 'lilas' : 'laranja', ehProBono(p) ? cobDe(p) : 'Observação de cobrança', esc(p.obsCobranca));
   $("#pp-aviso").innerHTML = avisoHtml;
   // sessões anteriores em aberto: a recepção vê na chegada e resolve ali mesmo (grava na linha antiga, como a Gestão)
@@ -247,7 +247,7 @@ function renderForm(it) {
       var p = pacInfo(it.paciente), esps = espsDoProf(it.profissional), base = tiposDe(esps)[0], oque = $("#d-nv-motivo", pn).value;
       var d = { paciente: it.paciente, profissional: it.profissional, data: DIA.data, hora: it.hora || '', procedimento: base ? derivarProc(base.nome, p || {}) : '', oque: oque, pago: '', valor: '', forma: '', dataPagamento: '', quemPagou: '', nf: 'Não se aplica', nfNumero: '', guia: '', observacao: $("#d-nv-obs", pn).value.trim(), tornarPagadorHabitual: false };
       // pacote no Posterior: a falta que gasta sessão fica lançada com o valor da sessão do pacote, não paga
-      if (p && ehPacoteCob(p) && pagDe(p) !== 'Antecipado' && consumoPacote(oque, d.procedimento, false, estPacote(p).faltasAvisadasMes || 0).delta < 0 && valorSessaoPacote(p) != null) { d.valor = brl(valorSessaoPacote(p)); d.pago = 'Não'; }
+      if (p && ehPacoteCob(p) && pagDe(p) !== 'No início do mês' && consumoPacote(oque, d.procedimento, false, estPacote(p).faltasAvisadasMes || 0).delta < 0 && valorSessaoPacote(p) != null) { d.valor = brl(valorSessaoPacote(p)); d.pago = 'Não'; }
       this.disabled = true;
       call('registrarAtendimento', d).then(function (r) { if (!r.ok) return toast((r.erros || ['Não gravou']).join(' ')); toast('Gravado: ' + oque); invalidarResumo(); carregarDia(); }).catch(function (e) { toast('Erro: ' + e.message); });
     });
@@ -312,9 +312,9 @@ function renderResumo(cont) {
 /* ---------- pendências de hoje (linhas clicáveis) ---------- */
 function renderPend(itens) {
   var dia = DIA.data, g = resumoMes[DIA.abaMes], out = [];
-  var pacs = itens.filter(function (i) { var p = pacInfo(i.paciente); return p && ehPacoteCob(p) && pagDe(p) === 'Antecipado' && estPacote(p).disponiveis <= 1; });
+  var pacs = itens.filter(function (i) { var p = pacInfo(i.paciente); return p && ehPacoteCob(p) && pagDe(p) === 'No início do mês' && estPacote(p).disponiveis <= 1; });
   if (pacs.length) out.push(['amarela', pacs.length, 'de hoje com pacote esgotado ou na última sessão · ' + pacs.map(function (i) { return primeiroNome(i.paciente); }).join(', '), 'pacotes']);
-  var mens = itens.filter(function (i) { var p = pacInfo(i.paciente); return p && ehMensalCob(p) && !estPacote(p).mesPago && pagDe(p) === 'Antecipado'; });
+  var mens = itens.filter(function (i) { var p = pacInfo(i.paciente); return p && ehMensalCob(p) && !estPacote(p).mesPago && pagDe(p) === 'No início do mês'; });
   if (mens.length) out.push([new Date().getDate() > 10 ? 'vermelha' : 'amarela', mens.length, 'de hoje com a mensalidade de ' + MESES_PT[new Date().getMonth()].toLowerCase() + ' em aberto · ' + mens.map(function (i) { return primeiroNome(i.paciente); }).join(', '), 'pacotes']);
   var incompl = itens.filter(function (i) { var p = pacInfo(i.paciente); return p && (cadastroIncompleto(p) || faltasDoc(p).length); });
   if (incompl.length) out.push(['laranja', incompl.length, 'cadastro incompleto (cobrança, CPF ou nascimento) · ' + incompl.map(function (i) { return primeiroNome(i.paciente); }).join(', '), 'pacientes', incompl[0].paciente]);
