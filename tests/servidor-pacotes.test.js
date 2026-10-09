@@ -23,7 +23,7 @@ const abas = {
     ["Faltou sem aviso","Pacote (sessão já paga)","","","","","","Pacote 4 sessões","Psicologia","Não se aplica"],
     ["Cancelado pela clínica","Não se aplica (pro bono / permuta)","","","","","","Pacote 12 sessões","",""],
     ["","Parcial","","","","","","Mensalidade social","",""],["","Incluída na mensalidade","","","","","","Mensalidade especial","",""],["","","","","","","","Convênio","",""],["","","","","","","","Pro bono","",""],["","","","","","","","Permuta","",""]],
-  Profissionais: [["Nome","Especialidade"],["Juliana Ribeiro","Psicologia"]],
+  Profissionais: [["Nome","Especialidade","Ativo"],["Juliana Ribeiro","Psicologia",""],["Saiu Teste","Nutrição","Não"]],
   Procedimentos: [["Procedimento","Especialidade","Valor","Obs"],["Sessão de psicologia","Psicologia",120,""]],
   'Alterações de cadastro': [["Quando","Paciente","Campo","De","Para","Quem informou","Por"]],
 };
@@ -42,6 +42,7 @@ const hj = fmt(hoje, '', 'dd/MM/yyyy');
 
 const b = API.bootstrap(); assert.deepStrictEqual(b.listas.pagamentos, ['Na sessão', 'No início do mês', 'No mês seguinte', 'Não se aplica']);
 assert.ok(b.listas.modalidades.indexOf('Mensalidade social') >= 0);
+assert.deepStrictEqual(b.profissionais.map(p => p.nome), ['Juliana Ribeiro'], 'profissional com Ativo = Não some das listas');
 const at = API.bootstrapAtendimento(); assert.ok(at.pacotesSessoes);
 const sofia = at.pacientes.filter(p => p.nome === 'Sofia Social')[0];
 assert.strictEqual(sofia.pctN, 4); assert.strictEqual(sofia.pagamento, 'No início do mês');

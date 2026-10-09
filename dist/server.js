@@ -303,8 +303,8 @@ function profissionais_() {
   return vals.map(function (r) {
     var horarios = {}; EXPEDIENTE.DIAS.forEach(function (d) { horarios[d] = txt(r, colExpediente_(d)); });
     var dur = parseInt(txt(r, EXPEDIENTE.DURACAO), 10);
-    return { nome: String(r[0] || '').trim(), especialidade: String(r[1] || '').trim(), horarios: horarios, duracao: dur > 0 ? dur : null };
-  }).filter(function (p) { return p.nome; });
+    return { nome: String(r[0] || '').trim(), especialidade: String(r[1] || '').trim(), horarios: horarios, duracao: dur > 0 ? dur : null, ativo: !/^n/i.test(txt(r, 'Ativo') || 'Sim') };
+  }).filter(function (p) { return p.nome && p.ativo; }); // coluna "Ativo" = Não: saiu da clínica, some das listas (os lançamentos antigos ficam)
 }
 // "08:00-12:00, 13:00-19:00" → [[480,720],[780,1140]]; aceita "8h-12h", "08:00 às 12:00", travessão; null se inválido
 function faixasHorario_(t) {
