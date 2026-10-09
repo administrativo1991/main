@@ -22,21 +22,21 @@ $("#r2-regras-btn").addEventListener('click', function () { repRegrasAbertas = !
 function pctTxt(p) { return p == null ? 'sem regra' : p === 'vários' ? 'vários %' : String(p).replace('.', ',') + '%'; }
 function renderRepasse() {
   var r = REP, R = function (n) { return 'R$ ' + brl(n || 0); }, tot = { pago: 0, prev: 0, perdido: 0 };
-  r.porProfissional.forEach(function (p) { tot.pago += p.repassePago; tot.prev += p.repassePrev; tot.perdido += p.perdido; });
+  r.porProfissional.forEach(function (p) { tot.pago += p.liquidoPago != null ? p.liquidoPago : p.repassePago; tot.prev += p.liquidoPrev != null ? p.liquidoPrev : p.repassePrev; tot.perdido += p.perdido; });
   $("#r2-aviso").innerHTML = !r.abaExiste ? aviso('cinza', 'A aba "' + esc(r.mes) + '" não existe', '') :
     !r.regras.length ? aviso('laranja', 'Nenhuma regra de repasse ainda', 'Abra <b>Regras de repasse</b> e cadastre o % de cada profissional (por convênio, se for diferente).') :
     r.semRegra ? aviso('laranja', r.semRegra + (r.semRegra === 1 ? ' linha com valor sem regra' : ' linhas com valor sem regra'), 'Essas linhas ficam fora do total. Cadastre a regra (profissional + convênio) em <b>Regras de repasse</b>.') : '';
-  $("#r2-kpis").innerHTML = '<div class="kpi roxo"><b>' + esc(R(tot.pago)) + '</b><span>repasse sobre o que já entrou</span></div><div class="kpi amarela"><b>' + esc(R(tot.prev)) + '</b><span>repasse previsto (inclui em aberto e convênio a receber)</span></div><div class="kpi"><b>' + esc(R(tot.perdido)) + '</b><span>perdido / glosa (repasse 0)</span></div>';
-  var card = el('<div class="tabela-card"><div class="tabela-wrap"><table><thead><tr><th>Profissional</th><th>Sessões</th><th>Por convênio</th><th>Base já recebida</th><th>Repasse já recebido</th><th>Repasse previsto</th><th></th></tr></thead><tbody></tbody></table></div><div class="tabela-rodape"><span>Clique num profissional pra ver as linhas</span><span>Atualizado ' + esc(r.atualizado || '') + '</span></div></div>');
+  $("#r2-kpis").innerHTML = '<div class="kpi roxo"><b>' + esc(R(tot.pago)) + '</b><span>repasse sobre o que já entrou (já com descontos do mês)</span></div><div class="kpi amarela"><b>' + esc(R(tot.prev)) + '</b><span>repasse previsto (inclui em aberto e convênio a receber; já com descontos)</span></div><div class="kpi"><b>' + esc(R(tot.perdido)) + '</b><span>perdido / glosa (repasse 0)</span></div>';
+  var card = el('<div class="tabela-card"><div class="tabela-wrap"><table><thead><tr><th>Profissional</th><th>Sessões</th><th>Por convênio</th><th>Base já recebida</th><th>Repasse já recebido</th><th>Repasse previsto</th><th>Desconto do mês</th><th>Líquido já recebido</th><th>Líquido previsto</th><th></th></tr></thead><tbody></tbody></table></div><div class="tabela-rodape"><span>Clique num profissional pra ver as linhas</span><span>Atualizado ' + esc(r.atualizado || '') + '</span></div></div>');
   var tb = $('tbody', card);
   r.porProfissional.forEach(function (p) {
     var conv = p.porConvenio.map(function (c) { return esc(c.convenio) + ' <span class="muted">' + c.sessoes + '× · ' + esc(pctTxt(c.pct)) + '</span>'; }).join('<br>');
-    var tr = el('<tr class="clicavel' + (repProf === p.profissional ? ' sel' : '') + '" tabindex="0"><td><b>' + esc(p.profissional) + '</b>' + (p.semRegra ? '<div><span class="tag laranja">' + p.semRegra + ' sem regra</span></div>' : '') + '</td><td>' + p.sessoes + '</td><td>' + conv + '</td><td>' + esc(R(p.basePago)) + '</td><td><b>' + esc(R(p.repassePago)) + '</b></td><td>' + esc(R(p.repassePrev)) + '</td><td class="muted">ver linhas</td></tr>');
+    var tr = el('<tr class="clicavel' + (repProf === p.profissional ? ' sel' : '') + '" tabindex="0"><td><b>' + esc(p.profissional) + '</b>' + (p.semRegra ? '<div><span class="tag laranja">' + p.semRegra + ' sem regra</span></div>' : '') + '</td><td>' + p.sessoes + '</td><td>' + conv + '</td><td>' + esc(R(p.basePago)) + '</td><td><b>' + esc(R(p.repassePago)) + '</b></td><td>' + esc(R(p.repassePrev)) + '</td><td>' + (p.desconto ? '<span title="' + esc(p.descontoObs || '') + '">− ' + esc(R(p.desconto)) + '</span>' : '<span class="muted">—</span>') + '</td><td><b>' + esc(R(p.liquidoPago)) + '</b></td><td>' + esc(R(p.liquidoPrev)) + '</td><td class="muted">ver linhas</td></tr>');
     var abrir = function () { repProf = repProf === p.profissional ? '' : p.profissional; renderRepasse(); if (repProf) $("#r2-linhas").scrollIntoView({ behavior: 'smooth', block: 'start' }); };
     tr.addEventListener('click', abrir); tr.addEventListener('keydown', function (e) { if (e.key === 'Enter') abrir(); });
     tb.appendChild(tr);
   });
-  if (!r.porProfissional.length) tb.innerHTML = '<tr><td colspan="7" class="vazio">Nenhum atendimento no mês.</td></tr>';
+  if (!r.porProfissional.length) tb.innerHTML = '<tr><td colspan="10" class="vazio">Nenhum atendimento no mês.</td></tr>';
   $("#r2-resumo").innerHTML = ''; $("#r2-resumo").appendChild(card);
   var box = $("#r2-linhas"); box.innerHTML = '';
   if (!repProf) return;
@@ -47,7 +47,7 @@ function renderRepasse() {
 function renderRegras() {
   var box = $("#r2-regras"), regras = (REP && REP.regras || []).map(function (g) { return Object.assign({}, g); });
   var profs = ['Todos'].concat((BOOT.profissionais || []).map(function (p) { return p.nome; }));
-  var convs = ['Qualquer', 'Particular'].concat((BOOT.listas.convenios || []).filter(function (c) { return c !== 'Particular'; }));
+  var convs = ['Qualquer', 'Particular'].concat((BOOT.listas.convenios || []).filter(function (c) { return c !== 'Particular'; })).concat(['Desconto mensal']);
   var opt = function (lista, v) { if (v && lista.indexOf(v) < 0) lista = lista.concat([v]); return lista.map(function (o) { return '<option' + (o === v ? ' selected' : '') + '>' + esc(o) + '</option>'; }).join(''); };
   var linha = function (g, i) {
     return '<tr data-i="' + i + '"' + (g.ativa === false ? ' class="desligada"' : '') + '><td><select data-k="profissional">' + opt(profs, g.profissional || '') + '</select></td><td><select data-k="convenio">' + opt(convs, g.convenio || 'Qualquer') + '</select></td>' +
@@ -57,7 +57,7 @@ function renderRegras() {
   };
   box.innerHTML = '<div class="cab"><h2>Regras de repasse</h2><span class="esp"></span><button type="button" class="btn icone p" data-fechar aria-label="Fechar">' + ic('fechar', 16) + '</button></div>' +
     '<p class="muted" style="margin:0">Vale a regra mais específica: uma regra com procedimento (ex.: avaliação neuropsicológica 0%) ganha de todas; depois, a do profissional (com o convênio certo antes de "Qualquer"); "Todos" serve de regra geral. Desmarcar "ativa" desliga a regra sem apagar. ' +
-    '"Valor da sessão" é usado quando a linha do convênio está sem valor na aba do mês (ex.: Sabin R$ 40); uma regra pode ter só o valor, sem %. As regras ficam na aba <b>Regras de repasse</b> da planilha.</p>' +
+    '"Valor da sessão" é usado quando a linha do convênio está sem valor na aba do mês (ex.: Sabin R$ 40); uma regra pode ter só o valor, sem %. % negativo = a profissional deve à clínica (ex.: PLASC que ela fatura e recebe). Convênio "Desconto mensal" + valor = abatimento fixo do mês (ex.: pró-labore). As regras ficam na aba <b>Regras de repasse</b> da planilha.</p>' +
     '<div class="tabela-wrap"><table class="regras"><thead><tr><th>Profissional</th><th>Convênio</th><th>Procedimento contém</th><th>% repasse</th><th>Valor da sessão (convênio)</th><th>Observação</th><th></th></tr></thead><tbody></tbody></table></div>' +
     '<div data-erros></div><div class="acoes"><button type="button" class="btn ter" data-nova>+ Nova regra</button><button type="button" class="btn" data-salvar>Salvar regras</button></div>';
   box.hidden = false;
@@ -68,7 +68,7 @@ function renderRegras() {
   $('[data-fechar]', box).addEventListener('click', function () { repRegrasAbertas = false; box.hidden = true; });
   $('[data-salvar]', box).addEventListener('click', function () {
     ler(); var b = this, er = [];
-    regras.forEach(function (g, i) { var n = num(String(g.pct).replace('%', '')); if (!g.profissional) er.push('Regra ' + (i + 1) + ': escolha o profissional (ou "Todos").'); if (n == null ? !(num(g.valorRef) > 0) : (n < 0 || n > 100)) er.push('Regra ' + (i + 1) + ': % entre 0 e 100 (ou deixe o % em branco e informe só o valor da sessão do convênio).'); });
+    regras.forEach(function (g, i) { var n = num(String(g.pct).replace('%', '')); if (!g.profissional) er.push('Regra ' + (i + 1) + ': escolha o profissional (ou "Todos").'); if (n == null ? !(num(g.valorRef) > 0) : (n < -100 || n > 100)) er.push('Regra ' + (i + 1) + ': % entre −100 e 100 (ou deixe o % em branco e informe só o valor: valor da sessão do convênio ou desconto mensal).'); });
     $('[data-erros]', box).innerHTML = erroBox(er); if (er.length) return;
     b.disabled = true;
     call('salvarRegrasRepasse', { regras: regras }).then(function (r) {

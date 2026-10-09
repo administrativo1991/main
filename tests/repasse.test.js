@@ -18,7 +18,9 @@ const ss = planilha({
     at('L1', 'Dra. Luciana Fiorilo', 'Consulta pediátrica', 'Sabin Sinai', '', 'Convênio (fatura)'),
     at('V1', 'Dr. Victor Cunha', 'Consulta pediátrica', 'Particular', 200, 'Sim'),
     at('M1', 'Juliana Ribeiro', 'Sessão de psicologia', 'Particular', 0, 'Incluída na mensalidade'),
-    at('F1', 'Juliana Ribeiro', 'Sessão de psicologia', 'Particular', '', '', { 'O que aconteceu': 'Faltou sem aviso' })],
+    at('F1', 'Juliana Ribeiro', 'Sessão de psicologia', 'Particular', '', '', { 'O que aconteceu': 'Faltou sem aviso' }),
+    at('P1', 'Dra. Luciana Fiorilo', '', '', 86.3, 'PLASC (fatura da Luciana)'),
+    at('C1', 'Dra. Luciana Fiorilo', 'Consulta pediátrica', 'Cedplan', '', 'Convênio (fatura)')],
   'Regras de repasse': [HR,
     ['Sim', 'Juliana Ribeiro', 'Particular', '', 80, '', '', ''],
     ['Sim', 'Juliana Ribeiro', 'Cedplan', '', 40, '', 'direito 80%: 40% retido', ''],
@@ -27,7 +29,10 @@ const ss = planilha({
     ['Sim', 'Todos', 'Qualquer', 'Avaliação neuropsicológica', 0, '', '0% para todos', ''],
     ['Sim', 'Giovana Grossi', 'Qualquer', '', 0, '', 'estagiária', ''],
     ['Sim', 'Dra. Luciana Fiorilo', 'Qualquer', '', 40, '', '', ''],
-    ['Não', 'Dr. Victor Cunha', 'Qualquer', '', 80, '', 'desligada pra testar', '']]
+    ['Não', 'Dr. Victor Cunha', 'Qualquer', '', 80, '', 'desligada pra testar', ''],
+    ['Sim', 'Todos', 'Cedplan', 'Consulta', '', 120, '', ''],
+    ['Sim', 'Dra. Luciana Fiorilo', 'PLASC', '', -40, 86.3, 'ela fatura e recebe', ''],
+    ['Sim', 'Juliana Ribeiro', 'Desconto mensal', '', '', 1621, 'pró-labore', '']]
 });
 let email = 'administrativo@clinicanascente.com.br';
 global.SpreadsheetApp = { getActiveSpreadsheet: () => ss, flush() { }, openById: () => ss, create: () => ss };
@@ -51,8 +56,12 @@ conf('L1', 40, 0, 16, 'convênio a receber');         // Luciana · Qualquer 40%
 conf('M1', 80, 0, 0, 'incluída no pacote/mensalidade');
 assert.strictEqual(l('V1').semRegra, true); assert.strictEqual(l('V1').pct, null); // regra do Victor desligada
 assert.ok(!l('F1'), 'falta sem valor não entra');
+conf('P1', -40, -34.52, -34.52, 'faturado pela profissional'); assert.strictEqual(l('P1').convenio, 'PLASC');
+conf('C1', 40, 0, 48, 'convênio a receber');         // Cedplan consulta R$ 120 (regra só de valor, por procedimento)
 const jul = r.porProfissional.filter(p => p.profissional === 'Juliana Ribeiro')[0];
 assert.strictEqual(jul.repassePago, 136); assert.strictEqual(jul.repassePrev, 280); assert.strictEqual(r.semRegra, 1);
+assert.strictEqual(jul.desconto, 1621); assert.strictEqual(jul.liquidoPago, 136 - 1621);
+const luc = r.porProfissional.filter(p => p.profissional === 'Dra. Luciana Fiorilo')[0]; assert.strictEqual(luc.repassePrev, Math.round((16 - 34.52 + 48) * 100) / 100);
 console.log('cálculo ok · Juliana: já recebido R$ ' + jul.repassePago + ' · previsto R$ ' + jul.repassePrev + ' · por convênio ' + jul.porConvenio.map(c => c.convenio + ' ' + c.pct + '%').join(', '));
 // recepção não vê nem muda
 email = 'atendimento@clinicanascente.com.br';
@@ -66,7 +75,7 @@ regras.filter(g => g.profissional === 'Dr. Victor Cunha')[0].ativa = true;
 regras.push({ ativa: true, profissional: 'Marileia Rodrigues', convenio: 'Qualquer', procedimento: '', pct: '40', valorRef: '', obs: 'nova' });
 assert.strictEqual(API.salvarRegrasRepasse({ regras: regras.concat([{ profissional: '', pct: '50' }]) }).ok, false, 'regra sem profissional');
 const sv = API.salvarRegrasRepasse({ regras: regras }); assert.ok(sv.ok, JSON.stringify(sv)); assert.strictEqual(sv.alteradas, 3);
-const aba = ss._m['Regras de repasse'].d; assert.strictEqual(aba.filter(x => x[1]).length, 1 + 9);
+const aba = ss._m['Regras de repasse'].d; assert.strictEqual(aba.filter(x => x[1]).length, 1 + 12);
 assert.ok(/administrativo@/.test(aba[2][7]) && aba[1][7] === '', 'só a linha mudada ganha o carimbo');
 const r2 = API.repasseMes({ mes: 'Outubro' });
 assert.strictEqual(r2.linhas.filter(x => x.id === 'J4')[0].repassePrev, 24); assert.strictEqual(r2.linhas.filter(x => x.id === 'V1')[0].repassePago, 160); assert.strictEqual(r2.semRegra, 0);
