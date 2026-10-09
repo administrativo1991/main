@@ -799,6 +799,13 @@ function pacotesEstado_(ref) {
     vals.forEach(function (r) {
       var pac = String(r[h[HM.PACIENTE] - 1] || '').trim(); if (!pac) return;
       var v = cS ? r[cS - 1] : ''; if (v !== '' && v != null && !isNaN(Number(v))) get(pac).disponiveis += Number(v);
+      // mensalidade paga lançada na aba do mês ("Mensalidade – psicologia" antiga ou "Mensalidade de <mês>" do app): marca o mês como pago
+      var procM = String(r[h[HM.PROCEDIMENTO] - 1] || ''), pagoM = String(r[h[HM.PAGO] - 1] || '').trim();
+      if (/^Mensalidade/i.test(procM) && (pagoM === 'Sim' || pagoM === 'Parcial')) {
+        var mm = procM.match(/^Mensalidade de (\S+)/i), nmM = mm ? mm[1].charAt(0).toUpperCase() + mm[1].slice(1).toLowerCase() : nm, iM = CONFIG.MESES.indexOf(nmM);
+        var dM = r[h[HM.DATA] - 1] instanceof Date ? r[h[HM.DATA] - 1] : parseData_(fmtData_(r[h[HM.DATA] - 1]));
+        if (iM >= 0 && dM) get(pac).mesesPagos[nmM + '/' + (dM.getFullYear() - (iM > dM.getMonth() ? 1 : 0))] = true;
+      }
       if (nm !== nmRef) return;
       var oque = String(r[h[HM.OQUE] - 1] || ''), obs = h[HM.OBS] ? String(r[h[HM.OBS] - 1] || '') : '', proc = String(r[h[HM.PROCEDIMENTO] - 1] || '');
       if (obs.indexOf(MARCA_FALTA_AVISADA) >= 0) get(pac).faltasAvisadasMes++;

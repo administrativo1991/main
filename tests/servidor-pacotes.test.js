@@ -42,7 +42,8 @@ const abas = {
     pac('Carlos ExPlano', 'Por sessão (combinado)', 'Posterior', { 'Valor combinado (R$)': 70, 'Histórico de cobrança (antigo)': 'Pagamento posterior: R$ 70 por sessão (07/10: era Plano de 4 consultas)' }),
     pac('Naimara Paula Sa da Silva', 'Por sessão (combinado)', 'Posterior', { 'Valor combinado (R$)': 120, 'Histórico de cobrança (antigo)': 'era Plano de 4 consultas' }),
     pac('Erica Pro Bono', 'Pro bono', 'Não se aplica', { 'Observação de cobrança (a recepção lê — diz O QUE cobrar, nunca o porquê)': 'Não cobrar até 31/10. A partir de 01/11: social R$ 200/mês' }),
-    pac('Beatriz Tabela', '', '')],
+    pac('Beatriz Tabela', '', ''),
+    pac('Igor Social', 'Mensalidade social', 'Posterior')],
   Listas: [["O que aconteceu","Pago?","Forma de pagamento","Sim/Não","Guia assinada?","Convênio","Regra de cobrança","Cobrança","Especialidade (modalidade)","Pagamento"],
     ["Atendido","Sim","Pix","Sim","Sim","Particular","Tabela","Tabela","Qualquer especialidade","Na sessão"],
     ["Desmarcou com antecedência (≥ 24h)","Não","Dinheiro","Não","Não","Cedplan","","Por sessão (combinado)","Qualquer especialidade","Antecipado"],
@@ -55,6 +56,7 @@ const abas = {
   'Alterações de cadastro': [["Quando","Paciente","Campo","De","Para","Quem informou","Por"]],
 };
 abas[mes] = [HM];
+{ const l = HM.map(() => ''); l[0] = hoje; l[2] = 'Igor Social'; l[4] = 'Mensalidade – psicologia'; l[8] = 'Atendido'; l[9] = 200; l[10] = 'Sim'; abas[mes].push(l); } // mensalidade lançada do jeito antigo
 const ss = planilha(abas);
 global.SpreadsheetApp = { getActiveSpreadsheet: () => ss, flush() { }, openById: () => ss, create: () => ss };
 global.LockService = { getScriptLock: () => ({ waitLock() { }, releaseLock() { } }) };
@@ -99,14 +101,15 @@ assert.strictEqual(pa.aPagarMes, 70); assert.strictEqual(pa.situacao, 'a pagar n
 let pm = API.pacotesPainel().itens.filter(i => i.paciente === 'Mara Mensal')[0]; assert.strictEqual(pm.mensal, true); assert.strictEqual(pm.valor, 150); assert.strictEqual(pm.mesPago, false);
 const rm = ok(API.renovarPacote({ paciente: 'Mara Mensal', valor: '150', data: hj, forma: 'Pix' }), 'mensalidade'); assert.ok(/\//.test(rm.referente)); assert.strictEqual(rm.mesPago, true);
 pm = API.pacotesPainel().itens.filter(i => i.paciente === 'Mara Mensal')[0]; assert.strictEqual(pm.situacao, 'mês pago');
+const pig = API.pacotesPainel().itens.filter(i => i.paciente === 'Igor Social')[0]; assert.strictEqual(pig.valor, 200); assert.strictEqual(pig.mesPago, true, 'mensalidade antiga na aba do mês conta como paga');
 console.log('painel ok', painel.itens.map(i => i.paciente + ':' + i.situacao).join(' · '));
 // virada de novembro
 const v = ok(API.viradaPropostas(), 'virada');
 const nomes = v.itens.map(i => i.nome).sort();
-assert.deepStrictEqual(nomes, ['Ana Posterior', 'Carlos ExPlano', 'Erica Pro Bono']);
+assert.deepStrictEqual(nomes, ['Ana Posterior', 'Carlos ExPlano', 'Erica Pro Bono', 'Igor Social']);
 const carlos = v.itens.filter(i => i.nome === 'Carlos ExPlano')[0]; assert.strictEqual(carlos.campos.pctV, 280); assert.strictEqual(carlos.campos.modalidade, 'Pacote 4 sessões');
 const ap = ok(API.aplicarAlteracoesLote({ itens: v.itens, quemInformou: 'teste' }), 'aplicar');
-assert.strictEqual(ap.feitos.length, 3, JSON.stringify(ap));
+assert.strictEqual(ap.feitos.length, 4, JSON.stringify(ap));
 const depois = API.bootstrapAtendimento().pacientes; const c2 = depois.filter(p => p.nome === 'Carlos ExPlano')[0], e2 = depois.filter(p => p.nome === 'Erica Pro Bono')[0];
 assert.strictEqual(c2.modalidade, 'Pacote 4 sessões'); assert.strictEqual(c2.pctN, 4); assert.strictEqual(c2.pctV, 280); assert.strictEqual(c2.pagamento, 'Antecipado');
 assert.strictEqual(e2.modalidade, 'Mensalidade social'); assert.strictEqual(e2.valorNum, 200); assert.strictEqual(e2.pagamento, 'Antecipado');

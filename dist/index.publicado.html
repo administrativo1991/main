@@ -918,12 +918,12 @@ table.pct .td-acao .btn{width:100%;min-height:44px}
 <legend class="campo" style="padding:0;margin-bottom:8px;display:block">Cobrança <span class="leg">— como o valor é calculado</span></legend>
 <div class="dica" id="n-mod-guia" hidden>Escolha o profissional: a cobrança diz como cobra, o profissional diz qual tabela.</div>
 <div class="cartoes" id="n-mods-tabela"></div>
-<div class="muted" id="n-mods-antigo-t" style="margin-top:6px"><strong style="color:var(--tx2)">Definidas pela gestão</strong> — pacotes, social, pro bono e permuta.</div>
+<div class="muted" id="n-mods-antigo-t" hidden></div>
 <div class="cartoes" id="n-mods-antigo"></div>
 <select id="n-mod" class="sr" tabindex="-1" aria-hidden="true"></select>
 <div id="n-modwarn"></div>
 <div class="grid" id="n-cob-campos">
-<label class="campo" id="l-valor-num" hidden>Valor combinado por sessão <span class="leg">— em branco = a definir</span><div class="campo-wrap"><span class="prefixo">R$</span><input id="n-valor-num" class="dinheiro" inputmode="decimal" autocomplete="off" placeholder="a definir"></div></label>
+<label class="campo" id="l-valor-num" hidden><span id="n-valor-txt">Valor combinado por sessão</span> <span class="leg">— em branco = a definir</span><div class="campo-wrap"><span class="prefixo">R$</span><input id="n-valor-num" class="dinheiro" inputmode="decimal" autocomplete="off" placeholder="a definir"></div></label>
 <label class="campo" id="l-pct-n" hidden>Sessões por pacote<input id="n-pct-n" inputmode="numeric" autocomplete="off" placeholder="4"></label>
 <label class="campo" id="l-pct-v" hidden>Valor do pacote<div class="campo-wrap"><span class="prefixo">R$</span><input id="n-pct-v" class="dinheiro" inputmode="decimal" autocomplete="off"></div></label>
 <label class="campo" id="l-pagamento">Pagamento <span class="leg" id="n-pag-leg">quando paga</span><select id="n-pagamento"></select></label>
@@ -969,7 +969,7 @@ table.pct .td-acao .btn{width:100%;min-height:44px}
 <section class="tela coluna" id="s-pacotes" hidden>
 <div class="titulo">
 <h1>Pacotes</h1>
-<span class="muted" id="k-legenda">pacote de sessões · renovação paga adiantada · cada sessão que gasta tira 1</span>
+<span class="muted" id="k-legenda">pacotes de 4 e 12 sessões (cada sessão que gasta tira 1) · mensalidades (valor fixo do mês, paga até o dia 10)</span>
 <span class="esp"></span>
 <div class="campo-wrap" style="min-width:240px"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg><input type="search" id="k-busca" placeholder="Buscar paciente ou pagador" aria-label="Buscar" style="font-size:14px"></div>
 <button type="button" class="btn ter imprimir so-pc"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9V3h12v6"/><rect x="3" y="9" width="18" height="9" rx="2"/><path d="M6 14h12v7H6z"/></svg>Imprimir</button>
@@ -1022,7 +1022,7 @@ table.pct .td-acao .btn{width:100%;min-height:44px}
 </div>
 <div class="card compacto" id="g-vnov">
 <h2 style="font-size:15px">Virada de novembro · pacotes</h2>
-<div class="muted" style="font-size:13px">Propõe as trocas no cadastro: ex-planos viram Pacote de 4 sessões (4 × o valor atual por sessão) com Pagamento Antecipado; pacotes no Posterior passam a Antecipado; pro bono "a partir de 01/11: social" vira Pacote social. Você revê e aplica só as marcadas.</div>
+<div class="muted" style="font-size:13px">Propõe as trocas no cadastro: ex-planos viram Pacote 4 sessões (4 × o valor atual por sessão) com Pagamento Antecipado; pacotes e mensalidades no Posterior passam a Antecipado; pro bono "a partir de 01/11: social" vira Mensalidade social (R$ 200/mês). Você revê e aplica só as marcadas.</div>
 <div class="acoes"><button type="button" class="btn sec" id="g-vnov-ver">Ver propostas</button></div>
 <div id="g-vnov-lista"></div>
 </div>
@@ -1139,11 +1139,14 @@ function primeiroNome(n) { return String(n || '').replace(/^Dra?\. /, '').split(
 function store(k, v) { try { if (v === undefined) return JSON.parse(localStorage.getItem(k) || 'null'); if (v === null) localStorage.removeItem(k); else localStorage.setItem(k, JSON.stringify(v)); } catch (e) { return null; } }
 /* ---------- cadastro: Cobrança + Pagamento (gestão, 07-08/10) ----------
 Cobrança = como o valor é calculado; Pagamento = quando é pago. Os nomes antigos (antes da migração de 08/10) são lidos como os novos. */
-var COBRANCAS = ['Tabela', 'Por sessão (combinado)', 'Pacote de sessões', 'Pacote social', 'Convênio', 'Pro bono', 'Permuta'];
-var COB_RESTRITA = ['Pacote de sessões', 'Pacote social', 'Pro bono', 'Permuta']; // definidas pela gestão
+// gestão, 09/10: Tabela fica pras outras especialidades; pacotes de 4 e 12 sessões; mensalidades (valor fixo do mês, não conta sessões).
+// Nenhuma é restrita à gestão: a Juliana passa o valor e a recepção cadastra.
+var COBRANCAS = ['Tabela', 'Por sessão (combinado)', 'Pacote 4 sessões', 'Pacote 12 sessões', 'Mensalidade social', 'Mensalidade especial', 'Convênio', 'Pro bono', 'Permuta'];
+var COB_RESTRITA = [];
 var PAGAMENTOS = ['Na sessão', 'Antecipado', 'Posterior', 'Não se aplica'];
-var PAG_SUGERIDO = { 'Tabela': 'Na sessão', 'Por sessão (combinado)': 'Na sessão', 'Pacote de sessões': 'Antecipado', 'Pacote social': 'Antecipado', 'Convênio': 'Posterior', 'Pro bono': 'Não se aplica', 'Permuta': 'Não se aplica' };
-var PACOTE_SOCIAL = { n: 4, valor: 200 };
+var PAG_SUGERIDO = { 'Tabela': 'Na sessão', 'Por sessão (combinado)': 'Na sessão', 'Pacote 4 sessões': 'Antecipado', 'Pacote 12 sessões': 'Antecipado', 'Mensalidade social': 'Antecipado', 'Mensalidade especial': 'Antecipado', 'Convênio': 'Posterior', 'Pro bono': 'Não se aplica', 'Permuta': 'Não se aplica' };
+var PACOTES_PADRAO = { 'Pacote 4 sessões': { n: 4, valor: 400 }, 'Pacote 12 sessões': { n: 12, valor: 900 } };
+var MENSALIDADE_SOCIAL = 200;
 function pacInfo(nome) { return (AT && AT.pacientes.filter(function (p) { return p.nome === nome; })[0]) || null; }
 function ehConvenio(p) { return !!(p.convenio && p.convenio !== 'Particular'); }
 // texto antigo "R$ 70 por sessão" (antes da migração); depois vale o número em "Valor combinado (R$)"
@@ -1154,8 +1157,9 @@ if (!p) return '';
 var m = String(p.modalidade || '').trim();
 if (COBRANCAS.indexOf(m) >= 0) return m;
 if (!m) return ehConvenio(p) ? 'Convênio' : '';
-if (/^Mensalidade (social|fixa)|^Social/i.test(m)) return 'Pacote social';
-if (/^(Plano|Pacote) |^Mensal \(valor especial\)/i.test(m)) return 'Pacote de sessões';
+if (/^Mensalidade (social|fixa)|^Social|^Pacote social/i.test(m)) return 'Mensalidade social';
+if (/^Mensal \(valor especial\)|^Mensalidade/i.test(m)) return 'Mensalidade especial';
+if (/^(Plano|Pacote) /i.test(m)) return Number(p.pctN) === 12 || /12/.test(m) ? 'Pacote 12 sessões' : 'Pacote 4 sessões';
 if (/^Pro bono/i.test(m)) return 'Pro bono';
 if (/^Permuta/i.test(m)) return 'Permuta';
 if (/^Conv[êe]nio/i.test(m)) return 'Convênio';
@@ -1169,7 +1173,11 @@ if (/^Pagamento posterior/i.test(p.modalidade || '')) return 'Posterior';
 if (/^Pagamento antecipado/i.test(p.modalidade || '')) return 'Antecipado';
 return PAG_SUGERIDO[cobDe(p)] || 'Na sessão';
 }
-function ehPacoteCob(p) { return !!p && /^Pacote/.test(cobDe(p)); }
+function ehPacoteCob(p) { return !!p && /^Pacote \d+ sessões$/.test(cobDe(p)); }
+// mensalidade: valor fixo do mês (social R$ 200; especial = valor do cadastro); a sessão fica "incluída na mensalidade"
+function ehMensalCob(p) { return !!p && /^Mensalidade (social|especial)$/.test(cobDe(p)); }
+function valorMensal(p) { if (!p) return null; if (cobDe(p) === 'Mensalidade social') return MENSALIDADE_SOCIAL; var v = valorComb(p); return v != null && v > 0 ? v : null; }
+function mesRefTxt() { var d = new Date(); return MESES_PT[d.getMonth()] + '/' + d.getFullYear(); }
 function ehProBono(p) { return !!p && /^(Pro bono|Permuta)$/.test(cobDe(p)); }
 function cobConvenio(p) { return !!p && cobDe(p) === 'Convênio'; }
 function ehPosterior(p) { return pagDe(p) === 'Posterior'; }
@@ -1179,7 +1187,7 @@ function cadastroIncompleto(p) { return !String(p.modalidade || '').trim() && !e
 function faltasDoc(p) { var f = []; if (p && !String(p.cpf || '').replace(/\D/g, '')) f.push('CPF'); if (p && !String(p.nasc || '').trim()) f.push('data de nascimento'); return f; }
 function faltasDocTxt(p) { return faltasDoc(p).join(' e '); }
 function modCurta(m) { return String(m || '').replace(/\s*\([^)]*\)/g, '').replace(/\s+/g, ' ').trim(); }
-function pacoteDe(p) { if (cobDe(p) === 'Pacote social') return { n: PACOTE_SOCIAL.n, valor: PACOTE_SOCIAL.valor }; return { n: Number(p.pctN) || 0, valor: Number(p.pctV) || 0 }; }
+function pacoteDe(p) { var pad = PACOTES_PADRAO[cobDe(p)] || { n: 0, valor: 0 }; return { n: pad.n || Number(p.pctN) || 0, valor: Number(p.pctV) || pad.valor }; }
 function valorSessaoPacote(p) { var k = pacoteDe(p); return k.n > 0 && k.valor > 0 ? Math.round(k.valor / k.n * 100) / 100 : null; }
 function estPacote(p) { return (AT && AT.pacotesSessoes && p && AT.pacotesSessoes[p.nome]) || { disponiveis: 0, ultima: '', validade: '', faltasAvisadasMes: 0, sessoesMes: 0, aPagarMes: 0, renovouMes: false, vencido: false }; }
 function sessoesTxt(n) { return n + (n === 1 || n === -1 ? ' sessão' : ' sessões'); }
@@ -1204,9 +1212,15 @@ function resumoCob(p, prof) {
 if (!p) return ['cinza', '—'];
 var cob = cobDe(p), pg = pagDe(p), partes = [], cor = 'cinza';
 if (!cob) partes.push('Tabela (cadastro sem cobrança definida)');
+else if (ehMensalCob(p)) {
+var vm = valorMensal(p), em = estPacote(p), mes = MESES_PT[new Date().getMonth()].toLowerCase();
+partes.push(cob + ' · ' + (vm != null ? brlCurto(vm) + '/mês' : 'valor a definir'));
+partes.push(em.mesPago ? mes + ' pago' : mes + ' em aberto');
+cor = em.mesPago ? 'verde' : pg === 'Antecipado' && new Date().getDate() > 10 ? 'vermelha' : 'amarela';
+}
 else if (ehPacoteCob(p)) {
 var k = pacoteDe(p), e = estPacote(p);
-partes.push((cob === 'Pacote social' ? 'Pacote social de ' : 'Pacote de ') + sessoesTxt(k.n) + (k.valor ? ' · ' + brlCurto(k.valor) : ''));
+partes.push('Pacote de ' + sessoesTxt(k.n) + (k.valor ? ' · ' + brlCurto(k.valor) : ''));
 if (pg === 'Antecipado') {
 partes.push(disponiveisTxt(e.disponiveis));
 if (e.validade && e.disponiveis > 0) partes.push((e.vencido ? 'venceram em ' : 'válidas até ') + diaMes(e.validade));
@@ -1236,6 +1250,7 @@ if (!p) return '—';
 if (ehProBono(p)) return 'sem cobrança';
 if (cobConvenio(p)) return 'convênio (R$ 0)';
 var pg = pagDe(p), quando = pg === 'Posterior' ? ' · paga no fim do mês' : pg === 'Antecipado' ? ' · pago adiantado' : '';
+if (ehMensalCob(p)) return 'incluída na mensalidade' + (valorMensal(p) != null ? ' (' + brlCurto(valorMensal(p)) + '/mês)' : '');
 if (ehPacoteCob(p)) { var vp = valorSessaoPacote(p); return pg === 'Antecipado' ? 'já paga no pacote' + (vp != null ? ' (R$ ' + brl(vp) + ')' : '') : (vp != null ? 'R$ ' + brl(vp) + ' (pacote ÷ sessões)' : 'pacote sem valor no cadastro') + quando; }
 if (cobDe(p) === 'Por sessão (combinado)') return valorComb(p) != null ? 'R$ ' + brl(valorComb(p)) + ' (combinado)' + quando : 'a definir (preencher à mão)';
 return valorTabelaTxt(p, prof) + (prof && AT ? ' (tabela)' : '') + quando;
@@ -1259,7 +1274,11 @@ if (p.obsCobranca && !ehProBono(p) && !cobConvenio(p)) t.push({ cor: 'laranja', 
 if (ehProBono(p)) t.push({ cor: 'lilas', txt: cob });
 if (ehPacoteCob(p)) {
 if (pg === 'Antecipado') { var e = estPacote(p); t.push({ cor: e.disponiveis <= 0 || e.vencido ? 'vermelha' : e.disponiveis === 1 ? 'amarela' : 'verde', txt: e.disponiveis <= 0 ? 'pacote esgotado' : e.vencido ? 'pacote vencido' : 'pacote · ' + disponiveisTxt(e.disponiveis) }); }
-else t.push({ cor: 'cinza', txt: (cob === 'Pacote social' ? 'pacote social' : 'pacote') + ' · paga no fim do mês' });
+else t.push({ cor: 'cinza', txt: 'pacote · paga no fim do mês' });
+} else if (ehMensalCob(p)) {
+var em = estPacote(p), mes = MESES_PT[new Date().getMonth()].toLowerCase();
+if (valorMensal(p) == null) t.push({ cor: 'laranja', ic: 'alerta', txt: 'mensalidade sem valor · completar cadastro' });
+t.push(em.mesPago ? { cor: 'verde', txt: 'mensalidade de ' + mes + ' paga' } : { cor: pg === 'Antecipado' && new Date().getDate() > 10 ? 'vermelha' : 'amarela', txt: 'mensalidade de ' + mes + ' em aberto' });
 } else if (cob === 'Por sessão (combinado)' && valorComb(p) == null) t.push({ cor: 'laranja', ic: 'alerta', txt: 'valor a definir · completar cadastro' });
 else if (cob === 'Por sessão (combinado)') t.push({ cor: 'cinza', txt: (valorComb(p) != null ? 'R$ ' + brl(valorComb(p)) + '/sessão' : 'por sessão') + (pg === 'Posterior' ? ' · paga no fim do mês' : pg === 'Antecipado' ? ' · antecipado' : '') });
 else if (cob === 'Tabela' && pg === 'Posterior') t.push({ cor: 'cinza', txt: 'paga no fim do mês' });
@@ -1605,6 +1624,7 @@ $("#pp-dl").innerHTML = '<div><dt>Hoje</dt><dd>' + esc((it.hora || '—') + ' ·
 var avisoHtml = '';
 if (p && (cadastroIncompleto(p) || faltasDoc(p).length)) avisoHtml = aviso('laranja', 'Cadastro incompleto', esc([cadastroIncompleto(p) ? 'Cobrança em branco: confira como paga antes de registrar.' : '', faltasDoc(p).length ? 'Falta ' + faltasDocTxt(p) + ': peça o documento e complete.' : ''].filter(Boolean).join(' ')));
 else if (p && ehPacoteCob(p) && pagDe(p) === 'Antecipado' && estPacote(p).disponiveis <= 0) avisoHtml = aviso('vermelha', 'Pacote esgotado — renovar antes de atender', esc(p.obsCobranca || ''));
+else if (p && ehMensalCob(p) && !estPacote(p).mesPago && pagDe(p) === 'Antecipado' && new Date().getDate() > 10) avisoHtml = aviso('vermelha', 'Mensalidade de ' + MESES_PT[new Date().getMonth()].toLowerCase() + ' em aberto (venceu dia 10)', esc(['Receba e registre em Pacotes ou no Registrar: “Registrar pagamento da mensalidade”.', p.obsCobranca || ''].filter(Boolean).join(' ')));
 else if (p && p.obsCobranca && !cobConvenio(p)) avisoHtml = aviso(ehProBono(p) ? 'lilas' : 'laranja', ehProBono(p) ? cobDe(p) : 'Observação de cobrança', esc(p.obsCobranca));
 $("#pp-aviso").innerHTML = avisoHtml;
 // sessões anteriores em aberto: a recepção vê na chegada e resolve ali mesmo (grava na linha antiga, como a Gestão)
@@ -1718,6 +1738,8 @@ function renderPend(itens) {
 var dia = DIA.data, g = resumoMes[DIA.abaMes], out = [];
 var pacs = itens.filter(function (i) { var p = pacInfo(i.paciente); return p && ehPacoteCob(p) && pagDe(p) === 'Antecipado' && estPacote(p).disponiveis <= 1; });
 if (pacs.length) out.push(['amarela', pacs.length, 'de hoje com pacote esgotado ou na última sessão · ' + pacs.map(function (i) { return primeiroNome(i.paciente); }).join(', '), 'pacotes']);
+var mens = itens.filter(function (i) { var p = pacInfo(i.paciente); return p && ehMensalCob(p) && !estPacote(p).mesPago && pagDe(p) === 'Antecipado'; });
+if (mens.length) out.push([new Date().getDate() > 10 ? 'vermelha' : 'amarela', mens.length, 'de hoje com a mensalidade de ' + MESES_PT[new Date().getMonth()].toLowerCase() + ' em aberto · ' + mens.map(function (i) { return primeiroNome(i.paciente); }).join(', '), 'pacotes']);
 var incompl = itens.filter(function (i) { var p = pacInfo(i.paciente); return p && (cadastroIncompleto(p) || faltasDoc(p).length); });
 if (incompl.length) out.push(['laranja', incompl.length, 'cadastro incompleto (cobrança, CPF ou nascimento) · ' + incompl.map(function (i) { return primeiroNome(i.paciente); }).join(', '), 'pacientes', incompl[0].paciente]);
 var fora = itens.filter(function (i) { return !pacInfo(i.paciente); });
@@ -2107,12 +2129,19 @@ box.innerHTML += aviso('vermelha', 'Pacote esgotado — renovar antes de atender
 var ult = ep.disponiveis === 1 ? '<div><b>Última sessão do pacote:</b> avise que a próxima precisa de renovação.</div>' : '';
 var venc = ep.vencido ? '<div><b>Validade vencida em ' + esc(ep.validade) + '.</b> Confira com a gestão.</div>' : '';
 box.innerHTML += aviso(ep.vencido ? 'vermelha' : ep.disponiveis === 1 ? 'amarela' : 'verde', 'Cobrança: ' + esc(rc[1]), ult + venc + obsHtml, '<div class="acoes" style="flex-basis:100%">' + btRen + '</div>');
+} else if (ehMensalCob(cur)) {
+// mensalidade (gestão, 09/10): valor fixo do mês; a sessão fica "incluída na mensalidade"
+var mesNm = MESES_PT[new Date().getMonth()].toLowerCase(), semValor = valorMensal(cur) == null;
+var txtM = ep.mesPago ? '<div>Mensalidade de ' + mesNm + ' já paga. A sessão entra como incluída na mensalidade.</div>'
+: '<div><b>Mensalidade de ' + mesNm + ' em aberto' + (pg === 'Antecipado' ? (new Date().getDate() > 10 ? ' (venceu dia 10)' : ' (vence dia 10)') : ' (paga no fim do mês)') + '.</b> Quando a pessoa pagar, clique em Registrar pagamento da mensalidade.</div>';
+if (semValor) txtM += '<div>Valor da mensalidade em branco: confirme com a gestão e complete o cadastro.</div>';
+box.innerHTML += aviso(rc[0], 'Cobrança: ' + esc(rc[1]), txtM + obsHtml, '<div class="acoes" style="flex-basis:100%"><button class="btn' + (ep.mesPago ? ' sec' : '') + '" type="button" id="a-btn-renovar">Registrar pagamento da mensalidade</button></div>');
 } else {
 var extra = '';
 if (ehPacoteCob(cur) && pg === 'Posterior') extra = '<div>Cada sessão fica lançada com Pago? = Não. No fim do mês o total aparece em Pendências. Este mês: ' + sessoesTxt(ep.sessoesMes || 0) + (ep.aPagarMes ? ', R$ ' + brl(ep.aPagarMes) + ' a pagar' : '') + '.</div>';
 else if (pg === 'Posterior' && !cobConvenio(cur)) extra = '<div>A sessão fica lançada com Pago? = Não. No fim do mês o total aparece em Pendências e é recebido por lá.</div>';
 box.innerHTML += aviso(cobConvenio(cur) || ehProBono(cur) ? 'lilas' : (cobDe(cur) === 'Por sessão (combinado)' && valorComb(cur) == null) ? 'laranja' : 'cinza', 'Cobrança: ' + esc(rc[1]), extra + obsHtml,
-pg === 'Antecipado' && !ehPacoteCob(cur) ? '<div class="acoes" style="flex-basis:100%"><button class="btn sec" type="button" id="a-btn-ant">Recebeu adiantado: lançar sessões pagas</button></div>' : '');
+pg === 'Antecipado' && !ehPacoteCob(cur) && !ehMensalCob(cur) ? '<div class="acoes" style="flex-basis:100%"><button class="btn sec" type="button" id="a-btn-ant">Recebeu adiantado: lançar sessões pagas</button></div>' : '');
 }
 if (faltasDoc(cur).length) box.innerHTML += aviso('laranja', 'Cadastro incompleto · falta ' + esc(faltasDocTxt(cur)), 'Peça o documento e complete o cadastro (dá pra registrar o atendimento mesmo assim).', '<button class="btn sec" type="button" id="a-btn-cad-doc">Completar cadastro</button>');
 var bcd = $("#a-btn-cad-doc"); if (bcd) bcd.addEventListener('click', function () { go('pacientes', { editar: cur.nome, voltar: 'registrar' }); });
@@ -2160,6 +2189,7 @@ var cons = pacote ? consumoAtual() : null, pagoPacote = pick(opts, 'Pacote') || 
 var semCobranca = procV === 0 && (!cur._cobrar || ehAplicacaoTeste());
 if (ehProBono(cur) && !cur._cobrar) { v.disabled = true; forma.disabled = true; desc.disabled = true; pago.value = pick(opts, 'Não se aplica'); nf.value = 'Não se aplica'; h.textContent = 'sem cobrança'; modo = 'probono'; }
 else if (cobConvenio(cur) && !cur._cobrar) { v.value = brl(0); v.disabled = true; forma.disabled = true; desc.disabled = true; pago.value = pick(opts, 'Convênio'); nf.value = 'Não se aplica'; h.textContent = 'faturado no convênio'; modo = 'convenio'; }
+else if (ehMensalCob(cur) && !cur._cobrar && (semCobranca || (p && /^(Sessão|Consulta|Terapia)/.test(p.nome)))) { v.value = semCobranca ? brl(0) : ''; v.disabled = true; forma.disabled = true; desc.disabled = true; pago.value = pick(opts, 'Incluída') || pick(opts, 'Não se aplica'); nf.value = 'Não se aplica'; h.textContent = semCobranca && ehAplicacaoTeste() ? 'já paga na avaliação neuropsicológica · só controle das sessões de teste' : 'incluída na mensalidade'; modo = 'pacote'; }
 else if (pacote && semCobranca) { v.value = brl(0); pago.value = pick(opts, 'Não se aplica'); nf.value = 'Não se aplica'; h.textContent = ehAplicacaoTeste() ? 'já paga na avaliação neuropsicológica · só controle das sessões de teste' : 'procedimento sem cobrança (R$ 0 na tabela)'; }
 else if (pacote && pg === 'Antecipado') { v.disabled = true; forma.disabled = true; desc.disabled = true; pago.value = pagoPacote; nf.value = 'Não se aplica'; h.textContent = 'já paga no pacote'; modo = 'pacote'; }
 else if (pacote) {
@@ -2184,7 +2214,8 @@ var hintFalta = pacote && !semCobranca ? consumoTxt(cons) : '';
 if (falta) {
 if (pacote && cons.delta < 0 && pg !== 'Antecipado' && v.value) { forma.disabled = true; desc.disabled = true; pago.value = pick(opts, 'Não'); nf.value = 'Não se aplica'; }
 else { v.value = ''; v.disabled = true; forma.disabled = true; desc.disabled = true; pago.value = pacote && cons.delta < 0 ? pagoPacote : ''; nf.value = 'Não se aplica'; }
-if (!pacote) hintFalta = (/sem aviso|em cima da hora/.test(oque) && !cobConvenio(cur) && !ehProBono(cur)) ? 'Falta: vira pendência de taxa pra gestão decidir.' : 'Sem cobrança nesta linha.';
+if (!pacote && ehMensalCob(cur)) hintFalta = 'Mensalidade: a falta não muda o valor do mês. Sem cobrança nesta linha.';
+else if (!pacote) hintFalta = (/sem aviso|em cima da hora/.test(oque) && !cobConvenio(cur) && !ehProBono(cur)) ? 'Falta: vira pendência de taxa pra gestão decidir.' : 'Sem cobrança nesta linha.';
 }
 $("#a-oque-hint").textContent = hintFalta;
 mostrarPagParcial();
@@ -2220,6 +2251,7 @@ if (!/^Atendido/.test(oque)) return (pago === 'Não' && v ? OQUE_CURTO(oque).toL
 if (/^Não se aplica/.test(pago)) return 'não se aplica (' + (ehProBono(cur) ? cobDe(cur).toLowerCase() : 'sem cobrança') + ')' + suf;
 if (/^Convênio/.test(pago)) return 'convênio ' + (cur.convenio || '') + ' · R$ 0 · guia ' + ($("#a-guia").value === 'Sim' ? 'assinada' : 'não assinada');
 if (/^Pacote|^Plano/.test(pago)) return 'pacote · sessão já paga' + suf;
+if (/^Incluída/.test(pago)) return 'incluída na mensalidade' + (estPacote(cur).mesPago ? ' (mês pago)' : ' (mensalidade do mês em aberto)');
 if (pago === 'Sim') return 'pago · R$ ' + (v || '…') + ' · ' + forma + ($("#a-nf").value === 'Sim' ? ' · NF ' + ($("#a-nfn").value || 'emitida') : ' · NF depois') + suf;
 if (pago === 'Não') return 'não pago · ' + (v ? 'R$ ' + v + ' em aberto' : 'valor em aberto') + suf;
 if (pago === 'Parcial') { var rc = num($("#a-recebido").value) || 0, vt = num(v) || 0; return 'pago em parte · R$ ' + brl(rc) + ' de R$ ' + (v || '…') + ' · ' + forma + ' · em aberto R$ ' + brl(Math.max(0, vt - rc)) + ($("#a-nf").value === 'Sim' ? ' · NF ' + ($("#a-nfn").value || 'emitida') + ' sobre o recebido' : ' · NF depois'); }
@@ -2371,7 +2403,6 @@ $("#a-sucesso").hidden = false; $("#a-sucesso").scrollIntoView({ behavior: 'smoo
 var pModo = 'novo', pVoltar = null, pacIniciado = false, cadNome = '', cadDados = null, dupConfirmada = false, salvandoP = false;
 var CAMPOS_N = ["n-nome", "n-cpf", "n-nasc", "n-tel-pac", "n-pagador", "n-whats", "n-prof", "n-mod", "n-valor-num", "n-pct-n", "n-pct-v", "n-pagamento", "n-conv", "n-cart", "n-indic", "n-primeira", "n-pag-cpf", "n-resp", "n-resp-par", "n-resp-tel", "n-resp-cpf"];
 var RASCUNHO_N = 'rn-novo-paciente';
-var MOD_TABELA = /^(Tabela|Por sessão \(combinado\)|Convênio)$/; // a recepção escolhe; as outras cobranças são da gestão
 var pagManual = false; // Pagamento mudado à mão (ou já gravado): a sugestão pela cobrança não sobrescreve
 // convênios de desconto (gestão, 07/10): o paciente paga particular com desconto, então os cartões de modalidade continuam.
 // Os demais convênios são de plano: a modalidade é sempre "Convênio" e os cartões somem. Convênio de desconto novo: acrescentar aqui.
@@ -2425,10 +2456,11 @@ var prof = $("#n-prof").value, esps = espsDoProf(prof);
 var tipos = AT && prof ? tiposDe(esps) : [], base = tipos.filter(function (p) { return /^(Sessão|Consulta)/.test(p.nome); })[0] || tipos[0];
 var anam = AT && prof ? procsDe(esps).filter(function (p) { return /^Anamnese|^1ª|^Primeira/i.test(p.nome); })[0] : null;
 var preco = function (p) { return p && p.valor != null ? 'R$ ' + (p.valor % 1 ? brl(p.valor) : p.valor) : null; };
-if (m === 'Tabela') return (anam && preco(anam) ? '1ª consulta ' + preco(anam) + ' · depois ' : '') + (preco(base) ? preco(base) + (anam ? '' : ' por sessão') : 'valor da tabela do procedimento');
+if (m === 'Tabela') return (anam && preco(anam) ? '1ª consulta ' + preco(anam) + ' · depois ' : '') + (preco(base) ? preco(base) + (anam ? '' : ' por sessão') : 'valor da tabela · clínica médica, pediatria e outras especialidades');
 if (m === 'Por sessão (combinado)') return 'valor por sessão combinado com a psicóloga ou a gestão · informe abaixo';
-if (m === 'Pacote de sessões') return 'nº de sessões por um valor fechado · renovação do pacote paga adiantada';
-if (m === 'Pacote social') return 'social · ' + PACOTE_SOCIAL.n + ' sessões por R$ ' + PACOTE_SOCIAL.valor;
+if (PACOTES_PADRAO[m]) return PACOTES_PADRAO[m].n + ' sessões por R$ ' + PACOTES_PADRAO[m].valor + ' (valor pode mudar no cadastro) · pago adiantado';
+if (m === 'Mensalidade social') return 'R$ ' + MENSALIDADE_SOCIAL + ' por mês · não conta sessões';
+if (m === 'Mensalidade especial') return 'valor fixo do mês combinado (ex.: R$ 150, R$ 120 quinzenal) · informe abaixo';
 if (m === 'Convênio') return 'guia por sessão · fatura no fim do mês';
 if (m === 'Pro bono') return 'sem cobrança · a psicóloga ou a gestão decide';
 if (m === 'Permuta') return 'troca de serviços · sem cobrança';
@@ -2459,26 +2491,30 @@ var c = el('<label class="cardmod ' + classe + (on ? ' on' : '') + (desab ? ' de
 if (!desab) c.querySelector('input').addEventListener('change', function () { $("#n-mod").value = m; renderCards(); onModalidade(); salvarRascunhoN(); });
 return c;
 };
-mods.filter(function (m) { return MOD_TABELA.test(m); }).forEach(function (m) { tab.appendChild(card(m, '')); });
-var restritas = mods.filter(function (m) { return !MOD_TABELA.test(m); });
-if (ehGestao()) restritas.forEach(function (m) { ant.appendChild(card(m, 'antigo', '<span class="tag p lilas">gestão</span>')); });
-else {
-if (atual && restritas.indexOf(atual) >= 0) ant.appendChild(card(atual, 'antigo', '<span class="tag p lilas">atual</span>', true));
-ant.appendChild(el('<div class="cardmod trancado"><span class="nome">' + ic('cadeado', 15, 2.2) + 'Só a gestão</span><span>' + esc(restritas.join(' · ').toLowerCase()) + '</span></div>'));
-}
+// gestão, 09/10: a recepção escolhe qualquer cobrança (a Juliana passa o valor)
+if (atual && mods.indexOf(atual) < 0) tab.appendChild(card(atual, '', '<span class="tag p lilas">atual</span>'));
+mods.forEach(function (m) { tab.appendChild(card(m, '')); });
+ant.hidden = true; $("#n-mods-antigo-t").hidden = true;
 }
 // campos da cobrança: valor combinado (Por sessão), sessões e valor (pacotes) e Pagamento sugerido pela cobrança
 function mostrarCamposCob() {
-var m = $("#n-mod").value, gestao = ehGestao();
-$("#l-valor-num").hidden = m !== 'Por sessão (combinado)';
-$("#l-pct-n").hidden = $("#l-pct-v").hidden = !/^Pacote/.test(m);
-["n-pct-n", "n-pct-v"].forEach(function (id) { $("#" + id).readOnly = m === 'Pacote social' || !gestao; });
-if (m === 'Pacote social') { $("#n-pct-n").value = PACOTE_SOCIAL.n; $("#n-pct-v").value = brl(PACOTE_SOCIAL.valor); }
+var m = $("#n-mod").value, pad = PACOTES_PADRAO[m], vn = $("#n-valor-num");
+$("#l-valor-num").hidden = !/^(Por sessão \(combinado\)|Mensalidade social|Mensalidade especial)$/.test(m);
+$("#n-valor-txt").textContent = /^Mensalidade/.test(m) ? 'Valor da mensalidade (por mês)' : 'Valor combinado por sessão';
+vn.readOnly = m === 'Mensalidade social';
+if (m === 'Mensalidade social') vn.value = brl(MENSALIDADE_SOCIAL); else if (vn.dataset.social === '1') vn.value = '';
+vn.dataset.social = m === 'Mensalidade social' ? '1' : '';
+$("#l-pct-n").hidden = $("#l-pct-v").hidden = !pad;
+$("#n-pct-n").readOnly = true;
+if (pad) {
+// pacote 4 / 12: nº fixo; valor padrão (R$ 400 / R$ 900) se estiver vazio ou com o padrão do outro pacote
+var vAt = num($("#n-pct-v").value), padroes = Object.keys(PACOTES_PADRAO).map(function (k) { return PACOTES_PADRAO[k].valor; });
+$("#n-pct-n").value = pad.n; if (!(vAt > 0) || (padroes.indexOf(vAt) >= 0 && vAt !== pad.valor)) $("#n-pct-v").value = brl(pad.valor);
+}
 $("#n-pag-leg").textContent = m && PAG_SUGERIDO[m] ? (pagManual && $("#n-pagamento").value !== PAG_SUGERIDO[m] ? 'mudado à mão (sugerido: ' + PAG_SUGERIDO[m] + ')' : 'sugerido pela cobrança · pode mudar') : 'quando paga';
 }
 function onModalidade() {
 var m = $("#n-mod").value, w = $("#n-modwarn"); w.innerHTML = '';
-if (COB_RESTRITA.indexOf(m) >= 0 && !ehGestao()) w.innerHTML = '<div class="faixa lilas">' + ic('info', 20, 2.2) + '<div class="corpo">“' + esc(m) + '” é definida pela gestão.</div></div>';
 if (m && !pagManual && PAG_SUGERIDO[m]) $("#n-pagamento").value = PAG_SUGERIDO[m];
 mostrarCamposCob();
 }
@@ -2540,8 +2576,8 @@ return e.concat(errosCob(), errosCpfsExtras());
 function errosCob() {
 var e = [], m = $("#n-mod").value;
 if (m === 'Convênio' && (!$("#n-conv").value || $("#n-conv").value === 'Particular')) e.push('Cobrança "Convênio": escolha o convênio.');
-var vtx = $("#n-valor-num").value.trim(); if (m === 'Por sessão (combinado)' && vtx && !/^a definir$/i.test(vtx) && !(num(vtx) > 0)) e.push('Valor combinado: use só o número (ex.: 90) ou deixe em branco se ainda está a definir.');
-if (m === 'Pacote de sessões' && !(num($("#n-pct-n").value) > 0 && num($("#n-pct-v").value) > 0)) e.push('Pacote de sessões: informe quantas sessões e o valor do pacote.');
+var vtx = $("#n-valor-num").value.trim(); if (/^(Por sessão \(combinado\)|Mensalidade especial)$/.test(m) && vtx && !/^a definir$/i.test(vtx) && !(num(vtx) > 0)) e.push('Valor combinado: use só o número (ex.: 90) ou deixe em branco se ainda está a definir.');
+if (PACOTES_PADRAO[m] && !(num($("#n-pct-v").value) > 0)) e.push(m + ': informe o valor do pacote.');
 if (m && !$("#n-pagamento").value) e.push('Escolha o Pagamento (quando paga).');
 return e;
 }
@@ -2606,7 +2642,8 @@ $("#n-indic").value = r.indicacao || ''; $("#n-primeira").value = r.primeira || 
 $("#n-pagador").value = c.pagador || ''; $("#n-whats").value = c.whats || ''; $("#n-tel-pac").value = c.telPac || '';
 $("#n-pag-cpf").value = c.pagadorCpf || ''; $("#n-resp").value = c.respNome || ''; $("#n-resp-par").value = c.respPar || ''; $("#n-resp-tel").value = c.respTel || ''; $("#n-resp-cpf").value = c.respCpf || '';
 setSel($("#n-prof"), c.profRef); setSel($("#n-conv"), c.convenio || 'Particular'); $("#n-cart").value = c.carteirinha || '';
-setSel($("#n-mod"), c.modalidade); setSel($("#c-regra"), c.regra);
+// nome antigo (antes de 09/10) aparece como o novo; só grava a troca se salvar
+setSel($("#n-mod"), !c.modalidade || COBRANCAS.indexOf(c.modalidade) >= 0 ? c.modalidade : (cobDe({ modalidade: c.modalidade, pctN: c.pctN, convenio: c.convenio, valorNum: c.valorNum }) || c.modalidade)); setSel($("#c-regra"), c.regra);
 var pac0 = pacInfo(r.nome) || {}; setSel($("#n-pagamento"), c.pagamento || ''); pagManual = !!c.pagamento;
 // o servidor manda o número como texto ("70.5"): ponto decimal, sem milhar
 var nSrv = function (v) { var n = parseFloat(String(v == null ? '' : v).replace(',', '.')); return isNaN(n) ? null : n; };
@@ -2683,27 +2720,30 @@ $("#k-carregando").hidden = false;
 call('pacotesPainel').then(function (r) { PCT = r; $("#k-carregando").hidden = true; renderPacotes(); })
 .catch(function (e) { $("#k-carregando").textContent = 'Não consegui carregar: ' + e.message; });
 }
-var SIT_PCT = { ok: ['verde', 'em dia'], renovar: ['amarela', 'última sessão'], esgotado: ['vermelha', 'pacote esgotado'], vencido: ['vermelha', 'validade vencida'], 'renovação do mês em aberto': ['amarela', 'renovação do mês em aberto'], 'a pagar no mês': ['amarela', 'a pagar no mês'] };
-function grupoPct(it) { return it.situacao === 'ok' ? 'ok' : /esgotado|vencido/.test(it.situacao) ? 'esg' : 'atn'; }
+var SIT_PCT = { ok: ['verde', 'em dia'], renovar: ['amarela', 'última sessão'], esgotado: ['vermelha', 'pacote esgotado'], vencido: ['vermelha', 'validade vencida'], 'renovação do mês em aberto': ['amarela', 'renovação do mês em aberto'], 'a pagar no mês': ['amarela', 'a pagar no mês'],
+'mês pago': ['verde', 'mês pago'], 'vence dia 10': ['amarela', 'vence dia 10'], 'venceu dia 10': ['vermelha', 'venceu dia 10'], 'mensalidade atrasada': ['vermelha', 'mensalidade atrasada'], 'a pagar no fim do mês': ['amarela', 'a pagar no fim do mês'] };
+function grupoPct(it) { return it.situacao === 'ok' || it.situacao === 'mês pago' ? 'ok' : /esgotado|vencido|venceu|atrasada/.test(it.situacao) ? 'esg' : 'atn'; }
 function renderPacotes() {
 var q = semAcento($("#k-busca").value || ''), itens = PCT.itens || [];
 var cont = { todos: itens.length, ok: 0, atn: 0, esg: 0 }; itens.forEach(function (it) { cont[grupoPct(it)]++; });
 var k = $("#k-kpis"); k.innerHTML = '';
-[['todos', 'pacotes', ''], ['ok', 'em dia', 'verde'], ['atn', 'última sessão · a renovar · a pagar', 'amarela'], ['esg', 'esgotados ou vencidos', 'vermelha']].forEach(function (x) {
+[['todos', 'pacotes e mensalidades', ''], ['ok', 'em dia', 'verde'], ['atn', 'última sessão · a renovar · a pagar', 'amarela'], ['esg', 'esgotados, vencidos ou atrasados', 'vermelha']].forEach(function (x) {
 var b = el('<button type="button" class="kpi ' + x[2] + '" aria-pressed="' + (pctFiltro === x[0]) + '"><b>' + cont[x[0]] + '</b><span>' + x[1] + '</span></button>');
 b.addEventListener('click', function () { pctFiltro = x[0]; renderPacotes(); }); k.appendChild(b);
 });
 var lista = itens.filter(function (it) { return (pctFiltro === 'todos' || pctFiltro === grupoPct(it)) && (!q || semAcento(it.paciente).indexOf(q) >= 0 || semAcento(it.pagador || '').indexOf(q) >= 0); });
 var root = $("#k-list"); root.innerHTML = '';
-if (!lista.length) { root.innerHTML = '<div class="vazio">' + (itens.length ? 'Ninguém neste filtro.' : 'Nenhum paciente com Cobrança = pacote.') + '</div>'; return; }
-var card = el('<div class="tabela-card pct-card"><div class="tabela-wrap"><table class="pct"><thead><tr><th>Paciente</th><th>Pacote</th><th>Pagamento</th><th>Sessões</th><th>Última renovação</th><th>Situação</th><th></th></tr></thead><tbody></tbody></table></div><div class="tabela-rodape"><span>Mostrando ' + lista.length + ' de ' + itens.length + '</span><span>Validade: 4 sessões = 2 meses · 12 sessões = 6 meses</span><span>Ninguém começa com sessões: elas entram na renovação</span></div></div>');
+if (!lista.length) { root.innerHTML = '<div class="vazio">' + (itens.length ? 'Ninguém neste filtro.' : 'Nenhum paciente com pacote ou mensalidade.') + '</div>'; return; }
+var card = el('<div class="tabela-card pct-card"><div class="tabela-wrap"><table class="pct"><thead><tr><th>Paciente</th><th>Pacote / mensalidade</th><th>Pagamento</th><th>Sessões / mês</th><th>Último pagamento</th><th>Situação</th><th></th></tr></thead><tbody></tbody></table></div><div class="tabela-rodape"><span>Mostrando ' + lista.length + ' de ' + itens.length + '</span><span>Validade: 4 sessões = 2 meses · 12 sessões = 6 meses</span><span>Ninguém começa com sessões: elas entram na renovação</span><span>Mensalidade: paga até o dia 10</span></div></div>');
 var tb = $('tbody', card);
 lista.forEach(function (it) {
 var s = SIT_PCT[it.situacao] || ['cinza', it.situacao], ant = it.pagamento === 'Antecipado';
-var pacote = (it.cobranca === 'Pacote social' ? 'Pacote social · ' : '') + sessoesTxt(it.sessoes) + (it.valor ? ' · R$ ' + brl(it.valor) : '');
-var sess = ant ? '<b>' + esc(disponiveisTxt(it.disponiveis)) + '</b>' : esc('este mês: ' + sessoesTxt(it.sessoesMes || 0)) + (it.aPagarMes ? '<br><b>R$ ' + brl(it.aPagarMes) + ' a pagar</b>' : '');
-var ren = it.ultima ? esc(it.ultima) + (it.validade ? '<div class="muted">válidas até ' + esc(it.validade) + '</div>' : '') : '<span class="muted">—</span>';
-var acao = ant ? '<button type="button" class="btn' + (s[0] === 'verde' ? ' ter' : '') + '" data-ren>Registrar renovação</button>' : '<span class="muted">recebe no fim do mês (Agenda → Receber)</span>';
+var mes = MESES_PT[new Date().getMonth()].toLowerCase(), mesAnt = MESES_PT[(new Date().getMonth() + 11) % 12].toLowerCase();
+var pacote = it.mensal ? it.cobranca + ' · ' + (it.valor ? 'R$ ' + brl(it.valor) + '/mês' : 'valor a definir') : sessoesTxt(it.sessoes) + (it.valor ? ' · R$ ' + brl(it.valor) : '');
+var sess = it.mensal ? '<b>' + esc(mes + (it.mesPago ? ' pago' : ' em aberto')) + '</b>' + (it.mesAnteriorPago ? '' : '<div class="muted">' + esc(mesAnt) + ' sem pagamento registrado</div>')
+: ant ? '<b>' + esc(disponiveisTxt(it.disponiveis)) + '</b>' : esc('este mês: ' + sessoesTxt(it.sessoesMes || 0)) + (it.aPagarMes ? '<br><b>R$ ' + brl(it.aPagarMes) + ' a pagar</b>' : '');
+var ren = it.ultima && it.mensal ? esc(it.ultima) : it.ultima ? esc(it.ultima) + (it.validade ? '<div class="muted">válidas até ' + esc(it.validade) + '</div>' : '') : '<span class="muted">—</span>';
+var acao = it.mensal ? '<button type="button" class="btn' + (it.mesPago ? ' ter' : '') + '" data-ren>Registrar pagamento da mensalidade</button>' : ant ? '<button type="button" class="btn' + (s[0] === 'verde' ? ' ter' : '') + '" data-ren>Registrar renovação</button>' : '<span class="muted">recebe no fim do mês (Agenda → Receber)</span>';
 var tr = el('<tr><td class="td-quem"><div style="font-weight:700">' + esc(it.paciente) + '</div><div class="muted">' + esc(it.pagador ? 'pagador: ' + it.pagador : '') + '</div></td><td class="td-pac">' + esc(pacote) + '<span class="so-tel"> · ' + esc(it.pagamento) + '</span></td><td class="td-pg">' + esc(it.pagamento) + '</td><td class="td-ses">' + sess + '</td><td class="td-ren">' + ren + '</td><td class="td-sit"><span class="tag ' + s[0] + '">' + esc(s[1]) + '</span></td><td class="td-acao" style="text-align:right">' + acao + '</td></tr>');
 var b = $('[data-ren]', tr); if (b) b.addEventListener('click', function () { var p = pacInfo(it.paciente); if (!p) return toast('Paciente não está em Pacientes'); abrirRenovacao($("#k-renbox"), p, carregarPacotes); });
 tb.appendChild(tr);
@@ -2714,11 +2754,12 @@ $("#k-busca").addEventListener('input', function () { if (PCT) renderPacotes(); 
 /* ---------- renovação do pacote (Registrar e tela Pacotes usam o mesmo formulário) ---------- */
 function dataMaisMeses(s, m) { var d = dataObj(s); if (!d) return ''; var x = new Date(d.getFullYear(), d.getMonth() + m, d.getDate()); return ('0' + x.getDate()).slice(-2) + '/' + ('0' + (x.getMonth() + 1)).slice(-2) + '/' + x.getFullYear(); }
 function abrirRenovacao(box, p, aoTerminar) {
+if (ehMensalCob(p)) return abrirMensalidade(box, p, aoTerminar);
 var k = pacoteDe(p), e = estPacote(p);
 box.innerHTML = '<div class="cab"><h2>Registrar renovação do pacote · ' + esc(p.nome) + '</h2><span class="esp"></span><button type="button" class="btn icone p" data-fechar aria-label="Fechar">' + ic('fechar', 16) + '</button></div>' +
 '<p class="muted" style="margin:0">Soma as sessões às sessões disponíveis (hoje: ' + esc(disponiveisTxt(e.disponiveis)) + '). Grava uma linha na aba <b>Renovações</b> (o Financeiro concilia) e o recebimento na aba do mês.</p>' +
 '<div class="grid">' +
-'<label class="campo">Sessões<input data-r="sessoes" inputmode="numeric" value="' + esc(k.n || '') + '"' + (cobDe(p) === 'Pacote social' ? ' readonly' : '') + '></label>' +
+'<label class="campo">Sessões<input data-r="sessoes" inputmode="numeric" value="' + esc(k.n || '') + '"></label>' +
 '<label class="campo">Valor recebido<div class="campo-wrap"><span class="prefixo">R$</span><input data-r="valor" class="dinheiro" inputmode="decimal" value="' + (k.valor ? brl(k.valor) : '') + '"></div></label>' +
 '<label class="campo">Data do pagamento<input data-r="data" inputmode="numeric" maxlength="10" value="' + hojeStr() + '"></label>' +
 '<label class="campo">Forma<select data-r="forma"></select></label>' +
@@ -2754,6 +2795,53 @@ ep.ultima = d.data; ep.validade = r.validade || ep.validade; ep.renovouMes = tru
 if (typeof invalidarResumo === 'function') invalidarResumo();
 box.hidden = true; box.innerHTML = '';
 toast('Renovação registrada · ' + disponiveisTxt(ep.disponiveis) + (r.validade ? ' até ' + r.validade : ''));
+if (aoTerminar) aoTerminar(r);
+}).catch(function (er2) { toast('Erro: ' + er2.message); }).finally(function () { b.disabled = false; });
+});
+box.scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+/* ---------- pagamento da mensalidade (gestão, 09/10): valor fixo do mês, sem sessões; "Referente a" diz qual mês ficou pago ---------- */
+function abrirMensalidade(box, p, aoTerminar) {
+var e = estPacote(p), vm = valorMensal(p), h = new Date(), mAt = MESES_PT[h.getMonth()] + '/' + h.getFullYear(), da = new Date(h.getFullYear(), h.getMonth() - 1, 1), mAnt = MESES_PT[da.getMonth()] + '/' + da.getFullYear();
+box.innerHTML = '<div class="cab"><h2>Registrar pagamento da mensalidade · ' + esc(p.nome) + '</h2><span class="esp"></span><button type="button" class="btn icone p" data-fechar aria-label="Fechar">' + ic('fechar', 16) + '</button></div>' +
+'<p class="muted" style="margin:0">' + esc(cobDe(p)) + (vm != null ? ' · R$ ' + esc(brl(vm)) + ' por mês' : ' · valor a definir (confirme com a gestão)') + '. Grava uma linha na aba <b>Renovações</b> (o Financeiro concilia) e o recebimento na aba do mês. As sessões do mês ficam “incluídas na mensalidade”.</p>' +
+'<div class="grid">' +
+'<label class="campo">Referente a<select data-r="referente"><option value="' + esc(mAt) + '">' + esc(mAt) + (e.mesPago ? ' (já pago)' : '') + '</option><option value="' + esc(mAnt) + '">' + esc(mAnt) + (e.mesAnteriorPago ? ' (já pago)' : '') + '</option></select></label>' +
+'<label class="campo">Valor recebido<div class="campo-wrap"><span class="prefixo">R$</span><input data-r="valor" class="dinheiro" inputmode="decimal" value="' + (vm != null ? brl(vm) : '') + '"></div></label>' +
+'<label class="campo">Data do pagamento<input data-r="data" inputmode="numeric" maxlength="10" value="' + hojeStr() + '"></label>' +
+'<label class="campo">Forma<select data-r="forma"></select></label>' +
+'<label class="campo">Quem pagou<input data-r="quemPagou" list="dl-pagadores" autocomplete="off" value="' + esc(p.pagador || p.nome) + '"></label>' +
+'<label class="campo">NF emitida?<select data-r="nf"><option>Não</option><option>Sim</option></select></label>' +
+'<label class="campo">Nº da NF<input data-r="nfNumero" autocomplete="off"></label>' +
+'<label class="campo c2">Observação <span class="leg">(opcional)</span><input data-r="observacao" autocomplete="off"></label>' +
+'</div><div class="faixa nota" data-r-resumo></div><div data-r-erros></div>' +
+'<div class="acoes"><button type="button" class="btn" data-r-ok>Registrar pagamento</button><button type="button" class="btn ter" data-fechar>Cancelar</button></div>';
+box.hidden = false;
+var v = function (n) { return $('[data-r=' + n + ']', box); };
+preencherSelect(v('forma'), BOOT.listas.formas || [], '—');
+if (e.mesPago && !e.mesAnteriorPago) v('referente').value = mAnt;
+var resumo = function () { var r0 = v('referente').value, jaPago = (r0 === mAt && e.mesPago) || (r0 === mAnt && e.mesAnteriorPago); $('[data-r-resumo]', box).innerHTML = 'Mensalidade de <b>' + esc(r0.split('/')[0].toLowerCase()) + '</b> fica paga.' + (jaPago ? ' <b>Atenção: este mês já tem pagamento registrado.</b>' : '') + (num(v('valor').value) > 0 && vm != null && num(v('valor').value) !== vm ? ' Valor diferente do cadastro (R$ ' + esc(brl(vm)) + '): anote o motivo na Observação.' : ''); };
+['referente', 'valor'].forEach(function (n) { v(n).addEventListener('input', resumo); v(n).addEventListener('change', resumo); });
+v('data').addEventListener('input', function () { this.value = mascaraData(this.value); });
+resumo();
+$$('[data-fechar]', box).forEach(function (b) { b.addEventListener('click', function () { box.hidden = true; box.innerHTML = ''; }); });
+$('[data-r-ok]', box).addEventListener('click', function () {
+var d = { paciente: p.nome }; ['referente', 'valor', 'data', 'forma', 'quemPagou', 'nf', 'nfNumero', 'observacao'].forEach(function (n) { d[n] = v(n).value.trim(); });
+if ($("#a-prof") && telaAtual === 'registrar') d.profissional = $("#a-prof").value;
+var er = [];
+if (!(num(d.valor) > 0)) er.push('Informe o valor recebido.');
+if (!dataValida(d.data)) er.push('Data do pagamento inválida (dd/mm/aaaa).');
+if (!d.forma) er.push('Escolha a forma de pagamento.');
+$('[data-r-erros]', box).innerHTML = erroBox(er); if (er.length) return;
+var b = this; b.disabled = true;
+call('renovarPacote', d).then(function (r) {
+if (!r.ok) { $('[data-r-erros]', box).innerHTML = erroBox(r.erros || [], 'Não gravou'); return; }
+var ps = AT.pacotesSessoes = AT.pacotesSessoes || {}, ep = ps[p.nome] = ps[p.nome] || estPacote(p);
+if (d.referente === mAt) ep.mesPago = true; else ep.mesAnteriorPago = true;
+ep.ultima = d.data;
+if (typeof invalidarResumo === 'function') invalidarResumo();
+box.hidden = true; box.innerHTML = '';
+toast('Mensalidade de ' + d.referente.split('/')[0].toLowerCase() + ' registrada');
 if (aoTerminar) aoTerminar(r);
 }).catch(function (er2) { toast('Erro: ' + er2.message); }).finally(function () { b.disabled = false; });
 });
