@@ -36,8 +36,9 @@ function pac(nome, cob, pag, extra) { const l = HP.map(() => ''); l[0] = nome; l
 const HM = ["Data","Hora","Paciente","Profissional","Procedimento","Convênio (auto)","Modalidade (auto)","⚠ Atenção na cobrança (auto)","O que aconteceu","Valor (R$)","Pago?","Data do pagamento","Forma de pagamento","Pagador habitual (auto)","Quem pagou (só se foi outra pessoa)","NF emitida?","Nº da NF","Guia assinada? (convênio)","Observação","ID","Registrado por (app)","Plano (ID)"];
 const hoje = new Date(), mes = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'][hoje.getMonth()];
 const abas = {
-  Pacientes: [HP, pac('Sofia Social', 'Pacote social', 'Antecipado', { 'Sessões por pacote': 4, 'Valor do pacote (R$)': 200 }),
-    pac('Ana Posterior', 'Pacote de sessões', 'Posterior', { 'Sessões por pacote': 4, 'Valor do pacote (R$)': 280 }),
+  Pacientes: [HP, pac('Sofia Social', 'Pacote 4 sessões', 'Antecipado', { 'Sessões por pacote': 4, 'Valor do pacote (R$)': 400 }),
+    pac('Ana Posterior', 'Pacote 4 sessões', 'Posterior', { 'Sessões por pacote': 4, 'Valor do pacote (R$)': 280 }),
+    pac('Mara Mensal', 'Mensalidade especial', 'Antecipado', { 'Valor combinado (R$)': 150 }),
     pac('Carlos ExPlano', 'Por sessão (combinado)', 'Posterior', { 'Valor combinado (R$)': 70, 'Histórico de cobrança (antigo)': 'Pagamento posterior: R$ 70 por sessão (07/10: era Plano de 4 consultas)' }),
     pac('Naimara Paula Sa da Silva', 'Por sessão (combinado)', 'Posterior', { 'Valor combinado (R$)': 120, 'Histórico de cobrança (antigo)': 'era Plano de 4 consultas' }),
     pac('Erica Pro Bono', 'Pro bono', 'Não se aplica', { 'Observação de cobrança (a recepção lê — diz O QUE cobrar, nunca o porquê)': 'Não cobrar até 31/10. A partir de 01/11: social R$ 200/mês' }),
@@ -46,9 +47,9 @@ const abas = {
     ["Atendido","Sim","Pix","Sim","Sim","Particular","Tabela","Tabela","Qualquer especialidade","Na sessão"],
     ["Desmarcou com antecedência (≥ 24h)","Não","Dinheiro","Não","Não","Cedplan","","Por sessão (combinado)","Qualquer especialidade","Antecipado"],
     ["Faltou avisando em cima da hora (< 24h)","Convênio (fatura)","","","","Sabin Sinai","","Pacote de sessões","Qualquer especialidade","Posterior"],
-    ["Faltou sem aviso","Pacote (sessão já paga)","","","","","","Pacote social","Psicologia","Não se aplica"],
-    ["Cancelado pela clínica","Não se aplica (pro bono / permuta)","","","","","","Convênio","",""],
-    ["","Parcial","","","","","","Pro bono","",""],["","","","","","","","Permuta","",""]],
+    ["Faltou sem aviso","Pacote (sessão já paga)","","","","","","Pacote 4 sessões","Psicologia","Não se aplica"],
+    ["Cancelado pela clínica","Não se aplica (pro bono / permuta)","","","","","","Pacote 12 sessões","",""],
+    ["","Parcial","","","","","","Mensalidade social","",""],["","Incluída na mensalidade","","","","","","Mensalidade especial","",""],["","","","","","","","Convênio","",""],["","","","","","","","Pro bono","",""],["","","","","","","","Permuta","",""]],
   Profissionais: [["Nome","Especialidade"],["Juliana Ribeiro","Psicologia"]],
   Procedimentos: [["Procedimento","Especialidade","Valor","Obs"],["Sessão de psicologia","Psicologia",120,""]],
   'Alterações de cadastro': [["Quando","Paciente","Campo","De","Para","Quem informou","Por"]],
@@ -66,7 +67,7 @@ const ok = (r, msg) => { if (!r || r.ok === false) { console.error(msg, JSON.str
 const hj = fmt(hoje, '', 'dd/MM/yyyy');
 
 const b = API.bootstrap(); assert.deepStrictEqual(b.listas.pagamentos, ['Na sessão', 'Antecipado', 'Posterior', 'Não se aplica']);
-assert.ok(b.listas.modalidades.indexOf('Pacote social') >= 0);
+assert.ok(b.listas.modalidades.indexOf('Mensalidade social') >= 0);
 const at = API.bootstrapAtendimento(); assert.ok(at.pacotesSessoes);
 const sofia = at.pacientes.filter(p => p.nome === 'Sofia Social')[0];
 assert.strictEqual(sofia.pctN, 4); assert.strictEqual(sofia.pagamento, 'Antecipado');
@@ -75,7 +76,7 @@ console.log('bootstrap ok · perfil', b.usuario.perfil);
 // ninguém começa com sessões: Sofia atendida sem renovação fica com −1
 let r = ok(API.registrarAtendimento({ paciente: 'Sofia Social', profissional: 'Juliana Ribeiro', procedimento: 'Sessão de psicologia', data: hj, hora: '09:00', oque: 'Atendido', pago: 'Pacote (sessão já paga)', valor: '' }), 'reg sofia');
 assert.strictEqual(r.consumo.delta, -1); assert.strictEqual(r.disponiveis, -1);
-r = ok(API.renovarPacote({ paciente: 'Sofia Social', sessoes: 4, valor: '200', data: hj, forma: 'Pix', nf: 'Não' }), 'renovar');
+r = ok(API.renovarPacote({ paciente: 'Sofia Social', sessoes: 4, valor: '400', data: hj, forma: 'Pix', nf: 'Não' }), 'renovar');
 assert.strictEqual(r.disponiveis, 3); console.log('renovação ok · válidas até', r.validade);
 // 1ª falta avisada não gasta, 2ª gasta; mesma semana nunca gasta
 r = ok(API.registrarAtendimento({ paciente: 'Sofia Social', profissional: 'Juliana Ribeiro', procedimento: 'Sessão de psicologia', data: hj, oque: 'Faltou avisando em cima da hora (< 24h)', pago: '' }), 'falta1');
@@ -94,17 +95,21 @@ r = ok(API.registrarAtendimento({ paciente: 'Ana Posterior', profissional: 'Juli
 assert.strictEqual(r.disponiveis, null);
 const painel = API.pacotesPainel(); const pa = painel.itens.filter(i => i.paciente === 'Ana Posterior')[0], ps = painel.itens.filter(i => i.paciente === 'Sofia Social')[0];
 assert.strictEqual(pa.aPagarMes, 70); assert.strictEqual(pa.situacao, 'a pagar no mês'); assert.strictEqual(ps.disponiveis, 2);
+// mensalidade: mês em aberto até registrar o pagamento do mês
+let pm = API.pacotesPainel().itens.filter(i => i.paciente === 'Mara Mensal')[0]; assert.strictEqual(pm.mensal, true); assert.strictEqual(pm.valor, 150); assert.strictEqual(pm.mesPago, false);
+const rm = ok(API.renovarPacote({ paciente: 'Mara Mensal', valor: '150', data: hj, forma: 'Pix' }), 'mensalidade'); assert.ok(/\//.test(rm.referente)); assert.strictEqual(rm.mesPago, true);
+pm = API.pacotesPainel().itens.filter(i => i.paciente === 'Mara Mensal')[0]; assert.strictEqual(pm.situacao, 'mês pago');
 console.log('painel ok', painel.itens.map(i => i.paciente + ':' + i.situacao).join(' · '));
 // virada de novembro
 const v = ok(API.viradaPropostas(), 'virada');
 const nomes = v.itens.map(i => i.nome).sort();
 assert.deepStrictEqual(nomes, ['Ana Posterior', 'Carlos ExPlano', 'Erica Pro Bono']);
-const carlos = v.itens.filter(i => i.nome === 'Carlos ExPlano')[0]; assert.strictEqual(carlos.campos.pctV, 280);
+const carlos = v.itens.filter(i => i.nome === 'Carlos ExPlano')[0]; assert.strictEqual(carlos.campos.pctV, 280); assert.strictEqual(carlos.campos.modalidade, 'Pacote 4 sessões');
 const ap = ok(API.aplicarAlteracoesLote({ itens: v.itens, quemInformou: 'teste' }), 'aplicar');
 assert.strictEqual(ap.feitos.length, 3, JSON.stringify(ap));
 const depois = API.bootstrapAtendimento().pacientes; const c2 = depois.filter(p => p.nome === 'Carlos ExPlano')[0], e2 = depois.filter(p => p.nome === 'Erica Pro Bono')[0];
-assert.strictEqual(c2.modalidade, 'Pacote de sessões'); assert.strictEqual(c2.pctN, 4); assert.strictEqual(c2.pctV, 280); assert.strictEqual(c2.pagamento, 'Antecipado');
-assert.strictEqual(e2.modalidade, 'Pacote social'); assert.strictEqual(e2.pctV, 200); assert.strictEqual(e2.pagamento, 'Antecipado');
+assert.strictEqual(c2.modalidade, 'Pacote 4 sessões'); assert.strictEqual(c2.pctN, 4); assert.strictEqual(c2.pctV, 280); assert.strictEqual(c2.pagamento, 'Antecipado');
+assert.strictEqual(e2.modalidade, 'Mensalidade social'); assert.strictEqual(e2.valorNum, 200); assert.strictEqual(e2.pagamento, 'Antecipado');
 console.log('virada ok');
 // cadastro: validações e novo paciente
 let c;

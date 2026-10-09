@@ -64,12 +64,12 @@
         <legend class="campo" style="padding:0;margin-bottom:8px;display:block">Cobrança <span class="leg">— como o valor é calculado</span></legend>
         <div class="dica" id="n-mod-guia" hidden>Escolha o profissional: a cobrança diz como cobra, o profissional diz qual tabela.</div>
         <div class="cartoes" id="n-mods-tabela"></div>
-        <div class="muted" id="n-mods-antigo-t" style="margin-top:6px"><strong style="color:var(--tx2)">Definidas pela gestão</strong> — pacotes, social, pro bono e permuta.</div>
+        <div class="muted" id="n-mods-antigo-t" hidden></div>
         <div class="cartoes" id="n-mods-antigo"></div>
         <select id="n-mod" class="sr" tabindex="-1" aria-hidden="true"></select>
         <div id="n-modwarn"></div>
         <div class="grid" id="n-cob-campos">
-          <label class="campo" id="l-valor-num" hidden>Valor combinado por sessão <span class="leg">— em branco = a definir</span><div class="campo-wrap"><span class="prefixo">R$</span><input id="n-valor-num" class="dinheiro" inputmode="decimal" autocomplete="off" placeholder="a definir"></div></label>
+          <label class="campo" id="l-valor-num" hidden><span id="n-valor-txt">Valor combinado por sessão</span> <span class="leg">— em branco = a definir</span><div class="campo-wrap"><span class="prefixo">R$</span><input id="n-valor-num" class="dinheiro" inputmode="decimal" autocomplete="off" placeholder="a definir"></div></label>
           <label class="campo" id="l-pct-n" hidden>Sessões por pacote<input id="n-pct-n" inputmode="numeric" autocomplete="off" placeholder="4"></label>
           <label class="campo" id="l-pct-v" hidden>Valor do pacote<div class="campo-wrap"><span class="prefixo">R$</span><input id="n-pct-v" class="dinheiro" inputmode="decimal" autocomplete="off"></div></label>
           <label class="campo" id="l-pagamento">Pagamento <span class="leg" id="n-pag-leg">quando paga</span><select id="n-pagamento"></select></label>

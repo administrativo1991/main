@@ -2,7 +2,6 @@
 var pModo = 'novo', pVoltar = null, pacIniciado = false, cadNome = '', cadDados = null, dupConfirmada = false, salvandoP = false;
 var CAMPOS_N = ["n-nome", "n-cpf", "n-nasc", "n-tel-pac", "n-pagador", "n-whats", "n-prof", "n-mod", "n-valor-num", "n-pct-n", "n-pct-v", "n-pagamento", "n-conv", "n-cart", "n-indic", "n-primeira", "n-pag-cpf", "n-resp", "n-resp-par", "n-resp-tel", "n-resp-cpf"];
 var RASCUNHO_N = 'rn-novo-paciente';
-var MOD_TABELA = /^(Tabela|Por sessão \(combinado\)|Convênio)$/; // a recepção escolhe; as outras cobranças são da gestão
 var pagManual = false; // Pagamento mudado à mão (ou já gravado): a sugestão pela cobrança não sobrescreve
 // convênios de desconto (gestão, 07/10): o paciente paga particular com desconto, então os cartões de modalidade continuam.
 // Os demais convênios são de plano: a modalidade é sempre "Convênio" e os cartões somem. Convênio de desconto novo: acrescentar aqui.
@@ -58,10 +57,11 @@ function descMod(m) {
   var tipos = AT && prof ? tiposDe(esps) : [], base = tipos.filter(function (p) { return /^(Sessão|Consulta)/.test(p.nome); })[0] || tipos[0];
   var anam = AT && prof ? procsDe(esps).filter(function (p) { return /^Anamnese|^1ª|^Primeira/i.test(p.nome); })[0] : null;
   var preco = function (p) { return p && p.valor != null ? 'R$ ' + (p.valor % 1 ? brl(p.valor) : p.valor) : null; };
-  if (m === 'Tabela') return (anam && preco(anam) ? '1ª consulta ' + preco(anam) + ' · depois ' : '') + (preco(base) ? preco(base) + (anam ? '' : ' por sessão') : 'valor da tabela do procedimento');
+  if (m === 'Tabela') return (anam && preco(anam) ? '1ª consulta ' + preco(anam) + ' · depois ' : '') + (preco(base) ? preco(base) + (anam ? '' : ' por sessão') : 'valor da tabela · clínica médica, pediatria e outras especialidades');
   if (m === 'Por sessão (combinado)') return 'valor por sessão combinado com a psicóloga ou a gestão · informe abaixo';
-  if (m === 'Pacote de sessões') return 'nº de sessões por um valor fechado · renovação do pacote paga adiantada';
-  if (m === 'Pacote social') return 'social · ' + PACOTE_SOCIAL.n + ' sessões por R$ ' + PACOTE_SOCIAL.valor;
+  if (PACOTES_PADRAO[m]) return PACOTES_PADRAO[m].n + ' sessões por R$ ' + PACOTES_PADRAO[m].valor + ' (valor pode mudar no cadastro) · pago adiantado';
+  if (m === 'Mensalidade social') return 'R$ ' + MENSALIDADE_SOCIAL + ' por mês · não conta sessões';
+  if (m === 'Mensalidade especial') return 'valor fixo do mês combinado (ex.: R$ 150, R$ 120 quinzenal) · informe abaixo';
   if (m === 'Convênio') return 'guia por sessão · fatura no fim do mês';
   if (m === 'Pro bono') return 'sem cobrança · a psicóloga ou a gestão decide';
   if (m === 'Permuta') return 'troca de serviços · sem cobrança';
@@ -92,26 +92,30 @@ function renderCards() {
     if (!desab) c.querySelector('input').addEventListener('change', function () { $("#n-mod").value = m; renderCards(); onModalidade(); salvarRascunhoN(); });
     return c;
   };
-  mods.filter(function (m) { return MOD_TABELA.test(m); }).forEach(function (m) { tab.appendChild(card(m, '')); });
-  var restritas = mods.filter(function (m) { return !MOD_TABELA.test(m); });
-  if (ehGestao()) restritas.forEach(function (m) { ant.appendChild(card(m, 'antigo', '<span class="tag p lilas">gestão</span>')); });
-  else {
-    if (atual && restritas.indexOf(atual) >= 0) ant.appendChild(card(atual, 'antigo', '<span class="tag p lilas">atual</span>', true));
-    ant.appendChild(el('<div class="cardmod trancado"><span class="nome">' + ic('cadeado', 15, 2.2) + 'Só a gestão</span><span>' + esc(restritas.join(' · ').toLowerCase()) + '</span></div>'));
-  }
+  // gestão, 09/10: a recepção escolhe qualquer cobrança (a Juliana passa o valor)
+  if (atual && mods.indexOf(atual) < 0) tab.appendChild(card(atual, '', '<span class="tag p lilas">atual</span>'));
+  mods.forEach(function (m) { tab.appendChild(card(m, '')); });
+  ant.hidden = true; $("#n-mods-antigo-t").hidden = true;
 }
 // campos da cobrança: valor combinado (Por sessão), sessões e valor (pacotes) e Pagamento sugerido pela cobrança
 function mostrarCamposCob() {
-  var m = $("#n-mod").value, gestao = ehGestao();
-  $("#l-valor-num").hidden = m !== 'Por sessão (combinado)';
-  $("#l-pct-n").hidden = $("#l-pct-v").hidden = !/^Pacote/.test(m);
-  ["n-pct-n", "n-pct-v"].forEach(function (id) { $("#" + id).readOnly = m === 'Pacote social' || !gestao; });
-  if (m === 'Pacote social') { $("#n-pct-n").value = PACOTE_SOCIAL.n; $("#n-pct-v").value = brl(PACOTE_SOCIAL.valor); }
+  var m = $("#n-mod").value, pad = PACOTES_PADRAO[m], vn = $("#n-valor-num");
+  $("#l-valor-num").hidden = !/^(Por sessão \(combinado\)|Mensalidade social|Mensalidade especial)$/.test(m);
+  $("#n-valor-txt").textContent = /^Mensalidade/.test(m) ? 'Valor da mensalidade (por mês)' : 'Valor combinado por sessão';
+  vn.readOnly = m === 'Mensalidade social';
+  if (m === 'Mensalidade social') vn.value = brl(MENSALIDADE_SOCIAL); else if (vn.dataset.social === '1') vn.value = '';
+  vn.dataset.social = m === 'Mensalidade social' ? '1' : '';
+  $("#l-pct-n").hidden = $("#l-pct-v").hidden = !pad;
+  $("#n-pct-n").readOnly = true;
+  if (pad) {
+    // pacote 4 / 12: nº fixo; valor padrão (R$ 400 / R$ 900) se estiver vazio ou com o padrão do outro pacote
+    var vAt = num($("#n-pct-v").value), padroes = Object.keys(PACOTES_PADRAO).map(function (k) { return PACOTES_PADRAO[k].valor; });
+    $("#n-pct-n").value = pad.n; if (!(vAt > 0) || (padroes.indexOf(vAt) >= 0 && vAt !== pad.valor)) $("#n-pct-v").value = brl(pad.valor);
+  }
   $("#n-pag-leg").textContent = m && PAG_SUGERIDO[m] ? (pagManual && $("#n-pagamento").value !== PAG_SUGERIDO[m] ? 'mudado à mão (sugerido: ' + PAG_SUGERIDO[m] + ')' : 'sugerido pela cobrança · pode mudar') : 'quando paga';
 }
 function onModalidade() {
   var m = $("#n-mod").value, w = $("#n-modwarn"); w.innerHTML = '';
-  if (COB_RESTRITA.indexOf(m) >= 0 && !ehGestao()) w.innerHTML = '<div class="faixa lilas">' + ic('info', 20, 2.2) + '<div class="corpo">“' + esc(m) + '” é definida pela gestão.</div></div>';
   if (m && !pagManual && PAG_SUGERIDO[m]) $("#n-pagamento").value = PAG_SUGERIDO[m];
   mostrarCamposCob();
 }
@@ -174,8 +178,8 @@ function validarN() {
 function errosCob() {
   var e = [], m = $("#n-mod").value;
   if (m === 'Convênio' && (!$("#n-conv").value || $("#n-conv").value === 'Particular')) e.push('Cobrança "Convênio": escolha o convênio.');
-  var vtx = $("#n-valor-num").value.trim(); if (m === 'Por sessão (combinado)' && vtx && !/^a definir$/i.test(vtx) && !(num(vtx) > 0)) e.push('Valor combinado: use só o número (ex.: 90) ou deixe em branco se ainda está a definir.');
-  if (m === 'Pacote de sessões' && !(num($("#n-pct-n").value) > 0 && num($("#n-pct-v").value) > 0)) e.push('Pacote de sessões: informe quantas sessões e o valor do pacote.');
+  var vtx = $("#n-valor-num").value.trim(); if (/^(Por sessão \(combinado\)|Mensalidade especial)$/.test(m) && vtx && !/^a definir$/i.test(vtx) && !(num(vtx) > 0)) e.push('Valor combinado: use só o número (ex.: 90) ou deixe em branco se ainda está a definir.');
+  if (PACOTES_PADRAO[m] && !(num($("#n-pct-v").value) > 0)) e.push(m + ': informe o valor do pacote.');
   if (m && !$("#n-pagamento").value) e.push('Escolha o Pagamento (quando paga).');
   return e;
 }
@@ -241,7 +245,8 @@ function carregarCad() {
     $("#n-pagador").value = c.pagador || ''; $("#n-whats").value = c.whats || ''; $("#n-tel-pac").value = c.telPac || '';
     $("#n-pag-cpf").value = c.pagadorCpf || ''; $("#n-resp").value = c.respNome || ''; $("#n-resp-par").value = c.respPar || ''; $("#n-resp-tel").value = c.respTel || ''; $("#n-resp-cpf").value = c.respCpf || '';
     setSel($("#n-prof"), c.profRef); setSel($("#n-conv"), c.convenio || 'Particular'); $("#n-cart").value = c.carteirinha || '';
-    setSel($("#n-mod"), c.modalidade); setSel($("#c-regra"), c.regra);
+    // nome antigo (antes de 09/10) aparece como o novo; só grava a troca se salvar
+    setSel($("#n-mod"), !c.modalidade || COBRANCAS.indexOf(c.modalidade) >= 0 ? c.modalidade : (cobDe({ modalidade: c.modalidade, pctN: c.pctN, convenio: c.convenio, valorNum: c.valorNum }) || c.modalidade)); setSel($("#c-regra"), c.regra);
     var pac0 = pacInfo(r.nome) || {}; setSel($("#n-pagamento"), c.pagamento || ''); pagManual = !!c.pagamento;
     // o servidor manda o número como texto ("70.5"): ponto decimal, sem milhar
     var nSrv = function (v) { var n = parseFloat(String(v == null ? '' : v).replace(',', '.')); return isNaN(n) ? null : n; };
