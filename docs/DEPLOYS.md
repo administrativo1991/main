@@ -23,7 +23,7 @@ coluna E não afeta o app. Atualizar `E2` faz parte de toda publicação (passo 
 
 | Canal | Deploy | Peças | Commit |
 |---|---|---|---|
-| Real (`arquivos_real`) | **2026-10-09-07** | 40 (duplicatas 1 · server 11 · index 28); ativas = 2, 123, 281, 345, 369, 398–405, 426–448, 451–454; `antigo23:` = trocadas neste deploy | branch `claude/busy-wright-xf0hql` |
+| Real (`arquivos_real`) | **2026-10-09-08** | 40 (duplicatas 1 · server 11 · index 28); ativas = 2, 123, 281, 345, 401–405, 426–448, 451–458; `antigo24:` = trocadas neste deploy | branch `claude/busy-wright-xf0hql` |
 | Teste (`arquivos`) | **2026-10-06-08** (atrás da real: não recebeu o 10, o 11, o 07-01 nem os de 07/10) | 27 | 135de84 |
 | Carregador real | 2026-10-06-02 (`dist/Code.real.gs`, implantado pela Roberta) | — | 4ad0272 |
 | Carregador teste | 2026-10-04-01 + nova versão pendente desde 05/10 (permissão do Drive, ver `COMO-INSTALAR.md`) | — | — |
@@ -48,6 +48,16 @@ Modelo:
 ```
 
 ## Lista
+
+### 2026-10-09-08 · Real (direto) · Profissionais: coluna Ativo
+- **O que mudou**: aba Profissionais ganhou a coluna K **Ativo**; "Não" = saiu da clínica e some das listas do app
+  (Registrar, Agenda, Pacientes, Repasse); os lançamentos antigos continuam com o nome.
+- **Dados** (gestão, 09/10): saíram Gabriela Ramos, Maria Fernanda, Camila Barros e Ana Beatriz (Ativo = Não; nenhuma
+  tinha horário fixo na Agenda recorrente; regras de repasse das 3 estagiárias desligadas). Entrou **Laryssa Dutra
+  Simili** (Nutrição), quinta 08:00-12:00, 13:00-18:00. Regra de repasse do Pacote Acolhimento desligada (não existe mais).
+- **Peças**: 4 novas (455–458, server 0–3); 369, 398–400 viraram `antigo24:`. 4/4 iguais ao build.
+- **Voltar**: `antigo24:` → nome e 455–458 → `antigo25:`.
+- **Aprovação**: gestão, 09/10.
 
 ### 2026-10-09-07 · Real (direto) · Repasse: PLASC, desconto mensal, valores dos convênios
 - **O que mudou**: % negativo = a profissional deve à clínica (linhas "PLASC (fatura da Luciana)" viram convênio PLASC,
