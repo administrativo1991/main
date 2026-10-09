@@ -238,6 +238,10 @@ API.bootstrap = function () {
 /* ---------- Cobrança + Pagamento (gestão, 07-09/10) ---------- */
 var PAGAMENTOS = ['Na sessão', 'No início do mês', 'No mês seguinte', 'Não se aplica'];
 // gestão, 09/10: "Antecipado" virou "No início do mês" e "Posterior" virou "No mês seguinte" (os nomes antigos são lidos como os novos)
+// Pago? = "Perdido / glosa" (gestão, 10/10): valor dado como perdido (glosa, guia não autorizada, calote). Fica fora de a receber,
+// pendências, guias e receita; o Valor fica como referência do que se perdeu. Só a gestão marca ou desmarca, sempre com o motivo.
+var PAGO_PERDIDO = 'Perdido / glosa';
+function ehPerdido_(p) { return /^Perdido/i.test(String(p || '').trim()); }
 function pagNorm_(v) { v = String(v || '').trim(); return v === 'Antecipado' ? 'No início do mês' : v === 'Posterior' ? 'No mês seguinte' : v; }
 var PAGAMENTO_SUGERIDO = { 'Tabela': 'Na sessão', 'Por sessão (combinado)': 'Na sessão', 'Pacote 4 sessões': 'No início do mês', 'Pacote 12 sessões': 'No início do mês',
   'Mensalidade social': 'No início do mês', 'Mensalidade especial': 'No início do mês', 'Convênio': 'No mês seguinte', 'Pro bono': 'Não se aplica', 'Permuta': 'Não se aplica' };
@@ -466,6 +470,8 @@ API.registrarAtendimento = function (d) {
   var valor = d.valor === '' || d.valor == null ? '' : Number(String(d.valor).replace(/\./g, '').replace(',', '.'));
   if (valor !== '' && isNaN(valor)) erros.push('Valor inválido.');
   if (pago === 'Sim' && (valor === '' || valor <= 0)) erros.push('Pago? = Sim exige um valor maior que zero.');
+  if (ehPerdido_(pago) && usuario_().perfil !== 'gestao') erros.push('Só a gestão marca "' + PAGO_PERDIDO + '".');
+  else if (ehPerdido_(pago) && !String(d.observacao || '').trim()) erros.push('"' + PAGO_PERDIDO + '": escreva o motivo na observação.');
   var recebido = pago === 'Parcial' ? numBR_(d.valorRecebido) : 0;
   if (pago === 'Parcial' && !(valor > 0)) erros.push('Pago parcial exige o valor total da sessão.');
   else if (pago === 'Parcial' && !(recebido > 0 && recebido < valor)) erros.push('Pago parcial: o valor recebido agora tem de ser maior que zero e menor que o valor da sessão.');
@@ -556,6 +562,10 @@ API.corrigirLancamento = function (d) {
     var pac = indicePacientes_().filter(function (p) { return p.nome === paciente; })[0] || {};
     var u = usuario_(), erros = [], novos = {}, rotulos = [], amplos = [];
     var quer = function (k) { return Object.prototype.hasOwnProperty.call(c, k); };
+    // perdido / glosa: só a gestão marca, desmarca ou recebe numa linha perdida
+    if (u.perfil !== 'gestao' && (ehPerdido_(c.pago) || (ehPerdido_(pagoAtual) && (quer('pago') || quer('recebidoAgora'))))) return { ok: false, erros: ['Só a gestão marca ou desmarca "' + PAGO_PERDIDO + '".'] };
+    var motivoPerdido = String(c.motivoPerdido || '').trim();
+    if (ehPerdido_(c.pago) && !ehPerdido_(pagoAtual) && !motivoPerdido) return { ok: false, erros: ['"' + PAGO_PERDIDO + '": informe o motivo (ex.: guia não autorizada pelo convênio).'] };
     var atualDe = function (k) { return k === 'DATA_PAG' || k === 'DATA' ? fmtData_(g(k)) : k === 'HORA' ? horaTxt_(g(k)) : (k === 'VALOR' || k === 'RECEBIDO') ? (g(k) === '' ? '' : String(numBR_(g(k)))) : txt(k); };
     var mudar = function (k, v, rotulo) { if (!h[HM[k]] && k !== 'RECEBIDO') return; var atual = atualDe(k); var nv = v instanceof Date ? fmtData_(v) : String(v == null ? '' : v).trim(); if (nv === atual) return; novos[k] = v instanceof Date ? v : (typeof v === 'number' ? v : nv); rotulos.push(rotulo); return { de: atual, para: nv }; };
     var amplo = function (k, v, rotulo) { var m = mudar(k, v, rotulo); if (m) amplos.push({ campo: rotulo, de: m.de, para: m.para }); };
@@ -609,7 +619,7 @@ API.corrigirLancamento = function (d) {
     }
     if (quer('quemPagou')) { var quem = String(c.quemPagou || '').trim(); mudar('QUEM', (quem && quem !== (pac.pagador || '') && quem !== paciente) ? quem : '', 'Quem pagou'); }
     if (quer('guia')) mudar('GUIA', String(c.guia || ''), 'Guia assinada?');
-    var obsNova = [histPag, String(c.observacao || '').trim(), amplos.length ? 'corrigido: ' + amplos.map(function (m) { return m.campo + ' ' + (m.de || '(vazio)') + ' → ' + (m.para || '(vazio)'); }).join('; ') + ' (informou: ' + String(c.quemInformou || '').trim() + ')' : ''].filter(Boolean).join(' · ');
+    var obsNova = [histPag, ehPerdido_(novos.PAGO) && motivoPerdido ? 'PERDIDO / glosa: ' + motivoPerdido : '', String(c.observacao || '').trim(), amplos.length ? 'corrigido: ' + amplos.map(function (m) { return m.campo + ' ' + (m.de || '(vazio)') + ' → ' + (m.para || '(vazio)'); }).join('; ') + ' (informou: ' + String(c.quemInformou || '').trim() + ')' : ''].filter(Boolean).join(' · ');
     if (obsNova) { novos.OBS = (txt('OBS') ? txt('OBS') + ' | ' : '') + obsNova; if (rotulos.indexOf('Observação') < 0) rotulos.push('Observação'); }
     if (erros.length) return { ok: false, erros: erros };
     if (!rotulos.length) return { ok: false, erros: ['Nada mudou: os campos já estavam assim.'] };
@@ -1105,6 +1115,7 @@ function pendenciasDe_(nomes, data) {
       if (!quer[r.paciente] || !/^Atendido/.test(r.oque)) return;
       var dt = parseData_(r.data); if (!dt || Utilities.formatDate(dt, CONFIG.TZ, 'yyyyMMdd') >= hojeChave) return;
       var particular = !r.convenio || /^Particular$/i.test(r.convenio), tipo = null;
+      if (ehPerdido_(r.pago)) return;
       if (particular && (r.pago === '' || r.pago === 'Não' || r.pago === 'Parcial') && (!/^Mensalidade|pacote|plano|mensal|convênio|AAPI/i.test(r.procedimento) || /\(compra\)/i.test(r.procedimento))) tipo = 'pag';
       else if ((!particular || /^Convênio/i.test(r.pago)) && r.guia !== 'Sim') tipo = 'guia';
       if (!tipo) return;
@@ -1387,8 +1398,10 @@ API.gestaoResumo = function (d) {
     // compra de plano "a receber" (lançada com Pago? = Não) entra aqui; sessões de plano/mensalidade/convênio não (aprovado pela Roberta em 06/10)
     pagamentoPendente: atend.filter(function (r) { return particular(r) && (r.pago === '' || r.pago === 'Não' || r.pago === 'Parcial') && (!/^Mensalidade|pacote|plano|mensal|convênio|AAPI/i.test(r.procedimento) || /\(compra\)/i.test(r.procedimento)); }),
     nfPendente: atend.filter(function (r) { return (r.pago === 'Sim' || r.pago === 'Parcial') && r.nf !== 'Sim' && r.nf !== 'Não se aplica'; }),
-    semGuia: L.filter(function (r) { return (!particular(r) || /^Convênio/i.test(r.pago)) && r.guia !== 'Sim' && /^Atendido/.test(r.oque); }),
-    faltas: L.filter(function (r) { return /sem aviso|em cima da hora/i.test(r.oque) && particular(r) && !/Pacote|Plano/i.test(r.pago); }),
+    semGuia: L.filter(function (r) { return (!particular(r) || /^Convênio/i.test(r.pago)) && r.guia !== 'Sim' && /^Atendido/.test(r.oque) && !ehPerdido_(r.pago); }),
+    faltas: L.filter(function (r) { return /sem aviso|em cima da hora/i.test(r.oque) && particular(r) && !/Pacote|Plano/i.test(r.pago) && !ehPerdido_(r.pago); }),
+    // relatório "Perdidos e glosas" (só gestão): o Valor é a referência do que se perdeu
+    perdidos: usuario_().perfil === 'gestao' ? L.filter(function (r) { return ehPerdido_(r.pago); }) : [],
     descontos: L.filter(function (r) { return /^Desconto:/i.test(r.obs); }),
     extras: L.filter(function (r) { return /^Sessão extra liberada/i.test(r.obs); }),
     pagadorDiferente: atend.filter(function (r) { return r.quem; }),

@@ -1352,7 +1352,7 @@ function mock(nome, d) {
   return new Promise(function (res) { setTimeout(function () {
     if (nome === 'bootstrap') return res({ usuario: { email: 'simulacao@local', perfil: window.__RECEPCAO ? 'recepcao' : 'gestao' }, planilha: '(simulação, sem planilha)', hora: '',
       lembrete: mockLemb[mockLemb.length - 1], lembretes: mockLemb.slice(-5).reverse(),
-      listas: { oque: ["Atendido", "Desmarcou com antecedência (≥ 24h)", "Faltou avisando em cima da hora (< 24h)", "Faltou sem aviso", "Cancelado pela clínica"], pago: ["Sim", "Não", "Convênio (fatura)", "Pacote (sessão já paga)", "Não se aplica (pro bono / permuta)", "Parcial", "Incluída na mensalidade"], formas: ["Pix", "Dinheiro", "Cartão de débito", "Cartão de crédito", "Link de pagamento"], modalidades: COBRANCAS.slice(), pagamentos: PAGAMENTOS.slice(),
+      listas: { oque: ["Atendido", "Desmarcou com antecedência (≥ 24h)", "Faltou avisando em cima da hora (< 24h)", "Faltou sem aviso", "Cancelado pela clínica"], pago: ["Sim", "Não", "Convênio (fatura)", "Pacote (sessão já paga)", "Não se aplica (pro bono / permuta)", "Perdido / glosa", "Parcial", "Incluída na mensalidade"], formas: ["Pix", "Dinheiro", "Cartão de débito", "Cartão de crédito", "Link de pagamento"], modalidades: COBRANCAS.slice(), pagamentos: PAGAMENTOS.slice(),
         modalidadesEsp: [], regras: ["Tabela", "Paga o que consegue", "Valor fixo combinado", "Mensalidade fixa (independe do nº de sessões)", "Pro bono", "Permuta", "Convênio"],
         convenios: ["Particular", "Cedplan", "Sabin Sinai", "Unafisco", "AAPI JF", "Plan Minas", "PLASC", "AMIL", "ASSEFAZ", "FUSEX", "IPSM", "Sulamérica", "18 de Julho", "Aeronáutica"] },
       profissionais: mockProfs, pacientes: mockBase.concat(mockPacientes.map(function (p) { return { linha: p.linha + 10, nome: p.nome, cpf: '', nasc: p.nasc, pagador: p.pagador, modalidade: p.modalidade, convenio: p.convenio, ativo: 'Sim' }; })) });
@@ -1399,7 +1399,7 @@ function mock(nome, d) {
     if (nome === 'criarColunasMes') return res({ ok: true, coluna: d.mes.toUpperCase() + ' — pago?' });
     if (nome === 'criarAbaMes') return res({ ok: true, aba: d.nome, modelo: 'Outubro' });
     if (nome === 'exportarMes') return res({ ok: true, nome: 'OUT 26 - Recepção atendimentos (app)', url: '#drive', xlsx: '#xlsx', linhas: 12, pasta: 'Controle Financeiro/2026/10 Out_26/2_Atendimentos', criadas: [], aviso: '', atualizado: '05/10/2026 12:00' });
-    if (nome === 'gestaoResumo') return res({ ok: true, mes: d.mes || MESES_PT[new Date().getMonth()], abaExiste: true, total: 40, atendidos: 35, recebido: 3120, pagamentoPendente: [{ id: 'A-sim-g1', data: hojeStr(), hora: '09:00', paciente: 'Beatriz Almeida Rocha', profissional: 'Juliana Ribeiro', procedimento: 'Sessão de psicologia', valor: 120, pago: '', obs: '' }, { id: 'A-sim-g7', data: '19/09/2026', hora: '09:00', paciente: 'Beatriz Almeida Rocha', profissional: 'Juliana Ribeiro', procedimento: 'Sessão de psicologia', valor: 120, recebido: 50, pago: 'Parcial', obs: 'Recebido R$ 50,00 em 19/09/2026' }], nfPendente: [{ id: 'A-sim-g2', data: hojeStr(), hora: '', paciente: 'Marcos Vinícius Tavares', valor: 100, forma: 'Pix', quem: '', nf: 'Não', pago: 'Sim' }], semGuia: [{ id: 'A-sim-g3', data: hojeStr(), hora: '10:00', paciente: 'Pedro Augusto Neves', convenio: 'Cedplan', profissional: 'Juliana Ribeiro', guia: '' }], faltas: [{ id: 'A-sim-g4', data: '05/11/2026', hora: '10:00', paciente: 'Pedro Augusto Neves', profissional: 'Juliana Ribeiro', oque: 'Faltou sem aviso', obs: '' }], descontos: [{ id: 'A-sim-g5', data: '06/11/2026', hora: '', paciente: 'Carlos Henrique Dias', procedimento: 'Sessão de psicologia', valor: 90, obs: 'Desconto: R$ 90,00 (tabela R$ 120,00) — Juliana', log: 'simulacao@local · 06/11/2026 10:00' }], extras: [], pagadorDiferente: [{ id: 'A-sim-g6', data: hojeStr(), hora: '', paciente: 'Helena Vasconcelos Prado', quem: 'Avó', valor: 200, nf: 'Sim' }], alteracoes: [{ quando: '05/11/2026 09:12', paciente: 'Yandra Duarte Pires', campo: 'Convênio', de: '', para: 'Sabin Sinai', quem: 'carteirinha apresentada', por: 'simulacao@local' }], mesesExistentes: ['Setembro', 'Outubro', 'Novembro'], colunasMensalistas: ['SETEMBRO', 'OUTUBRO', 'NOVEMBRO'] });
+    if (nome === 'gestaoResumo') return res({ ok: true, mes: d.mes || MESES_PT[new Date().getMonth()], abaExiste: true, total: 40, atendidos: 35, recebido: 3120, pagamentoPendente: [{ id: 'A-sim-g1', data: hojeStr(), hora: '09:00', paciente: 'Beatriz Almeida Rocha', profissional: 'Juliana Ribeiro', procedimento: 'Sessão de psicologia', valor: 120, pago: '', obs: '' }, { id: 'A-sim-g7', data: '19/09/2026', hora: '09:00', paciente: 'Beatriz Almeida Rocha', profissional: 'Juliana Ribeiro', procedimento: 'Sessão de psicologia', valor: 120, recebido: 50, pago: 'Parcial', obs: 'Recebido R$ 50,00 em 19/09/2026' }], nfPendente: [{ id: 'A-sim-g2', data: hojeStr(), hora: '', paciente: 'Marcos Vinícius Tavares', valor: 100, forma: 'Pix', quem: '', nf: 'Não', pago: 'Sim' }], semGuia: [{ id: 'A-sim-g3', data: hojeStr(), hora: '10:00', paciente: 'Pedro Augusto Neves', convenio: 'Cedplan', profissional: 'Juliana Ribeiro', guia: '' }], faltas: [{ id: 'A-sim-g4', data: '05/11/2026', hora: '10:00', paciente: 'Pedro Augusto Neves', profissional: 'Juliana Ribeiro', oque: 'Faltou sem aviso', obs: '' }], descontos: [{ id: 'A-sim-g5', data: '06/11/2026', hora: '', paciente: 'Carlos Henrique Dias', procedimento: 'Sessão de psicologia', valor: 90, obs: 'Desconto: R$ 90,00 (tabela R$ 120,00) — Juliana', log: 'simulacao@local · 06/11/2026 10:00' }], extras: [], pagadorDiferente: [{ id: 'A-sim-g6', data: hojeStr(), hora: '', paciente: 'Helena Vasconcelos Prado', quem: 'Avó', valor: 200, nf: 'Sim' }], perdidos: window.__RECEPCAO ? [] : [{ id: 'A-sim-g8', data: '25/09/2026', hora: '13:00', paciente: 'Pedro Augusto Neves', profissional: 'Juliana Ribeiro', convenio: 'Cedplan', valor: 40, pago: 'Perdido / glosa', obs: 'PERDIDO / glosa: guia não autorizada pelo convênio' }], alteracoes: [{ quando: '05/11/2026 09:12', paciente: 'Yandra Duarte Pires', campo: 'Convênio', de: '', para: 'Sabin Sinai', quem: 'carteirinha apresentada', por: 'simulacao@local' }], mesesExistentes: ['Setembro', 'Outubro', 'Novembro'], colunasMensalistas: ['SETEMBRO', 'OUTUBRO', 'NOVEMBRO'] });
     if (nome === 'lancamentos') { var ml = [{ aba: 'Setembro', linha: 12, id: 'A-sim-l1', data: '12/09/2026', hora: '09:00', paciente: 'Beatriz Almeida Rocha', profissional: 'Juliana Ribeiro', procedimento: 'Sessão de psicologia', oque: 'Atendido', valor: 120, recebido: 0, pago: 'Sim', dataPag: '12/09/2026', forma: 'Pix', quem: '', nf: 'Sim', nfN: '55', guia: '', convenio: 'Particular', obs: '' },
         { aba: 'Setembro', linha: 20, id: 'A-sim-l2', data: '19/09/2026', hora: '09:00', paciente: 'Beatriz Almeida Rocha', profissional: 'Juliana Ribeiro', procedimento: 'Sessão de psicologia', oque: 'Atendido', valor: 120, recebido: 50, pago: 'Parcial', dataPag: '19/09/2026', forma: 'Dinheiro', quem: '', nf: 'Não', nfN: '', guia: '', convenio: 'Particular', obs: 'Recebido R$ 50,00 em 19/09/2026 (Dinheiro); em aberto R$ 70,00' }];
       var qn = (d.paciente || '').toLowerCase(); return res({ ok: true, linhas: ml.filter(function (x) { return !qn || x.paciente.toLowerCase().indexOf(qn) >= 0; }), total: 2 }); }
@@ -1605,6 +1605,9 @@ function tagHtml(t, p) { return '<span class="tag ' + (p ? 'p ' : '') + t.cor + 
 /* ---------- navegação ---------- */
 /* ---------- correção de um lançamento já gravado na aba do mês (gestão e recepção usam o mesmo formulário) ---------- */
 // reg: { id, oque, pago, forma, nf, nfN, guia, quem, valor, convenio, dataPag } · foco: 'pag' | 'nf' | 'guia' | 'obs' | 'todos'
+// Pago? = "Perdido / glosa" (gestão, 10/10): fora de a receber, guias e receita; só a gestão marca, com o motivo
+var PAGO_PERDIDO = 'Perdido / glosa';
+function ehPerdido(pago) { return /^Perdido/i.test(String(pago || '').trim()); }
 function ehConvReg(reg, p) { return !!((p && ehConvenio(p)) || (reg.convenio && !/^Particular$/i.test(reg.convenio)) || /^Convênio/.test(reg.pago || '')); }
 function saldoReg(reg) { var v = Number(reg.valor) || 0; return reg.pago === 'Parcial' ? Math.max(0, Math.round((v - (Number(reg.recebido) || 0)) * 100) / 100) : v; }
 // foco 'pag' = receber (total ou parcial; gestão 07/10) · 'amplo' = corrigir tudo da linha (data, profissional, valores…) · 'nf' / 'guia' / 'obs' / 'todos' = campos de cobrança
@@ -1633,9 +1636,12 @@ function corrigirForm(reg, foco, p) {
     }
     var mostraPago = foco === 'amplo' || (atendido && (foco === 'nf' || foco === 'todos')), mostraGuia = foco === 'guia' || ((foco === 'todos' || foco === 'amplo') && conv);
     var pagoOpts = (BOOT.listas.pago || []).slice(); if (pagoOpts.indexOf('Parcial') < 0) pagoOpts.push('Parcial'); if (reg.pago && pagoOpts.indexOf(reg.pago) < 0) pagoOpts.unshift(reg.pago); if (!reg.pago) pagoOpts.unshift('');
+    if (!ehGestao()) pagoOpts = pagoOpts.filter(function (o) { return !ehPerdido(o) || o === reg.pago; }); // a recepção vê o status, mas não escolhe
+    var travaPerdido = !ehGestao() && ehPerdido(reg.pago);
     var pagoIni = foco === 'nf' && (!reg.pago || reg.pago === 'Não') ? 'Sim' : (reg.pago || '');
-    if (mostraPago) html += '<label class="campo">Pago?<select data-c="pago">' + pagoOpts.map(function (o) { return '<option value="' + esc(o) + '"' + (o === pagoIni ? ' selected' : '') + '>' + esc(o || '(em branco)') + '</option>'; }).join('') + '</select></label>' +
+    if (mostraPago) html += '<label class="campo">Pago?<select data-c="pago"' + (travaPerdido ? ' disabled title="Só a gestão muda uma linha perdida"' : '') + '>' + pagoOpts.map(function (o) { return '<option value="' + esc(o) + '"' + (o === pagoIni ? ' selected' : '') + '>' + esc(o || '(em branco)') + '</option>'; }).join('') + '</select></label>' +
       '<label class="campo" data-parcial>Valor já recebido<div class="campo-wrap"><span class="prefixo">R$</span><input data-c="valorRecebido" class="dinheiro" inputmode="decimal" value="' + (reg.recebido ? brl(reg.recebido) : '') + '"></div></label>' +
+      '<label class="campo c2" data-perdido>Motivo da perda <span class="leg">(obrigatório; o Valor fica como referência do que se perdeu)</span><input data-c="motivoPerdido" autocomplete="off" placeholder="ex.: guia 1504122 não autorizada (trocou de convênio)"></label>' +
       '<label class="campo" data-sim>Data do pagamento<input data-c="dataPagamento" inputmode="numeric" maxlength="10" value="' + esc(reg.dataPag || hojeStr()) + '"></label>' + forma + quem + nf;
     if (mostraGuia) html += '<label class="check forte c2"><input type="checkbox" data-c="guia"' + (reg.guia === 'Sim' ? ' checked' : '') + '> Guia assinada</label>';
     if (foco === 'amplo') html += '<label class="campo c2">Quem informou / motivo <span class="leg">(obrigatório se mudar data, paciente, profissional, procedimento ou valores)</span><input data-c="quemInformou" autocomplete="off" placeholder="ex.: extrato do Pix de 12/09 mostra R$ 80"></label>';
@@ -1644,7 +1650,7 @@ function corrigirForm(reg, foco, p) {
   var box = el('<div>' + html + '</div>');
   var fSel = $('[data-c=forma]', box); if (fSel) { preencherSelect(fSel, BOOT.listas.formas || [], '—'); setSel(fSel, foco === 'pag' ? '' : (reg.forma || '')); }
   var nfSel = $('[data-c=nf]', box); if (nfSel) setSel(nfSel, foco === 'nf' ? 'Sim' : foco === 'pag' ? 'Não' : (reg.nf || 'Não'));
-  var pSel = $('[data-c=pago]', box), soSim = function () { var v = pSel ? pSel.value : 'Sim', sim = v === 'Sim' || v === 'Parcial'; $$('[data-sim]', box).forEach(function (l) { l.hidden = !sim; }); $$('[data-parcial]', box).forEach(function (l) { l.hidden = v !== 'Parcial'; }); };
+  var pSel = $('[data-c=pago]', box), soSim = function () { var v = pSel ? pSel.value : 'Sim', sim = v === 'Sim' || v === 'Parcial'; $$('[data-sim]', box).forEach(function (l) { l.hidden = !sim; }); $$('[data-parcial]', box).forEach(function (l) { l.hidden = v !== 'Parcial'; }); $$('[data-perdido]', box).forEach(function (l) { l.hidden = !(ehPerdido(v) && !ehPerdido(reg.pago)); }); };
   if (pSel) pSel.addEventListener('change', soSim); soSim();
   $$('[data-c=dataPagamento], [data-c=data]', box).forEach(function (i) { i.addEventListener('input', function () { this.value = mascaraData(this.value); }); });
   var hr = $('[data-c=hora]', box); if (hr) hr.addEventListener('input', function () { this.value = mascaraHora(this.value); });
@@ -1667,7 +1673,11 @@ function corrigirCampos(box, reg) {
   var val = v('valor'); if (val) { var nv = num(val.value); if (nv !== (reg.valor === '' || reg.valor == null ? null : Number(reg.valor))) c.valor = val.value.trim(); }
   var pago = v('pago');
   if (pago) {
+    if (pago.disabled) pago = null;
+  }
+  if (pago) {
     if (pago.value !== (reg.pago || '') || v('valor') == null) c.pago = pago.value;
+    if (ehPerdido(pago.value) && !ehPerdido(reg.pago)) { c.pago = pago.value; c.motivoPerdido = txt('motivoPerdido') || ''; }
     if (pago.value === 'Parcial') { var vr = num(txt('valorRecebido')); if (vr !== (Number(reg.recebido) || null)) { c.valorRecebido = txt('valorRecebido'); c.pago = 'Parcial'; } }
     if (pago.value === 'Sim' || pago.value === 'Parcial') { c.dataPagamento = txt('dataPagamento'); c.forma = v('forma').value; c.quemPagou = txt('quemPagou'); c.nf = v('nf').value; c.nfNumero = txt('nfNumero'); if (v('valor') && c.pago == null && c.forma === (reg.forma || '') && c.nf === (reg.nf || 'Não') && c.nfNumero === (reg.nfN || '') && c.dataPagamento === (reg.dataPag || hojeStr())) { delete c.dataPagamento; delete c.forma; delete c.nf; delete c.nfNumero; if (c.quemPagou === (reg.quem || '') || !reg.quem) delete c.quemPagou; } }
     if (v('valor') && c.pago == null && (c.dataPagamento != null || c.forma != null || c.nf != null || c.nfNumero != null || c.quemPagou != null)) c.pago = pago.value;
@@ -1681,6 +1691,7 @@ function corrigirValidar(c, reg) {
   var e = [], valor = c.valor != null ? num(c.valor) : Number(reg.valor);
   if (c.recebidoAgora != null) { var ag = num(c.recebidoAgora); if (!(ag > 0)) e.push('Informe o valor recebido agora.'); else if (ag > saldoReg(Object.assign({}, reg, { valor: valor })) + 0.001) e.push('O valor recebido passa do que está em aberto (R$ ' + brl(saldoReg(reg)) + '). Se o valor da sessão está errado, use "Corrigir lançamento" na tela Pendências.'); }
   if (c.pago === 'Sim' && !(valor > 0)) e.push('Pago? = Sim exige um valor da sessão maior que zero.');
+  if (ehPerdido(c.pago) && !ehPerdido(reg.pago) && !c.motivoPerdido) e.push('"' + PAGO_PERDIDO + '": escreva o motivo da perda.');
   if (c.pago === 'Parcial') { var vr = num(c.valorRecebido != null ? c.valorRecebido : reg.recebido); if (!(vr > 0 && vr < valor)) e.push('Pago? = Parcial: o "valor já recebido" tem de ser maior que zero e menor que o valor da sessão.'); }
   if (c.dataPagamento && !dataValida(c.dataPagamento)) e.push('Data do pagamento inválida (dd/mm/aaaa).');
   if (c.data && !dataObj(c.data)) e.push('Data da sessão inválida (dd/mm/aaaa).');
@@ -2041,7 +2052,7 @@ function renderResumo(cont) {
   var recebido = regs.reduce(function (a, r) { return a + (r.pago === 'Sim' ? (Number(r.valor) || 0) : r.pago === 'Parcial' ? (Number(r.recebido) || 0) : 0); }, 0);
   var aRec = regs.filter(function (r) { return particular(r) && pendentePagamento(r); }).reduce(function (a, r) { return a + saldoReg(r); }, 0);
   var nfPend = regs.filter(function (r) { return (r.pago === 'Sim' || r.pago === 'Parcial') && r.nf !== 'Sim' && r.nf !== 'Não se aplica'; }).length;
-  var guiaPend = regs.filter(function (r) { return (!particular(r) || /^Convênio/i.test(r.pago)) && r.guia !== 'Sim'; }).length;
+  var guiaPend = regs.filter(function (r) { return (!particular(r) || /^Convênio/i.test(r.pago)) && r.guia !== 'Sim' && !ehPerdido(r.pago); }).length;
   var rs = function (n) { return 'R$ ' + brl(n).replace(',00', ''); };
   var tiles = [[rs(recebido), 'recebido hoje', recebido ? 'verde' : 'cinza'], [rs(aRec), 'a receber hoje (particular)', aRec ? 'amarelo' : 'cinza'], [nfPend, 'NF a emitir hoje', nfPend ? 'laranja' : 'cinza', 'gestao'], [guiaPend, 'guia a emitir hoje', guiaPend ? 'amarelo' : 'cinza', 'gestao']];
   var box = $("#d-resumo"); box.innerHTML = '';
@@ -2068,7 +2079,7 @@ function renderPend(itens) {
   if (guiasAnt.length) out.push(['lilas', guiasAnt.length, 'de hoje com guia anterior sem assinatura (pedir pra imprimir) · ' + guiasAnt.map(function (i) { return primeiroNome(i.paciente); }).join(', '), null]);
   var regs = itens.filter(function (i) { return i.registro && /^Atendido/.test(i.registro.oque); });
   var particular = function (r) { return !r.convenio || /^Particular$/i.test(r.convenio); }, dest = 'gestao';
-  var sg = regs.filter(function (i) { var r = i.registro; return (!particular(r) || /^Convênio/i.test(r.pago)) && r.guia !== 'Sim'; });
+  var sg = regs.filter(function (i) { var r = i.registro; return (!particular(r) || /^Convênio/i.test(r.pago)) && r.guia !== 'Sim' && !ehPerdido(r.pago); });
   if (sg.length) out.push(['amarela', sg.length, 'guia a emitir hoje · ' + sg.map(function (i) { return primeiroNome(i.paciente) + (i.hora ? ' ' + i.hora : ''); }).join(', '), dest]);
   var nf = regs.filter(function (i) { var r = i.registro; return (r.pago === 'Sim' || r.pago === 'Parcial') && r.nf !== 'Sim' && r.nf !== 'Não se aplica'; });
   if (nf.length) out.push(['laranja', nf.length, 'NF a emitir hoje · ' + nf.map(function (i) { return primeiroNome(i.paciente) + (i.registro.valor ? ' R$ ' + brl(i.registro.valor).replace(',00', '') : ''); }).join(', '), dest]);
@@ -2437,7 +2448,8 @@ function iniciarAtend() {
     $("#a-aba-nome").textContent = 'Grava na aba ' + AT.abaMes + (AT.abaMesExiste ? '' : ' (ainda não existe!)');
     preencherSelect($("#a-prof"), BOOT.profissionais, '—');
     preencherSelect($("#a-oque"), BOOT.listas.oque || []);
-    preencherSelect($("#a-pago"), (BOOT.listas.pago || []).concat((BOOT.listas.pago || []).indexOf('Parcial') < 0 ? ['Parcial'] : []), '—');
+    // "Perdido / glosa" não se escolhe no Registrar: a gestão marca depois, em Pendências → Lançamentos, com o motivo
+    preencherSelect($("#a-pago"), (BOOT.listas.pago || []).filter(function (o) { return !ehPerdido(o); }).concat((BOOT.listas.pago || []).indexOf('Parcial') < 0 ? ['Parcial'] : []), '—');
     preencherSelect($("#a-forma"), BOOT.listas.formas || []);
     preencherSelect($("#a-ant-forma"), BOOT.listas.formas || []);
     var segO = $("#a-oque-seg"); segO.innerHTML = '';
@@ -3287,6 +3299,9 @@ function renderGestao() {
     { k: 'faltas', cor: 'vermelha', n: faltas, t: 'Faltas sem aviso de particular — taxa de falta?', s: 'Você decide caso a caso; se cobrar, entra no próximo agendamento', acao: 'Decidir', tabela: function () { return tabelaG('Faltas sem aviso de particular (taxa a decidir)', [['Data', D], ['Paciente', 'paciente'], ['Profissional', 'profissional'], ['O que aconteceu', 'oque'], ['Obs.', 'obs']], r.faltas, 'Nenhuma falta sem aviso.', 'obs'); } },
     { k: 'pagador', cor: 'lilas', n: (r.pagadorDiferente || []).length, t: 'Pagou outra pessoa — conferir o nome na NF', s: (r.pagadorDiferente || []).length ? nomes(r.pagadorDiferente) + ' — se for sempre essa pessoa, promover a pagador habitual em Pacientes' : 'Ninguém pagou por outra pessoa.', acao: 'Revisar', tabela: function () { return tabelaG('Pagou outra pessoa (conferir nome na NF)', [['Data', D], ['Paciente', 'paciente'], ['Quem pagou', 'quem'], ['Valor', V], ['NF?', 'nf']], r.pagadorDiferente, 'Nenhum.', 'obs'); } }
   ];
+  // Perdidos e glosas (só gestão): quanto se perdeu no mês; o Valor é a referência
+  if (ehGestao()) { var perd = r.perdidos || []; PEND.push({ k: 'perdidos', cor: 'lilas', n: perd.length, t: 'Perdidos e glosas', s: perd.length ? brlCurto(soma(perd)) + ' perdidos no mês · ' + contarPor(perd, 'convenio') : 'Nenhum valor dado como perdido no mês.', acao: 'Ver lista',
+    tabela: function () { return tabelaG('Perdidos e glosas · ' + brlCurto(soma(perd)), [['Data', D], ['Paciente', 'paciente'], ['Profissional', 'profissional'], ['Convênio', function (l) { return l.convenio || '—'; }], ['Valor de referência', V], ['Observação', 'obs']], perd, 'Nenhum valor dado como perdido no mês.'); } }); }
   var root = $("#g-pend"); root.innerHTML = '';
   PEND.forEach(function (p) {
     var b = el('<button type="button" class="pend ' + (p.n ? p.cor : 'verde') + '" aria-expanded="' + (gesAberto === p.k) + '"><span class="n">' + p.n + '</span><div class="corpo"><b>' + esc(p.t) + '</b><span>' + esc(p.s) + '</span></div><span class="ver">' + p.acao + ' ' + ic('direita', 14) + '</span></button>');

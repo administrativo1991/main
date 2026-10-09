@@ -299,7 +299,7 @@ function renderResumo(cont) {
   var recebido = regs.reduce(function (a, r) { return a + (r.pago === 'Sim' ? (Number(r.valor) || 0) : r.pago === 'Parcial' ? (Number(r.recebido) || 0) : 0); }, 0);
   var aRec = regs.filter(function (r) { return particular(r) && pendentePagamento(r); }).reduce(function (a, r) { return a + saldoReg(r); }, 0);
   var nfPend = regs.filter(function (r) { return (r.pago === 'Sim' || r.pago === 'Parcial') && r.nf !== 'Sim' && r.nf !== 'Não se aplica'; }).length;
-  var guiaPend = regs.filter(function (r) { return (!particular(r) || /^Convênio/i.test(r.pago)) && r.guia !== 'Sim'; }).length;
+  var guiaPend = regs.filter(function (r) { return (!particular(r) || /^Convênio/i.test(r.pago)) && r.guia !== 'Sim' && !ehPerdido(r.pago); }).length;
   var rs = function (n) { return 'R$ ' + brl(n).replace(',00', ''); };
   var tiles = [[rs(recebido), 'recebido hoje', recebido ? 'verde' : 'cinza'], [rs(aRec), 'a receber hoje (particular)', aRec ? 'amarelo' : 'cinza'], [nfPend, 'NF a emitir hoje', nfPend ? 'laranja' : 'cinza', 'gestao'], [guiaPend, 'guia a emitir hoje', guiaPend ? 'amarelo' : 'cinza', 'gestao']];
   var box = $("#d-resumo"); box.innerHTML = '';
@@ -326,7 +326,7 @@ function renderPend(itens) {
   if (guiasAnt.length) out.push(['lilas', guiasAnt.length, 'de hoje com guia anterior sem assinatura (pedir pra imprimir) · ' + guiasAnt.map(function (i) { return primeiroNome(i.paciente); }).join(', '), null]);
   var regs = itens.filter(function (i) { return i.registro && /^Atendido/.test(i.registro.oque); });
   var particular = function (r) { return !r.convenio || /^Particular$/i.test(r.convenio); }, dest = 'gestao';
-  var sg = regs.filter(function (i) { var r = i.registro; return (!particular(r) || /^Convênio/i.test(r.pago)) && r.guia !== 'Sim'; });
+  var sg = regs.filter(function (i) { var r = i.registro; return (!particular(r) || /^Convênio/i.test(r.pago)) && r.guia !== 'Sim' && !ehPerdido(r.pago); });
   if (sg.length) out.push(['amarela', sg.length, 'guia a emitir hoje · ' + sg.map(function (i) { return primeiroNome(i.paciente) + (i.hora ? ' ' + i.hora : ''); }).join(', '), dest]);
   var nf = regs.filter(function (i) { var r = i.registro; return (r.pago === 'Sim' || r.pago === 'Parcial') && r.nf !== 'Sim' && r.nf !== 'Não se aplica'; });
   if (nf.length) out.push(['laranja', nf.length, 'NF a emitir hoje · ' + nf.map(function (i) { return primeiroNome(i.paciente) + (i.registro.valor ? ' R$ ' + brl(i.registro.valor).replace(',00', '') : ''); }).join(', '), dest]);

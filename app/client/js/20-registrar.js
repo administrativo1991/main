@@ -13,7 +13,8 @@ function iniciarAtend() {
     $("#a-aba-nome").textContent = 'Grava na aba ' + AT.abaMes + (AT.abaMesExiste ? '' : ' (ainda não existe!)');
     preencherSelect($("#a-prof"), BOOT.profissionais, '—');
     preencherSelect($("#a-oque"), BOOT.listas.oque || []);
-    preencherSelect($("#a-pago"), (BOOT.listas.pago || []).concat((BOOT.listas.pago || []).indexOf('Parcial') < 0 ? ['Parcial'] : []), '—');
+    // "Perdido / glosa" não se escolhe no Registrar: a gestão marca depois, em Pendências → Lançamentos, com o motivo
+    preencherSelect($("#a-pago"), (BOOT.listas.pago || []).filter(function (o) { return !ehPerdido(o); }).concat((BOOT.listas.pago || []).indexOf('Parcial') < 0 ? ['Parcial'] : []), '—');
     preencherSelect($("#a-forma"), BOOT.listas.formas || []);
     preencherSelect($("#a-ant-forma"), BOOT.listas.formas || []);
     var segO = $("#a-oque-seg"); segO.innerHTML = '';
