@@ -23,7 +23,7 @@ coluna E não afeta o app. Atualizar `E2` faz parte de toda publicação (passo 
 
 | Canal | Deploy | Peças | Commit |
 |---|---|---|---|
-| Real (`arquivos_real`) | **2026-10-09-02** | 37 (duplicatas 1 · server 10 · index 26); ativas = 2, 123, 281–286, 301–305, 311–334 menos 306–310 (`descartado:`); `antigo18:` = trocadas neste deploy | branch `claude/busy-wright-xf0hql` |
+| Real (`arquivos_real`) | **2026-10-09-03** | 37 (duplicatas 1 · server 10 · index 26); ativas = 2, 123, 281, 335–368; `antigo19:` = trocadas neste deploy | branch `claude/busy-wright-xf0hql` |
 | Teste (`arquivos`) | **2026-10-06-08** (atrás da real: não recebeu o 10, o 11, o 07-01 nem os de 07/10) | 27 | 135de84 |
 | Carregador real | 2026-10-06-02 (`dist/Code.real.gs`, implantado pela Roberta) | — | 4ad0272 |
 | Carregador teste | 2026-10-04-01 + nova versão pendente desde 05/10 (permissão do Drive, ver `COMO-INSTALAR.md`) | — | — |
@@ -48,6 +48,16 @@ Modelo:
 ```
 
 ## Lista
+
+### 2026-10-09-03 · Real (direto) · agendar na vaga; pacote com valor automático
+- **O que mudou**: na Agenda, clicar num horário vago abre um cartão ali mesmo (profissional, dia e hora já preenchidos):
+  paciente, tipo, observação → **Agendar** ou **Toda semana neste horário**. Esc ou clique fora fecha. Pacote 4 sessões e
+  Pacote 12 sessões com valor automático e travado (R$ 400 / R$ 900), como a Mensalidade social; a virada de novembro
+  propõe R$ 400 para os ex-planos.
+- **Peças**: 34 novas (335–368); 34 viraram `antigo19:` (301–305, 330–334, 282–286, 311–329).
+- **Conferência**: 34/34 iguais ao build; ativas = 1 + 10 + 26; testes do servidor e simulação passam.
+- **Voltar**: `antigo19:` → nome e 335–368 → `antigo20:`.
+- **Aprovação**: gestão, 09/10.
 
 ### 2026-10-09-02 · Real (direto) · pacotes 4/12 e mensalidades
 - **O que mudou**: cobranças novas (gestão, 09/10): Tabela (outras especialidades) · Por sessão (combinado) · Pacote 4 sessões
