@@ -10,8 +10,8 @@ Todas podem ser escolhidas pela recepção. A Juliana passa o valor.
 
 - **Tabela**: valor da tabela do procedimento. É a das outras especialidades (clínica médica, pediatria etc.).
 - **Por sessão (combinado)**: valor por sessão combinado. Em branco = a definir.
-- **Pacote 4 sessões**: R$ 400 por padrão (o valor pode mudar no cadastro). Pago adiantado.
-- **Pacote 12 sessões**: R$ 900 por padrão (o valor pode mudar no cadastro). Pago adiantado.
+- **Pacote 4 sessões**: R$ 400 (o app preenche sozinho). Pago adiantado.
+- **Pacote 12 sessões**: R$ 900 (o app preenche sozinho). Pago adiantado.
 - **Mensalidade social**: R$ 200 por mês. Não conta sessões.
 - **Mensalidade especial**: valor fixo do mês combinado (ex.: R$ 150, R$ 120 quinzenal). Não conta sessões.
 - **Convênio** · **Pro bono** · **Permuta**: como antes.
@@ -37,5 +37,8 @@ Ao lado fica o **Pagamento** (quando paga): Na sessão · Antecipado · Posterio
 - Faltou avisando em cima da hora:
   - remarcou na mesma semana → não gasta (marque "Remarcada na mesma semana");
   - senão, a 1ª do mês não gasta e a 2ª em diante gasta.
+
+**Agendar pela Agenda**: na visão Agenda, clique no horário vago do profissional. Abre um cartão ali mesmo, já com
+profissional, dia e hora: escolha o paciente e clique em **Agendar** (ou **Toda semana neste horário** pra virar horário fixo).
 
 Ficou em dúvida? Siga o que o app mostra e anote na Observação. A gestão confere.
