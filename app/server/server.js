@@ -22,7 +22,7 @@ var CONFIG = {
   HR: ['ID', 'Data', 'Paciente', 'Sessões', 'Valor (R$)', 'Forma de pagamento', 'Quem pagou', 'NF emitida?', 'Nº da NF', 'Válido até', 'Observação', 'Registrado por (app)', 'Referente a'],
   // validade das sessões de cada renovação, em meses, pelo tamanho do pacote (a confirmar com Bruna e Juliana)
   VALIDADE_PACOTE: { 4: 2, 12: 6 }, VALIDADE_PADRAO: 2,
-  // gestão, 09/10: pacotes de 4 e 12 sessões (valor padrão; cada cadastro pode ter o seu) e mensalidades (valor fixo do mês)
+  // gestão, 09/10: pacotes de 4 e 12 sessões (valor fixo, automático) e mensalidades (valor fixo do mês)
   PACOTES: { 'Pacote 4 sessões': { sessoes: 4, valor: 400 }, 'Pacote 12 sessões': { sessoes: 12, valor: 900 } },
   MENSALIDADE_SOCIAL: 200,
   HL_LANC: ['Data/hora', 'Aba', 'ID', 'Paciente', 'Campo', 'De', 'Para', 'Quem informou', 'Registrado por (app)'],
@@ -253,7 +253,7 @@ function camposCobranca_(c, erros) {
   if (c.pctN != null) out.pctN = num(c.pctN);
   if (c.pctV != null) out.pctV = num(c.pctV);
   var pad = CONFIG.PACOTES[cob];
-  if (pad) { out.pctN = pad.sessoes; if (!(out.pctV > 0)) out.pctV = pad.valor; }
+  if (pad) { out.pctN = pad.sessoes; out.pctV = pad.valor; } // valor automático (gestão, 09/10), como a mensalidade social
   if (cob === 'Mensalidade social') { out.valorNum = CONFIG.MENSALIDADE_SOCIAL; out.pctN = ''; out.pctV = ''; }
   if (cob === 'Mensalidade especial') { out.pctN = ''; out.pctV = ''; } // valor do mês em branco = a definir
   // Por sessão (combinado) com valor em branco = "valor a definir" (gestão, 08/10): o Registrar pede o valor à mão
@@ -873,7 +873,7 @@ API.pacotesPainel = function () {
   var vazio = { disponiveis: 0, ultima: '', validade: '', sessoesMes: 0, aPagarMes: 0, renovouMes: false, vencido: false, mesPago: false, mesAnteriorPago: false };
   var itens = indicePacientes_().filter(function (p) { return (ehPacoteCob_(p.modalidade) || ehMensalidadeCob_(p.modalidade)) && !/^N/i.test(p.ativo || 'Sim'); }).map(function (p) {
     var e = est[p.nome] || vazio, mensal = ehMensalidadeCob_(p.modalidade), pg = p.pagamento || 'Antecipado', sit;
-    var pad = CONFIG.PACOTES[p.modalidade] || {}, n = mensal ? 0 : (p.pctN || pad.sessoes || 0), v = mensal ? valorMensalidade_(p) : (p.pctV || pad.valor || 0);
+    var pad = CONFIG.PACOTES[p.modalidade] || {}, n = mensal ? 0 : (pad.sessoes || p.pctN || 0), v = mensal ? valorMensalidade_(p) : (pad.valor || p.pctV || 0);
     if (mensal) sit = e.mesPago ? 'mês pago' : pg === 'Antecipado' ? (dia >= 16 ? 'mensalidade atrasada' : dia >= 11 ? 'venceu dia 10' : 'vence dia 10') : 'a pagar no fim do mês';
     else if (pg === 'Antecipado') sit = e.vencido ? 'vencido' : e.disponiveis <= 0 ? 'esgotado' : e.disponiveis === 1 ? 'renovar' : (!e.renovouMes && dia > 10 ? 'renovação do mês em aberto' : 'ok');
     else sit = e.aPagarMes > 0 ? 'a pagar no mês' : 'ok';
@@ -892,7 +892,7 @@ API.viradaPropostas = function () {
     if (VIRADA_EXCLUIR.indexOf(p.nome) >= 0) return;
     var hist = String(p.valorCombinado || '');
     if (p.modalidade === 'Por sessão (combinado)' && p.pagamento === 'Posterior' && /era Plano de 4 consultas/i.test(hist) && p.valorNum > 0)
-      out.push({ nome: p.nome, de: 'Por sessão R$ ' + p.valorNum + ' · Posterior', para: 'Pacote 4 sessões · R$ ' + (p.valorNum * 4) + ' · Antecipado', campos: { modalidade: 'Pacote 4 sessões', pctN: 4, pctV: p.valorNum * 4, pagamento: 'Antecipado' } });
+      out.push({ nome: p.nome, de: 'Por sessão R$ ' + p.valorNum + ' · Posterior', para: 'Pacote 4 sessões · R$ ' + CONFIG.PACOTES['Pacote 4 sessões'].valor + ' · Antecipado', campos: { modalidade: 'Pacote 4 sessões', pctN: 4, pctV: CONFIG.PACOTES['Pacote 4 sessões'].valor, pagamento: 'Antecipado' } });
     else if ((ehPacoteCob_(p.modalidade) || ehMensalidadeCob_(p.modalidade)) && p.pagamento === 'Posterior')
       out.push({ nome: p.nome, de: p.modalidade + ' · Posterior', para: p.modalidade + ' · Antecipado', campos: { pagamento: 'Antecipado' } });
     else if (p.modalidade === 'Pro bono' && /a partir de 01\/11: social/i.test(p.obsCobranca + ' ' + hist))

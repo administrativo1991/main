@@ -107,11 +107,11 @@ console.log('painel ok', painel.itens.map(i => i.paciente + ':' + i.situacao).jo
 const v = ok(API.viradaPropostas(), 'virada');
 const nomes = v.itens.map(i => i.nome).sort();
 assert.deepStrictEqual(nomes, ['Ana Posterior', 'Carlos ExPlano', 'Erica Pro Bono', 'Igor Social']);
-const carlos = v.itens.filter(i => i.nome === 'Carlos ExPlano')[0]; assert.strictEqual(carlos.campos.pctV, 280); assert.strictEqual(carlos.campos.modalidade, 'Pacote 4 sessões');
+const carlos = v.itens.filter(i => i.nome === 'Carlos ExPlano')[0]; assert.strictEqual(carlos.campos.pctV, 400); assert.strictEqual(carlos.campos.modalidade, 'Pacote 4 sessões');
 const ap = ok(API.aplicarAlteracoesLote({ itens: v.itens, quemInformou: 'teste' }), 'aplicar');
 assert.strictEqual(ap.feitos.length, 4, JSON.stringify(ap));
 const depois = API.bootstrapAtendimento().pacientes; const c2 = depois.filter(p => p.nome === 'Carlos ExPlano')[0], e2 = depois.filter(p => p.nome === 'Erica Pro Bono')[0];
-assert.strictEqual(c2.modalidade, 'Pacote 4 sessões'); assert.strictEqual(c2.pctN, 4); assert.strictEqual(c2.pctV, 280); assert.strictEqual(c2.pagamento, 'Antecipado');
+assert.strictEqual(c2.modalidade, 'Pacote 4 sessões'); assert.strictEqual(c2.pctN, 4); assert.strictEqual(c2.pctV, 400); assert.strictEqual(c2.pagamento, 'Antecipado');
 assert.strictEqual(e2.modalidade, 'Mensalidade social'); assert.strictEqual(e2.valorNum, 200); assert.strictEqual(e2.pagamento, 'Antecipado');
 console.log('virada ok');
 // cadastro: validações e novo paciente

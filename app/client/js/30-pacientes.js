@@ -59,7 +59,7 @@ function descMod(m) {
   var preco = function (p) { return p && p.valor != null ? 'R$ ' + (p.valor % 1 ? brl(p.valor) : p.valor) : null; };
   if (m === 'Tabela') return (anam && preco(anam) ? '1ª consulta ' + preco(anam) + ' · depois ' : '') + (preco(base) ? preco(base) + (anam ? '' : ' por sessão') : 'valor da tabela · clínica médica, pediatria e outras especialidades');
   if (m === 'Por sessão (combinado)') return 'valor por sessão combinado com a psicóloga ou a gestão · informe abaixo';
-  if (PACOTES_PADRAO[m]) return PACOTES_PADRAO[m].n + ' sessões por R$ ' + PACOTES_PADRAO[m].valor + ' (valor pode mudar no cadastro) · pago adiantado';
+  if (PACOTES_PADRAO[m]) return PACOTES_PADRAO[m].n + ' sessões por R$ ' + PACOTES_PADRAO[m].valor + ' · pago adiantado';
   if (m === 'Mensalidade social') return 'R$ ' + MENSALIDADE_SOCIAL + ' por mês · não conta sessões';
   if (m === 'Mensalidade especial') return 'valor fixo do mês combinado (ex.: R$ 150, R$ 120 quinzenal) · informe abaixo';
   if (m === 'Convênio') return 'guia por sessão · fatura no fim do mês';
@@ -106,12 +106,8 @@ function mostrarCamposCob() {
   if (m === 'Mensalidade social') vn.value = brl(MENSALIDADE_SOCIAL); else if (vn.dataset.social === '1') vn.value = '';
   vn.dataset.social = m === 'Mensalidade social' ? '1' : '';
   $("#l-pct-n").hidden = $("#l-pct-v").hidden = !pad;
-  $("#n-pct-n").readOnly = true;
-  if (pad) {
-    // pacote 4 / 12: nº fixo; valor padrão (R$ 400 / R$ 900) se estiver vazio ou com o padrão do outro pacote
-    var vAt = num($("#n-pct-v").value), padroes = Object.keys(PACOTES_PADRAO).map(function (k) { return PACOTES_PADRAO[k].valor; });
-    $("#n-pct-n").value = pad.n; if (!(vAt > 0) || (padroes.indexOf(vAt) >= 0 && vAt !== pad.valor)) $("#n-pct-v").value = brl(pad.valor);
-  }
+  $("#n-pct-n").readOnly = true; $("#n-pct-v").readOnly = true;
+  if (pad) { $("#n-pct-n").value = pad.n; $("#n-pct-v").value = brl(pad.valor); } // pacote 4 / 12: nº e valor automáticos (gestão, 09/10)
   $("#n-pag-leg").textContent = m && PAG_SUGERIDO[m] ? (pagManual && $("#n-pagamento").value !== PAG_SUGERIDO[m] ? 'mudado à mão (sugerido: ' + PAG_SUGERIDO[m] + ')' : 'sugerido pela cobrança · pode mudar') : 'quando paga';
 }
 function onModalidade() {
@@ -179,7 +175,6 @@ function errosCob() {
   var e = [], m = $("#n-mod").value;
   if (m === 'Convênio' && (!$("#n-conv").value || $("#n-conv").value === 'Particular')) e.push('Cobrança "Convênio": escolha o convênio.');
   var vtx = $("#n-valor-num").value.trim(); if (/^(Por sessão \(combinado\)|Mensalidade especial)$/.test(m) && vtx && !/^a definir$/i.test(vtx) && !(num(vtx) > 0)) e.push('Valor combinado: use só o número (ex.: 90) ou deixe em branco se ainda está a definir.');
-  if (PACOTES_PADRAO[m] && !(num($("#n-pct-v").value) > 0)) e.push(m + ': informe o valor do pacote.');
   if (m && !$("#n-pagamento").value) e.push('Escolha o Pagamento (quando paga).');
   return e;
 }

@@ -401,6 +401,13 @@ button.kpi[aria-pressed="true"] span,.kpi.roxo span{color:#fff;opacity:.9}
 .ag-livre:hover,.ag-livre:focus-visible{border:1px solid var(--roxo);background:#FBF9FC;outline:none}
 .ag-livre:hover em,.ag-livre:focus-visible em{opacity:1}
 .ag-livre.passou{opacity:.45}
+.ag-livre.escolhida{border:2px solid var(--roxo);background:var(--lilas)}
+.ag-livre.escolhida em{opacity:1}
+.ag-pop{position:fixed;z-index:50;background:var(--sup);border:1px solid var(--borda);border-radius:14px;box-shadow:0 12px 32px rgba(46,36,52,.22);padding:14px;display:flex;flex-direction:column;gap:10px}
+.ag-pop-cab{display:flex;align-items:center;gap:8px}
+.ag-pop-cab b{font-size:15px;color:var(--tx)}
+.ag-pop-cab span{color:var(--tx3);font-size:13px;flex:1}
+.ag-pop .acoes{display:flex;flex-wrap:wrap;gap:8px}
 .ag-item{position:absolute;z-index:1;border:1px solid var(--lilas-b);border-left:4px solid var(--roxo);border-radius:8px;background:var(--lilas);color:var(--tx);padding:3px 8px;text-align:left;font-size:12px;line-height:1.25;overflow:hidden;display:flex;flex-direction:column;gap:1px}
 .ag-item b{font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .ag-item span{color:var(--tx2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}

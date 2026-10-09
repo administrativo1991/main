@@ -396,6 +396,13 @@ button.kpi[aria-pressed="true"] span,.kpi.roxo span{color:#fff;opacity:.9}
 .ag-livre:hover,.ag-livre:focus-visible{border:1px solid var(--roxo);background:#FBF9FC;outline:none}
 .ag-livre:hover em,.ag-livre:focus-visible em{opacity:1}
 .ag-livre.passou{opacity:.45}
+.ag-livre.escolhida{border:2px solid var(--roxo);background:var(--lilas)}
+.ag-livre.escolhida em{opacity:1}
+.ag-pop{position:fixed;z-index:50;background:var(--sup);border:1px solid var(--borda);border-radius:14px;box-shadow:0 12px 32px rgba(46,36,52,.22);padding:14px;display:flex;flex-direction:column;gap:10px}
+.ag-pop-cab{display:flex;align-items:center;gap:8px}
+.ag-pop-cab b{font-size:15px;color:var(--tx)}
+.ag-pop-cab span{color:var(--tx3);font-size:13px;flex:1}
+.ag-pop .acoes{display:flex;flex-wrap:wrap;gap:8px}
 .ag-item{position:absolute;z-index:1;border:1px solid var(--lilas-b);border-left:4px solid var(--roxo);border-radius:8px;background:var(--lilas);color:var(--tx);padding:3px 8px;text-align:left;font-size:12px;line-height:1.25;overflow:hidden;display:flex;flex-direction:column;gap:1px}
 .ag-item b{font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .ag-item span{color:var(--tx2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -1187,7 +1194,7 @@ function cadastroIncompleto(p) { return !String(p.modalidade || '').trim() && !e
 function faltasDoc(p) { var f = []; if (p && !String(p.cpf || '').replace(/\D/g, '')) f.push('CPF'); if (p && !String(p.nasc || '').trim()) f.push('data de nascimento'); return f; }
 function faltasDocTxt(p) { return faltasDoc(p).join(' e '); }
 function modCurta(m) { return String(m || '').replace(/\s*\([^)]*\)/g, '').replace(/\s+/g, ' ').trim(); }
-function pacoteDe(p) { var pad = PACOTES_PADRAO[cobDe(p)] || { n: 0, valor: 0 }; return { n: pad.n || Number(p.pctN) || 0, valor: Number(p.pctV) || pad.valor }; }
+function pacoteDe(p) { var pad = PACOTES_PADRAO[cobDe(p)]; return pad ? { n: pad.n, valor: pad.valor } : { n: Number(p.pctN) || 0, valor: Number(p.pctV) || 0 }; } // pacote 4/12: valor fixo (gestão, 09/10)
 function valorSessaoPacote(p) { var k = pacoteDe(p); return k.n > 0 && k.valor > 0 ? Math.round(k.valor / k.n * 100) / 100 : null; }
 function estPacote(p) { return (AT && AT.pacotesSessoes && p && AT.pacotesSessoes[p.nome]) || { disponiveis: 0, ultima: '', validade: '', faltasAvisadasMes: 0, sessoesMes: 0, aPagarMes: 0, renovouMes: false, vencido: false }; }
 function sessoesTxt(n) { return n + (n === 1 || n === -1 ? ' sessão' : ' sessões'); }
@@ -1962,7 +1969,7 @@ c.faixas.forEach(function (f) {
 for (var s = f[0]; s + c.dur <= f[1]; s += c.dur) {
 var e = s + c.dur; if (ocupa.some(function (o) { return o[0] < e && o[1] > s; })) continue;
 var b = el('<button type="button" class="ag-livre' + (s + c.dur <= passado ? ' passou' : '') + '" style="top:' + (px(s) + 1) + 'px;height:' + (px(e) - px(s) - 2) + 'px" aria-label="Vaga ' + hm(s) + ' ' + esc(c.prof) + ' ' + c.data + '"><span>' + hm(s) + '</span><em>+ agendar</em></button>');
-(function (hora) { b.addEventListener('click', function () { abrirEncaixe(c.prof, c.data, hora); }); })(hm(s));
+(function (hora, bt) { bt.addEventListener('click', function (ev) { ev.stopPropagation(); abrirVaga(bt, c.prof, c.data, hora); }); })(hm(s), b);
 col.appendChild(b);
 }
 });
@@ -2002,6 +2009,46 @@ $("#d-addbox").scrollIntoView({ behavior: 'smooth', block: 'start' });
 $("#d-add-pac").focus();
 });
 }
+/* ---------- agendar direto no cartão da vaga (gestão, 09/10): abre ali mesmo, já com profissional, dia e hora ---------- */
+var vagaPop = null;
+function fecharVaga() { if (vagaPop) { vagaPop.remove(); vagaPop = null; } $$('.ag-livre.escolhida').forEach(function (x) { x.classList.remove('escolhida'); }); }
+function abrirVaga(bt, prof, data, hora) {
+fecharVaga(); bt.classList.add('escolhida');
+var dt = dataObj(data), diaSem = dt ? DIAS_PT[dt.getDay()] : '';
+vagaPop = el('<div class="ag-pop" role="dialog" aria-label="Agendar ' + esc(hora) + '">' +
+'<div class="ag-pop-cab"><b>' + esc(hora) + ' · ' + esc(profCurto(prof)) + '</b><span>' + esc(diaSem + ' ' + data.slice(0, 5)) + '</span><button type="button" class="btn icone p" data-x aria-label="Fechar">' + ic('fechar', 14) + '</button></div>' +
+'<label class="campo">Paciente<input data-v="pac" list="dl-pacientes" autocomplete="off" placeholder="Comece a digitar o nome…"><span class="hint" data-v="info"></span></label>' +
+'<label class="campo">Tipo<select data-v="origem"><option>Avulso</option><option>Primeira consulta</option><option>Retorno</option><option>Encaixe</option><option>Reposição</option></select></label>' +
+'<label class="campo">Observação <span class="leg">(opcional)</span><input data-v="obs" autocomplete="off"></label>' +
+'<div class="acoes"><button type="button" class="btn" data-ok>Agendar</button><button type="button" class="btn ter" data-rec>Toda semana neste horário</button></div></div>');
+document.body.appendChild(vagaPop);
+var r = bt.getBoundingClientRect(), w = Math.min(320, window.innerWidth - 24), x = r.right + 8;
+if (x + w > window.innerWidth - 12) x = Math.max(12, r.left - w - 8);
+vagaPop.style.width = w + 'px'; vagaPop.style.left = x + 'px';
+var y = Math.min(Math.max(12, r.top - 10), window.innerHeight - vagaPop.offsetHeight - 12); vagaPop.style.top = Math.max(12, y) + 'px';
+var v = function (n) { return $('[data-v=' + n + ']', vagaPop); }, pop = vagaPop;
+v('pac').addEventListener('input', function () { mostrarInfo(v('info'), this.value); });
+$('[data-x]', pop).addEventListener('click', fecharVaga);
+var gravar = function (recorrente) {
+var pac = v('pac').value.trim(); if (!pacInfo(pac)) { v('pac').focus(); return toast('Escolha um paciente da lista'); }
+$$('button', pop).forEach(function (b) { b.disabled = true; });
+var fn = recorrente ? call('salvarAgendaFixa', { paciente: pac, profissional: prof, diaSemana: diaSem, hora: hora, frequencia: 'Semanal', comecaEm: data, ativo: true, observacao: v('obs').value.trim() })
+: call('acrescentarAoDia', { data: data, hora: hora, paciente: pac, profissional: prof, origem: v('origem').value, observacao: v('obs').value.trim() });
+fn.then(function (res) {
+if (!res.ok) { $$('button', pop).forEach(function (b) { b.disabled = false; }); return toast((res.erros || ['Não gravou']).join(' ')); }
+fecharVaga(); toast(res.duplicado ? 'Já estava agendado (não duplicou)' : (recorrente ? 'Horário fixo criado: ' : 'Agendado: ') + primeiroNome(pac) + ' ' + hora);
+AGS = null; carregarDia(false);
+}).catch(function (e) { $$('button', pop).forEach(function (b) { b.disabled = false; }); toast('Erro: ' + e.message); });
+};
+$('[data-ok]', pop).addEventListener('click', function () { gravar(false); });
+$('[data-rec]', pop).addEventListener('click', function () { gravar(true); });
+v('pac').addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); gravar(false); } });
+v('pac').focus({ preventScroll: true });
+}
+document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && vagaPop) fecharVaga(); });
+document.addEventListener('mousedown', function (e) { if (vagaPop && !vagaPop.contains(e.target) && !e.target.closest('.ag-livre')) fecharVaga(); });
+window.addEventListener('resize', fecharVaga);
+window.addEventListener('scroll', function (e) { if (vagaPop && !(e.target && e.target.nodeType === 1 && vagaPop.contains(e.target))) fecharVaga(); }, true);
 /* ---------- alternância Lista | Agenda e Dia | Semana ---------- */
 function aplicarVisao() {
 $$('#d-visao button').forEach(function (b) { b.setAttribute('aria-pressed', String(b.dataset.v === diaVisao)); });
@@ -2458,7 +2505,7 @@ var anam = AT && prof ? procsDe(esps).filter(function (p) { return /^Anamnese|^1
 var preco = function (p) { return p && p.valor != null ? 'R$ ' + (p.valor % 1 ? brl(p.valor) : p.valor) : null; };
 if (m === 'Tabela') return (anam && preco(anam) ? '1ª consulta ' + preco(anam) + ' · depois ' : '') + (preco(base) ? preco(base) + (anam ? '' : ' por sessão') : 'valor da tabela · clínica médica, pediatria e outras especialidades');
 if (m === 'Por sessão (combinado)') return 'valor por sessão combinado com a psicóloga ou a gestão · informe abaixo';
-if (PACOTES_PADRAO[m]) return PACOTES_PADRAO[m].n + ' sessões por R$ ' + PACOTES_PADRAO[m].valor + ' (valor pode mudar no cadastro) · pago adiantado';
+if (PACOTES_PADRAO[m]) return PACOTES_PADRAO[m].n + ' sessões por R$ ' + PACOTES_PADRAO[m].valor + ' · pago adiantado';
 if (m === 'Mensalidade social') return 'R$ ' + MENSALIDADE_SOCIAL + ' por mês · não conta sessões';
 if (m === 'Mensalidade especial') return 'valor fixo do mês combinado (ex.: R$ 150, R$ 120 quinzenal) · informe abaixo';
 if (m === 'Convênio') return 'guia por sessão · fatura no fim do mês';
@@ -2505,12 +2552,8 @@ vn.readOnly = m === 'Mensalidade social';
 if (m === 'Mensalidade social') vn.value = brl(MENSALIDADE_SOCIAL); else if (vn.dataset.social === '1') vn.value = '';
 vn.dataset.social = m === 'Mensalidade social' ? '1' : '';
 $("#l-pct-n").hidden = $("#l-pct-v").hidden = !pad;
-$("#n-pct-n").readOnly = true;
-if (pad) {
-// pacote 4 / 12: nº fixo; valor padrão (R$ 400 / R$ 900) se estiver vazio ou com o padrão do outro pacote
-var vAt = num($("#n-pct-v").value), padroes = Object.keys(PACOTES_PADRAO).map(function (k) { return PACOTES_PADRAO[k].valor; });
-$("#n-pct-n").value = pad.n; if (!(vAt > 0) || (padroes.indexOf(vAt) >= 0 && vAt !== pad.valor)) $("#n-pct-v").value = brl(pad.valor);
-}
+$("#n-pct-n").readOnly = true; $("#n-pct-v").readOnly = true;
+if (pad) { $("#n-pct-n").value = pad.n; $("#n-pct-v").value = brl(pad.valor); } // pacote 4 / 12: nº e valor automáticos (gestão, 09/10)
 $("#n-pag-leg").textContent = m && PAG_SUGERIDO[m] ? (pagManual && $("#n-pagamento").value !== PAG_SUGERIDO[m] ? 'mudado à mão (sugerido: ' + PAG_SUGERIDO[m] + ')' : 'sugerido pela cobrança · pode mudar') : 'quando paga';
 }
 function onModalidade() {
@@ -2577,7 +2620,6 @@ function errosCob() {
 var e = [], m = $("#n-mod").value;
 if (m === 'Convênio' && (!$("#n-conv").value || $("#n-conv").value === 'Particular')) e.push('Cobrança "Convênio": escolha o convênio.');
 var vtx = $("#n-valor-num").value.trim(); if (/^(Por sessão \(combinado\)|Mensalidade especial)$/.test(m) && vtx && !/^a definir$/i.test(vtx) && !(num(vtx) > 0)) e.push('Valor combinado: use só o número (ex.: 90) ou deixe em branco se ainda está a definir.');
-if (PACOTES_PADRAO[m] && !(num($("#n-pct-v").value) > 0)) e.push(m + ': informe o valor do pacote.');
 if (m && !$("#n-pagamento").value) e.push('Escolha o Pagamento (quando paga).');
 return e;
 }

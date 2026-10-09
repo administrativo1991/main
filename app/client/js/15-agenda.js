@@ -123,7 +123,7 @@ function renderAgenda() {
       for (var s = f[0]; s + c.dur <= f[1]; s += c.dur) {
         var e = s + c.dur; if (ocupa.some(function (o) { return o[0] < e && o[1] > s; })) continue;
         var b = el('<button type="button" class="ag-livre' + (s + c.dur <= passado ? ' passou' : '') + '" style="top:' + (px(s) + 1) + 'px;height:' + (px(e) - px(s) - 2) + 'px" aria-label="Vaga ' + hm(s) + ' ' + esc(c.prof) + ' ' + c.data + '"><span>' + hm(s) + '</span><em>+ agendar</em></button>');
-        (function (hora) { b.addEventListener('click', function () { abrirEncaixe(c.prof, c.data, hora); }); })(hm(s));
+        (function (hora, bt) { bt.addEventListener('click', function (ev) { ev.stopPropagation(); abrirVaga(bt, c.prof, c.data, hora); }); })(hm(s), b);
         col.appendChild(b);
       }
     });
@@ -163,6 +163,46 @@ function abrirEncaixe(prof, data, hora) {
     $("#d-add-pac").focus();
   });
 }
+/* ---------- agendar direto no cartão da vaga (gestão, 09/10): abre ali mesmo, já com profissional, dia e hora ---------- */
+var vagaPop = null;
+function fecharVaga() { if (vagaPop) { vagaPop.remove(); vagaPop = null; } $$('.ag-livre.escolhida').forEach(function (x) { x.classList.remove('escolhida'); }); }
+function abrirVaga(bt, prof, data, hora) {
+  fecharVaga(); bt.classList.add('escolhida');
+  var dt = dataObj(data), diaSem = dt ? DIAS_PT[dt.getDay()] : '';
+  vagaPop = el('<div class="ag-pop" role="dialog" aria-label="Agendar ' + esc(hora) + '">' +
+    '<div class="ag-pop-cab"><b>' + esc(hora) + ' · ' + esc(profCurto(prof)) + '</b><span>' + esc(diaSem + ' ' + data.slice(0, 5)) + '</span><button type="button" class="btn icone p" data-x aria-label="Fechar">' + ic('fechar', 14) + '</button></div>' +
+    '<label class="campo">Paciente<input data-v="pac" list="dl-pacientes" autocomplete="off" placeholder="Comece a digitar o nome…"><span class="hint" data-v="info"></span></label>' +
+    '<label class="campo">Tipo<select data-v="origem"><option>Avulso</option><option>Primeira consulta</option><option>Retorno</option><option>Encaixe</option><option>Reposição</option></select></label>' +
+    '<label class="campo">Observação <span class="leg">(opcional)</span><input data-v="obs" autocomplete="off"></label>' +
+    '<div class="acoes"><button type="button" class="btn" data-ok>Agendar</button><button type="button" class="btn ter" data-rec>Toda semana neste horário</button></div></div>');
+  document.body.appendChild(vagaPop);
+  var r = bt.getBoundingClientRect(), w = Math.min(320, window.innerWidth - 24), x = r.right + 8;
+  if (x + w > window.innerWidth - 12) x = Math.max(12, r.left - w - 8);
+  vagaPop.style.width = w + 'px'; vagaPop.style.left = x + 'px';
+  var y = Math.min(Math.max(12, r.top - 10), window.innerHeight - vagaPop.offsetHeight - 12); vagaPop.style.top = Math.max(12, y) + 'px';
+  var v = function (n) { return $('[data-v=' + n + ']', vagaPop); }, pop = vagaPop;
+  v('pac').addEventListener('input', function () { mostrarInfo(v('info'), this.value); });
+  $('[data-x]', pop).addEventListener('click', fecharVaga);
+  var gravar = function (recorrente) {
+    var pac = v('pac').value.trim(); if (!pacInfo(pac)) { v('pac').focus(); return toast('Escolha um paciente da lista'); }
+    $$('button', pop).forEach(function (b) { b.disabled = true; });
+    var fn = recorrente ? call('salvarAgendaFixa', { paciente: pac, profissional: prof, diaSemana: diaSem, hora: hora, frequencia: 'Semanal', comecaEm: data, ativo: true, observacao: v('obs').value.trim() })
+      : call('acrescentarAoDia', { data: data, hora: hora, paciente: pac, profissional: prof, origem: v('origem').value, observacao: v('obs').value.trim() });
+    fn.then(function (res) {
+      if (!res.ok) { $$('button', pop).forEach(function (b) { b.disabled = false; }); return toast((res.erros || ['Não gravou']).join(' ')); }
+      fecharVaga(); toast(res.duplicado ? 'Já estava agendado (não duplicou)' : (recorrente ? 'Horário fixo criado: ' : 'Agendado: ') + primeiroNome(pac) + ' ' + hora);
+      AGS = null; carregarDia(false);
+    }).catch(function (e) { $$('button', pop).forEach(function (b) { b.disabled = false; }); toast('Erro: ' + e.message); });
+  };
+  $('[data-ok]', pop).addEventListener('click', function () { gravar(false); });
+  $('[data-rec]', pop).addEventListener('click', function () { gravar(true); });
+  v('pac').addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); gravar(false); } });
+  v('pac').focus({ preventScroll: true });
+}
+document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && vagaPop) fecharVaga(); });
+document.addEventListener('mousedown', function (e) { if (vagaPop && !vagaPop.contains(e.target) && !e.target.closest('.ag-livre')) fecharVaga(); });
+window.addEventListener('resize', fecharVaga);
+window.addEventListener('scroll', function (e) { if (vagaPop && !(e.target && e.target.nodeType === 1 && vagaPop.contains(e.target))) fecharVaga(); }, true);
 /* ---------- alternância Lista | Agenda e Dia | Semana ---------- */
 function aplicarVisao() {
   $$('#d-visao button').forEach(function (b) { b.setAttribute('aria-pressed', String(b.dataset.v === diaVisao)); });
