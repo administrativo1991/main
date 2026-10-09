@@ -23,7 +23,7 @@ coluna E não afeta o app. Atualizar `E2` faz parte de toda publicação (passo 
 
 | Canal | Deploy | Peças | Commit |
 |---|---|---|---|
-| Real (`arquivos_real`) | **2026-10-09-05** | 38 (duplicatas 1 · server 10 · index 27); ativas = 2, 123, 281, 345–350, 369, 379–380, 398–423; `antigo21:` = trocadas neste deploy | branch `claude/busy-wright-xf0hql` |
+| Real (`arquivos_real`) | **2026-10-09-06** | 40 (duplicatas 1 · server 11 · index 28); ativas = 2, 123, 281, 345, 369, 398–405, 424–450; `antigo22:` = trocadas neste deploy | branch `claude/busy-wright-xf0hql` |
 | Teste (`arquivos`) | **2026-10-06-08** (atrás da real: não recebeu o 10, o 11, o 07-01 nem os de 07/10) | 27 | 135de84 |
 | Carregador real | 2026-10-06-02 (`dist/Code.real.gs`, implantado pela Roberta) | — | 4ad0272 |
 | Carregador teste | 2026-10-04-01 + nova versão pendente desde 05/10 (permissão do Drive, ver `COMO-INSTALAR.md`) | — | — |
@@ -48,6 +48,22 @@ Modelo:
 ```
 
 ## Lista
+
+### 2026-10-09-06 · Real (direto) · tela Repasse (só gestão)
+- **O que mudou**: menu **Repasse**, visível só pra gestão. Calcula na hora, a partir da aba do mês, o repasse de cada
+  linha e o resumo por profissional e convênio: "já recebido" (Sim / parte recebida do Parcial) e "previsto" (inclui
+  em aberto e convênio a receber). Perdido / glosa, sem cobrança e sessão incluída em pacote/mensalidade = 0. Linha
+  com valor e sem regra fica fora do total e aparece em laranja.
+- **Regras**: aba nova **Regras de repasse** (Ativa · Profissional · Convênio · Procedimento (contém) · % · Valor da
+  sessão (convênio) · Observação · Alterado por), editável na tela ou direto na aba. Vale a mais específica:
+  procedimento > profissional > convênio. "Ativa = Não" desliga sem apagar; o app grava só o que mudou.
+  19 regras iniciais copiadas da FICHA de repasse v1.2 e do 00_CONSTITUICAO (Juliana: Particular 80, Cedplan 40,
+  Sabin 80; Victor 80; não-sócios 40; estagiários 0; avaliação neuro e altas habilidades 0; Sabin R$ 40 por sessão).
+- **Peças**: 27 novas (424–450: server 9–10, index 3–27); 25 viraram `antigo22:`.
+- **Conferência**: 27/27 iguais ao build; ativas = 1 + 11 + 28; `tests/repasse.test.js` passa; rodado também numa cópia
+  dos dados reais de Setembro.
+- **Voltar**: `antigo22:` → nome e 424–450 → `antigo23:` (a aba Regras de repasse pode ficar).
+- **Aprovação**: gestão, 09/10.
 
 ### 2026-10-09-05 · Real (direto) · Pago? = "Perdido / glosa"
 - **O que mudou**: opção nova no Pago? para valor dado como perdido (glosa, guia não autorizada, calote). Fica fora de
