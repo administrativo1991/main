@@ -122,6 +122,12 @@ assert.strictEqual(API.atualizarCadastro({ nome: 'Joana Teste da Silva', quemInf
 // cobrança a definir: Por sessão sem valor e cobrança em branco são aceitos
 ok(API.criarPaciente({ nome: 'Valor Adefinir Teste', cpf: '', nasc: '', modalidade: 'Por sessão (combinado)', valorNum: '', convenio: 'Particular' }), 'a definir');
 ok(API.criarPaciente({ nome: 'Cobranca Embranco Teste', cpf: '', nasc: '', modalidade: '', convenio: 'Particular' }), 'em branco');
+// hora gravada como horário (30/12/1899 08:00) na Lista do dia sai como "08:00", não como data
+ss._m['Lista do dia'] = new Sheet('Lista do dia', [['ID', 'Data', 'Hora', 'Paciente', 'Profissional', 'Origem', 'Observação', 'Registrado por (app)'], ['D-1', new Date(hoje.getFullYear(), hoje.getMonth(), hoje.getDate(), 12), new Date(1899, 11, 30, 8, 0), 'Beatriz Tabela', 'Juliana Ribeiro', 'Avulso', '', '']]);
+const ld = API.listaDoDia({ data: hj }); const it = (ld.itens || []).filter(i => i.paciente === 'Beatriz Tabela')[0];
+assert.ok(it, JSON.stringify(ld).slice(0, 300)); assert.strictEqual(it.hora, '08:00');
+ok(API.acrescentarAoDia({ data: hj, hora: '09:30', paciente: 'Sofia Social', profissional: 'Juliana Ribeiro' }), 'acrescentar');
+assert.strictEqual(ss._m['Lista do dia'].d[2][2], '09:30');
 // recepção não roda a virada
 email = 'atendimento@clinicanascente.com.br'; assert.strictEqual(API.viradaPropostas().ok, false);
 assert.strictEqual(API.atualizarCadastro({ nome: 'Pedro Sem Documento', quemInformou: 'x', campos: { nasc: '03/03/2015' } }).ok, false);

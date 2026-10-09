@@ -518,7 +518,10 @@ function proximaLinha_(sheet, colChave) {
 function gravarCelulas_(sheet, linha, h, pares) {
   Object.keys(pares).forEach(function (nome) {
     var c = h[nome]; if (!c) return;
-    sheet.getRange(linha, c).setValue(pares[nome]);
+    var v = pares[nome], cel = sheet.getRange(linha, c);
+    // Lista do dia / Agenda recorrente: a hora fica texto (sem o formato antes, a planilha converte "08:00" em horário e o app lia "30/12/1899")
+    if (typeof v === 'string' && /^\d{1,2}:\d{2}$/.test(v) && (sheet.getName() === CONFIG.ABA.DIA || sheet.getName() === CONFIG.ABA.AGENDA)) cel.setNumberFormat('@');
+    cel.setValue(v);
   });
 }
 function abaPacotes_() {
@@ -1060,14 +1063,17 @@ function abaComCabecalho_(nome, cab) {
   if (!s) { s = ss.insertSheet(nome); s.getRange(1, 1, 1, cab.length).setValues([cab]).setFontWeight('bold'); s.setFrozenRows(1); }
   return s;
 }
+// hora guardada como horário de verdade (a planilha converte "08:00" sozinha) chega como Date de 30/12/1899: é hora, não data
+function ehSoHora_(v) { return v instanceof Date && !isNaN(v) && v.getFullYear() < 1901; }
+function tzPlanilha_() { try { return planilha_().getSpreadsheetTimeZone() || CONFIG.TZ; } catch (e) { return CONFIG.TZ; } }
 function linhasComo_(s) {
   if (!s || s.getLastRow() < 2) return [];
-  var h = cabecalhos_(s), vals = s.getRange(2, 1, s.getLastRow() - 1, s.getLastColumn()).getValues(), out = [];
-  vals.forEach(function (r, i) { var o = { _linha: i + 2 }; Object.keys(h).forEach(function (k) { var v = r[h[k] - 1]; o[k] = (v instanceof Date) ? fmtData_(v) : (v == null ? '' : v); }); out.push(o); });
+  var h = cabecalhos_(s), vals = s.getRange(2, 1, s.getLastRow() - 1, s.getLastColumn()).getValues(), out = [], tz = tzPlanilha_();
+  vals.forEach(function (r, i) { var o = { _linha: i + 2 }; Object.keys(h).forEach(function (k) { var v = r[h[k] - 1]; o[k] = ehSoHora_(v) ? Utilities.formatDate(v, tz, 'HH:mm') : (v instanceof Date) ? fmtData_(v) : (v == null ? '' : v); }); out.push(o); });
   return out;
 }
 function horaTxt_(v) {
-  if (v instanceof Date && !isNaN(v)) return Utilities.formatDate(v, CONFIG.TZ, 'HH:mm');
+  if (v instanceof Date && !isNaN(v)) return Utilities.formatDate(v, ehSoHora_(v) ? tzPlanilha_() : CONFIG.TZ, 'HH:mm');
   var t = String(v == null ? '' : v).trim(); var m = t.match(/^(\d{1,2})[:h](\d{2})/); return m ? ('0' + m[1]).slice(-2) + ':' + m[2] : t;
 }
 // valor da planilha: número, ou texto "1.234,56" / "100,00" (linhas importadas)
