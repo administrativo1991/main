@@ -23,7 +23,7 @@ coluna E não afeta o app. Atualizar `E2` faz parte de toda publicação (passo 
 
 | Canal | Deploy | Peças | Commit |
 |---|---|---|---|
-| Real (`arquivos_real`) | **2026-10-09-01** | 36 (duplicatas 1 · server 10 · index 25); ativas = 2, 123, 223, 258–261, 270, 273–300; `antigo17:` = trocadas neste deploy | branch `claude/busy-wright-xf0hql` |
+| Real (`arquivos_real`) | **2026-10-09-02** | 37 (duplicatas 1 · server 10 · index 26); ativas = 2, 123, 281–286, 301–305, 311–334 menos 306–310 (`descartado:`); `antigo18:` = trocadas neste deploy | branch `claude/busy-wright-xf0hql` |
 | Teste (`arquivos`) | **2026-10-06-08** (atrás da real: não recebeu o 10, o 11, o 07-01 nem os de 07/10) | 27 | 135de84 |
 | Carregador real | 2026-10-06-02 (`dist/Code.real.gs`, implantado pela Roberta) | — | 4ad0272 |
 | Carregador teste | 2026-10-04-01 + nova versão pendente desde 05/10 (permissão do Drive, ver `COMO-INSTALAR.md`) | — | — |
@@ -48,6 +48,21 @@ Modelo:
 ```
 
 ## Lista
+
+### 2026-10-09-02 · Real (direto) · pacotes 4/12 e mensalidades
+- **O que mudou**: cobranças novas (gestão, 09/10): Tabela (outras especialidades) · Por sessão (combinado) · Pacote 4 sessões
+  (R$ 400) · Pacote 12 sessões (R$ 900) · Mensalidade social (R$ 200/mês) · Mensalidade especial (valor do cadastro) ·
+  Convênio · Pro bono · Permuta. Nenhuma é mais restrita à gestão. Sessão de mensalista grava Pago? = "Incluída na
+  mensalidade"; botão "Registrar pagamento da mensalidade" grava em Renovações com "Referente a" (mês). Mês pago também é
+  lido das linhas "Mensalidade…" já lançadas na aba do mês. Pacotes e Agenda mostram mensalidade em aberto (vence dia 10).
+- **Dados**: Listas H2:I10 (cobranças novas) e B8 "Incluída na mensalidade". Pacientes: 22 Pacote social → Mensalidade
+  social (AE 200, AF/AG limpos); Borchert ×2 → Mensalidade especial 150; Oziel → 250; Inglidy e Luccas → 120 (obs.
+  "Quinzenal: mensalidade R$ 120."); obs. da Erica. 30 linhas em "Alterações de cadastro" (143–172).
+- **Peças**: 29 novas (301–305 e 330–334 server; 311–329 index 7–25); 306–310 `descartado:` (versão anterior do server
+  5–9, refeita antes da troca). 28 viraram `antigo18:`.
+- **Conferência**: 34/34 iguais ao build; ativas = 1 + 10 + 26; testes do servidor e simulação (gestão e recepção) passam.
+- **Voltar**: `antigo18:` → nome; 301–305, 311–334 → `antigo19:`; Listas H/B8 e Pacientes pelo log de 09/10.
+- **Aprovação**: gestão, 09/10.
 
 ### 2026-10-09-01 · Real (direto) · hora "30/12/1899" na Agenda
 - **O que mudou**: agendamentos avulsos (aba Lista do dia) apareciam com hora "30/12/1899": o app gravava "08:00", a planilha
