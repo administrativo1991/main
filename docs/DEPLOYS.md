@@ -23,7 +23,7 @@ coluna E não afeta o app. Atualizar `E2` faz parte de toda publicação (passo 
 
 | Canal | Deploy | Peças | Commit |
 |---|---|---|---|
-| Real (`arquivos_real`) | **2026-10-09-04** | 38 (duplicatas 1 · server 10 · index 27); ativas = 2, 123, 281, 345–350, 369–397; `antigo20:` = trocadas neste deploy | branch `claude/busy-wright-xf0hql` |
+| Real (`arquivos_real`) | **2026-10-09-05** | 38 (duplicatas 1 · server 10 · index 27); ativas = 2, 123, 281, 345–350, 369, 379–380, 398–423; `antigo21:` = trocadas neste deploy | branch `claude/busy-wright-xf0hql` |
 | Teste (`arquivos`) | **2026-10-06-08** (atrás da real: não recebeu o 10, o 11, o 07-01 nem os de 07/10) | 27 | 135de84 |
 | Carregador real | 2026-10-06-02 (`dist/Code.real.gs`, implantado pela Roberta) | — | 4ad0272 |
 | Carregador teste | 2026-10-04-01 + nova versão pendente desde 05/10 (permissão do Drive, ver `COMO-INSTALAR.md`) | — | — |
@@ -48,6 +48,24 @@ Modelo:
 ```
 
 ## Lista
+
+### 2026-10-09-05 · Real (direto) · Pago? = "Perdido / glosa"
+- **O que mudou**: opção nova no Pago? para valor dado como perdido (glosa, guia não autorizada, calote). Fica fora de
+  a receber, pendências da chegada, convênio sem guia, faltas a decidir e recebido; o Valor fica como referência.
+  Só a gestão marca ou desmarca (na correção do lançamento), com **motivo obrigatório** (vai pra Observação como
+  "PERDIDO / glosa: …"). A recepção vê a linha como perdida, com o Pago? travado; a opção não aparece no Registrar.
+  Pendências (gestão) ganhou o card **Perdidos e glosas**: data, paciente, profissional, convênio, valor de referência,
+  observação e o total do mês. Se o dinheiro entrar, a gestão troca pra Sim com data e forma.
+- **Planilha**: Listas B7 "Perdido / glosa" (Parcial e Incluída na mensalidade desceram pra B8/B9); validação de
+  Setembro!K e Outubro!K agora `Listas!$B$2:$B$20` (a próxima aba do mês copia da última). Emily Rocha Erculano
+  (Setembro, IDs IMP-SET26-037, -235 e -333; a de 25/09 está na linha 333): Pago? → Perdido / glosa, Valor R$ 40,00;
+  na de 25/09, observação + "guia 1504122 = 4 sessões / R$ 160; 4ª sessão não localizada na planilha"; coluna U com
+  "corrigido por … (Pago?, Valor)"; 6 linhas em "Alterações de lançamento".
+- **Peças**: 26 novas (398–423: server 1–9, index 10–26); 26 viraram `antigo21:` (370–378, 381–397).
+- **Conferência**: 26/26 iguais ao build; ativas = 1 + 10 + 27; `tests/perdido-glosa.test.js` passa com os dados de
+  exemplo e com uma cópia dos dados reais de Setembro (linha da Emily e uma particular em aberto).
+- **Voltar**: `antigo21:` → nome e 398–423 → `antigo22:`.
+- **Aprovação**: gestão, 09/10.
 
 ### 2026-10-09-04 · Real (direto) · Pagamento: "No início do mês" / "No mês seguinte"
 - **O que mudou**: Pagamento "Antecipado" passa a se chamar **No início do mês** e "Posterior", **No mês seguinte** (o app
