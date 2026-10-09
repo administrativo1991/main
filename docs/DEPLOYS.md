@@ -23,7 +23,7 @@ coluna E não afeta o app. Atualizar `E2` faz parte de toda publicação (passo 
 
 | Canal | Deploy | Peças | Commit |
 |---|---|---|---|
-| Real (`arquivos_real`) | **2026-10-09-06** | 40 (duplicatas 1 · server 11 · index 28); ativas = 2, 123, 281, 345, 369, 398–405, 424–450; `antigo22:` = trocadas neste deploy | branch `claude/busy-wright-xf0hql` |
+| Real (`arquivos_real`) | **2026-10-09-07** | 40 (duplicatas 1 · server 11 · index 28); ativas = 2, 123, 281, 345, 369, 398–405, 426–448, 451–454; `antigo23:` = trocadas neste deploy | branch `claude/busy-wright-xf0hql` |
 | Teste (`arquivos`) | **2026-10-06-08** (atrás da real: não recebeu o 10, o 11, o 07-01 nem os de 07/10) | 27 | 135de84 |
 | Carregador real | 2026-10-06-02 (`dist/Code.real.gs`, implantado pela Roberta) | — | 4ad0272 |
 | Carregador teste | 2026-10-04-01 + nova versão pendente desde 05/10 (permissão do Drive, ver `COMO-INSTALAR.md`) | — | — |
@@ -48,6 +48,18 @@ Modelo:
 ```
 
 ## Lista
+
+### 2026-10-09-07 · Real (direto) · Repasse: PLASC, desconto mensal, valores dos convênios
+- **O que mudou**: % negativo = a profissional deve à clínica (linhas "PLASC (fatura da Luciana)" viram convênio PLASC,
+  "faturado pela profissional"); convênio "Desconto mensal" + valor = abatimento fixo do mês, com colunas Desconto e
+  Líquido no resumo; regras só de valor por procedimento.
+- **Regras** (aba Regras de repasse, linhas 21–28, das fichas "Valores dos convênios v1.0" e "Repasse v1.2"): Sabin
+  consulta R$ 95, nutrição R$ 40, pacote avaliação R$ 475; Cedplan R$ 120 (psicoterapia/consulta), nutrição R$ 60;
+  Luciana PLASC −40% sobre R$ 86,30; Juliana desconto mensal R$ 1.621 (pró-labore); Juliana Acolhimento 40%.
+- **Conferência**: 4/4 peças iguais ao build (451–454); ativas = 1 + 11 + 28; testes passam; cópia de Setembro dá
+  Luciana −R$ 138,08 (igual à planilha SET 26).
+- **Voltar**: `antigo23:` → nome e 451–454 → `antigo24:`.
+- **Aprovação**: gestão, 09/10.
 
 ### 2026-10-09-06 · Real (direto) · tela Repasse (só gestão)
 - **O que mudou**: menu **Repasse**, visível só pra gestão. Calcula na hora, a partir da aba do mês, o repasse de cada
