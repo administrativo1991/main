@@ -16,7 +16,7 @@ Todas podem ser escolhidas pela recepção. A Juliana passa o valor.
 - **Mensalidade especial**: valor fixo do mês combinado (ex.: R$ 150, R$ 120 quinzenal). Não conta sessões.
 - **Convênio** · **Pro bono** · **Permuta**: como antes.
 
-Ao lado fica o **Pagamento** (quando paga): Na sessão · Antecipado · Posterior · Não se aplica.
+Ao lado fica o **Pagamento** (quando paga): Na sessão · No início do mês · No mês seguinte · Não se aplica.
 
 **Mensalidade**
 

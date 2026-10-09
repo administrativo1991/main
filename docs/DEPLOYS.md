@@ -23,7 +23,7 @@ coluna E não afeta o app. Atualizar `E2` faz parte de toda publicação (passo 
 
 | Canal | Deploy | Peças | Commit |
 |---|---|---|---|
-| Real (`arquivos_real`) | **2026-10-09-03** | 37 (duplicatas 1 · server 10 · index 26); ativas = 2, 123, 281, 335–368; `antigo19:` = trocadas neste deploy | branch `claude/busy-wright-xf0hql` |
+| Real (`arquivos_real`) | **2026-10-09-04** | 38 (duplicatas 1 · server 10 · index 27); ativas = 2, 123, 281, 345–350, 369–397; `antigo20:` = trocadas neste deploy | branch `claude/busy-wright-xf0hql` |
 | Teste (`arquivos`) | **2026-10-06-08** (atrás da real: não recebeu o 10, o 11, o 07-01 nem os de 07/10) | 27 | 135de84 |
 | Carregador real | 2026-10-06-02 (`dist/Code.real.gs`, implantado pela Roberta) | — | 4ad0272 |
 | Carregador teste | 2026-10-04-01 + nova versão pendente desde 05/10 (permissão do Drive, ver `COMO-INSTALAR.md`) | — | — |
@@ -48,6 +48,18 @@ Modelo:
 ```
 
 ## Lista
+
+### 2026-10-09-04 · Real (direto) · Pagamento: "No início do mês" / "No mês seguinte"
+- **O que mudou**: Pagamento "Antecipado" passa a se chamar **No início do mês** e "Posterior", **No mês seguinte** (o app
+  lê os nomes antigos como os novos). A virada de novembro não propõe mais Pacote 4 sessões pros ex-planos: eles ficam em
+  Por sessão (combinado) (gestão, 09/10).
+- **Dados**: Listas J2:J5 com os nomes novos; Pacientes AH: 80 "Posterior" → "No mês seguinte" e 2 "Antecipado" →
+  "No início do mês" (localizar e substituir só na coluna AH, célula inteira).
+- **Peças**: 29 novas (369–397: server 0–9, index 8–26); 28 viraram `antigo20:` (335–344, 351–368).
+- **Conferência**: 29/29 iguais ao build; ativas = 1 + 10 + 27; testes do servidor e simulação passam.
+- **Voltar**: `antigo20:` → nome e 369–397 → `antigo21:` (o código antigo não entende os nomes novos: voltar também
+  Listas J e a coluna AH com localizar e substituir).
+- **Aprovação**: gestão, 09/10.
 
 ### 2026-10-09-03 · Real (direto) · agendar na vaga; pacote com valor automático
 - **O que mudou**: na Agenda, clicar num horário vago abre um cartão ali mesmo (profissional, dia e hora já preenchidos):
