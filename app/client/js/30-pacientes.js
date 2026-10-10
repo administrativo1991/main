@@ -274,8 +274,28 @@ function salvarEdicao() {
     var mudou = r.alterados && r.alterados.length;
     toast(mudou ? 'Cadastro atualizado' : 'Nada mudou');
     $("#n-sucesso").innerHTML = aviso('verde', esc(nome) + ' · ' + (mudou ? 'cadastro atualizado' : 'nada mudou'), mudou ? 'Alterado: ' + esc(r.alterados.map(function (c) { return c.split(' (')[0]; }).join(', ')) + '. Registrado em “Alterações de cadastro”.' : 'Nenhum campo mudou.');
-    if (pVoltar) { var v = pVoltar; pVoltar = null; go(v, { paciente: nome }); }
+    var voltar = function () { if (pVoltar) { var v = pVoltar; pVoltar = null; go(v, { paciente: nome }); } };
+    // mudou convênio ou cobrança (gestão): o passado não muda; pergunta só pelas linhas do mês aberto de hoje em diante
+    if (ehGestao() && mudou && r.alterados.some(function (c) { return c === 'Convênio' || c === 'Cobrança'; })) perguntarLinhasAbertas(nome, voltar); else voltar();
   }).catch(function (e) { toast('Erro: ' + e.message); }).finally(function () { salvandoP = false; $("#p-salvar").disabled = false; });
+}
+function perguntarLinhasAbertas(nome, depois) {
+  call('linhasAbertasPaciente', { nome: nome }).then(function (r) {
+    if (!r.ok || !r.linhas.length) return depois();
+    var n = r.linhas.length, box = el('<div class="faixa nota" style="display:block;margin-top:8px"><strong>Atualizar também ' + (n === 1 ? 'esta linha' : 'estas ' + n + ' linhas') + '?</strong> ' +
+      '<span class="muted">Sessões de ' + esc(nome) + ' na aba ' + esc(r.aba) + ' de hoje em diante, ainda com o convênio/modalidade antigos. Os meses anteriores não mudam.</span>' +
+      '<ul style="margin:6px 0;padding-left:18px">' + r.linhas.map(function (l) { return '<li>' + esc(l.data + (l.hora ? ' ' + l.hora : '') + ' · ' + l.profissional + ' · ' + (l.convenio || '(sem convênio)') + ' / ' + (l.modalidade || '—') + ' → ' + (r.convenio || '(sem convênio)') + ' / ' + (r.modalidade || '—')) + '</li>'; }).join('') + '</ul>' +
+      '<div class="acoes"><button type="button" class="btn" data-sim>Atualizar ' + n + ' linha' + (n === 1 ? '' : 's') + '</button><button type="button" class="btn ter" data-nao>Não, deixar como está</button></div></div>');
+    $("#n-sucesso").appendChild(box);
+    $('[data-nao]', box).addEventListener('click', function () { box.remove(); depois(); });
+    $('[data-sim]', box).addEventListener('click', function () {
+      var b = this; b.disabled = true;
+      call('atualizarLinhasDoCadastro', { nome: nome, ids: r.linhas.map(function (l) { return l.id; }) }).then(function (r2) {
+        if (!r2.ok) { b.disabled = false; return toast((r2.erros || ['Não gravou']).join(' ')); }
+        toast((r2.atualizadas || []).length + ' linha(s) de ' + r2.aba + ' atualizada(s)'); box.remove(); depois();
+      }).catch(function (e) { b.disabled = false; toast('Erro: ' + e.message); });
+    });
+  }).catch(function () { depois(); });
 }
 /* ---------- eventos ---------- */
 $("#n-cpf").addEventListener('input', function () { if (!this.readOnly) this.value = mascaraCPF(this.value); });

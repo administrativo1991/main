@@ -158,7 +158,9 @@ var CONFIG = {
   MESES: ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'],
   VIRADA: '2026-11-01', // a partir daqui a mensalidade é antecipada (vence dia 10, tolerância 15)
   // cabeçalhos da aba do mês (os existentes são lidos como estão; U e V são criados no fim se faltarem)
-  HM: { DATA: 'Data', HORA: 'Hora', PACIENTE: 'Paciente', PROFISSIONAL: 'Profissional', PROCEDIMENTO: 'Procedimento', OQUE: 'O que aconteceu', VALOR: 'Valor (R$)', PAGO: 'Pago?', DATA_PAG: 'Data do pagamento', FORMA: 'Forma de pagamento', QUEM: 'Quem pagou (só se foi outra pessoa)', NF: 'NF emitida?', NF_N: 'Nº da NF', GUIA: 'Guia assinada? (convênio)', OBS: 'Observação', ID: 'ID', LOG: 'Registrado por (app)', PACOTE: 'Plano (ID)', RECEBIDO: 'Valor recebido (R$)', SESSOES: 'Sessões do pacote' },
+  HM: { DATA: 'Data', HORA: 'Hora', PACIENTE: 'Paciente', PROFISSIONAL: 'Profissional', PROCEDIMENTO: 'Procedimento', OQUE: 'O que aconteceu', VALOR: 'Valor (R$)', PAGO: 'Pago?', DATA_PAG: 'Data do pagamento', FORMA: 'Forma de pagamento', QUEM: 'Quem pagou (só se foi outra pessoa)', NF: 'NF emitida?', NF_N: 'Nº da NF', GUIA: 'Guia assinada? (convênio)', OBS: 'Observação', ID: 'ID', LOG: 'Registrado por (app)', PACOTE: 'Plano (ID)', RECEBIDO: 'Valor recebido (R$)', SESSOES: 'Sessões do pacote',
+    // copiadas do cadastro na hora em que a linha é gravada (gestão, 10/10); o nome "(auto)" ficou do tempo da fórmula
+    CONV: 'Convênio (auto)', MOD: 'Modalidade (auto)', ATENCAO: '⚠ Atenção na cobrança (auto)', PAGADOR_L: 'Pagador habitual (auto)' },
   // Renovação do pacote (gestão, 07-08/10): uma linha por pagamento antecipado; é o que o Financeiro concilia
   HR: ['ID', 'Data', 'Paciente', 'Sessões', 'Valor (R$)', 'Forma de pagamento', 'Quem pagou', 'NF emitida?', 'Nº da NF', 'Válido até', 'Observação', 'Registrado por (app)', 'Referente a'],
   // validade das sessões de cada renovação, em meses, pelo tamanho do pacote (a confirmar com Bruna e Juliana)
@@ -540,6 +542,82 @@ function gravarCelulas_(sheet, linha, h, pares) {
     cel.setValue(v);
   });
 }
+/* ---------- Cadastro gravado na linha (gestão, 10/10) ----------
+   Convênio, Modalidade (= Cobrança do cadastro), Atenção na cobrança e Pagador habitual (F, G, H e N da aba do mês) são
+   GRAVADOS na linha, copiados do cadastro no momento em que o atendimento é salvo. Mudar o cadastro depois não mexe em
+   nenhuma linha já gravada; só a gestão corrige uma linha (Corrigir lançamento). As abas antigas tinham ARRAYFORMULA na
+   linha 2 dessas colunas, lendo o cadastro ATUAL: "Virar aba para o app" (Pendências, gestão) troca a fórmula pelos valores
+   que ela mostrava. Enquanto a fórmula estiver lá, o app não grava na aba (um valor no meio da coluna quebra a fórmula). */
+var COLS_AUTO = ['CONV', 'MOD', 'ATENCAO', 'PAGADOR_L'];
+// mesmo resultado das fórmulas antigas: Convênio (Q), Cobrança (F), Regra (R) — Observação de cobrança (S), Pagador (O)
+function autoDoCadastro_(pac) {
+  pac = pac || {}; var HM = CONFIG.HM, o = {};
+  o[HM.CONV] = pac.convenio || ''; o[HM.MOD] = pac.modalidade || '';
+  o[HM.ATENCAO] = pac.regra ? pac.regra + ' — ' + (pac.obsCobranca || '') : (pac.obsCobranca || '');
+  o[HM.PAGADOR_L] = pac.pagador || '';
+  return o;
+}
+function comAuto_(pares, pac) { var a = autoDoCadastro_(pac); Object.keys(a).forEach(function (k) { pares[k] = a[k]; }); return pares; }
+// colunas automáticas que ainda têm fórmula na linha 2 (aba em "modo planilha")
+function formulasAuto_(s) {
+  var h = cabecalhos_(s), HM = CONFIG.HM;
+  return COLS_AUTO.filter(function (k) { return h[HM[k]] && String(s.getRange(2, h[HM[k]]).getFormula() || '') !== ''; }).map(function (k) { return HM[k]; });
+}
+function msgModoPlanilha_(nome) { return 'A aba ' + nome + ' ainda está em modo planilha — rodar \'Virar aba para o app\' na tela Gestão.'; }
+// guarda: devolve o aviso se alguma das abas ainda estiver em modo planilha (nada é gravado)
+function bloqueioPlanilha_(abas) {
+  var vistos = {}, msg = '';
+  (abas || []).forEach(function (s) { if (!msg && s && !vistos[s.getName()]) { vistos[s.getName()] = 1; if (formulasAuto_(s).length) msg = msgModoPlanilha_(s.getName()); } });
+  return msg;
+}
+function letraCol_(c) { var t = ''; while (c > 0) { var m = (c - 1) % 26; t = String.fromCharCode(65 + m) + t; c = Math.floor((c - 1) / 26); } return t; }
+var CAMPO_VIRADA = 'Virada para o app';
+function viradaLog_(mes) {
+  var sa = planilha_().getSheetByName(CONFIG.ABA.ALT_LANC), achou = null;
+  linhasComo_(sa).forEach(function (r) { if (String(r['Aba'] || '') === mes && String(r['Campo'] || '') === CAMPO_VIRADA) achou = { quando: String(r['Data/hora'] || ''), texto: String(r['Quem informou'] || ''), por: String(r['Registrado por (app)'] || '') }; });
+  return achou;
+}
+function estadoVirada_(mes) {
+  var s = planilha_().getSheetByName(mes); if (!s) return null;
+  var f = formulasAuto_(s), lg = f.length ? null : viradaLog_(mes);
+  return { mes: mes, modo: f.length ? 'planilha' : 'app', formulas: f, viradaEm: lg ? lg.quando : '', texto: lg ? lg.texto : '' };
+}
+// Virar a aba para o app (só gestão): lê F2:H e N2:N com getValues e grava os mesmos valores com setValues (a fórmula vira
+// valor). Antes, confere que nenhuma célula dessas colunas mostra erro (#REF!: alguém digitou no meio da coluna); se mostrar,
+// para sem gravar. Depois confere com getFormula que a linha 2 ficou sem fórmula e registra em "Alterações de lançamento".
+API.virarAbaMes = function (d) {
+  d = d || {};
+  var u = usuario_(); if (u.perfil !== 'gestao') return { ok: false, erros: ['Só a gestão vira a aba para o app.'] };
+  var mes = String(d.mes || '').trim(); if (CONFIG.MESES.indexOf(mes) < 0) return { ok: false, erros: ['Mês inválido.'] };
+  var s = planilha_().getSheetByName(mes); if (!s) return { ok: false, erros: ['A aba "' + mes + '" não existe.'] };
+  var lock = LockService.getScriptLock(); lock.waitLock(20000);
+  try {
+    var h = cabecalhos_(s), HM = CONFIG.HM, cols = COLS_AUTO.filter(function (k) { return h[HM[k]]; }).map(function (k) { return h[HM[k]]; }).sort(function (a, b) { return a - b; });
+    if (!cols.length) return { ok: false, erros: ['A aba ' + mes + ' não tem as colunas de convênio/modalidade/atenção/pagador.'] };
+    if (!formulasAuto_(s).length) { var lg = viradaLog_(mes); return { ok: true, jaVirada: true, mes: mes, viradaEm: lg ? lg.quando : '', mensagem: 'Já virada' + (lg ? ' em ' + lg.quando : ' (sem fórmula na linha 2; data não registrada)') + '.' }; }
+    // blocos de colunas vizinhas (F:H e N)
+    var blocos = []; cols.forEach(function (c) { var b = blocos[blocos.length - 1]; if (b && b.c + b.n === c) b.n++; else blocos.push({ c: c, n: 1 }); });
+    var n = Math.max(s.getLastRow() - 1, 1), erros = [];
+    blocos.forEach(function (b) {
+      var rg = s.getRange(2, b.c, n, b.n); b.vals = rg.getValues(); var disp = rg.getDisplayValues();
+      disp.forEach(function (l, i) { l.forEach(function (v, j) { if (/^#(REF!|N\/A|VALUE!|ERROR!|NAME\?|DIV\/0!|NUM!|NULL!)/.test(String(v || ''))) erros.push(letraCol_(b.c + j) + (i + 2) + ' (' + String(v).split(' ')[0] + ')'); }); });
+    });
+    if (erros.length) return { ok: false, comErro: erros, erros: ['Parei sem gravar nada: ' + erros.length + ' célula(s) de ' + blocos.map(function (b) { return letraCol_(b.c) + (b.n > 1 ? ':' + letraCol_(b.c + b.n - 1) : ''); }).join(' e ') + ' mostram erro: ' + erros.slice(0, 8).join(', ') + (erros.length > 8 ? '…' : '') + '. Alguém digitou no meio da coluna automática: apague o valor digitado na planilha e rode de novo.'] };
+    blocos.forEach(function (b) { s.getRange(2, b.c, n, b.n).setValues(b.vals); });
+    SpreadsheetApp.flush();
+    var resta = formulasAuto_(s);
+    if (resta.length) return { ok: false, erros: ['Gravei os valores, mas a linha 2 ainda tem fórmula em: ' + resta.join(', ') + '. Avise o suporte antes de registrar nesta aba.'] };
+    var dif = 0; blocos.forEach(function (b) { var lido = s.getRange(2, b.c, n, b.n).getValues(); lido.forEach(function (l, i) { l.forEach(function (v, j) { if (String(v) !== String(b.vals[i][j])) dif++; }); }); });
+    var carimbo = (u.email || 'app') + ' · ' + agora_(), texto = mes + ' · virada para o app em ' + agora_() + ' por ' + (u.email || 'app');
+    var faixas = blocos.map(function (b) { return letraCol_(b.c) + '2:' + letraCol_(b.c + b.n - 1); }).join(' e ');
+    var sa = abaComCabecalho_(CONFIG.ABA.ALT_LANC, CONFIG.HL_LANC), ha = cabecalhos_(sa);
+    gravarCelulas_(sa, proximaLinha_(sa, ha['ID']), ha, { 'Data/hora': agora_(), 'Aba': mes, 'ID': '(aba inteira)', 'Paciente': '', 'Campo': CAMPO_VIRADA, 'De': 'fórmula (ARRAYFORMULA em ' + faixas + ')', 'Para': n + ' linhas gravadas como valor' + (dif ? ' · ' + dif + ' célula(s) diferentes na releitura' : ''), 'Quem informou': texto, 'Registrado por (app)': carimbo });
+    SpreadsheetApp.flush();
+    return { ok: true, mes: mes, linhas: n, faixas: faixas, diferencas: dif, texto: texto };
+  } finally { lock.releaseLock(); }
+};
+API.estadoVirada = function (d) { d = d || {}; return { ok: true, estado: estadoVirada_(String(d.mes || nomeAbaMes_(new Date()))) }; };
+
 function abaPacotes_() {
   var ss = planilha_(), s = ss.getSheetByName(CONFIG.ABA.PACOTES);
   if (!s) {
@@ -622,7 +700,8 @@ API.registrarAtendimento = function (d) {
   try {
     var indice = indicePacientes_(), pac = indice.filter(function (p) { return p.nome === paciente; })[0];
     if (!pac) return { ok: false, erros: ['Paciente não está em Pacientes. Cadastre primeiro em "Novo paciente".'] };
-    var s = abaMes_(data), g = garantirColunas_(s, [CONFIG.HM.LOG, CONFIG.HM.PACOTE].concat(pago === 'Parcial' ? [CONFIG.HM.RECEBIDO] : [])), h = g.h, HM = CONFIG.HM;
+    var s = abaMes_(data), bloq = bloqueioPlanilha_([s]); if (bloq) return { ok: false, erros: [bloq] };
+    var g = garantirColunas_(s, [CONFIG.HM.LOG, CONFIG.HM.PACOTE].concat(pago === 'Parcial' ? [CONFIG.HM.RECEBIDO] : [])), h = g.h, HM = CONFIG.HM;
     var linha = proximaLinha_(s, h[HM.PACIENTE] || 3);
     var u = usuario_(), id = novoId_('A'), pagou = pago === 'Sim' || pago === 'Parcial';
     var quem = String(d.quemPagou || '').trim();
@@ -636,6 +715,7 @@ API.registrarAtendimento = function (d) {
     pares[HM.QUEM] = (quem && quem !== (pac.pagador || '') && quem !== paciente) ? quem : '';
     pares[HM.NF] = String(d.nf || '').trim(); pares[HM.NF_N] = String(d.nfNumero || '').trim(); pares[HM.GUIA] = String(d.guia || '').trim();
     pares[HM.OBS] = obs; pares[HM.ID] = id; pares[HM.LOG] = (u.email || 'app') + ' · ' + agora_(); pares[HM.PACOTE] = String(d.pacoteId || '');
+    comAuto_(pares, pac); // convênio, modalidade, atenção e pagador do cadastro de agora ficam gravados na linha
     // pacote de sessões: decide se gasta sessão (regra em consumoPacote_); no Antecipado grava −1/0 em "Sessões do pacote"
     var consumo = null;
     if (ehPacoteCob_(pac.modalidade) && !d.cobrarAvulsa) {
@@ -681,8 +761,9 @@ API.registrarAtendimento = function (d) {
 
 // Corrigir um lançamento já gravado na aba do mês (gestão e recepção; aprovado pela Roberta em 06/10).
 // Acha a linha pelo ID e só mexe nas colunas de cobrança preenchidas pela recepção: Pago?, Data do pagamento, Forma,
-// Quem pagou, NF emitida?, Nº da NF, Guia assinada? e Observação (só acrescenta). Nunca toca em Valor, nas colunas
-// automáticas (F, G, H, N) nem apaga nada; o carimbo da correção vai somado em "Registrado por (app)".
+// Quem pagou, NF emitida?, Nº da NF, Guia assinada? e Observação (só acrescenta). Convênio e Modalidade da linha (F, G) só a
+// gestão troca (10/10); paciente trocado regrava F, G, H e N com o cadastro do paciente certo. Nunca apaga nada; o carimbo da
+// correção vai somado em "Registrado por (app)".
 // Se a linha for a compra de um plano (Observação "Compra do plano P-…"), a aba Planos recebe o mesmo Pago?/Forma/NF.
 API.corrigirLancamento = function (d) {
   d = d || {};
@@ -692,7 +773,8 @@ API.corrigirLancamento = function (d) {
   var s = planilha_().getSheetByName(aba); if (!s) return { ok: false, erros: ['A aba "' + aba + '" não existe.'] };
   var lock = LockService.getScriptLock(); lock.waitLock(20000);
   try {
-    var h = cabecalhos_(s), HM = CONFIG.HM;
+    var h = cabecalhos_(s), HM = CONFIG.HM, bloq = bloqueioPlanilha_([s]);
+    if (bloq) return { ok: false, erros: [bloq] };
     if (!h[HM.ID]) return { ok: false, erros: ['A aba "' + aba + '" não tem a coluna ID.'] };
     var ids = s.getRange(2, h[HM.ID], Math.max(s.getLastRow() - 1, 1), 1).getValues(), linha = 0;
     for (var i = 0; i < ids.length; i++) if (String(ids[i][0]).trim() === id) { linha = i + 2; break; }
@@ -709,11 +791,20 @@ API.corrigirLancamento = function (d) {
     if (ehPerdido_(c.pago) && !ehPerdido_(pagoAtual) && !motivoPerdido) return { ok: false, erros: ['"' + PAGO_PERDIDO + '": informe o motivo (ex.: guia não autorizada pelo convênio).'] };
     var atualDe = function (k) { return k === 'DATA_PAG' || k === 'DATA' ? fmtData_(g(k)) : k === 'HORA' ? horaTxt_(g(k)) : (k === 'VALOR' || k === 'RECEBIDO') ? (g(k) === '' ? '' : String(numBR_(g(k)))) : txt(k); };
     var mudar = function (k, v, rotulo) { if (!h[HM[k]] && k !== 'RECEBIDO') return; var atual = atualDe(k); var nv = v instanceof Date ? fmtData_(v) : String(v == null ? '' : v).trim(); if (nv === atual) return; novos[k] = v instanceof Date ? v : (typeof v === 'number' ? v : nv); rotulos.push(rotulo); return { de: atual, para: nv }; };
-    var amplo = function (k, v, rotulo) { var m = mudar(k, v, rotulo); if (m) amplos.push({ campo: rotulo, de: m.de, para: m.para }); };
+    var amplo = function (k, v, rotulo) { var m = mudar(k, v, rotulo); if (m) amplos.push({ campo: rotulo, de: m.de, para: m.para }); return m; };
     // correção ampla (recepção e gestão; gestão 07/10): dados da sessão e valores, sempre com "quem informou" e registro em "Alterações de lançamento"
     if (quer('data')) { var dt = parseData_(c.data); if (!dt) erros.push('Data da sessão inválida.'); else if (nomeAbaMes_(dt) !== aba) erros.push('A data nova é de outro mês: lance a sessão no mês certo (Registrar) e marque esta como "Cancelado pela clínica".'); else amplo('DATA', dt, 'Data'); }
     if (quer('hora')) { var hr = horaTxt_(c.hora); if (hr && !/^\d{2}:\d{2}$/.test(hr)) erros.push('Hora inválida (hh:mm).'); else amplo('HORA', hr, 'Hora'); }
-    if (quer('paciente')) { var np = String(c.paciente || '').trim(); if (!indicePacientes_().some(function (p) { return p.nome === np; })) erros.push('Paciente novo não está em Pacientes.'); else amplo('PACIENTE', np, 'Paciente'); }
+    var pacNovo = null;
+    if (quer('paciente')) { var np = String(c.paciente || '').trim(); pacNovo = indicePacientes_().filter(function (p) { return p.nome === np; })[0]; if (!pacNovo) erros.push('Paciente novo não está em Pacientes.'); else if (!amplo('PACIENTE', np, 'Paciente')) pacNovo = null; }
+    // convênio e modalidade gravados na linha (gestão, 10/10): só a gestão troca; a recepção vê, mas não edita
+    var cadLinha = [], muda = function (k, v, rotulo) { var m = mudar(k, v, rotulo); if (m) cadLinha.push({ campo: rotulo, de: m.de, para: m.para }); return m; };
+    if ((quer('convenio') || quer('modalidade')) && u.perfil !== 'gestao') return { ok: false, erros: ['Só a gestão troca o convênio ou a modalidade de uma linha.'] };
+    if (quer('convenio')) { var cv = String(c.convenio || '').trim(), lcv = colunaLista_(CONFIG.LISTAS.CONVENIO); if (cv && lcv.length && lcv.indexOf(cv) < 0) erros.push('Convênio fora da lista (aba Listas).'); else muda('CONV', cv, 'Convênio'); }
+    if (quer('modalidade')) { var md = String(c.modalidade || '').trim(), lmd = colunaLista_(CONFIG.LISTAS.MODALIDADE); if (md && lmd.length && lmd.indexOf(md) < 0) erros.push('Modalidade fora da lista (aba Listas, Cobrança).'); else muda('MOD', md, 'Modalidade'); }
+    // paciente trocado (lançado no paciente errado): a linha passa a levar o cadastro do paciente certo, salvo o que a gestão escolheu acima
+    if (pacNovo) { var an = autoDoCadastro_(pacNovo), rot = { CONV: 'Convênio', MOD: 'Modalidade', ATENCAO: 'Atenção na cobrança', PAGADOR_L: 'Pagador habitual' };
+      COLS_AUTO.forEach(function (k) { if ((k === 'CONV' && quer('convenio')) || (k === 'MOD' && quer('modalidade'))) return; muda(k, an[HM[k]], rot[k]); }); }
     if (quer('profissional')) amplo('PROFISSIONAL', String(c.profissional || '').trim(), 'Profissional');
     if (quer('procedimento')) amplo('PROCEDIMENTO', String(c.procedimento || '').trim(), 'Procedimento');
     if (quer('oque')) amplo('OQUE', String(c.oque || '').trim(), 'O que aconteceu');
@@ -772,8 +863,9 @@ API.corrigirLancamento = function (d) {
     ['DATA_PAG', 'DATA'].forEach(function (k) { if (novos[k] instanceof Date && h[HM[k]]) s.getRange(linha, h[HM[k]]).setNumberFormat('dd/MM/yyyy'); });
     ['VALOR', 'RECEBIDO'].forEach(function (k) { if (novos[k] != null && h[HM[k]]) s.getRange(linha, h[HM[k]]).setNumberFormat('#,##0.00'); });
     if (novos.HORA != null && h[HM.HORA]) s.getRange(linha, h[HM.HORA]).setNumberFormat('@');
-    if (amplos.length) {
+    if (amplos.length || cadLinha.length) {
       var sa = abaComCabecalho_(CONFIG.ABA.ALT_LANC, CONFIG.HL_LANC), ha = cabecalhos_(sa);
+      cadLinha.forEach(function (m) { gravarCelulas_(sa, proximaLinha_(sa, ha['ID']), ha, { 'Data/hora': agora_(), 'Aba': aba, 'ID': id, 'Paciente': paciente, 'Campo': m.campo, 'De': m.de, 'Para': m.para, 'Quem informou': String(c.quemInformou || '').trim() || (pacNovo ? 'cadastro do paciente certo' : 'gestão'), 'Registrado por (app)': carimbo }); });
       amplos.forEach(function (m) { gravarCelulas_(sa, proximaLinha_(sa, ha['ID']), ha, { 'Data/hora': agora_(), 'Aba': aba, 'ID': id, 'Paciente': paciente, 'Campo': m.campo, 'De': m.de, 'Para': m.para, 'Quem informou': String(c.quemInformou || '').trim(), 'Registrado por (app)': carimbo }); });
     }
     // compra de plano: a aba Planos acompanha a cobrança
@@ -832,6 +924,7 @@ API.lancarPacote = function (d) {
   try {
     var pac = indicePacientes_().filter(function (p) { return p.nome === paciente; })[0];
     if (!pac) return { ok: false, erros: ['Paciente não está em Pacientes.'] };
+    var sm = abaMes_(data), bloq = bloqueioPlanilha_([sm]); if (bloq) return { ok: false, erros: [bloq] };
     var sp = abaPacotes_(), hp = cabecalhos_(sp), u = usuario_(), id = novoId_('P');
     // encerra plano ativo anterior do mesmo paciente
     if (sp.getLastRow() >= 2) {
@@ -846,7 +939,7 @@ API.lancarPacote = function (d) {
     gravarCelulas_(sp, linha, hp, pares);
     ['Data da compra', 'Válido até'].forEach(function (k) { sp.getRange(linha, hp[k]).setNumberFormat('dd/MM/yyyy'); });
     // linha de recebimento na aba do mês
-    var sm = abaMes_(data), gm = garantirColunas_(sm, [CONFIG.HM.LOG, CONFIG.HM.PACOTE]), hm = gm.h, HM = CONFIG.HM;
+    var gm = garantirColunas_(sm, [CONFIG.HM.LOG, CONFIG.HM.PACOTE]), hm = gm.h, HM = CONFIG.HM;
     var lm = proximaLinha_(sm, hm[HM.PACIENTE] || 3), idA = novoId_('A');
     var pm = {};
     pm[HM.DATA] = data; pm[HM.HORA] = String(d.hora || ''); pm[HM.PACIENTE] = paciente; pm[HM.PROFISSIONAL] = String(d.profissional || '');
@@ -854,7 +947,7 @@ API.lancarPacote = function (d) {
     var pagoPlano = String(d.pago || 'Sim') === 'Sim'; // "vai pagar depois" (Roberta 06/10): data e forma ficam em branco até a correção da linha
     pm[HM.DATA_PAG] = pagoPlano ? data : ''; pm[HM.FORMA] = pagoPlano ? String(d.forma || '') : ''; pm[HM.QUEM] = (d.quemPagou && d.quemPagou !== (pac.pagador || '') && d.quemPagou !== paciente) ? String(d.quemPagou) : '';
     pm[HM.NF] = String(d.nf || ''); pm[HM.NF_N] = String(d.nfNumero || ''); pm[HM.OBS] = ('Compra do plano ' + id + (pagoPlano ? '' : ' (a receber)') + '. ' + String(d.observacao || '')).trim();
-    pm[HM.ID] = idA; pm[HM.LOG] = (u.email || 'app') + ' · ' + agora_(); pm[HM.PACOTE] = id;
+    pm[HM.ID] = idA; pm[HM.LOG] = (u.email || 'app') + ' · ' + agora_(); pm[HM.PACOTE] = id; comAuto_(pm, pac);
     gravarCelulas_(sm, lm, hm, pm);
     [HM.DATA, HM.DATA_PAG].forEach(function (k) { if (hm[k]) sm.getRange(lm, hm[k]).setNumberFormat('dd/MM/yyyy'); });
     if (hm[HM.VALOR]) sm.getRange(lm, hm[HM.VALOR]).setNumberFormat('#,##0.00');
@@ -901,6 +994,7 @@ API.lancarAntecipado = function (d) {
   try {
     var pac = indicePacientes_().filter(function (p) { return p.nome === paciente; })[0];
     if (!pac) return { ok: false, erros: ['Paciente não está em Pacientes.'] };
+    var bloq = bloqueioPlanilha_(sessoes.map(function (x) { return abaMes_(x.data); })); if (bloq) return { ok: false, erros: [bloq] };
     // não lança duas vezes o mesmo dia/profissional
     var cache = {}, dup = sessoes.filter(function (x) { var r = montarDia_(x.data, cache); return r.itens.some(function (it) { return it.paciente === paciente && it.profissional === x.profissional && it.registro; }); });
     if (dup.length) return { ok: false, erros: ['Já há lançamento de ' + paciente + ' em ' + dup.map(function (x) { return fmtData_(x.data); }).join(', ') + '. Tire essas datas da lista.'] };
@@ -912,7 +1006,7 @@ API.lancarAntecipado = function (d) {
       pr[HM.OQUE] = 'Atendido'; pr[HM.VALOR] = valor; pr[HM.PAGO] = 'Sim'; pr[HM.DATA_PAG] = dpg; pr[HM.FORMA] = forma;
       pr[HM.QUEM] = (quem && quem !== (pac.pagador || '') && quem !== paciente) ? quem : '';
       pr[HM.NF] = String(d.nf || 'Não'); pr[HM.NF_N] = String(d.nfNumero || '').trim();
-      pr[HM.OBS] = obsBase + ' · sessão ' + (i + 1) + ' de ' + sessoes.length + ' (lançada antes de acontecer: se faltar, corrija)'; pr[HM.ID] = id; pr[HM.LOG] = carimbo;
+      pr[HM.OBS] = obsBase + ' · sessão ' + (i + 1) + ' de ' + sessoes.length + ' (lançada antes de acontecer: se faltar, corrija)'; pr[HM.ID] = id; pr[HM.LOG] = carimbo; comAuto_(pr, pac);
       gravarCelulas_(s, linha, h, pr);
       [HM.DATA, HM.DATA_PAG].forEach(function (k) { if (h[k]) s.getRange(linha, h[k]).setNumberFormat('dd/MM/yyyy'); });
       if (h[HM.VALOR]) s.getRange(linha, h[HM.VALOR]).setNumberFormat('#,##0.00');
@@ -1000,18 +1094,19 @@ API.renovarPacote = function (d) {
     if (!mensal && !(n > 0)) return { ok: false, erros: ['Informe quantas sessões entram nesta renovação.'] };
     var referente = mensal ? (String(d.referente || '').trim() || chaveMes_(data)) : '';
     var meses = CONFIG.VALIDADE_PACOTE[pac.pctN || n] || CONFIG.VALIDADE_PADRAO, validade = mensal ? '' : dataMaisMeses_(data, meses);
+    var sm = abaMes_(data), bloq = bloqueioPlanilha_([sm]); if (bloq) return { ok: false, erros: [bloq] };
     var u = usuario_(), carimbo = (u.email || 'app') + ' · ' + agora_(), id = novoId_('R'), quem = String(d.quemPagou || '').trim();
     var sr = abaComCabecalho_(CONFIG.ABA.RENOVACOES, CONFIG.HR), hr = garantirColunas_(sr, ['Referente a']).h, lr = proximaLinha_(sr, hr['Paciente']);
     gravarCelulas_(sr, lr, hr, { 'ID': id, 'Data': data, 'Paciente': paciente, 'Sessões': n, 'Valor (R$)': valor, 'Forma de pagamento': forma, 'Quem pagou': quem || pac.pagador || paciente,
       'NF emitida?': String(d.nf || 'Não'), 'Nº da NF': String(d.nfNumero || '').trim(), 'Válido até': validade, 'Observação': String(d.observacao || '').trim(), 'Registrado por (app)': carimbo, 'Referente a': referente });
     ['Data', 'Válido até'].forEach(function (k) { if (hr[k]) sr.getRange(lr, hr[k]).setNumberFormat('dd/MM/yyyy'); });
-    var HM = CONFIG.HM, sm = abaMes_(data), hm = garantirColunas_(sm, [HM.LOG, HM.SESSOES]).h, lm = proximaLinha_(sm, hm[HM.PACIENTE] || 3), pm = {};
+    var HM = CONFIG.HM, hm = garantirColunas_(sm, [HM.LOG, HM.SESSOES]).h, lm = proximaLinha_(sm, hm[HM.PACIENTE] || 3), pm = {};
     pm[HM.DATA] = data; pm[HM.PACIENTE] = paciente; pm[HM.PROFISSIONAL] = String(d.profissional || pac.profRef || '');
     pm[HM.PROCEDIMENTO] = mensal ? 'Mensalidade de ' + referente.split('/')[0].toLowerCase() : 'Renovação do pacote (' + n + ' sessões)'; pm[HM.OQUE] = 'Atendido'; pm[HM.VALOR] = valor; pm[HM.PAGO] = 'Sim';
     pm[HM.DATA_PAG] = data; pm[HM.FORMA] = forma; pm[HM.QUEM] = (quem && quem !== (pac.pagador || '') && quem !== paciente) ? quem : '';
     pm[HM.NF] = String(d.nf || 'Não'); pm[HM.NF_N] = String(d.nfNumero || '').trim(); if (!mensal) pm[HM.SESSOES] = n;
     pm[HM.OBS] = (mensal ? 'Mensalidade ' + referente + ' (' + id + '). ' : 'Renovação ' + id + ': +' + n + ' sessões, válidas até ' + fmtData_(validade) + '. ') + String(d.observacao || '');
-    pm[HM.OBS] = pm[HM.OBS].trim(); pm[HM.ID] = novoId_('A'); pm[HM.LOG] = carimbo;
+    pm[HM.OBS] = pm[HM.OBS].trim(); pm[HM.ID] = novoId_('A'); pm[HM.LOG] = carimbo; comAuto_(pm, pac);
     gravarCelulas_(sm, lm, hm, pm);
     [HM.DATA, HM.DATA_PAG].forEach(function (k) { if (hm[k]) sm.getRange(lm, hm[k]).setNumberFormat('dd/MM/yyyy'); });
     if (hm[HM.VALOR]) sm.getRange(lm, hm[HM.VALOR]).setNumberFormat('#,##0.00');
@@ -1397,6 +1492,46 @@ API.atualizarCadastro = function (d) {
     return { ok: true, alterados: mudancas.map(function (m) { return m.campo; }), colunasCriadas: g.criadas };
   } finally { lock.releaseLock(); }
 };
+// Mudança de convênio/cobrança no cadastro (gestão, 10/10): o passado não muda. Opcional: as linhas do mês aberto
+// (aba do mês de hoje) com data a partir de hoje podem levar o cadastro novo, se a gestão confirmar. Nunca meses anteriores.
+function linhasAbertas_(nome) {
+  var hoje = new Date(), aba = nomeAbaMes_(hoje), s = planilha_().getSheetByName(aba), hk = Utilities.formatDate(hoje, CONFIG.TZ, 'yyyyMMdd');
+  if (!s) return { aba: aba, s: null, linhas: [] };
+  var linhas = linhasMes_(aba).linhas.filter(function (r) { var dt = parseData_(r.data); return r.paciente === nome && r.id && dt && dt.getFullYear() === hoje.getFullYear() && Utilities.formatDate(dt, CONFIG.TZ, 'yyyyMMdd') >= hk; });
+  return { aba: aba, s: s, linhas: linhas };
+}
+API.linhasAbertasPaciente = function (d) {
+  d = d || {}; if (usuario_().perfil !== 'gestao') return { ok: false, erros: ['Só a gestão.'] };
+  var p = linhaPaciente_(d.nome); if (!p) return { ok: false, erros: ['Paciente não encontrado em Pacientes.'] };
+  var a = autoDoCadastro_(p), HM = CONFIG.HM, la = linhasAbertas_(p.nome);
+  var dif = la.linhas.filter(function (r) { return r.convenio !== a[HM.CONV] || r.modalidade !== a[HM.MOD]; });
+  return { ok: true, aba: la.aba, paciente: p.nome, convenio: a[HM.CONV], modalidade: a[HM.MOD], linhas: dif.map(function (r) { return { id: r.id, data: r.data, hora: r.hora, profissional: r.profissional, convenio: r.convenio, modalidade: r.modalidade }; }) };
+};
+API.atualizarLinhasDoCadastro = function (d) {
+  d = d || {}; var u = usuario_(); if (u.perfil !== 'gestao') return { ok: false, erros: ['Só a gestão.'] };
+  var p = linhaPaciente_(d.nome); if (!p) return { ok: false, erros: ['Paciente não encontrado em Pacientes.'] };
+  var quer = {}; (d.ids || []).forEach(function (x) { quer[String(x)] = 1; });
+  var lock = LockService.getScriptLock(); lock.waitLock(20000);
+  try {
+    var la = linhasAbertas_(p.nome); if (!la.s) return { ok: false, erros: ['A aba ' + la.aba + ' não existe.'] };
+    var bloq = bloqueioPlanilha_([la.s]); if (bloq) return { ok: false, erros: [bloq] };
+    var h = cabecalhos_(la.s), HM = CONFIG.HM, a = autoDoCadastro_(p), carimbo = (u.email || 'app') + ' · ' + agora_(), feitas = [];
+    var rot = { CONV: 'Convênio', MOD: 'Modalidade', ATENCAO: 'Atenção na cobrança', PAGADOR_L: 'Pagador habitual' };
+    var sa = abaComCabecalho_(CONFIG.ABA.ALT_LANC, CONFIG.HL_LANC), ha = cabecalhos_(sa);
+    la.linhas.forEach(function (r) {
+      if (!quer[r.id]) return; // só as que a gestão confirmou, e só se ainda forem do mês aberto, de hoje em diante
+      var atual = la.s.getRange(r.linha, 1, 1, la.s.getLastColumn()).getValues()[0], pares = {}, mud = [];
+      COLS_AUTO.forEach(function (k) { var c = h[HM[k]]; if (!c) return; var de = String(atual[c - 1] == null ? '' : atual[c - 1]).trim(); if (de !== a[HM[k]]) { pares[HM[k]] = a[HM[k]]; mud.push({ campo: rot[k], de: de, para: a[HM[k]] }); } });
+      if (!mud.length) return;
+      if (h[HM.LOG]) pares[HM.LOG] = (String(atual[h[HM.LOG] - 1] || '').trim() ? String(atual[h[HM.LOG] - 1]).trim() + ' | ' : '') + 'corrigido por ' + carimbo + ' (' + mud.map(function (m) { return m.campo; }).join(', ') + ' — cadastro novo)';
+      gravarCelulas_(la.s, r.linha, h, pares);
+      mud.forEach(function (m) { gravarCelulas_(sa, proximaLinha_(sa, ha['ID']), ha, { 'Data/hora': agora_(), 'Aba': la.aba, 'ID': r.id, 'Paciente': p.nome, 'Campo': m.campo, 'De': m.de, 'Para': m.para, 'Quem informou': 'mudança no cadastro (linhas de hoje em diante)', 'Registrado por (app)': carimbo }); });
+      feitas.push(r.id);
+    });
+    SpreadsheetApp.flush();
+    return { ok: true, aba: la.aba, atualizadas: feitas };
+  } finally { lock.releaseLock(); }
+};
 /* ---------- Mensalistas ---------- */
 // Colunas "<MÊS> … — pago?" da aba Mensalistas, na ordem da planilha
 function colunasMensalistas_(hdr) {
@@ -1458,6 +1593,7 @@ API.registrarMensalidade = function (d) {
     var nomes = s.getRange(2, 1, s.getLastRow() - 1, 1).getValues(), linha = 0;
     for (var i = 0; i < nomes.length; i++) if (String(nomes[i][0] || '').trim() === paciente) { linha = i + 2; break; }
     if (!linha) return { ok: false, erros: ['Paciente não está na aba Mensalistas.'] };
+    var sm = abaMes_(data), bloq = bloqueioPlanilha_([sm]); if (bloq) return { ok: false, erros: [bloq] };
     var u = usuario_(), carimbo = (u.email || 'app') + ' · ' + agora_();
     var anterior = String(s.getRange(linha, col.idx + 2).getValue() || '').trim();
     var nota = fmtData_(data) + ' — R$ ' + valor.toFixed(2).replace('.', ',') + ' ' + forma + (d.quemPagou ? ' (' + String(d.quemPagou).trim() + ')' : '') + (d.nfNumero ? ' · NF ' + String(d.nfNumero).trim() : (String(d.nf || '') === 'Sim' ? ' · NF emitida' : '')) + (d.sessaoExtra ? ' · com 5ª sessão' : '') + ' · ' + carimbo;
@@ -1466,7 +1602,7 @@ API.registrarMensalidade = function (d) {
     s.getRange(linha, col.idx + 2).setValue(nota);
     // linha de recebimento na aba do mês do pagamento
     var pac = indicePacientes_().filter(function (p) { return p.nome === paciente; })[0] || {};
-    var sm = abaMes_(data), gm = garantirColunas_(sm, [CONFIG.HM.LOG, CONFIG.HM.PACOTE]), hm = gm.h, HM = CONFIG.HM;
+    var gm = garantirColunas_(sm, [CONFIG.HM.LOG, CONFIG.HM.PACOTE]), hm = gm.h, HM = CONFIG.HM;
     var lm = proximaLinha_(sm, hm[HM.PACIENTE] || 3), id = novoId_('A');
     var proc = procedimentos_().filter(function (p) { return /^Mensalidade/i.test(p.nome); })[0];
     var pm = {};
@@ -1475,7 +1611,7 @@ API.registrarMensalidade = function (d) {
     pm[HM.DATA_PAG] = data; pm[HM.FORMA] = forma; pm[HM.QUEM] = (d.quemPagou && d.quemPagou !== (pac.pagador || '') && d.quemPagou !== paciente) ? String(d.quemPagou) : '';
     pm[HM.NF] = String(d.nf || ''); pm[HM.NF_N] = String(d.nfNumero || '');
     pm[HM.OBS] = ('Mensalidade ' + (col.mes ? col.mes.toLowerCase() : coluna) + (d.sessaoExtra ? ' (com 5ª sessão)' : '') + '. ' + String(d.observacao || '')).trim();
-    pm[HM.ID] = id; pm[HM.LOG] = carimbo;
+    pm[HM.ID] = id; pm[HM.LOG] = carimbo; comAuto_(pm, pac);
     gravarCelulas_(sm, lm, hm, pm);
     [HM.DATA, HM.DATA_PAG].forEach(function (k) { if (hm[k]) sm.getRange(lm, hm[k]).setNumberFormat('dd/MM/yyyy'); });
     if (hm[HM.VALOR]) sm.getRange(lm, hm[HM.VALOR]).setNumberFormat('#,##0.00');
@@ -1510,7 +1646,7 @@ function linhasMes_(nome) {
   vals.forEach(function (r, i) {
     var pac = String(g(r, 'PACIENTE') || '').trim(); if (!pac) return;
     out.push({ linha: i + 2, data: fmtData_(g(r, 'DATA')), hora: horaTxt_(g(r, 'HORA')), paciente: pac, profissional: String(g(r, 'PROFISSIONAL') || ''), procedimento: String(g(r, 'PROCEDIMENTO') || ''),
-      convenio: String(g(r, 'Convênio (auto)') || ''), oque: String(g(r, 'OQUE') || ''), valor: numBR_(g(r, 'VALOR')), recebido: numBR_(g(r, 'RECEBIDO')), pago: String(g(r, 'PAGO') || '').trim(), dataPag: fmtData_(g(r, 'DATA_PAG')),
+      convenio: String(g(r, 'CONV') || ''), modalidade: String(g(r, 'MOD') || ''), oque: String(g(r, 'OQUE') || ''), valor: numBR_(g(r, 'VALOR')), recebido: numBR_(g(r, 'RECEBIDO')), pago: String(g(r, 'PAGO') || '').trim(), dataPag: fmtData_(g(r, 'DATA_PAG')),
       forma: String(g(r, 'FORMA') || ''), quem: String(g(r, 'QUEM') || ''), nf: String(g(r, 'NF') || '').trim(), nfN: String(g(r, 'NF_N') || ''), guia: String(g(r, 'GUIA') || '').trim(), obs: String(g(r, 'OBS') || ''), id: String(g(r, 'ID') || ''), log: String(g(r, 'LOG') || '') });
   });
   return { existe: true, linhas: out };
@@ -1546,6 +1682,9 @@ API.gestaoResumo = function (d) {
     descontos: L.filter(function (r) { return /^Desconto:/i.test(r.obs); }),
     extras: L.filter(function (r) { return /^Sessão extra liberada/i.test(r.obs); }),
     pagadorDiferente: atend.filter(function (r) { return r.quem; }),
+    // linhas de convênio sem convênio gravado (gestão, 10/10): sem o nome, o Repasse joga em "Convênio (sem nome)" sem regra
+    semConvenio: usuario_().perfil === 'gestao' ? L.filter(function (r) { return (/^Convênio/i.test(r.pago) || ehPerdido_(r.pago)) && !String(r.convenio || '').trim(); }) : [],
+    virada: m.existe ? estadoVirada_(mes) : null,
     alteracoes: []
   };
   var sl = planilha_().getSheetByName(CONFIG.ABA.ALTERACOES);
@@ -1704,7 +1843,8 @@ API.exportarMes = function (d) {
   SpreadsheetApp.flush();
   return { ok: true, nome: nome, url: ss.getUrl(), xlsx: 'https://docs.google.com/spreadsheets/d/' + ss.getId() + '/export?format=xlsx', linhas: n - 1, pasta: destino ? destino.caminho : '', criadas: destino ? destino.criadas : [], aviso: aviso, atualizado: agora_() };
 };
-// Gestão: cria a aba de um mês copiando a estrutura (cabeçalho, fórmulas automáticas, validações) da aba-modelo
+// Gestão: cria a aba de um mês copiando a estrutura da aba-modelo: só cabeçalho, validações e formatação.
+// Nasce SEM fórmula em F/G/H/N (10/10): o app grava o cadastro em cada linha na hora de salvar.
 API.criarAbaMes = function (d) {
   d = d || {};
   if (usuario_().perfil !== 'gestao') return { ok: false, erros: ['Só a gestão cria a aba do mês.'] };
@@ -1715,17 +1855,12 @@ API.criarAbaMes = function (d) {
   var lock = LockService.getScriptLock(); lock.waitLock(20000);
   try {
     var nova = modelo.copyTo(ss).setName(nome);
-    var h = cabecalhos_(nova), max = nova.getMaxRows();
-    // limpa os dados, preservando as colunas automáticas (fórmulas em F:H e N)
-    var auto = {}; ['Convênio (auto)', 'Modalidade (auto)', '⚠ Atenção na cobrança (auto)', 'Pagador habitual (auto)'].forEach(function (k) { if (h[k]) auto[h[k]] = true; });
-    var ini = 0; for (var c = 1; c <= nova.getLastColumn() + 1; c++) {
-      var ehAuto = auto[c] || c > nova.getLastColumn();
-      if (!ehAuto && !ini) ini = c;
-      if (ehAuto && ini) { nova.getRange(2, ini, max - 1, c - ini).clearContent(); ini = 0; }
-    }
+    var max = nova.getMaxRows();
+    // limpa os dados de todas as colunas, inclusive as fórmulas antigas de F/G/H/N (clearContent mantém validações e formatação)
+    if (max > 1) nova.getRange(2, 1, max - 1, nova.getMaxColumns()).clearContent();
     ss.setActiveSheet(nova); ss.moveActiveSheet(CONFIG.MESES.indexOf(nome) < CONFIG.MESES.indexOf(modelo.getName()) ? modelo.getIndex() : modelo.getIndex() + 1);
     SpreadsheetApp.flush();
-    return { ok: true, aba: nome, modelo: modelo.getName() };
+    return { ok: true, aba: nome, modelo: modelo.getName(), formulas: formulasAuto_(nova) };
   } finally { lock.releaseLock(); }
 };
 

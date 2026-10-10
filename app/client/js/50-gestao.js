@@ -69,6 +69,9 @@ function renderGestao() {
   // Perdidos e glosas (só gestão): quanto se perdeu no mês; o Valor é a referência
   if (ehGestao()) { var perd = r.perdidos || []; PEND.push({ k: 'perdidos', cor: 'lilas', n: perd.length, t: 'Perdidos e glosas', s: perd.length ? brlCurto(soma(perd)) + ' perdidos no mês · ' + contarPor(perd, 'convenio') : 'Nenhum valor dado como perdido no mês.', acao: 'Ver lista',
     tabela: function () { return tabelaG('Perdidos e glosas · ' + brlCurto(soma(perd)), [['Data', D], ['Paciente', 'paciente'], ['Profissional', 'profissional'], ['Convênio', function (l) { return l.convenio || '—'; }], ['Valor de referência', V], ['Observação', 'obs']], perd, 'Nenhum valor dado como perdido no mês.'); } }); }
+  // linhas de convênio sem o nome do convênio gravado (gestão, 10/10): o Repasse joga em "Convênio (sem nome)", sem regra
+  if (ehGestao()) { var sc = r.semConvenio || []; PEND.push({ k: 'semconv', cor: 'laranja', n: sc.length, t: 'Linhas de convênio sem convênio', s: sc.length ? nomes(sc) + ' — Pago? de convênio (ou perdido) sem o convênio na linha: escolha o convênio' : 'Toda linha de convênio tem o convênio gravado.', acao: 'Corrigir',
+    tabela: function () { return tabelaG('Linhas de convênio sem convênio', [['Data', D], ['Paciente', 'paciente'], ['Profissional', 'profissional'], ['Procedimento', 'procedimento'], ['Pago?', 'pago'], ['Valor', V], ['Modalidade', function (l) { return l.modalidade || '—'; }]], sc, 'Nenhuma.', 'amplo'); } }); }
   var root = $("#g-pend"); root.innerHTML = '';
   PEND.forEach(function (p) {
     var b = el('<button type="button" class="pend ' + (p.n ? p.cor : 'verde') + '" aria-expanded="' + (gesAberto === p.k) + '"><span class="n">' + p.n + '</span><div class="corpo"><b>' + esc(p.t) + '</b><span>' + esc(p.s) + '</span></div><span class="ver">' + p.acao + ' ' + ic('direita', 14) + '</span></button>');
@@ -92,7 +95,12 @@ function renderGestao() {
   var l2 = li(false, 'Renovações dos pacotes antecipados <small class="muted">(tela <a href="#" id="g-ir-pacotes">Pacotes</a>)</small>');
   var l3 = li(false, 'Recorrências renovadas <small class="muted">(conferir na Agenda recorrente)</small>');
   var l4 = li(false, 'Exportar ' + esc(r.mes.toLowerCase()) + ' → pasta do Financeiro <small class="muted">(botão no topo)</small>');
-  [l1, l2, l3, l4].forEach(function (x) { vir.appendChild(x); });
+  // aba em modo planilha (fórmula em F/G/H/N lendo o cadastro atual) → virar para o app: o convênio passa a ficar gravado na linha
+  var vd = r.virada, l0 = null;
+  if (vd) l0 = vd.modo === 'app' ? li(true, 'Aba <strong>' + esc(r.mes) + '</strong> no modo app <small class="muted">(' + esc(vd.viradaEm ? 'já virada em ' + vd.viradaEm : 'sem fórmula em F/G/H/N') + ')</small>')
+    : li(false, 'Aba <strong>' + esc(r.mes) + '</strong> ainda em modo planilha <small class="muted">(convênio vem do cadastro atual; o app não grava nela)</small> <button type="button" class="btn sec mini" id="g-virar" data-mes="' + esc(r.mes) + '">Virar aba ' + esc(r.mes) + ' para o app</button>');
+  [l0, l1, l2, l3, l4].forEach(function (x) { if (x) vir.appendChild(x); });
+  var bv = $("#g-virar"); if (bv) bv.addEventListener('click', function () { var b = this, m = b.dataset.mes; doisCliques(b, 'Confirmar: virar ' + m + '? (as fórmulas viram valor)', function () { b.disabled = true; call('virarAbaMes', { mes: m }).then(function (r2) { if (!r2.ok) { b.disabled = false; return toast((r2.erros || ['Não virou']).join(' ')); } toast(r2.jaVirada ? r2.mensagem : r2.texto + ' · ' + r2.linhas + ' linhas'); carregarGestao(); }).catch(function (e) { b.disabled = false; toast('Erro: ' + e.message); }); }); });
   var ba = $("#g-aba"); if (ba) ba.addEventListener('click', function () { var b = this, m = b.dataset.mes; doisCliques(b, 'Confirmar: criar ' + m + '?', function () { b.disabled = true; call('criarAbaMes', { nome: m }).then(function (r2) { if (!r2.ok) return toast((r2.erros || ['Não criou']).join(' ')); toast('Aba ' + m + ' criada a partir de ' + r2.modelo); carregarGestao(); }).catch(function (e) { toast('Erro: ' + e.message); }); }); });
   var gip = $("#g-ir-pacotes"); if (gip) gip.addEventListener('click', function (e) { e.preventDefault(); go('pacotes'); });
   var comRegra = (AT ? AT.pacientes : []).filter(function (p) { return !!p.obsCobranca; }).length; $("#g-regras-n").textContent = comRegra || '';

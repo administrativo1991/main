@@ -1349,7 +1349,7 @@ html += '<div class="c2 muted" data-resumo>Sessão ' + (reg.valor ? 'R$ ' + brl(
 '<label class="campo">Data do pagamento<input data-c="dataPagamento" inputmode="numeric" maxlength="10" value="' + esc(hojeStr()) + '"></label>' + forma + quem + nf;
 } else {
 if (foco === 'amplo') {
-var prOpts = (AT && AT.procedimentos || []).map(function (x) { return x.nome; }); if (reg.procedimento && prOpts.indexOf(reg.procedimento) < 0) prOpts.unshift(reg.procedimento);
+var prOpts = (AT && AT.procedimentos || []).map(function (x) { return x.nome; }); if (prOpts.indexOf(reg.procedimento || '') < 0) prOpts.unshift(reg.procedimento || ''); // procedimento vazio fica vazio (não vira o 1º da lista)
 var oqOpts = (BOOT.listas.oque || []).slice(); if (reg.oque && oqOpts.indexOf(reg.oque) < 0) oqOpts.unshift(reg.oque);
 var sel = function (k, opts, atual) { return '<select data-c="' + k + '">' + opts.map(function (o) { return '<option' + (o === atual ? ' selected' : '') + '>' + esc(o) + '</option>'; }).join('') + '</select>'; };
 html += '<div class="c2 faixa nota">Lançou por engano (duplicado, paciente errado)? <button type="button" class="btn link" data-engano>Marcar como lançado por engano</button> A linha vira "Cancelado pela clínica" (nada é apagado) e, se for sessão de plano, a consulta volta pro plano.</div>';
@@ -1359,6 +1359,13 @@ html += '<label class="campo">Data<input data-c="data" inputmode="numeric" maxle
 '<label class="campo">O que aconteceu' + sel('oque', oqOpts, reg.oque) + '</label>' +
 '<label class="campo c2">Procedimento' + sel('procedimento', prOpts, reg.procedimento) + '</label>' +
 '<label class="campo">Valor da sessão<div class="campo-wrap"><span class="prefixo">R$</span><input data-c="valor" class="dinheiro" inputmode="decimal" value="' + (reg.valor !== '' && reg.valor != null ? brl(reg.valor) : '') + '"></div></label>';
+// convênio e modalidade ficam gravados na linha (copiados do cadastro ao salvar): só a gestão troca; a recepção vê
+var opc = function (lista, atual) { var l = (lista || []).slice(); if (atual && l.indexOf(atual) < 0) l.unshift(atual); return [''].concat(l); };
+var trava = ehGestao() ? '' : ' disabled title="Só a gestão troca o convênio ou a modalidade da linha"';
+var selC = function (k, opts, atual) { return '<select data-c="' + k + '"' + trava + '>' + opts.map(function (o) { return '<option value="' + esc(o) + '"' + (o === (atual || '') ? ' selected' : '') + '>' + esc(o || '(em branco)') + '</option>'; }).join('') + '</select>'; };
+html += '<label class="campo">Convênio da linha' + selC('convenio', opc(BOOT.listas.convenios, reg.convenio), reg.convenio) + '</label>' +
+'<label class="campo">Modalidade da linha' + selC('modalidade', opc(BOOT.listas.modalidades, reg.modalidade), reg.modalidade) + '</label>' +
+'<div class="c2 muted" style="font-size:13px">Convênio e modalidade foram copiados do cadastro quando a sessão foi salva; mudar o cadastro não muda esta linha.' + (ehGestao() ? ' Trocar aqui fica registrado na coluna "Registrado por (app)" e em "Alterações de lançamento".' : ' Só a gestão corrige.') + '</div>';
 }
 var mostraPago = foco === 'amplo' || (atendido && (foco === 'nf' || foco === 'todos')), mostraGuia = foco === 'guia' || ((foco === 'todos' || foco === 'amplo') && conv);
 var pagoOpts = (BOOT.listas.pago || []).slice(); if (pagoOpts.indexOf('Parcial') < 0) pagoOpts.push('Parcial'); if (reg.pago && pagoOpts.indexOf(reg.pago) < 0) pagoOpts.unshift(reg.pago); if (!reg.pago) pagoOpts.unshift('');
@@ -1396,6 +1403,7 @@ var c = {}, v = function (k) { return $('[data-c=' + k + ']', box); }, txt = fun
 var mudou = function (k, atual) { var x = txt(k); if (x != null && x !== String(atual == null ? '' : atual)) c[k] = x; };
 if (v('recebidoAgora')) { c.recebidoAgora = txt('recebidoAgora'); c.dataPagamento = txt('dataPagamento'); c.forma = v('forma').value; c.quemPagou = txt('quemPagou'); c.nf = v('nf').value; c.nfNumero = txt('nfNumero'); }
 ['data', 'hora', 'paciente', 'profissional', 'procedimento', 'oque'].forEach(function (k) { mudou(k, reg[k]); });
+['convenio', 'modalidade'].forEach(function (k) { var e = v(k); if (e && !e.disabled && e.value !== String(reg[k] || '')) c[k] = e.value; });
 var val = v('valor'); if (val) { var nv = num(val.value); if (nv !== (reg.valor === '' || reg.valor == null ? null : Number(reg.valor))) c.valor = val.value.trim(); }
 var pago = v('pago');
 if (pago) {
@@ -2764,8 +2772,28 @@ if (!r.ok) { $("#n-erros").innerHTML = erroBox(r.erros || [], 'Não gravou'); re
 var mudou = r.alterados && r.alterados.length;
 toast(mudou ? 'Cadastro atualizado' : 'Nada mudou');
 $("#n-sucesso").innerHTML = aviso('verde', esc(nome) + ' · ' + (mudou ? 'cadastro atualizado' : 'nada mudou'), mudou ? 'Alterado: ' + esc(r.alterados.map(function (c) { return c.split(' (')[0]; }).join(', ')) + '. Registrado em “Alterações de cadastro”.' : 'Nenhum campo mudou.');
-if (pVoltar) { var v = pVoltar; pVoltar = null; go(v, { paciente: nome }); }
+var voltar = function () { if (pVoltar) { var v = pVoltar; pVoltar = null; go(v, { paciente: nome }); } };
+// mudou convênio ou cobrança (gestão): o passado não muda; pergunta só pelas linhas do mês aberto de hoje em diante
+if (ehGestao() && mudou && r.alterados.some(function (c) { return c === 'Convênio' || c === 'Cobrança'; })) perguntarLinhasAbertas(nome, voltar); else voltar();
 }).catch(function (e) { toast('Erro: ' + e.message); }).finally(function () { salvandoP = false; $("#p-salvar").disabled = false; });
+}
+function perguntarLinhasAbertas(nome, depois) {
+call('linhasAbertasPaciente', { nome: nome }).then(function (r) {
+if (!r.ok || !r.linhas.length) return depois();
+var n = r.linhas.length, box = el('<div class="faixa nota" style="display:block;margin-top:8px"><strong>Atualizar também ' + (n === 1 ? 'esta linha' : 'estas ' + n + ' linhas') + '?</strong> ' +
+'<span class="muted">Sessões de ' + esc(nome) + ' na aba ' + esc(r.aba) + ' de hoje em diante, ainda com o convênio/modalidade antigos. Os meses anteriores não mudam.</span>' +
+'<ul style="margin:6px 0;padding-left:18px">' + r.linhas.map(function (l) { return '<li>' + esc(l.data + (l.hora ? ' ' + l.hora : '') + ' · ' + l.profissional + ' · ' + (l.convenio || '(sem convênio)') + ' / ' + (l.modalidade || '—') + ' → ' + (r.convenio || '(sem convênio)') + ' / ' + (r.modalidade || '—')) + '</li>'; }).join('') + '</ul>' +
+'<div class="acoes"><button type="button" class="btn" data-sim>Atualizar ' + n + ' linha' + (n === 1 ? '' : 's') + '</button><button type="button" class="btn ter" data-nao>Não, deixar como está</button></div></div>');
+$("#n-sucesso").appendChild(box);
+$('[data-nao]', box).addEventListener('click', function () { box.remove(); depois(); });
+$('[data-sim]', box).addEventListener('click', function () {
+var b = this; b.disabled = true;
+call('atualizarLinhasDoCadastro', { nome: nome, ids: r.linhas.map(function (l) { return l.id; }) }).then(function (r2) {
+if (!r2.ok) { b.disabled = false; return toast((r2.erros || ['Não gravou']).join(' ')); }
+toast((r2.atualizadas || []).length + ' linha(s) de ' + r2.aba + ' atualizada(s)'); box.remove(); depois();
+}).catch(function (e) { b.disabled = false; toast('Erro: ' + e.message); });
+});
+}).catch(function () { depois(); });
 }
 /* ---------- eventos ---------- */
 $("#n-cpf").addEventListener('input', function () { if (!this.readOnly) this.value = mascaraCPF(this.value); });
@@ -3007,6 +3035,9 @@ var PEND = [
 // Perdidos e glosas (só gestão): quanto se perdeu no mês; o Valor é a referência
 if (ehGestao()) { var perd = r.perdidos || []; PEND.push({ k: 'perdidos', cor: 'lilas', n: perd.length, t: 'Perdidos e glosas', s: perd.length ? brlCurto(soma(perd)) + ' perdidos no mês · ' + contarPor(perd, 'convenio') : 'Nenhum valor dado como perdido no mês.', acao: 'Ver lista',
 tabela: function () { return tabelaG('Perdidos e glosas · ' + brlCurto(soma(perd)), [['Data', D], ['Paciente', 'paciente'], ['Profissional', 'profissional'], ['Convênio', function (l) { return l.convenio || '—'; }], ['Valor de referência', V], ['Observação', 'obs']], perd, 'Nenhum valor dado como perdido no mês.'); } }); }
+// linhas de convênio sem o nome do convênio gravado (gestão, 10/10): o Repasse joga em "Convênio (sem nome)", sem regra
+if (ehGestao()) { var sc = r.semConvenio || []; PEND.push({ k: 'semconv', cor: 'laranja', n: sc.length, t: 'Linhas de convênio sem convênio', s: sc.length ? nomes(sc) + ' — Pago? de convênio (ou perdido) sem o convênio na linha: escolha o convênio' : 'Toda linha de convênio tem o convênio gravado.', acao: 'Corrigir',
+tabela: function () { return tabelaG('Linhas de convênio sem convênio', [['Data', D], ['Paciente', 'paciente'], ['Profissional', 'profissional'], ['Procedimento', 'procedimento'], ['Pago?', 'pago'], ['Valor', V], ['Modalidade', function (l) { return l.modalidade || '—'; }]], sc, 'Nenhuma.', 'amplo'); } }); }
 var root = $("#g-pend"); root.innerHTML = '';
 PEND.forEach(function (p) {
 var b = el('<button type="button" class="pend ' + (p.n ? p.cor : 'verde') + '" aria-expanded="' + (gesAberto === p.k) + '"><span class="n">' + p.n + '</span><div class="corpo"><b>' + esc(p.t) + '</b><span>' + esc(p.s) + '</span></div><span class="ver">' + p.acao + ' ' + ic('direita', 14) + '</span></button>');
@@ -3030,7 +3061,12 @@ var l1 = li(temAba, 'Aba <strong>' + esc(prox) + '</strong> ' + (temAba ? 'criad
 var l2 = li(false, 'Renovações dos pacotes antecipados <small class="muted">(tela <a href="#" id="g-ir-pacotes">Pacotes</a>)</small>');
 var l3 = li(false, 'Recorrências renovadas <small class="muted">(conferir na Agenda recorrente)</small>');
 var l4 = li(false, 'Exportar ' + esc(r.mes.toLowerCase()) + ' → pasta do Financeiro <small class="muted">(botão no topo)</small>');
-[l1, l2, l3, l4].forEach(function (x) { vir.appendChild(x); });
+// aba em modo planilha (fórmula em F/G/H/N lendo o cadastro atual) → virar para o app: o convênio passa a ficar gravado na linha
+var vd = r.virada, l0 = null;
+if (vd) l0 = vd.modo === 'app' ? li(true, 'Aba <strong>' + esc(r.mes) + '</strong> no modo app <small class="muted">(' + esc(vd.viradaEm ? 'já virada em ' + vd.viradaEm : 'sem fórmula em F/G/H/N') + ')</small>')
+: li(false, 'Aba <strong>' + esc(r.mes) + '</strong> ainda em modo planilha <small class="muted">(convênio vem do cadastro atual; o app não grava nela)</small> <button type="button" class="btn sec mini" id="g-virar" data-mes="' + esc(r.mes) + '">Virar aba ' + esc(r.mes) + ' para o app</button>');
+[l0, l1, l2, l3, l4].forEach(function (x) { if (x) vir.appendChild(x); });
+var bv = $("#g-virar"); if (bv) bv.addEventListener('click', function () { var b = this, m = b.dataset.mes; doisCliques(b, 'Confirmar: virar ' + m + '? (as fórmulas viram valor)', function () { b.disabled = true; call('virarAbaMes', { mes: m }).then(function (r2) { if (!r2.ok) { b.disabled = false; return toast((r2.erros || ['Não virou']).join(' ')); } toast(r2.jaVirada ? r2.mensagem : r2.texto + ' · ' + r2.linhas + ' linhas'); carregarGestao(); }).catch(function (e) { b.disabled = false; toast('Erro: ' + e.message); }); }); });
 var ba = $("#g-aba"); if (ba) ba.addEventListener('click', function () { var b = this, m = b.dataset.mes; doisCliques(b, 'Confirmar: criar ' + m + '?', function () { b.disabled = true; call('criarAbaMes', { nome: m }).then(function (r2) { if (!r2.ok) return toast((r2.erros || ['Não criou']).join(' ')); toast('Aba ' + m + ' criada a partir de ' + r2.modelo); carregarGestao(); }).catch(function (e) { toast('Erro: ' + e.message); }); }); });
 var gip = $("#g-ir-pacotes"); if (gip) gip.addEventListener('click', function (e) { e.preventDefault(); go('pacotes'); });
 var comRegra = (AT ? AT.pacientes : []).filter(function (p) { return !!p.obsCobranca; }).length; $("#g-regras-n").textContent = comRegra || '';
