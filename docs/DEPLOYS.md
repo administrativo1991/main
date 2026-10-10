@@ -23,7 +23,7 @@ coluna E não afeta o app. Atualizar `E2` faz parte de toda publicação (passo 
 
 | Canal | Deploy | Peças | Commit |
 |---|---|---|---|
-| Real (`arquivos_real`) | **2026-10-09-08** | 40 (duplicatas 1 · server 11 · index 28); ativas = 2, 123, 281, 345, 401–405, 426–448, 451–458; `antigo24:` = trocadas neste deploy | branch `claude/busy-wright-xf0hql` |
+| Real (`arquivos_real`) | **2026-10-10-02** | 41 (duplicatas 1 · server 12 · index 28); ativas = 459–499; `antigo25:` = as 40 do 2026-10-09-08 | branch `claude/kind-franklin-q0je9a` |
 | Teste (`arquivos`) | **2026-10-10-01** (real 2026-10-09-08 + convênio gravado na linha) | 41 (duplicatas 1 · server 12 · index 28), linhas 2–42, como valor (montadas por fórmula sobre `arquivos_real` + `lits_teste` e congeladas) | branch `claude/kind-franklin-q0je9a` |
 | Carregador real | 2026-10-06-02 (`dist/Code.real.gs`, implantado pela Roberta) | — | 4ad0272 |
 | Carregador teste | 2026-10-04-01 + nova versão pendente desde 05/10 (permissão do Drive, ver `COMO-INSTALAR.md`) | — | — |
@@ -48,6 +48,22 @@ Modelo:
 ```
 
 ## Lista
+
+### 2026-10-10-02 · Real · convênio gravado na linha + virada de Setembro e Outubro
+- **O que mudou**: o mesmo código do 2026-10-10-01 (teste), autorizado pela gestão em 09/10 à noite.
+- **Peças**: 41 copiadas de `arquivos!A2:C42` para `arquivos_real!A459:C499` (colar valores) e, na mesma operação, as 40
+  ativas do 09-08 (2, 123, 281, 345, 401–405, 426–448, 451–458) viraram `antigo25:`. Lidas de volta: duplicatas, server e
+  index montados pelo critério do carregador = build. E2 carimbado. 23:31.
+- **Virada (23:31)**: Setembro F2:H420 e N2:N420, Outubro F2:H155 e N2:N155 colados como valor (antes: 0 #REF!; depois:
+  F2/G2/H2/N2 sem fórmula, 0 células diferentes; Repasse idêntico antes/depois nos dois meses). Log em "Alterações de
+  lançamento" (linhas 36–37).
+- **Emily (23:32)**: IMP-SET26-037, -235, -333 e A-20261009-215500-set (linhas 38, 236, 333, 420): F = Sabin Sinai,
+  G = Convênio, U + "corrigido por … 23:32 (Convênio, Modalidade)"; 8 linhas em "Alterações de lançamento" (38–45). Só essas
+  12 células mudaram. Repasse Juliana set: Sabin 78 · Cedplan 40 · Particular 106, sem "Convênio (sem nome)".
+- **Voltar**: `antigo25:` → nome e 459–499 → `antigo26:` (o código antigo volta a funcionar; as abas ficam com valor,
+  sem fórmula — recolocar a ARRAYFORMULA só se for voltar de vez).
+- **Aprovação**: gestão, 09/10 ("autorizo publicar na planilha real e virar Setembro e Outubro lá").
+
 
 ### 2026-10-10-01 · Teste · convênio gravado na linha (virada F/G/H/N)
 - **O que mudou**: botão "Virar aba {Mês} para o app" (Pendências → Virada do mês, gestão); registrar / plano / antecipado /
