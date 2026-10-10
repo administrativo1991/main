@@ -24,7 +24,7 @@ coluna E não afeta o app. Atualizar `E2` faz parte de toda publicação (passo 
 | Canal | Deploy | Peças | Commit |
 |---|---|---|---|
 | Real (`arquivos_real`) | **2026-10-09-08** | 40 (duplicatas 1 · server 11 · index 28); ativas = 2, 123, 281, 345, 401–405, 426–448, 451–458; `antigo24:` = trocadas neste deploy | branch `claude/busy-wright-xf0hql` |
-| Teste (`arquivos`) | **2026-10-10-01** (real 2026-10-09-08 + convênio gravado na linha) | 41 (duplicatas 1 · server 12 · index 28), linhas 2–42, por fórmula sobre `arquivos_real` + `lits_teste` (ainda não congeladas como valor) | branch `claude/kind-franklin-q0je9a` |
+| Teste (`arquivos`) | **2026-10-10-01** (real 2026-10-09-08 + convênio gravado na linha) | 41 (duplicatas 1 · server 12 · index 28), linhas 2–42, como valor (montadas por fórmula sobre `arquivos_real` + `lits_teste` e congeladas) | branch `claude/kind-franklin-q0je9a` |
 | Carregador real | 2026-10-06-02 (`dist/Code.real.gs`, implantado pela Roberta) | — | 4ad0272 |
 | Carregador teste | 2026-10-04-01 + nova versão pendente desde 05/10 (permissão do Drive, ver `COMO-INSTALAR.md`) | — | — |
 
@@ -61,8 +61,15 @@ Modelo:
   mesmo texto pra ligar ao Pacientes novo; Setembro da cópia conferido igual ao da real (420 linhas, 0 diferenças, 0 erros).
 - **Peças**: 41 em `arquivos` linhas 2–42; cada peça é uma fórmula `MID(arquivos_real!C…)` + trechos novos na aba
   `lits_teste` (35 trechos, 22.746 caracteres, conferidos por LEN e soma de controle). Lidas de volta: 41/41 iguais ao build.
-- **Falta**: congelar `arquivos!C2:C42` como valor e gravar E2 (a sessão foi barrada pela permissão ao continuar gravando
-  na planilha de código); virar Setembro/Outubro e corrigir a Emily NA CÓPIA pelo app; aprovação da gestão para a real.
+- **Congelado** (09/10 23:00): `arquivos!C2:C42` colado como valor (0 fórmulas, 41/41 iguais ao build); E2 carimbado.
+- **Na CÓPIA TESTE** (09/10 23:04–23:05, mesma operação do botão: F2:H e N2:N até a última linha colados como valor):
+  Setembro 419 linhas, Outubro 154; antes, 0 #REF!; depois, F2/G2/H2/N2 sem fórmula e 0 células diferentes; Repasse
+  idêntico antes/depois (Juliana set: Sabin 74 · Cedplan 40 · Particular 106 · sem nome 4). Emily (IMP-SET26-037, -235,
+  -333, A-20261009-215500-set): F = Sabin Sinai, G = Convênio, U + "corrigido por … 23:05 (Convênio, Modalidade)",
+  10 linhas em "Alterações de lançamento" (2 da virada, 8 da Emily); só essas 12 células mudaram; Juliana set: Sabin 78,
+  sem "Convênio (sem nome)".
+- **Real**: não publicado. A gravação em `arquivos_real` foi barrada pela permissão da sessão (deploy em produção);
+  a virada da real espera o código (a guarda precisa estar no ar antes).
 - **Commit**: 6554ae0.
 
 
