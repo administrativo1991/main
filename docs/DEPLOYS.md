@@ -24,7 +24,7 @@ coluna E não afeta o app. Atualizar `E2` faz parte de toda publicação (passo 
 | Canal | Deploy | Peças | Commit |
 |---|---|---|---|
 | Real (`arquivos_real`) | **2026-10-09-08** | 40 (duplicatas 1 · server 11 · index 28); ativas = 2, 123, 281, 345, 401–405, 426–448, 451–458; `antigo24:` = trocadas neste deploy | branch `claude/busy-wright-xf0hql` |
-| Teste (`arquivos`) | **2026-10-06-08** (atrás da real: não recebeu o 10, o 11, o 07-01 nem os de 07/10) | 27 | 135de84 |
+| Teste (`arquivos`) | **2026-10-10-01** (real 2026-10-09-08 + convênio gravado na linha) | 41 (duplicatas 1 · server 12 · index 28), linhas 2–42, por fórmula sobre `arquivos_real` + `lits_teste` (ainda não congeladas como valor) | branch `claude/kind-franklin-q0je9a` |
 | Carregador real | 2026-10-06-02 (`dist/Code.real.gs`, implantado pela Roberta) | — | 4ad0272 |
 | Carregador teste | 2026-10-04-01 + nova versão pendente desde 05/10 (permissão do Drive, ver `COMO-INSTALAR.md`) | — | — |
 
@@ -48,6 +48,23 @@ Modelo:
 ```
 
 ## Lista
+
+### 2026-10-10-01 · Teste · convênio gravado na linha (virada F/G/H/N)
+- **O que mudou**: botão "Virar aba {Mês} para o app" (Pendências → Virada do mês, gestão); registrar / plano / antecipado /
+  renovação / mensalidade gravam Convênio, Modalidade, Atenção e Pagador do cadastro na linha; aba ainda com fórmula não
+  recebe gravação ("…ainda está em modo planilha…"); Corrigir lançamento: gestão troca Convênio e Modalidade da linha (U +
+  "Alterações de lançamento"), recepção vê travado; card "Linhas de convênio sem convênio"; cadastro com convênio/cobrança
+  novo pergunta só pelas linhas do mês aberto de hoje em diante; aba nova nasce sem fórmula.
+- **CÓPIA TESTE atualizada com as abas da real de 10/10** (Setembro, Outubro, Pacientes, Listas, Profissionais,
+  Procedimentos, Regras de repasse, Alterações de lançamento, Planos, Mensalistas, Alterações de cadastro, Agenda recorrente,
+  Lista do dia, copiadas com `copyTo`); as antigas da cópia ficaram como `_antes 10-10 …`. F2/G2/H2/N2 regravadas com o
+  mesmo texto pra ligar ao Pacientes novo; Setembro da cópia conferido igual ao da real (420 linhas, 0 diferenças, 0 erros).
+- **Peças**: 41 em `arquivos` linhas 2–42; cada peça é uma fórmula `MID(arquivos_real!C…)` + trechos novos na aba
+  `lits_teste` (35 trechos, 22.746 caracteres, conferidos por LEN e soma de controle). Lidas de volta: 41/41 iguais ao build.
+- **Falta**: congelar `arquivos!C2:C42` como valor e gravar E2 (a sessão foi barrada pela permissão ao continuar gravando
+  na planilha de código); virar Setembro/Outubro e corrigir a Emily NA CÓPIA pelo app; aprovação da gestão para a real.
+- **Commit**: 6554ae0.
+
 
 ### 2026-10-09-08 · Real (direto) · Profissionais: coluna Ativo
 - **O que mudou**: aba Profissionais ganhou a coluna K **Ativo**; "Não" = saiu da clínica e some das listas do app
