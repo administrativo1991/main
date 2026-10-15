@@ -8,7 +8,7 @@ var CONFIG = {
   TZ: 'America/Sao_Paulo',
   PASTA_FINANCEIRO: '1TVCErWCv4bn0ed66T5eZSvcATPIoxboc', // Drive: Clínica Nascente/Controle Financeiro (as exportações vão em <ano>/<MM Mês_AA>/2_Atendimentos)
   GESTAO: ['administrativo@clinicanascente.com.br'],
-  ABA: { PACIENTES: 'Pacientes', LISTAS: 'Listas', PROFISSIONAIS: 'Profissionais', PROCEDIMENTOS: 'Procedimentos', MENSALISTAS: 'Mensalistas', PACOTES: 'Planos', AGENDA: 'Agenda recorrente', DIA: 'Lista do dia', ALTERACOES: 'Alterações de cadastro', RENOVACOES: 'Renovações', LEMBRETES: 'Lembretes', ALT_LANC: 'Alterações de lançamento' },
+  ABA: { PACIENTES: 'Pacientes', LISTAS: 'Listas', PROFISSIONAIS: 'Profissionais', PROCEDIMENTOS: 'Procedimentos', MENSALISTAS: 'Mensalistas', PACOTES: 'Planos', AGENDA: 'Agenda recorrente', DIA: 'Lista do dia', ALTERACOES: 'Alterações de cadastro', RENOVACOES: 'Renovações', LEMBRETES: 'Lembretes', ALT_LANC: 'Alterações de lançamento', CPP: 'Cobrança por profissional', VALORES: 'Valores por sessão', PARAMS: 'Parâmetros' },
   DIAS: ['Domingo','Segunda','Terça','Quarta','Quinta','Sexta','Sábado'],
   HA: ['ID', 'Paciente', 'Profissional', 'Dia da semana', 'Hora', 'Frequência', 'Começa em', 'Termina em', 'Ativo', 'Observação', 'Registrado por (app)'],
   HD: ['ID', 'Data', 'Hora', 'Paciente', 'Profissional', 'Origem', 'Observação', 'Registrado por (app)'],
@@ -17,16 +17,11 @@ var CONFIG = {
   MESES: ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'],
   VIRADA: '2026-11-01', // a partir daqui a mensalidade é antecipada (vence dia 10, tolerância 15)
   // cabeçalhos da aba do mês (os existentes são lidos como estão; U e V são criados no fim se faltarem)
-  HM: { DATA: 'Data', HORA: 'Hora', PACIENTE: 'Paciente', PROFISSIONAL: 'Profissional', PROCEDIMENTO: 'Procedimento', OQUE: 'O que aconteceu', VALOR: 'Valor (R$)', PAGO: 'Pago?', DATA_PAG: 'Data do pagamento', FORMA: 'Forma de pagamento', QUEM: 'Quem pagou (só se foi outra pessoa)', NF: 'NF emitida?', NF_N: 'Nº da NF', GUIA: 'Guia assinada? (convênio)', OBS: 'Observação', ID: 'ID', LOG: 'Registrado por (app)', PACOTE: 'Plano (ID)', RECEBIDO: 'Valor recebido (R$)', SESSOES: 'Sessões do pacote',
+  HM: { DATA: 'Data', HORA: 'Hora', PACIENTE: 'Paciente', PROFISSIONAL: 'Profissional', PROCEDIMENTO: 'Procedimento', OQUE: 'O que aconteceu', VALOR: 'Valor (R$)', PAGO: 'Pago?', DATA_PAG: 'Data do pagamento', FORMA: 'Forma de pagamento', QUEM: 'Quem pagou (só se foi outra pessoa)', NF: 'NF emitida?', NF_N: 'Nº da NF', GUIA: 'Guia assinada? (convênio)', OBS: 'Observação', ID: 'ID', LOG: 'Registrado por (app)', PACOTE: 'Plano (ID)', RECEBIDO: 'Valor recebido (R$)', SESSOES: 'Sessões do pacote', DETALHE: 'Detalhe da falta', DECISAO: 'Decisão da gestão',
     // copiadas do cadastro na hora em que a linha é gravada (gestão, 10/10); o nome "(auto)" ficou do tempo da fórmula
     CONV: 'Convênio (auto)', MOD: 'Modalidade (auto)', ATENCAO: '⚠ Atenção na cobrança (auto)', PAGADOR_L: 'Pagador habitual (auto)' },
   // Renovação do pacote (gestão, 07-08/10): uma linha por pagamento antecipado; é o que o Financeiro concilia
   HR: ['ID', 'Data', 'Paciente', 'Sessões', 'Valor (R$)', 'Forma de pagamento', 'Quem pagou', 'NF emitida?', 'Nº da NF', 'Válido até', 'Observação', 'Registrado por (app)', 'Referente a'],
-  // validade das sessões de cada renovação, em meses, pelo tamanho do pacote (a confirmar com Bruna e Juliana)
-  VALIDADE_PACOTE: { 4: 2, 12: 6 }, VALIDADE_PADRAO: 2,
-  // gestão, 09/10: pacotes de 4 e 12 sessões (valor fixo, automático) e mensalidades (valor fixo do mês)
-  PACOTES: { 'Pacote 4 sessões': { sessoes: 4, valor: 400 }, 'Pacote 12 sessões': { sessoes: 12, valor: 900 } },
-  MENSALIDADE_SOCIAL: 200,
   HL_LANC: ['Data/hora', 'Aba', 'ID', 'Paciente', 'Campo', 'De', 'Para', 'Quem informou', 'Registrado por (app)'],
   HP: ['ID', 'Paciente', 'Modalidade', 'Nº de sessões', 'Valor (R$)', 'Data da compra', 'Válido até', 'Pago?', 'Forma de pagamento', 'Quem pagou', 'NF emitida?', 'Nº da NF', 'Sessões usadas', 'Última sessão', 'Status', 'Registrado por (app)', 'Observação'],
   // Cabeçalhos de Pacientes (os existentes são lidos como estão; os novos são criados no fim da aba se faltarem)
@@ -45,7 +40,11 @@ var CONFIG = {
     // Cobrança + Pagamento (gestão, 07-08/10)
     VALOR_NUM: 'Valor combinado (R$)', PCT_N: 'Sessões por pacote', PCT_V: 'Valor do pacote (R$)', PAGAMENTO: 'Pagamento'
   },
-  LISTAS: { OQUE: 'O que aconteceu', PAGO: 'Pago?', FORMA: 'Forma de pagamento', CONVENIO: 'Convênio', REGRA: 'Regra de cobrança', MODALIDADE: 'Cobrança', PAGAMENTO: 'Pagamento', MODALIDADE_ESP: 'Especialidade (modalidade)', GESTAO: 'Gestão' }
+  LISTAS: { OQUE: 'O que aconteceu', PAGO: 'Pago?', FORMA: 'Forma de pagamento', CONVENIO: 'Convênio', REGRA: 'Regra de cobrança', MODALIDADE: 'Cobrança', PAGAMENTO: 'Pagamento', MODALIDADE_ESP: 'Especialidade (modalidade)', GESTAO: 'Gestão', COB_PROF: 'Cobrança (por profissional)', PAG_PROF: 'Pagamento (por profissional)', FERIADOS: 'Feriados' },
+  // Cobrança por profissional (gestão, 15/10): uma linha por paciente × profissional; o app nunca recalcula o valor a partir da tabela
+  HCPP: ['ID', 'Paciente', 'Profissional', 'Ativo', 'Cobrança', 'Convênio', 'Valor por sessão (R$)', 'Valor mensal (R$)', 'Pagamento', 'Vigente desde', 'Vigente até', 'Valor decidido por', 'Valor decidido em', 'Observação de cobrança', 'Registrado por (app)'],
+  // Mensalistas: colunas novas por competência (no fim da aba), além de 'Profissional'
+  COMP_COLS: ['sessões agendadas', 'valor cobrado', 'pago?', 'data', 'forma', 'NF']
 };
 var COLS_NOVAS_PACIENTES = ['LOG', 'WHATS', 'TEL_PAC', 'CARTEIRINHA', 'INDICACAO', 'PRIMEIRA', 'PROF_REF', 'PAGADOR_CPF', 'RESP', 'RESP_PAR', 'RESP_TEL', 'RESP_CPF', 'VALOR_NUM', 'PCT_N', 'PCT_V', 'PAGAMENTO'];
 // nomes antigos das colunas (antes da migração de 08/10): lidos como se fossem os novos
@@ -88,25 +87,17 @@ function parseData_(s) {
   if (d.getDate() !== parseInt(m[1], 10) || d.getMonth() !== parseInt(m[2], 10) - 1) return null;
   return d;
 }
-function colunaLista_(cabecalho) {
-  var s = aba_(CONFIG.ABA.LISTAS), h = cabecalhos_(s), c = h[cabecalho];
-  if (!c) return [];
-  var n = s.getLastRow();
-  if (n < 2) return [];
-  return s.getRange(2, c, n - 1, 1).getValues().map(function (r) { return String(r[0] || '').trim(); }).filter(Boolean);
+// Listas: a aba inteira lida uma vez por chamada (e guardada em cache por alguns minutos); cada coluna vira uma lista
+function listas_() {
+  return cacheado_('listas', function () {
+    var s = aba_(CONFIG.ABA.LISTAS), h = cabecalhos_(s), n = s.getLastRow(), out = {};
+    if (n < 2) return out;
+    var vals = s.getRange(2, 1, n - 1, s.getLastColumn()).getValues();
+    Object.keys(h).forEach(function (k) { out[k] = vals.map(function (r) { var v = r[h[k] - 1]; return (v instanceof Date) ? fmtData_(v) : String(v == null ? '' : v).trim(); }).filter(Boolean); });
+    return out;
+  });
 }
-// Modalidades com a especialidade da coluna ao lado (Listas, "Especialidade (modalidade)"); vazio = o app agrupa pelo nome
-function modalidadesComEsp_() {
-  var s = aba_(CONFIG.ABA.LISTAS), h = cabecalhos_(s), c = h[CONFIG.LISTAS.MODALIDADE], ce = h[CONFIG.LISTAS.MODALIDADE_ESP];
-  if (!c) return [];
-  var n = s.getLastRow();
-  if (n < 2) return [];
-  var mods = s.getRange(2, c, n - 1, 1).getValues();
-  var esps = ce ? s.getRange(2, ce, n - 1, 1).getValues() : [];
-  var out = [];
-  mods.forEach(function (r, i) { var m = String(r[0] || '').trim(); if (m) out.push({ nome: m, esp: ce ? String((esps[i] || [''])[0] || '').trim() : '' }); });
-  return out;
-}
+function colunaLista_(cabecalho) { return (listas_()[cabecalho] || []).slice(); }
 function garantirColunasPacientes_() {
   var s = aba_(CONFIG.ABA.PACIENTES), h = cabecalhos_(s), prox = s.getLastColumn() + 1, criadas = [];
   COLS_NOVAS_PACIENTES.forEach(function (k) {
@@ -121,7 +112,8 @@ function garantirColunasPacientes_() {
 }
 
 /* ---------- leitura ---------- */
-function indicePacientes_() {
+function indicePacientes_() { return cacheado_('pac', lerPacientes_); }
+function lerPacientes_() {
   var s = aba_(CONFIG.ABA.PACIENTES), h = cabecalhos_(s), n = s.getLastRow();
   if (n < 2) return [];
   var vals = s.getRange(2, 1, n - 1, s.getLastColumn()).getValues();
@@ -156,9 +148,10 @@ function indicePacientes_() {
 // criadas no fim pela tela Agenda → "Horário dos profissionais". Formato da célula: "08:00-12:00, 13:00-19:00" (vazio = não atende)
 var EXPEDIENTE = { DIAS: ['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'], DURACAO: 'Duração da sessão (min)', LOG: 'Horário alterado por (app)' };
 function colExpediente_(dia) { return 'Horário ' + dia.toLowerCase(); }
-function profissionais_() {
-  var s = aba_(CONFIG.ABA.PROFISSIONAIS), n = s.getLastRow();
-  if (n < 2) return [];
+function profissionais_() { return cacheado_('prof', lerProfissionais_); }
+function lerProfissionais_() {
+  var s = planilha_().getSheetByName(CONFIG.ABA.PROFISSIONAIS), n = s ? s.getLastRow() : 0;
+  if (!s || n < 2) return [];
   var h = cabecalhos_(s), vals = s.getRange(2, 1, n - 1, s.getLastColumn()).getValues();
   var txt = function (r, nome) { var c = h[nome]; return c ? String(r[c - 1] == null ? '' : r[c - 1]).trim() : ''; };
   return vals.map(function (r) {
@@ -205,37 +198,13 @@ API.salvarExpediente = function (d) {
     pares[EXPEDIENTE.DURACAO] = dur ? durN : '';
     pares[EXPEDIENTE.LOG] = (u.email || 'app') + ' · ' + agora_();
     gravarCelulas_(s, linha, h, pares);
+    invalidar_(['prof']);
     SpreadsheetApp.flush();
     return { ok: true, linha: linha, colunasCriadas: g.criadas, profissionais: profissionais_() };
   } finally { lock.releaseLock(); }
 };
 
 API.ping = function () { return { ok: true, hora: agora_(), usuario: usuario_(), planilha: planilha_().getName() }; };
-
-API.bootstrap = function () {
-  return {
-    usuario: usuario_(),
-    planilha: planilha_().getName(),
-    hora: agora_(),
-    lembrete: lembreteAtivo_(),
-    lembretes: lembretes_().slice(-5).reverse(),
-    listas: {
-      modalidades: colunaLista_(CONFIG.LISTAS.MODALIDADE),
-      modalidadesEsp: modalidadesComEsp_(),
-      convenios: colunaLista_(CONFIG.LISTAS.CONVENIO),
-      regras: colunaLista_(CONFIG.LISTAS.REGRA),
-      pagamentos: (function () { var l = colunaLista_(CONFIG.LISTAS.PAGAMENTO).map(pagNorm_); return l.length ? l : PAGAMENTOS; })(),
-      oque: colunaLista_(CONFIG.LISTAS.OQUE),
-      pago: colunaLista_(CONFIG.LISTAS.PAGO),
-      formas: colunaLista_(CONFIG.LISTAS.FORMA)
-    },
-    profissionais: profissionais_(),
-    pacientes: indicePacientes_().map(function (p) {
-      // o índice que vai pra tela não leva CPF completo: só os dígitos finais, pra conferência
-      return { linha: p.linha, nome: p.nome, cpf: p.cpf, nasc: p.nasc, pagador: p.pagador, modalidade: p.modalidade, convenio: p.convenio, ativo: p.ativo };
-    })
-  };
-};
 
 /* ---------- Cobrança + Pagamento (gestão, 07-09/10) ---------- */
 var PAGAMENTOS = ['Na sessão', 'No início do mês', 'No mês seguinte', 'Não se aplica'];
@@ -248,10 +217,7 @@ function pagNorm_(v) { v = String(v || '').trim(); return v === 'Antecipado' ? '
 var PAGAMENTO_SUGERIDO = { 'Tabela': 'Na sessão', 'Por sessão (combinado)': 'Na sessão', 'Pacote 4 sessões': 'No início do mês', 'Pacote 12 sessões': 'No início do mês',
   'Mensalidade social': 'No início do mês', 'Mensalidade especial': 'No início do mês', 'Convênio': 'No mês seguinte', 'Pro bono': 'Não se aplica', 'Permuta': 'Não se aplica' };
 // pacote = sessões disponíveis (renovação soma, sessão que gasta tira 1); "Pacote de sessões" é o nome antigo (08/10)
-function ehPacoteCob_(c) { return /^Pacote (\d+ sessões|de sessões)$/.test(String(c || '')); }
 // mensalidade = valor fixo do mês, independe do nº de sessões; a sessão fica "incluída na mensalidade"
-function ehMensalidadeCob_(c) { return /^Mensalidade (social|especial)$/.test(String(c || '')); }
-function valorMensalidade_(p) { return p.modalidade === 'Mensalidade social' ? CONFIG.MENSALIDADE_SOCIAL : (p.valorNum || 0); }
 function chaveMes_(d) { return CONFIG.MESES[d.getMonth()] + '/' + d.getFullYear(); }
 // valida e normaliza os campos de cobrança (valores numéricos; pacote 4/12 com nº fixo e valor padrão; social R$ 200/mês)
 function camposCobranca_(c, erros) {
@@ -260,9 +226,6 @@ function camposCobranca_(c, erros) {
   if (c.valorNum != null) out.valorNum = num(c.valorNum);
   if (c.pctN != null) out.pctN = num(c.pctN);
   if (c.pctV != null) out.pctV = num(c.pctV);
-  var pad = CONFIG.PACOTES[cob];
-  if (pad) { out.pctN = pad.sessoes; out.pctV = pad.valor; } // valor automático (gestão, 09/10), como a mensalidade social
-  if (cob === 'Mensalidade social') { out.valorNum = CONFIG.MENSALIDADE_SOCIAL; out.pctN = ''; out.pctV = ''; }
   if (cob === 'Mensalidade especial') { out.pctN = ''; out.pctV = ''; } // valor do mês em branco = a definir
   // Por sessão (combinado) com valor em branco = "valor a definir" (gestão, 08/10): o Registrar pede o valor à mão
   ['valorNum', 'pctN', 'pctV'].forEach(function (k) { if (typeof out[k] === 'number' && isNaN(out[k])) erros.push('Número inválido em ' + k + '.'); });
@@ -348,6 +311,7 @@ API.criarPaciente = function (d) {
     put('RESP_CPF', cpfFmt_(d.respCpf));
     put('LOG', (u.email || 'app') + ' · ' + agora_() + (d.confirmouDuplicata ? ' · confirmou que não é duplicata' : ''));
     s.appendRow(linha);
+    invalidar_(['pac']);
     var novaLinha = s.getLastRow();
     ['NASC', 'PRIMEIRA'].forEach(function (k) { var c = h[H[k]]; if (c) s.getRange(novaLinha, c).setNumberFormat('dd/MM/yyyy'); });
     SpreadsheetApp.flush();
@@ -477,50 +441,8 @@ API.virarAbaMes = function (d) {
 };
 API.estadoVirada = function (d) { d = d || {}; return { ok: true, estado: estadoVirada_(String(d.mes || nomeAbaMes_(new Date()))) }; };
 
-function abaPacotes_() {
-  var ss = planilha_(), s = ss.getSheetByName(CONFIG.ABA.PACOTES);
-  if (!s) {
-    s = ss.insertSheet(CONFIG.ABA.PACOTES);
-    s.getRange(1, 1, 1, CONFIG.HP.length).setValues([CONFIG.HP]).setFontWeight('bold');
-    s.setFrozenRows(1);
-  }
-  return s;
-}
-function pacotesPorPaciente_() {
-  var s = planilha_().getSheetByName(CONFIG.ABA.PACOTES);
-  if (!s || s.getLastRow() < 2) return {};
-  var h = cabecalhos_(s), vals = s.getRange(2, 1, s.getLastRow() - 1, s.getLastColumn()).getValues();
-  var g = function (r, nome) { var c = h[nome]; return c ? r[c - 1] : ''; };
-  var out = {};
-  vals.forEach(function (r, i) {
-    var pac = String(g(r, 'Paciente') || '').trim(); if (!pac) return;
-    var st = String(g(r, 'Status') || '').trim();
-    var item = { linha: i + 2, id: String(g(r, 'ID') || ''), modalidade: String(g(r, 'Modalidade') || ''), n: Number(g(r, 'Nº de sessões')) || 0,
-      valor: Number(g(r, 'Valor (R$)')) || 0, compra: fmtData_(g(r, 'Data da compra')), validade: fmtData_(g(r, 'Válido até')),
-      usadas: Number(g(r, 'Sessões usadas')) || 0, ultima: fmtData_(g(r, 'Última sessão')), status: st || 'ativo', pago: String(g(r, 'Pago?') || '').trim() };
-    if (!out[pac] || item.status === 'ativo') out[pac] = item; // o ativo mais recente
-  });
-  return out;
-}
-function mensalistas_() {
-  var s = planilha_().getSheetByName(CONFIG.ABA.MENSALISTAS);
-  if (!s || s.getLastRow() < 2) return { lista: {}, coluna: '' };
-  var hdr = s.getRange(1, 1, 1, s.getLastColumn()).getValues()[0].map(function (x) { return String(x || '').trim(); });
-  var hoje = new Date(), novo = Utilities.formatDate(hoje, CONFIG.TZ, 'yyyy-MM-dd') >= CONFIG.VIRADA;
-  // antes da virada, o mês a conferir é o anterior (paga no mês seguinte); depois, o próprio mês (antecipado)
-  var ref = new Date(hoje.getFullYear(), hoje.getMonth() - (novo ? 0 : 1), 1);
-  var mesNome = CONFIG.MESES[ref.getMonth()].toUpperCase();
-  var cPago = -1; hdr.forEach(function (x, i) { if (cPago < 0 && x.toUpperCase().indexOf(mesNome) === 0 && /pago/i.test(x)) cPago = i; });
-  var vals = s.getRange(2, 1, s.getLastRow() - 1, s.getLastColumn()).getValues();
-  var out = {};
-  vals.forEach(function (r, i) {
-    var pac = String(r[0] || '').trim(); if (!pac) return;
-    out[pac] = { linha: i + 2, modalidade: String(r[1] || ''), valor: Number(r[2]) || 0, pagador: String(r[3] || ''),
-      mes: mesNome, pago: cPago >= 0 ? String(r[cPago] || '').trim() : '', dataPago: cPago >= 0 ? fmtData_(r[cPago + 1]) : '', modeloNovo: novo };
-  });
-  return { lista: out, coluna: cPago >= 0 ? hdr[cPago] : '', modeloNovo: novo, mes: mesNome };
-}
-function procedimentos_() {
+function procedimentos_() { return cacheado_('proc', lerProcedimentos_); }
+function lerProcedimentos_() {
   var s = planilha_().getSheetByName(CONFIG.ABA.PROCEDIMENTOS);
   if (!s || s.getLastRow() < 2) return [];
   return s.getRange(2, 1, s.getLastRow() - 1, 4).getValues().map(function (r) {
@@ -528,95 +450,6 @@ function procedimentos_() {
     return { nome: String(r[0] || '').trim(), especialidade: String(r[1] || '').trim(), valor: (v === '' || v == null || isNaN(v)) ? null : Number(v), obs: String(r[3] || '').trim() };
   }).filter(function (p) { return p.nome; });
 }
-
-API.bootstrapAtendimento = function () {
-  var m = mensalistas_();
-  return { procedimentos: procedimentos_(), pacotes: pacotesPorPaciente_(), pacotesSessoes: pacotesEstado_(new Date()), mensalistas: m.lista, mensalistasInfo: { coluna: m.coluna, modeloNovo: m.modeloNovo, mes: m.mes },
-    pacientes: indicePacientes_(), hoje: hoje_(), abaMes: nomeAbaMes_(new Date()), abaMesExiste: !!planilha_().getSheetByName(nomeAbaMes_(new Date())) };
-};
-
-API.registrarAtendimento = function (d) {
-  d = d || {};
-  var erros = [];
-  var paciente = String(d.paciente || '').trim(); if (!paciente) erros.push('Escolha o paciente.');
-  var profissional = String(d.profissional || '').trim(); if (!profissional) erros.push('Escolha o profissional.');
-  var procedimento = String(d.procedimento || '').trim(); if (!procedimento) erros.push('Escolha o procedimento.');
-  var data = parseData_(d.data); if (!data) erros.push('Data inválida.');
-  var hora = String(d.hora || '').trim(); if (hora && !/^\d{1,2}:\d{2}$/.test(hora)) erros.push('Hora inválida (use hh:mm).');
-  var oque = String(d.oque || '').trim(); if (!oque) erros.push('Informe o que aconteceu.');
-  var pago = String(d.pago || '').trim();
-  var valor = d.valor === '' || d.valor == null ? '' : Number(String(d.valor).replace(/\./g, '').replace(',', '.'));
-  if (valor !== '' && isNaN(valor)) erros.push('Valor inválido.');
-  if (pago === 'Sim' && (valor === '' || valor <= 0)) erros.push('Pago? = Sim exige um valor maior que zero.');
-  if (ehPerdido_(pago) && usuario_().perfil !== 'gestao') erros.push('Só a gestão marca "' + PAGO_PERDIDO + '".');
-  else if (ehPerdido_(pago) && !String(d.observacao || '').trim()) erros.push('"' + PAGO_PERDIDO + '": escreva o motivo na observação.');
-  var recebido = pago === 'Parcial' ? numBR_(d.valorRecebido) : 0;
-  if (pago === 'Parcial' && !(valor > 0)) erros.push('Pago parcial exige o valor total da sessão.');
-  else if (pago === 'Parcial' && !(recebido > 0 && recebido < valor)) erros.push('Pago parcial: o valor recebido agora tem de ser maior que zero e menor que o valor da sessão.');
-  if (erros.length) return { ok: false, erros: erros };
-
-  var lock = LockService.getScriptLock(); lock.waitLock(20000);
-  try {
-    var indice = indicePacientes_(), pac = indice.filter(function (p) { return p.nome === paciente; })[0];
-    if (!pac) return { ok: false, erros: ['Paciente não está em Pacientes. Cadastre primeiro em "Novo paciente".'] };
-    var s = abaMes_(data), bloq = bloqueioPlanilha_([s]); if (bloq) return { ok: false, erros: [bloq] };
-    var g = garantirColunas_(s, [CONFIG.HM.LOG, CONFIG.HM.PACOTE].concat(pago === 'Parcial' ? [CONFIG.HM.RECEBIDO] : [])), h = g.h, HM = CONFIG.HM;
-    var linha = proximaLinha_(s, h[HM.PACIENTE] || 3);
-    var u = usuario_(), id = novoId_('A'), pagou = pago === 'Sim' || pago === 'Parcial';
-    var quem = String(d.quemPagou || '').trim();
-    var obs = String(d.observacao || '').trim();
-    var pares = {};
-    pares[HM.DATA] = data; pares[HM.HORA] = hora; pares[HM.PACIENTE] = paciente; pares[HM.PROFISSIONAL] = profissional; pares[HM.PROCEDIMENTO] = procedimento;
-    pares[HM.OQUE] = oque; pares[HM.VALOR] = valor === '' ? '' : valor; pares[HM.PAGO] = pago;
-    pares[HM.DATA_PAG] = pagou ? (parseData_(d.dataPagamento) || data) : '';
-    pares[HM.FORMA] = pagou ? String(d.forma || '').trim() : '';
-    if (pago === 'Parcial') { pares[HM.RECEBIDO] = recebido; obs = ('Recebido ' + brl_(recebido) + ' em ' + fmtData_(pares[HM.DATA_PAG]) + ' (' + pares[HM.FORMA] + ')' + (d.nfNumero ? ' · NF ' + String(d.nfNumero).trim() : '') + '; em aberto ' + brl_(valor - recebido) + (obs ? ' | ' + obs : '')); }
-    pares[HM.QUEM] = (quem && quem !== (pac.pagador || '') && quem !== paciente) ? quem : '';
-    pares[HM.NF] = String(d.nf || '').trim(); pares[HM.NF_N] = String(d.nfNumero || '').trim(); pares[HM.GUIA] = String(d.guia || '').trim();
-    pares[HM.OBS] = obs; pares[HM.ID] = id; pares[HM.LOG] = (u.email || 'app') + ' · ' + agora_(); pares[HM.PACOTE] = String(d.pacoteId || '');
-    comAuto_(pares, pac); // convênio, modalidade, atenção e pagador do cadastro de agora ficam gravados na linha
-    // pacote de sessões: decide se gasta sessão (regra em consumoPacote_); no Antecipado grava −1/0 em "Sessões do pacote"
-    var consumo = null;
-    if (ehPacoteCob_(pac.modalidade) && !d.cobrarAvulsa) {
-      if (!h[HM.SESSOES]) h = garantirColunas_(s, [HM.SESSOES]).h;
-      var nFA = 0, vv = s.getLastRow() >= 2 ? s.getRange(2, 1, s.getLastRow() - 1, s.getLastColumn()).getValues() : [];
-      vv.forEach(function (r) { if (String(r[h[HM.PACIENTE] - 1] || '').trim() === paciente && h[HM.OBS] && String(r[h[HM.OBS] - 1] || '').indexOf(MARCA_FALTA_AVISADA) >= 0) nFA++; });
-      consumo = consumoPacote_(oque, procedimento, !!d.mesmaSemana, nFA);
-      if (consumo.nota) pares[HM.OBS] = (consumo.nota + (pares[HM.OBS] ? ' | ' + pares[HM.OBS] : ''));
-      if ((pac.pagamento || 'No início do mês') === 'No início do mês') pares[HM.SESSOES] = consumo.delta;
-    }
-    gravarCelulas_(s, linha, h, pares);
-    [HM.DATA, HM.DATA_PAG].forEach(function (k) { if (h[k]) s.getRange(linha, h[k]).setNumberFormat('dd/MM/yyyy'); });
-    if (h[HM.VALOR]) s.getRange(linha, h[HM.VALOR]).setNumberFormat('#,##0.00');
-    if (h[HM.RECEBIDO] && pago === 'Parcial') s.getRange(linha, h[HM.RECEBIDO]).setNumberFormat('#,##0.00');
-
-    // plano: consome consulta (Atendido ou falta sem aviso / em cima da hora), salvo sessão extra
-    var pk = null;
-    if (d.pacoteId && !d.sessaoExtra && /^(Atendido|Faltou)/.test(oque)) {
-      var sp = planilha_().getSheetByName(CONFIG.ABA.PACOTES);
-      if (sp) {
-        var hp = cabecalhos_(sp), ids = sp.getRange(2, hp['ID'], Math.max(sp.getLastRow() - 1, 1), 1).getValues();
-        for (var i = 0; i < ids.length; i++) if (String(ids[i][0]) === String(d.pacoteId)) {
-          var r = i + 2, usadas = (Number(sp.getRange(r, hp['Sessões usadas']).getValue()) || 0) + 1, n = Number(sp.getRange(r, hp['Nº de sessões']).getValue()) || 0;
-          sp.getRange(r, hp['Sessões usadas']).setValue(usadas);
-          sp.getRange(r, hp['Última sessão']).setValue(data).setNumberFormat('dd/MM/yyyy');
-          if (usadas >= n && n > 0) sp.getRange(r, hp['Status']).setValue('encerrado');
-          pk = { usadas: usadas, n: n };
-          break;
-        }
-      }
-    }
-    // pagador novo confirmado → cadastro
-    if (d.tornarPagadorHabitual && quem && quem !== (pac.pagador || '')) {
-      var spc = aba_(CONFIG.ABA.PACIENTES), hc = cabecalhos_(spc);
-      [CONFIG.H.PAGADOR, CONFIG.H.PAGADOR_EXTRATO].forEach(function (k) { if (hc[k]) spc.getRange(pac.linha, hc[k]).setValue(quem); });
-      if (hc[CONFIG.H.LOG]) { var cl = spc.getRange(pac.linha, hc[CONFIG.H.LOG]); cl.setValue((String(cl.getValue() || '') + ' | pagador alterado por ' + (u.email || 'app') + ' · ' + agora_()).replace(/^ \| /, '')); }
-    }
-    SpreadsheetApp.flush();
-    var dispo = null; if (consumo && (pac.pagamento || 'No início do mês') === 'No início do mês') { SpreadsheetApp.flush(); dispo = (pacotesEstado_(data)[paciente] || {}).disponiveis; }
-    return { ok: true, id: id, linha: linha, aba: s.getName(), pacote: pk, consumo: consumo, disponiveis: dispo };
-  } finally { lock.releaseLock(); }
-};
 
 // Corrigir um lançamento já gravado na aba do mês (gestão e recepção; aprovado pela Roberta em 06/10).
 // Acha a linha pelo ID e só mexe nas colunas de cobrança preenchidas pela recepção: Pago?, Data do pagamento, Forma,
@@ -762,259 +595,11 @@ API.corrigirLancamento = function (d) {
         }
       }
     }
+    invalidar_(['comp']);
     SpreadsheetApp.flush();
     var depois = {}; Object.keys(novos).forEach(function (k) { depois[k] = novos[k] instanceof Date ? fmtData_(novos[k]) : novos[k]; });
     return { ok: true, id: id, aba: aba, linha: linha, alterados: rotulos, novos: depois, plano: plano };
   } finally { lock.releaseLock(); }
-};
-
-API.lancarPacote = function (d) {
-  d = d || {};
-  var erros = [];
-  var paciente = String(d.paciente || '').trim(); if (!paciente) erros.push('Escolha o paciente.');
-  var n = parseInt(d.sessoes, 10); if (!n || n < 1) erros.push('Número de sessões inválido.');
-  var valor = Number(String(d.valor || '').replace(/\./g, '').replace(',', '.')); if (isNaN(valor) || valor < 0) erros.push('Valor inválido.');
-  var data = parseData_(d.data) || new Date();
-  // validade do plano (Roberta 05/10): 4 consultas = 2 meses, 12 consultas = 6 meses; 6 consultas = 3 meses
-  var validadeMeses = parseInt(d.validadeMeses, 10) || (n >= 12 ? 6 : (n >= 6 ? 3 : 2));
-  var validade = dataMaisMeses_(data, validadeMeses);
-  if (erros.length) return { ok: false, erros: erros };
-  var lock = LockService.getScriptLock(); lock.waitLock(20000);
-  try {
-    var pac = indicePacientes_().filter(function (p) { return p.nome === paciente; })[0];
-    if (!pac) return { ok: false, erros: ['Paciente não está em Pacientes.'] };
-    var sm = abaMes_(data), bloq = bloqueioPlanilha_([sm]); if (bloq) return { ok: false, erros: [bloq] };
-    var sp = abaPacotes_(), hp = cabecalhos_(sp), u = usuario_(), id = novoId_('P');
-    // encerra plano ativo anterior do mesmo paciente
-    if (sp.getLastRow() >= 2) {
-      var vals = sp.getRange(2, 1, sp.getLastRow() - 1, sp.getLastColumn()).getValues();
-      vals.forEach(function (r, i) { if (String(r[hp['Paciente'] - 1]) === paciente && String(r[hp['Status'] - 1] || 'ativo') === 'ativo') sp.getRange(i + 2, hp['Status']).setValue('encerrado'); });
-    }
-    var linha = proximaLinha_(sp, hp['Paciente']);
-    var pares = { 'ID': id, 'Paciente': paciente, 'Modalidade': String(d.modalidade || pac.modalidade || ''), 'Nº de sessões': n, 'Valor (R$)': valor,
-      'Data da compra': data, 'Válido até': validade, 'Pago?': String(d.pago || 'Sim'), 'Forma de pagamento': String(d.forma || ''),
-      'Quem pagou': String(d.quemPagou || pac.pagador || paciente), 'NF emitida?': String(d.nf || ''), 'Nº da NF': String(d.nfNumero || ''),
-      'Sessões usadas': 0, 'Última sessão': '', 'Status': 'ativo', 'Registrado por (app)': (u.email || 'app') + ' · ' + agora_(), 'Observação': String(d.observacao || '') };
-    gravarCelulas_(sp, linha, hp, pares);
-    ['Data da compra', 'Válido até'].forEach(function (k) { sp.getRange(linha, hp[k]).setNumberFormat('dd/MM/yyyy'); });
-    // linha de recebimento na aba do mês
-    var gm = garantirColunas_(sm, [CONFIG.HM.LOG, CONFIG.HM.PACOTE]), hm = gm.h, HM = CONFIG.HM;
-    var lm = proximaLinha_(sm, hm[HM.PACIENTE] || 3), idA = novoId_('A');
-    var pm = {};
-    pm[HM.DATA] = data; pm[HM.HORA] = String(d.hora || ''); pm[HM.PACIENTE] = paciente; pm[HM.PROFISSIONAL] = String(d.profissional || '');
-    pm[HM.PROCEDIMENTO] = String(d.procedimentoCompra || ''); pm[HM.OQUE] = 'Atendido'; pm[HM.VALOR] = valor; pm[HM.PAGO] = String(d.pago || 'Sim');
-    var pagoPlano = String(d.pago || 'Sim') === 'Sim'; // "vai pagar depois" (Roberta 06/10): data e forma ficam em branco até a correção da linha
-    pm[HM.DATA_PAG] = pagoPlano ? data : ''; pm[HM.FORMA] = pagoPlano ? String(d.forma || '') : ''; pm[HM.QUEM] = (d.quemPagou && d.quemPagou !== (pac.pagador || '') && d.quemPagou !== paciente) ? String(d.quemPagou) : '';
-    pm[HM.NF] = String(d.nf || ''); pm[HM.NF_N] = String(d.nfNumero || ''); pm[HM.OBS] = ('Compra do plano ' + id + (pagoPlano ? '' : ' (a receber)') + '. ' + String(d.observacao || '')).trim();
-    pm[HM.ID] = idA; pm[HM.LOG] = (u.email || 'app') + ' · ' + agora_(); pm[HM.PACOTE] = id; comAuto_(pm, pac);
-    gravarCelulas_(sm, lm, hm, pm);
-    [HM.DATA, HM.DATA_PAG].forEach(function (k) { if (hm[k]) sm.getRange(lm, hm[k]).setNumberFormat('dd/MM/yyyy'); });
-    if (hm[HM.VALOR]) sm.getRange(lm, hm[HM.VALOR]).setNumberFormat('#,##0.00');
-    SpreadsheetApp.flush();
-    return { ok: true, id: id, validade: fmtData_(validade), linhaRecebimento: lm, aba: sm.getName() };
-  } finally { lock.releaseLock(); }
-};
-
-/* ---------- Pagamento antecipado (gestão, 07/10): no dia em que a pessoa paga, lança as N sessões já pagas, uma por data da agenda ---------- */
-// próximas sessões do paciente pela agenda (recorrente + acréscimos do dia), a partir de "de"; ignora "Não vem" e dias que já têm lançamento
-API.proximasSessoes = function (d) {
-  d = d || {};
-  var paciente = String(d.paciente || '').trim(), prof = String(d.profissional || '').trim(), n = Math.min(parseInt(d.n, 10) || 4, 24);
-  var de = parseData_(d.de) || new Date(), cache = {}, out = [];
-  for (var i = 0; i < 120 && out.length < n; i++) {
-    var dia = dataMais_(de, i), r;
-    try { r = montarDia_(dia, cache); } catch (e) { continue; }
-    r.itens.forEach(function (it) {
-      if (out.length >= n || it.paciente !== paciente || (prof && it.profissional !== prof) || it.naoVem || it.registro) return;
-      out.push({ data: r.data, hora: horaTxt_(it.hora), profissional: it.profissional });
-    });
-  }
-  return { ok: true, sessoes: out };
-};
-API.lancarAntecipado = function (d) {
-  d = d || {};
-  var erros = [], HM = CONFIG.HM;
-  var paciente = String(d.paciente || '').trim(); if (!paciente) erros.push('Escolha o paciente.');
-  var procedimento = String(d.procedimento || '').trim(); if (!procedimento) erros.push('Escolha o procedimento.');
-  var valor = numBR_(d.valorSessao); if (!(valor > 0)) erros.push('Informe o valor por sessão.');
-  var dpg = parseData_(d.dataPagamento); if (!dpg) erros.push('Data do pagamento inválida.');
-  var forma = String(d.forma || '').trim(); if (!forma) erros.push('Escolha a forma de pagamento.');
-  var sessoes = (d.sessoes || []).map(function (x) { return { data: parseData_(x.data), dataTxt: String(x.data || ''), hora: String(x.hora || '').trim(), profissional: String(x.profissional || d.profissional || '').trim() }; });
-  if (!sessoes.length) erros.push('Informe as datas das sessões.');
-  sessoes.forEach(function (x, i) {
-    if (!x.data) erros.push('Sessão ' + (i + 1) + ': data inválida (' + x.dataTxt + ').');
-    if (x.hora && !/^\d{1,2}:\d{2}$/.test(x.hora)) erros.push('Sessão ' + (i + 1) + ': hora inválida (hh:mm).');
-    if (!x.profissional) erros.push('Sessão ' + (i + 1) + ': sem profissional.');
-  });
-  if (erros.length) return { ok: false, erros: erros };
-  var faltam = {}; sessoes.forEach(function (x) { var nm = nomeAbaMes_(x.data); if (!planilha_().getSheetByName(nm)) faltam[nm] = 1; });
-  if (Object.keys(faltam).length) return { ok: false, erros: ['A aba ' + Object.keys(faltam).join(', ') + ' ainda não existe. Crie em Pendências → Criar aba do mês, ou lance só as datas deste mês.'] };
-  var lock = LockService.getScriptLock(); lock.waitLock(20000);
-  try {
-    var pac = indicePacientes_().filter(function (p) { return p.nome === paciente; })[0];
-    if (!pac) return { ok: false, erros: ['Paciente não está em Pacientes.'] };
-    var bloq = bloqueioPlanilha_(sessoes.map(function (x) { return abaMes_(x.data); })); if (bloq) return { ok: false, erros: [bloq] };
-    // não lança duas vezes o mesmo dia/profissional
-    var cache = {}, dup = sessoes.filter(function (x) { var r = montarDia_(x.data, cache); return r.itens.some(function (it) { return it.paciente === paciente && it.profissional === x.profissional && it.registro; }); });
-    if (dup.length) return { ok: false, erros: ['Já há lançamento de ' + paciente + ' em ' + dup.map(function (x) { return fmtData_(x.data); }).join(', ') + '. Tire essas datas da lista.'] };
-    var u = usuario_(), carimbo = (u.email || 'app') + ' · ' + agora_(), total = Math.round(valor * sessoes.length * 100) / 100, quem = String(d.quemPagou || '').trim(), ids = [];
-    var obsBase = 'Pagamento antecipado de ' + sessoes.length + ' sessões (' + brl_(total) + ') em ' + fmtData_(dpg) + (d.nfNumero ? ' · NF ' + String(d.nfNumero).trim() : '') + (d.observacao ? ' · ' + String(d.observacao).trim() : '');
-    sessoes.forEach(function (x, i) {
-      var s = abaMes_(x.data), h = garantirColunas_(s, [HM.LOG]).h, linha = proximaLinha_(s, h[HM.PACIENTE] || 3), id = novoId_('A'), pr = {};
-      pr[HM.DATA] = x.data; pr[HM.HORA] = x.hora; pr[HM.PACIENTE] = paciente; pr[HM.PROFISSIONAL] = x.profissional; pr[HM.PROCEDIMENTO] = procedimento;
-      pr[HM.OQUE] = 'Atendido'; pr[HM.VALOR] = valor; pr[HM.PAGO] = 'Sim'; pr[HM.DATA_PAG] = dpg; pr[HM.FORMA] = forma;
-      pr[HM.QUEM] = (quem && quem !== (pac.pagador || '') && quem !== paciente) ? quem : '';
-      pr[HM.NF] = String(d.nf || 'Não'); pr[HM.NF_N] = String(d.nfNumero || '').trim();
-      pr[HM.OBS] = obsBase + ' · sessão ' + (i + 1) + ' de ' + sessoes.length + ' (lançada antes de acontecer: se faltar, corrija)'; pr[HM.ID] = id; pr[HM.LOG] = carimbo; comAuto_(pr, pac);
-      gravarCelulas_(s, linha, h, pr);
-      [HM.DATA, HM.DATA_PAG].forEach(function (k) { if (h[k]) s.getRange(linha, h[k]).setNumberFormat('dd/MM/yyyy'); });
-      if (h[HM.VALOR]) s.getRange(linha, h[HM.VALOR]).setNumberFormat('#,##0.00');
-      ids.push({ id: id, aba: s.getName(), linha: linha, data: fmtData_(x.data) });
-    });
-    SpreadsheetApp.flush();
-    return { ok: true, total: total, lancadas: ids };
-  } finally { lock.releaseLock(); }
-};
-
-/* ---------- Pacotes de sessões (gestão, 07-08/10) ----------
-   Pacote + Pagamento Antecipado: a renovação soma "Sessões por pacote" às sessões disponíveis; cada atendimento que gasta tira 1.
-   Pacote + Posterior: cada sessão que gasta é lançada com o valor do pacote ÷ sessões, não paga, e entra nas pendências.
-   O que gasta: Atendido · Faltou sem aviso · a partir da 2ª "falta avisando em cima da hora" do mês (a 1ª não gasta; remarcada
-   na mesma semana nunca gasta). Não gasta: desmarcou com antecedência · cancelado pela clínica · aplicação de teste · retorno.
-   As sessões disponíveis são a soma da coluna "Sessões do pacote" nas abas de mês (+N na renovação, −1 no que gasta). */
-var MARCA_FALTA_AVISADA = '1ª falta avisada do mês (não gasta sessão)';
-function consumoPacote_(oque, procedimento, mesmaSemana, faltasAvisadasMes) {
-  oque = String(oque || ''); procedimento = String(procedimento || '');
-  if (/^(Aplicação de teste|Retorno|Renovação)/i.test(procedimento)) return { delta: 0, nota: '' };
-  if (/^Atendido/.test(oque) || /sem aviso/i.test(oque)) return { delta: -1, nota: '' };
-  if (/em cima da hora/i.test(oque)) {
-    if (mesmaSemana) return { delta: 0, nota: 'Remarcada na mesma semana (não gasta sessão)' };
-    if (faltasAvisadasMes >= 1) return { delta: -1, nota: '2ª falta avisada do mês (gasta sessão)' };
-    return { delta: 0, nota: MARCA_FALTA_AVISADA };
-  }
-  return { delta: 0, nota: '' }; // desmarcou com antecedência, cancelado pela clínica
-}
-// estado dos pacotes: sessões disponíveis, última renovação e validade, faltas avisadas e sessões no mês de "ref"
-function pacotesEstado_(ref) {
-  ref = ref || new Date();
-  var out = {}, nmRef = nomeAbaMes_(ref), HM = CONFIG.HM;
-  var get = function (n) { return out[n] = out[n] || { disponiveis: 0, ultima: '', ultimaSessoes: 0, validade: '', faltasAvisadasMes: 0, sessoesMes: 0, aPagarMes: 0, renovouMes: false, mesesPagos: {} }; };
-  CONFIG.MESES.forEach(function (nm) {
-    var sm = planilha_().getSheetByName(nm); if (!sm || sm.getLastRow() < 2) return;
-    var h = cabecalhos_(sm), cS = h[HM.SESSOES], vals = sm.getRange(2, 1, sm.getLastRow() - 1, sm.getLastColumn()).getValues();
-    vals.forEach(function (r) {
-      var pac = String(r[h[HM.PACIENTE] - 1] || '').trim(); if (!pac) return;
-      var v = cS ? r[cS - 1] : ''; if (v !== '' && v != null && !isNaN(Number(v))) get(pac).disponiveis += Number(v);
-      // mensalidade paga lançada na aba do mês ("Mensalidade – psicologia" antiga ou "Mensalidade de <mês>" do app): marca o mês como pago
-      var procM = String(r[h[HM.PROCEDIMENTO] - 1] || ''), pagoM = String(r[h[HM.PAGO] - 1] || '').trim();
-      if (/^Mensalidade/i.test(procM) && (pagoM === 'Sim' || pagoM === 'Parcial')) {
-        var mm = procM.match(/^Mensalidade de (\S+)/i), nmM = mm ? mm[1].charAt(0).toUpperCase() + mm[1].slice(1).toLowerCase() : nm, iM = CONFIG.MESES.indexOf(nmM);
-        var dM = r[h[HM.DATA] - 1] instanceof Date ? r[h[HM.DATA] - 1] : parseData_(fmtData_(r[h[HM.DATA] - 1]));
-        if (iM >= 0 && dM) get(pac).mesesPagos[nmM + '/' + (dM.getFullYear() - (iM > dM.getMonth() ? 1 : 0))] = true;
-      }
-      if (nm !== nmRef) return;
-      var oque = String(r[h[HM.OQUE] - 1] || ''), obs = h[HM.OBS] ? String(r[h[HM.OBS] - 1] || '') : '', proc = String(r[h[HM.PROCEDIMENTO] - 1] || '');
-      if (obs.indexOf(MARCA_FALTA_AVISADA) >= 0) get(pac).faltasAvisadasMes++;
-      if (/^Atendido/.test(oque) && !/^(Mensalidade|Renovação|Aplicação de teste|Retorno)|\(compra\)/i.test(proc)) get(pac).sessoesMes++;
-      var pago = String(r[h[HM.PAGO] - 1] || '').trim();
-      if ((pago === 'Não' || pago === 'Parcial') && /^Atendido|sem aviso|em cima da hora/i.test(oque)) get(pac).aPagarMes += numBR_(r[h[HM.VALOR] - 1]) - (pago === 'Parcial' && h[HM.RECEBIDO] ? numBR_(r[h[HM.RECEBIDO] - 1]) : 0);
-    });
-  });
-  var sr = planilha_().getSheetByName(CONFIG.ABA.RENOVACOES);
-  if (sr && sr.getLastRow() >= 2) linhasComo_(sr).forEach(function (r) {
-    var pac = String(r['Paciente'] || '').trim(); if (!pac) return;
-    var dt = r['Data'] instanceof Date ? r['Data'] : parseData_(fmtData_(r['Data'])); if (!dt) return;
-    var e = get(pac), atual = parseData_(e.ultima);
-    if (!atual || dt >= atual) { e.ultima = fmtData_(dt); e.ultimaSessoes = Number(r['Sessões']) || 0; e.validade = fmtData_(r['Válido até']); }
-    if (nomeAbaMes_(dt) === nmRef && dt.getFullYear() === ref.getFullYear()) e.renovouMes = true;
-    var refm = String(r['Referente a'] || '').trim(); if (refm) e.mesesPagos[refm] = true; // mensalidade: mês pago
-  });
-  var ant = new Date(ref.getFullYear(), ref.getMonth() - 1, 1);
-  Object.keys(out).forEach(function (n) { out[n].mesPago = !!out[n].mesesPagos[chaveMes_(ref)]; out[n].mesAnteriorPago = !!out[n].mesesPagos[chaveMes_(ant)]; out[n].mesRef = chaveMes_(ref); });
-  var hojeK = Utilities.formatDate(new Date(), CONFIG.TZ, 'yyyyMMdd');
-  Object.keys(out).forEach(function (n) { var v = parseData_(out[n].validade); out[n].vencido = !!(v && Utilities.formatDate(v, CONFIG.TZ, 'yyyyMMdd') < hojeK && out[n].disponiveis > 0); });
-  return out;
-}
-// Renovação do pacote: linha na aba Renovações (Financeiro concilia) + linha de recebimento na aba do mês com "Sessões do pacote" = +N
-API.renovarPacote = function (d) {
-  d = d || {};
-  var erros = [];
-  var paciente = String(d.paciente || '').trim(); if (!paciente) erros.push('Escolha o paciente.');
-  var valor = numBR_(d.valor); if (!(valor > 0)) erros.push('Informe o valor recebido.');
-  var data = parseData_(d.data) || new Date();
-  var forma = String(d.forma || '').trim(); if (!forma) erros.push('Escolha a forma de pagamento.');
-  if (erros.length) return { ok: false, erros: erros };
-  var lock = LockService.getScriptLock(); lock.waitLock(20000);
-  try {
-    var pac = indicePacientes_().filter(function (p) { return p.nome === paciente; })[0];
-    if (!pac) return { ok: false, erros: ['Paciente não está em Pacientes.'] };
-    // mensalidade (gestão, 09/10): pagamento do mês, sem sessões; "Referente a" diz qual mês ficou pago
-    var mensal = ehMensalidadeCob_(pac.modalidade), n = mensal ? 0 : parseInt(d.sessoes, 10);
-    if (!mensal && !(n > 0)) return { ok: false, erros: ['Informe quantas sessões entram nesta renovação.'] };
-    var referente = mensal ? (String(d.referente || '').trim() || chaveMes_(data)) : '';
-    var meses = CONFIG.VALIDADE_PACOTE[pac.pctN || n] || CONFIG.VALIDADE_PADRAO, validade = mensal ? '' : dataMaisMeses_(data, meses);
-    var sm = abaMes_(data), bloq = bloqueioPlanilha_([sm]); if (bloq) return { ok: false, erros: [bloq] };
-    var u = usuario_(), carimbo = (u.email || 'app') + ' · ' + agora_(), id = novoId_('R'), quem = String(d.quemPagou || '').trim();
-    var sr = abaComCabecalho_(CONFIG.ABA.RENOVACOES, CONFIG.HR), hr = garantirColunas_(sr, ['Referente a']).h, lr = proximaLinha_(sr, hr['Paciente']);
-    gravarCelulas_(sr, lr, hr, { 'ID': id, 'Data': data, 'Paciente': paciente, 'Sessões': n, 'Valor (R$)': valor, 'Forma de pagamento': forma, 'Quem pagou': quem || pac.pagador || paciente,
-      'NF emitida?': String(d.nf || 'Não'), 'Nº da NF': String(d.nfNumero || '').trim(), 'Válido até': validade, 'Observação': String(d.observacao || '').trim(), 'Registrado por (app)': carimbo, 'Referente a': referente });
-    ['Data', 'Válido até'].forEach(function (k) { if (hr[k]) sr.getRange(lr, hr[k]).setNumberFormat('dd/MM/yyyy'); });
-    var HM = CONFIG.HM, hm = garantirColunas_(sm, [HM.LOG, HM.SESSOES]).h, lm = proximaLinha_(sm, hm[HM.PACIENTE] || 3), pm = {};
-    pm[HM.DATA] = data; pm[HM.PACIENTE] = paciente; pm[HM.PROFISSIONAL] = String(d.profissional || pac.profRef || '');
-    pm[HM.PROCEDIMENTO] = mensal ? 'Mensalidade de ' + referente.split('/')[0].toLowerCase() : 'Renovação do pacote (' + n + ' sessões)'; pm[HM.OQUE] = 'Atendido'; pm[HM.VALOR] = valor; pm[HM.PAGO] = 'Sim';
-    pm[HM.DATA_PAG] = data; pm[HM.FORMA] = forma; pm[HM.QUEM] = (quem && quem !== (pac.pagador || '') && quem !== paciente) ? quem : '';
-    pm[HM.NF] = String(d.nf || 'Não'); pm[HM.NF_N] = String(d.nfNumero || '').trim(); if (!mensal) pm[HM.SESSOES] = n;
-    pm[HM.OBS] = (mensal ? 'Mensalidade ' + referente + ' (' + id + '). ' : 'Renovação ' + id + ': +' + n + ' sessões, válidas até ' + fmtData_(validade) + '. ') + String(d.observacao || '');
-    pm[HM.OBS] = pm[HM.OBS].trim(); pm[HM.ID] = novoId_('A'); pm[HM.LOG] = carimbo; comAuto_(pm, pac);
-    gravarCelulas_(sm, lm, hm, pm);
-    [HM.DATA, HM.DATA_PAG].forEach(function (k) { if (hm[k]) sm.getRange(lm, hm[k]).setNumberFormat('dd/MM/yyyy'); });
-    if (hm[HM.VALOR]) sm.getRange(lm, hm[HM.VALOR]).setNumberFormat('#,##0.00');
-    SpreadsheetApp.flush();
-    var est = pacotesEstado_(new Date())[paciente] || {};
-    return { ok: true, id: id, aba: sm.getName(), linha: lm, validade: validade ? fmtData_(validade) : '', disponiveis: est.disponiveis, referente: referente, mesPago: est.mesPago };
-  } finally { lock.releaseLock(); }
-};
-// Painel dos pacotes e mensalidades (substitui a tela Mensalistas)
-API.pacotesPainel = function () {
-  var est = pacotesEstado_(new Date()), dia = Number(Utilities.formatDate(new Date(), CONFIG.TZ, 'd'));
-  var vazio = { disponiveis: 0, ultima: '', validade: '', sessoesMes: 0, aPagarMes: 0, renovouMes: false, vencido: false, mesPago: false, mesAnteriorPago: false };
-  var itens = indicePacientes_().filter(function (p) { return (ehPacoteCob_(p.modalidade) || ehMensalidadeCob_(p.modalidade)) && !/^N/i.test(p.ativo || 'Sim'); }).map(function (p) {
-    var e = est[p.nome] || vazio, mensal = ehMensalidadeCob_(p.modalidade), pg = p.pagamento || 'No início do mês', sit;
-    var pad = CONFIG.PACOTES[p.modalidade] || {}, n = mensal ? 0 : (pad.sessoes || p.pctN || 0), v = mensal ? valorMensalidade_(p) : (pad.valor || p.pctV || 0);
-    if (mensal) sit = e.mesPago ? 'mês pago' : pg === 'No início do mês' ? (dia >= 16 ? 'mensalidade atrasada' : dia >= 11 ? 'venceu dia 10' : 'vence dia 10') : 'a pagar no fim do mês';
-    else if (pg === 'No início do mês') sit = e.vencido ? 'vencido' : e.disponiveis <= 0 ? 'esgotado' : e.disponiveis === 1 ? 'renovar' : (!e.renovouMes && dia > 10 ? 'renovação do mês em aberto' : 'ok');
-    else sit = e.aPagarMes > 0 ? 'a pagar no mês' : 'ok';
-    return { paciente: p.nome, cobranca: p.modalidade, mensal: mensal, sessoes: n, valor: v, pagamento: pg, disponiveis: e.disponiveis, ultima: e.ultima, validade: e.validade,
-      sessoesMes: e.sessoesMes, aPagarMes: Math.round((e.aPagarMes || 0) * 100) / 100, mesPago: !!e.mesPago, mesAnteriorPago: !!e.mesAnteriorPago, situacao: sit, pagador: p.pagador };
-  });
-  itens.sort(function (a, b) { return a.paciente.localeCompare(b.paciente); });
-  return { ok: true, itens: itens, dia: dia, mesRef: chaveMes_(new Date()) };
-};
-// Virada de novembro (gestão): propõe as trocas no cadastro; a gestão revê e aplica as marcadas
-var VIRADA_EXCLUIR = ['Naimara Paula Sa da Silva']; // gestão 08/10: continua por sessão
-API.viradaPropostas = function () {
-  if (usuario_().perfil !== 'gestao') return { ok: false, erros: ['Só a gestão.'] };
-  var out = [];
-  indicePacientes_().forEach(function (p) {
-    if (VIRADA_EXCLUIR.indexOf(p.nome) >= 0) return;
-    var hist = String(p.valorCombinado || '');
-    // ex-planos ficam em Por sessão (combinado) (gestão, 09/10)
-    if ((ehPacoteCob_(p.modalidade) || ehMensalidadeCob_(p.modalidade)) && p.pagamento === 'No mês seguinte')
-      out.push({ nome: p.nome, de: p.modalidade + ' · No mês seguinte', para: p.modalidade + ' · No início do mês', campos: { pagamento: 'No início do mês' } });
-    else if (p.modalidade === 'Pro bono' && /a partir de 01\/11: social/i.test(p.obsCobranca + ' ' + hist))
-      out.push({ nome: p.nome, de: 'Pro bono', para: 'Mensalidade social · R$ ' + CONFIG.MENSALIDADE_SOCIAL + ' · No início do mês', campos: { modalidade: 'Mensalidade social', pagamento: 'No início do mês', regra: '' } });
-  });
-  return { ok: true, itens: out };
-};
-API.aplicarAlteracoesLote = function (d) {
-  d = d || {};
-  if (usuario_().perfil !== 'gestao') return { ok: false, erros: ['Só a gestão.'] };
-  var feitos = [], erros = [];
-  (d.itens || []).forEach(function (it) {
-    var r = API.atualizarCadastro({ nome: it.nome, quemInformou: String(d.quemInformou || 'Gestão (virada de novembro)'), campos: it.campos || {} });
-    if (r.ok) feitos.push(it.nome); else erros.push(it.nome + ': ' + (r.erros || []).join(' '));
-  });
-  return { ok: !erros.length || feitos.length > 0, feitos: feitos, erros: erros };
 };
 
 /* ---------- Lembrete pra recepção (aba Lembretes: só acrescenta linha; vale o último; os antigos ficam como histórico) ---------- */
@@ -1145,7 +730,7 @@ function montarDia_(data, cache) {
     if (/quinzen/i.test(String(r['Frequência'] || '')) && c) { // quinzenal: só nas semanas pares contadas a partir de "começa em"
       var semanas = Math.round((data - c) / (7 * 24 * 3600 * 1000)); if (semanas % 2 !== 0) return;
     }
-    itens.push({ hora: r['Hora'], paciente: r['Paciente'], profissional: r['Profissional'], origem: /quinzen/i.test(String(r['Frequência'] || '')) ? 'Quinzenal' : 'Semanal', agendaId: r['ID'], obs: r['Observação'] || '' });
+    itens.push({ hora: r['Hora'], paciente: r['Paciente'], profissional: r['Profissional'], origem: /quinzen/i.test(String(r['Frequência'] || '')) ? 'Quinzenal' : 'Semanal', agendaId: r['ID'], obs: r['Observação'] || '', tipo: String(r['Tipo'] || '').trim() });
   });
   cache.dia.forEach(function (r) {
     if (r['Data'] !== chave || !r['Paciente']) return;
@@ -1164,7 +749,7 @@ function montarDia_(data, cache) {
       else itens.push({ hora: horaTxt_(r['Hora']), paciente: r['Paciente'], profissional: r['Profissional'], origem: 'Semanal', naoVem: origem, listaId: r['ID'], obs: r['Observação'] || '' });
       return;
     }
-    itens.push({ hora: horaTxt_(r['Hora']), paciente: r['Paciente'], profissional: r['Profissional'], origem: origem, listaId: r['ID'], obs: r['Observação'] || '' });
+    itens.push({ hora: horaTxt_(r['Hora']), paciente: r['Paciente'], profissional: r['Profissional'], origem: origem, listaId: r['ID'], obs: r['Observação'] || '', tipo: String(r['Tipo'] || '').trim() });
   });
   // registros do dia na aba do mês
   var reg = {}, nm = nomeAbaMes_(data);
@@ -1192,12 +777,6 @@ function montarDia_(data, cache) {
   itens.sort(function (a, b) { return (a.profissional + a.hora).localeCompare(b.profissional + b.hora); });
   return { data: chave, diaSemana: diaSemana, itens: itens, abaMes: nomeAbaMes_(data), abaMesExiste: cm.existe };
 }
-API.listaDoDia = function (d) {
-  d = d || {};
-  var data = parseData_(d.data) || new Date(), r = montarDia_(data);
-  r.pendencias = pendenciasDe_(r.itens.map(function (it) { return it.paciente; }), data);
-  return r;
-};
 // Pendências de sessões anteriores (mês do dia e o anterior), pra recepção ver quando o paciente chega (gestão, 07/10):
 // particular atendido sem "Pago?" (mesma regra da Gestão: plano, mensalidade e convênio não entram) e convênio sem guia assinada.
 // Falta sem aviso não entra (decisão da gestão). Só linhas de antes do dia mostrado; as do próprio dia já aparecem no registro.
@@ -1340,6 +919,7 @@ API.atualizarCadastro = function (d) {
       mudancas.push({ campo: H[CAMPOS_CADASTRO[k]], de: deTxt, para: para });
     });
     if (!mudancas.length) return { ok: true, alterados: [], aviso: 'Nada mudou.' };
+    invalidar_(['pac']);
     var carimbo = (u.email || 'app') + ' · ' + agora_();
     if (h[H.LOG]) { var cl = s.getRange(p.linha, h[H.LOG]); cl.setValue((String(cl.getValue() || '') + ' | cadastro alterado por ' + carimbo + ' (' + mudancas.map(function (m) { return m.campo.split(' (')[0]; }).join(', ') + '; informou: ' + quem + ')').replace(/^ \| /, '')); }
     var sl = abaComCabecalho_(CONFIG.ABA.ALTERACOES, CONFIG.HC), hl = cabecalhos_(sl);
@@ -1391,111 +971,6 @@ API.atualizarLinhasDoCadastro = function (d) {
     return { ok: true, aba: la.aba, atualizadas: feitas };
   } finally { lock.releaseLock(); }
 };
-/* ---------- Mensalistas ---------- */
-// Colunas "<MÊS> … — pago?" da aba Mensalistas, na ordem da planilha
-function colunasMensalistas_(hdr) {
-  var out = [];
-  hdr.forEach(function (x, i) { if (/pago\?/i.test(x)) out.push({ nome: x, idx: i, mes: (x.toUpperCase().match(/^[A-ZÇ]+/) || [''])[0] }); });
-  return out;
-}
-function sessoesNoMes_(data) {
-  var sm = planilha_().getSheetByName(nomeAbaMes_(data)), out = {};
-  if (!sm || sm.getLastRow() < 2) return out;
-  var h = cabecalhos_(sm), HM = CONFIG.HM, vals = sm.getRange(2, 1, sm.getLastRow() - 1, sm.getLastColumn()).getValues();
-  vals.forEach(function (r) {
-    var pac = String(r[h[HM.PACIENTE] - 1] || '').trim(); if (!pac) return;
-    if (!/^Atendido/.test(String(r[h[HM.OQUE] - 1] || ''))) return;
-    if (/^(Mensalidade|Renovação)|\(compra\)/.test(String(r[h[HM.PROCEDIMENTO] - 1] || ''))) return; // recebimentos não contam como sessão
-    out[pac] = (out[pac] || 0) + 1;
-  });
-  return out;
-}
-API.mensalistasPainel = function (d) {
-  d = d || {};
-  var s = planilha_().getSheetByName(CONFIG.ABA.MENSALISTAS);
-  if (!s || s.getLastRow() < 2) return { itens: [], colunas: [], coluna: '', modeloNovo: false };
-  var hdr = s.getRange(1, 1, 1, s.getLastColumn()).getValues()[0].map(function (x) { return String(x || '').trim(); });
-  var cols = colunasMensalistas_(hdr), ref = mensalistas_();
-  // abre no mês atual (Roberta, 06/10); a faixa avisa se o mês anterior ainda tem pendência
-  var hj = new Date(), mesAtual = CONFIG.MESES[hj.getMonth()].toUpperCase(), mesAnt = CONFIG.MESES[(hj.getMonth() + 11) % 12].toUpperCase();
-  var colAtual = cols.filter(function (x) { return x.mes === mesAtual; })[0], colAnt = cols.filter(function (x) { return x.mes === mesAnt; })[0];
-  var coluna = String(d.coluna || (colAtual ? colAtual.nome : '') || ref.coluna || (cols.length ? cols[cols.length - 1].nome : '')).trim();
-  var c = cols.filter(function (x) { return x.nome === coluna; })[0];
-  var cObs = -1; hdr.forEach(function (x, i) { if (cObs < 0 && /^Observa/i.test(x)) cObs = i; });
-  var sess = sessoesNoMes_(new Date());
-  var vals = s.getRange(2, 1, s.getLastRow() - 1, s.getLastColumn()).getValues(), itens = [];
-  vals.forEach(function (r, i) {
-    var pac = String(r[0] || '').trim(); if (!pac) return;
-    var pagoV = c ? r[c.idx] : '', dataV = c ? r[c.idx + 1] : '';
-    itens.push({ linha: i + 2, paciente: pac, modalidade: String(r[1] || ''), valor: Number(String(r[2] || '').replace(',', '.')) || 0, pagador: String(r[3] || ''),
-      pago: String(pagoV == null ? '' : pagoV).trim(), dataPago: (dataV instanceof Date) ? fmtData_(dataV) : String(dataV == null ? '' : dataV).trim(),
-      obs: cObs >= 0 ? String(r[cObs] || '') : '', sessoes: sess[pac] || 0 });
-  });
-  var anterior = null;
-  if (colAnt) anterior = { coluna: colAnt.nome, mes: colAnt.mes, pendentes: vals.filter(function (r) { return String(r[0] || '').trim() && !/^sim/i.test(String(r[colAnt.idx] == null ? '' : r[colAnt.idx]).trim()); }).length };
-  return { itens: itens, colunas: cols.map(function (x) { return x.nome; }), coluna: coluna, mes: c ? c.mes : '', anterior: anterior, modeloNovo: ref.modeloNovo, abaMes: nomeAbaMes_(new Date()), hoje: hoje_() };
-};
-API.registrarMensalidade = function (d) {
-  d = d || {};
-  var erros = [];
-  var paciente = String(d.paciente || '').trim(); if (!paciente) erros.push('Escolha o paciente.');
-  var coluna = String(d.coluna || '').trim(); if (!coluna) erros.push('Escolha o mês da mensalidade.');
-  var data = parseData_(d.data); if (!data) erros.push('Data do pagamento inválida.');
-  var valor = Number(String(d.valor || '').replace(/\./g, '').replace(',', '.')); if (isNaN(valor) || valor <= 0) erros.push('Valor inválido.');
-  var forma = String(d.forma || '').trim(); if (!forma) erros.push('Informe a forma de pagamento.');
-  if (erros.length) return { ok: false, erros: erros };
-  var lock = LockService.getScriptLock(); lock.waitLock(20000);
-  try {
-    var s = aba_(CONFIG.ABA.MENSALISTAS), hdr = s.getRange(1, 1, 1, s.getLastColumn()).getValues()[0].map(function (x) { return String(x || '').trim(); });
-    var col = colunasMensalistas_(hdr).filter(function (x) { return x.nome === coluna; })[0];
-    if (!col) return { ok: false, erros: ['Coluna "' + coluna + '" não existe em Mensalistas.'] };
-    var nomes = s.getRange(2, 1, s.getLastRow() - 1, 1).getValues(), linha = 0;
-    for (var i = 0; i < nomes.length; i++) if (String(nomes[i][0] || '').trim() === paciente) { linha = i + 2; break; }
-    if (!linha) return { ok: false, erros: ['Paciente não está na aba Mensalistas.'] };
-    var sm = abaMes_(data), bloq = bloqueioPlanilha_([sm]); if (bloq) return { ok: false, erros: [bloq] };
-    var u = usuario_(), carimbo = (u.email || 'app') + ' · ' + agora_();
-    var anterior = String(s.getRange(linha, col.idx + 2).getValue() || '').trim();
-    var nota = fmtData_(data) + ' — R$ ' + valor.toFixed(2).replace('.', ',') + ' ' + forma + (d.quemPagou ? ' (' + String(d.quemPagou).trim() + ')' : '') + (d.nfNumero ? ' · NF ' + String(d.nfNumero).trim() : (String(d.nf || '') === 'Sim' ? ' · NF emitida' : '')) + (d.sessaoExtra ? ' · com 5ª sessão' : '') + ' · ' + carimbo;
-    if (anterior && !/^\d{2}\/\d{2}/.test(anterior)) nota = nota + ' | antes: ' + anterior; // não perde a anotação da gestão
-    s.getRange(linha, col.idx + 1).setValue('Sim');
-    s.getRange(linha, col.idx + 2).setValue(nota);
-    // linha de recebimento na aba do mês do pagamento
-    var pac = indicePacientes_().filter(function (p) { return p.nome === paciente; })[0] || {};
-    var gm = garantirColunas_(sm, [CONFIG.HM.LOG, CONFIG.HM.PACOTE]), hm = gm.h, HM = CONFIG.HM;
-    var lm = proximaLinha_(sm, hm[HM.PACIENTE] || 3), id = novoId_('A');
-    var proc = procedimentos_().filter(function (p) { return /^Mensalidade/i.test(p.nome); })[0];
-    var pm = {};
-    pm[HM.DATA] = data; pm[HM.HORA] = String(d.hora || ''); pm[HM.PACIENTE] = paciente; pm[HM.PROFISSIONAL] = String(d.profissional || '');
-    pm[HM.PROCEDIMENTO] = proc ? proc.nome : 'Mensalidade – psicologia'; pm[HM.OQUE] = 'Atendido'; pm[HM.VALOR] = valor; pm[HM.PAGO] = 'Sim';
-    pm[HM.DATA_PAG] = data; pm[HM.FORMA] = forma; pm[HM.QUEM] = (d.quemPagou && d.quemPagou !== (pac.pagador || '') && d.quemPagou !== paciente) ? String(d.quemPagou) : '';
-    pm[HM.NF] = String(d.nf || ''); pm[HM.NF_N] = String(d.nfNumero || '');
-    pm[HM.OBS] = ('Mensalidade ' + (col.mes ? col.mes.toLowerCase() : coluna) + (d.sessaoExtra ? ' (com 5ª sessão)' : '') + '. ' + String(d.observacao || '')).trim();
-    pm[HM.ID] = id; pm[HM.LOG] = carimbo; comAuto_(pm, pac);
-    gravarCelulas_(sm, lm, hm, pm);
-    [HM.DATA, HM.DATA_PAG].forEach(function (k) { if (hm[k]) sm.getRange(lm, hm[k]).setNumberFormat('dd/MM/yyyy'); });
-    if (hm[HM.VALOR]) sm.getRange(lm, hm[HM.VALOR]).setNumberFormat('#,##0.00');
-    SpreadsheetApp.flush();
-    return { ok: true, id: id, linha: lm, aba: sm.getName(), nota: nota };
-  } finally { lock.releaseLock(); }
-};
-// Gestão: cria o par de colunas "<MÊS> — pago?" / "Data" no fim da aba Mensalistas
-API.criarColunasMes = function (d) {
-  d = d || {};
-  if (usuario_().perfil !== 'gestao') return { ok: false, erros: ['Só a gestão cria colunas de mês.'] };
-  var mes = String(d.mes || '').trim(); if (CONFIG.MESES.indexOf(mes) < 0) return { ok: false, erros: ['Mês inválido.'] };
-  var lock = LockService.getScriptLock(); lock.waitLock(20000);
-  try {
-    var s = aba_(CONFIG.ABA.MENSALISTAS), hdr = s.getRange(1, 1, 1, s.getLastColumn()).getValues()[0].map(function (x) { return String(x || '').trim(); });
-    var nome = mes.toUpperCase() + ' — pago?';
-    if (colunasMensalistas_(hdr).some(function (c) { return c.mes === mes.toUpperCase(); })) return { ok: false, erros: ['Já existe coluna de ' + mes + ' em Mensalistas.'] };
-    var prox = s.getLastColumn() + 1;
-    if (prox + 1 > s.getMaxColumns()) s.insertColumnsAfter(s.getMaxColumns(), 2);
-    s.getRange(1, prox, 1, 2).setValues([[nome, 'Data']]).setFontWeight('bold');
-    SpreadsheetApp.flush();
-    return { ok: true, coluna: nome };
-  } finally { lock.releaseLock(); }
-};
-
 /* ---------- Gestão ---------- */
 function linhasMes_(nome) {
   var sm = planilha_().getSheetByName(nome);
@@ -1506,7 +981,7 @@ function linhasMes_(nome) {
     var pac = String(g(r, 'PACIENTE') || '').trim(); if (!pac) return;
     out.push({ linha: i + 2, data: fmtData_(g(r, 'DATA')), hora: horaTxt_(g(r, 'HORA')), paciente: pac, profissional: String(g(r, 'PROFISSIONAL') || ''), procedimento: String(g(r, 'PROCEDIMENTO') || ''),
       convenio: String(g(r, 'CONV') || ''), modalidade: String(g(r, 'MOD') || ''), oque: String(g(r, 'OQUE') || ''), valor: numBR_(g(r, 'VALOR')), recebido: numBR_(g(r, 'RECEBIDO')), pago: String(g(r, 'PAGO') || '').trim(), dataPag: fmtData_(g(r, 'DATA_PAG')),
-      forma: String(g(r, 'FORMA') || ''), quem: String(g(r, 'QUEM') || ''), nf: String(g(r, 'NF') || '').trim(), nfN: String(g(r, 'NF_N') || ''), guia: String(g(r, 'GUIA') || '').trim(), obs: String(g(r, 'OBS') || ''), id: String(g(r, 'ID') || ''), log: String(g(r, 'LOG') || '') });
+      forma: String(g(r, 'FORMA') || ''), quem: String(g(r, 'QUEM') || ''), nf: String(g(r, 'NF') || '').trim(), nfN: String(g(r, 'NF_N') || ''), guia: String(g(r, 'GUIA') || '').trim(), obs: String(g(r, 'OBS') || ''), id: String(g(r, 'ID') || ''), log: String(g(r, 'LOG') || ''), detalhe: String(g(r, 'DETALHE') || ''), decisao: String(g(r, 'DECISAO') || '').trim() });
   });
   return { existe: true, linhas: out };
 }
@@ -1535,7 +1010,9 @@ API.gestaoResumo = function (d) {
     pagamentoPendente: atend.filter(function (r) { return particular(r) && (r.pago === '' || r.pago === 'Não' || r.pago === 'Parcial') && (!/^Mensalidade|pacote|plano|mensal|convênio|AAPI/i.test(r.procedimento) || /\(compra\)/i.test(r.procedimento)); }),
     nfPendente: atend.filter(function (r) { return (r.pago === 'Sim' || r.pago === 'Parcial') && r.nf !== 'Sim' && r.nf !== 'Não se aplica'; }),
     semGuia: L.filter(function (r) { return (!particular(r) || /^Convênio/i.test(r.pago)) && r.guia !== 'Sim' && /^Atendido/.test(r.oque) && !ehPerdido_(r.pago); }),
-    faltas: L.filter(function (r) { return /sem aviso|em cima da hora/i.test(r.oque) && particular(r) && !/Pacote|Plano/i.test(r.pago) && !ehPerdido_(r.pago); }),
+    // Faltas → Decidir (gestão, 15/10): TODA falta e desmarcação entra, com o Detalhe da recepção e a decisão da gestão
+    faltas: L.filter(function (r) { return /^(Faltou|Desmarcou)/i.test(r.oque) && !ehPerdido_(r.pago); }),
+    cadastroIncompleto: cadastroIncompletoMes_(atend),
     // relatório "Perdidos e glosas" (só gestão): o Valor é a referência do que se perdeu
     perdidos: usuario_().perfil === 'gestao' ? L.filter(function (r) { return ehPerdido_(r.pago); }) : [],
     descontos: L.filter(function (r) { return /^Desconto:/i.test(r.obs); }),
@@ -1552,8 +1029,7 @@ API.gestaoResumo = function (d) {
     linhasComo_(sl).forEach(function (r) { var dt = String(r['Data/hora'] || ''); if (dt.slice(3, 5) === mm) out.alteracoes.push({ quando: dt, paciente: r['Paciente'], campo: r['Campo'], de: r['De'], para: r['Para'], quem: r['Quem informou'], por: r['Registrado por (app)'] }); });
   }
   out.mesesExistentes = CONFIG.MESES.filter(function (x) { return !!planilha_().getSheetByName(x); });
-  var sM = planilha_().getSheetByName(CONFIG.ABA.MENSALISTAS);
-  out.colunasMensalistas = sM ? colunasMensalistas_(sM.getRange(1, 1, 1, sM.getLastColumn()).getValues()[0].map(function (x) { return String(x || '').trim(); })).map(function (c) { return c.mes; }) : [];
+  out.competencias = competenciasExistentes_();
   return out;
 };
 /* ---------- Repasse (só gestão, 10/10) ----------
@@ -1566,7 +1042,8 @@ API.gestaoResumo = function (d) {
 var HR_REPASSE = ['Ativa', 'Profissional', 'Convênio', 'Procedimento (contém)', '% repasse', 'Valor da sessão (convênio) (R$)', 'Observação', 'Alterado por (app)'];
 var ABA_REPASSE = 'Regras de repasse';
 function semAcento_(t) { return String(t || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim(); }
-function regrasRepasse_() {
+function regrasRepasse_() { return cacheado_('rep', lerRegrasRepasse_); }
+function lerRegrasRepasse_() {
   var s = planilha_().getSheetByName(ABA_REPASSE);
   return linhasComo_(s).map(function (r) {
     var bruto = String(r['% repasse'] == null ? '' : r['% repasse']).trim(), pct = bruto === '' ? null : numBR_(bruto.replace('%', ''));
@@ -1658,6 +1135,7 @@ API.salvarRegrasRepasse = function (d) {
         pares['Alterado por (app)'] = carimbo; gravarCelulas_(s, a.linha, h, pares); mud++;
       } else { novo['Alterado por (app)'] = carimbo; gravarCelulas_(s, proximaLinha_(s, h['Profissional']), h, novo); mud++; }
     });
+    invalidar_(['rep']);
     SpreadsheetApp.flush();
     return { ok: true, alteradas: mud, regras: regrasRepasse_() };
   } finally { lock.releaseLock(); }
@@ -1723,4 +1201,3 @@ API.criarAbaMes = function (d) {
   } finally { lock.releaseLock(); }
 };
 
-API;

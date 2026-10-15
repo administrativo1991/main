@@ -24,7 +24,7 @@ global.LockService = { getScriptLock: () => ({ waitLock() { }, releaseLock() { }
 global.Utilities = { formatDate: fmt };
 global.Session = { getActiveUser: () => ({ getEmail: () => email }) };
 const R = p => fs.readFileSync(path.join(__dirname, '..', 'app/server', p), 'utf8');
-const API = (0, eval)(R('duplicatas.js') + '\n' + R('server.js'));
+const API = (0, eval)(require('./carregar-servidor')());
 const S = ss._m.Setembro, O = ss._m.Outubro, linhaId = (s, id) => s.d.find(r => r[19] === id);
 const novoReg = () => ({ paciente: 'Ana Teste', profissional: 'Juliana Ribeiro', procedimento: 'Sessão de psicologia – convênio', data: '10/10/2026', oque: 'Atendido', pago: 'Convênio (fatura)' });
 

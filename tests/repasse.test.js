@@ -40,7 +40,7 @@ global.LockService = { getScriptLock: () => ({ waitLock() { }, releaseLock() { }
 global.Utilities = { formatDate: fmt };
 global.Session = { getActiveUser: () => ({ getEmail: () => email }) };
 const R = p => fs.readFileSync(path.join(__dirname, '..', 'app/server', p), 'utf8');
-const API = (0, eval)(R('duplicatas.js') + '\n' + R('server.js'));
+const API = (0, eval)(require('./carregar-servidor')());
 const r = API.repasseMes({ mes: 'Outubro' }); assert.ok(r.ok, JSON.stringify(r));
 const l = id => r.linhas.filter(x => x.id === id)[0];
 const conf = (id, pct, pago, prev, sit) => { const x = l(id); assert.ok(x, id); assert.deepStrictEqual([x.pct, x.repassePago, x.repassePrev, x.situacao], [pct, pago, prev, sit], id + ' ' + JSON.stringify(x)); };

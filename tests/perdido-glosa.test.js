@@ -30,7 +30,7 @@ global.LockService = { getScriptLock: () => ({ waitLock() { }, releaseLock() { }
 global.Utilities = { formatDate: fmt };
 global.Session = { getActiveUser: () => ({ getEmail: () => email }) };
 const R = p => fs.readFileSync(path.join(__dirname, '..', 'app/server', p), 'utf8');
-const S = (0, eval)(R('duplicatas.js') + '\n' + R('server.js') + '\n;({ API: API, pendenciasDe_: pendenciasDe_ })'), API = S.API;
+const S = (0, eval)(require('./carregar-servidor')().replace(/\nAPI;\s*$/, '\n;({ API: API, pendenciasDe_: pendenciasDe_ })')), API = S.API;
 const brl = n => 'R$ ' + (Math.round(n * 100) / 100).toFixed(2).replace('.', ',');
 const resumo = () => { const r = API.gestaoResumo({ mes: 'Setembro' }); assert.ok(r.ok, JSON.stringify(r)); return r; };
 const aReceber = r => r.pagamentoPendente.reduce((a, x) => a + (x.pago === 'Parcial' ? x.valor - (x.recebido || 0) : x.valor || 0), 0);
