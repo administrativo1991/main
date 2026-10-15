@@ -86,4 +86,8 @@ salvar WhatsApp, link `wa.me`, Não vem → Agenda com o formulário aberto).
 de `Profissionais`, **`Nome na mensagem`**; vazia = nome da aba (Dr. Victor, Dra. Tatiana e Dra. Luciana já têm o título
 no nome). Não se deduz Dr./Dra. pelo nome: a gestão diz como cada um sai.
 
-**Falta (gestão)**: os nomes de cada profissional para a coluna; testar na CÓPIA TESTE; OK para a real.
+Gestão (15/10): "pode colocar todo mundo como Dr. e Dra., é mensagem automática". Preenchido na CÓPIA TESTE: Dra. Juliana
+Ribeiro; Dr. Victor, Dra. Tatiana e Dra. Luciana como já estavam; os demais ativos como "Dr(a). Nome" (a forma do próprio
+modelo da clínica; para Dr. ou Dra. específico, a gestão troca a célula). Na real, junto com a promoção.
+
+**Falta (gestão)**: testar na CÓPIA TESTE; OK para a real (código + coluna `Nome na mensagem`).

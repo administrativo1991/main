@@ -58,7 +58,10 @@ Modelo:
   mudou no meio da gravação, com o "Nome na mensagem": as peças afetadas foram regravadas). Lidas de volta: **48/48 iguais
   a `dist/pedacos.json` do commit 053a9f9**; index e duplicatas + server remontados iguais. Ativação numa gravação só
   (A229:A324): 229–276 → `antigo33:`; ativas = só 277–324. E2 carimbado. O 2026-10-15-11 ficou ativo até aqui.
-- **Dados**: nenhum ainda. Falta a coluna `Nome na mensagem` em Profissionais (gestão manda os nomes).
+- **Dados (CÓPIA TESTE, 15/10 noite)**: `Profissionais` ganhou 1 coluna no fim (L) **`Nome na mensagem`**: Dra. Juliana
+  Ribeiro (gestão); Dr. Victor Cunha, Dra. Tatiana Grünewald, Dra. Luciana Fiorilo (o título que já estava no nome); os
+  outros 10 ativos como **"Dr(a). Nome"** (gestão: "pode colocar todo mundo como Dr. e Dra."; Dr./Dra. não se deduz pelo
+  nome: a gestão troca a célula de quem quiser); inativos vazios. Nada mais mexido. **Na real: ainda não.**
 - **Voltar**: `antigo33:` → nome (229–276) e 277–324 → `antigo34:`.
 - **Commit**: 053a9f9 · **Aprovação**: só teste.
 
