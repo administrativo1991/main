@@ -4,7 +4,7 @@ Arquivo de retomada da Fase 2 (começou em 15/10/2026, à noite). Quem abrir um 
 ("No ar agora"), este arquivo, `NOTAS-fase1.md` (modelo de cobrança e decisões da Fase 1) e `docs/ESTADO-ATUAL.md` (mapa).
 
 > **Estado em 15/10 (noite)**: item 1 (Confirmações + WhatsApp) feito, testado em simulação e **publicado no teste** = deploy
-> **2026-10-15-11** (ver DEPLOYS). Real continua no 2026-10-15-10 até o OK da gestão.
+> **2026-10-15-12** (ver DEPLOYS), com o texto oficial e a coluna `Nome na mensagem`. Real continua no 2026-10-15-10 até o OK da gestão.
 
 ## Ordem combinada com a gestão (15/10)
 
@@ -82,4 +82,8 @@ Lista do dia nem duplicar a Agenda, Confirmou tira a sessão da mensagem, WhatsA
 cadastro com log); simulação Playwright 1280 e 390 px sem erro de console (Próxima semana, Confirmou, Ver mensagem,
 salvar WhatsApp, link `wa.me`, Não vem → Agenda com o formulário aberto).
 
-**Falta (gestão)**: testar na CÓPIA TESTE; OK para a real.
+**Nome do profissional** (gestão, 15/10: "coloca com dra. Juliana Ribeiro, dr. Victor Cunha, etc"): coluna nova no fim
+de `Profissionais`, **`Nome na mensagem`**; vazia = nome da aba (Dr. Victor, Dra. Tatiana e Dra. Luciana já têm o título
+no nome). Não se deduz Dr./Dra. pelo nome: a gestão diz como cada um sai.
+
+**Falta (gestão)**: os nomes de cada profissional para a coluna; testar na CÓPIA TESTE; OK para a real.

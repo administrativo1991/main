@@ -24,7 +24,7 @@ coluna E não afeta o app. Atualizar `E2` faz parte de toda publicação (passo 
 | Canal | Deploy | Peças | Commit |
 |---|---|---|---|
 | Real (`arquivos_real`) | **2026-10-15-10** (avaliação de convênio) | 46 (duplicatas 3 · server 14 · index 29); ativas = 637–682; `antigo30:` = as do 2026-10-15-08 (591–636) | branch `claude/compassionate-sagan-hpb0p1`, commit e79f8fd |
-| Teste (`arquivos`) | **2026-10-15-11** (Fase 2: Confirmações por WhatsApp) | 48 (duplicatas 3 · server 15 · index 30), linhas 229–276; `antigo32:` = as do 09 (183–228) | branch `claude/sweet-wozniak-aviy8u`, commit 80e62b4 |
+| Teste (`arquivos`) | **2026-10-15-12** (Confirmações: texto oficial + Nome na mensagem) | 48 (duplicatas 3 · server 15 · index 30), linhas 277–324; `antigo33:` = as do 11 (229–276) | branch `claude/sweet-wozniak-aviy8u`, commit 053a9f9 |
 | Carregador real | 2026-10-06-02 (`dist/Code.real.gs`, implantado pela Roberta) | — | 4ad0272 |
 | Carregador teste | 2026-10-04-01 + nova versão pendente desde 05/10 (permissão do Drive, ver `COMO-INSTALAR.md`) | — | — |
 
@@ -48,6 +48,19 @@ Modelo:
 ```
 
 ## Lista
+
+### 2026-10-15-12 · Teste · Confirmações: texto oficial da clínica + "Nome na mensagem"
+- **O que mudou**: mensagem de confirmação = texto oficial mandado pela gestão (uma sessão: igual ao texto; várias sessões
+  da família: "das suas consultas" + Data/Horário de cada uma), num módulo compartilhado servidor/tela
+  (`app/shared/mensagens.js`, vai na peça `duplicatas.js`); some a faixa "texto provisório"; profissional sai como na
+  coluna nova **`Nome na mensagem`** da aba `Profissionais` (vazia = nome da aba).
+- **Peças**: 48 em `arquivos!A277:C324` com `novo:`; 34 iguais ao 11 copiadas por "colar valores", 14 gravadas (o build
+  mudou no meio da gravação, com o "Nome na mensagem": as peças afetadas foram regravadas). Lidas de volta: **48/48 iguais
+  a `dist/pedacos.json` do commit 053a9f9**; index e duplicatas + server remontados iguais. Ativação numa gravação só
+  (A229:A324): 229–276 → `antigo33:`; ativas = só 277–324. E2 carimbado. O 2026-10-15-11 ficou ativo até aqui.
+- **Dados**: nenhum ainda. Falta a coluna `Nome na mensagem` em Profissionais (gestão manda os nomes).
+- **Voltar**: `antigo33:` → nome (229–276) e 277–324 → `antigo34:`.
+- **Commit**: 053a9f9 · **Aprovação**: só teste.
 
 ### 2026-10-15-11 · Teste · Fase 2: Confirmações por WhatsApp
 - **O que mudou**: tela nova **Confirmações** (menu, recepção e gestão): período escolhido (amanhã · daqui a 2 dias · resto
