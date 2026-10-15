@@ -82,6 +82,7 @@ function itensFiltrados() {
   return itens;
 }
 function contagem(itens) {
+  itens = itens.filter(function (it) { return !it.extra; }); // pagamento do mês e taxa de falta não são atendimentos
   var cont = { todos: itens.length, aguardando: 0, chegou: 0, registrados: 0, naovem: 0, aconfirmar: 0, atendido: 0, falta: 0 };
   itens.forEach(function (it) { var s = statusItem(it); cont[s]++; if (s === 'atendido' || s === 'falta') cont.registrados++; });
   return cont;
@@ -300,7 +301,7 @@ $("#pp-corrigir").addEventListener('click', function () { var it = itemSeleciona
 /* ---------- tiles de resumo e resumo do painel ---------- */
 function doDia(l, dia) { return (l || []).filter(function (x) { return x.data === dia; }); }
 function renderResumo(cont) {
-  var tot = DIA.itens.length, reg = DIA.itens.filter(function (i) { return i.registro; }).length, dia = DIA.data, g = resumoMes[DIA.abaMes];
+  var atend = DIA.itens.filter(function (i) { return !i.extra; }), tot = atend.length, reg = atend.filter(function (i) { return i.registro; }).length, dia = DIA.data, g = resumoMes[DIA.abaMes];
   // resumo do painel (sem paciente selecionado)
   $("#pp-resumo").innerHTML = '<div><b>' + reg + '<small>/' + tot + '</small></b><span>registrados</span></div><div><b>' + cont.chegou + '</b><span>na recepção</span></div><div><b>' + (cont.aguardando + cont.aconfirmar) + '</b><span>aguardando</span></div><div class="' + (cont.naovem ? 'atencao' : '') + '"><b>' + cont.naovem + '</b><span>não vêm</span></div>';
   // tiles (gestão 14/10): A cobrar hoje · Recebido hoje · Guias a pegar · NF a emitir — os mesmos números da tela Meu dia
@@ -410,12 +411,12 @@ function carregarRec() { return call('agendaFixa').then(function (l) { AGENDA = 
 function renderRec() {
   var tb = $("#r-lista"); tb.innerHTML = '';
   AGENDA.slice().sort(function (a, b) { return (DIAS_PT.indexOf(a['Dia da semana']) * 10000 + (a['Hora'] || '').replace(':', '') * 1) - (DIAS_PT.indexOf(b['Dia da semana']) * 10000 + (b['Hora'] || '').replace(':', '') * 1); }).forEach(function (a) {
-    var tr = el('<tr><td><b>' + esc(a['Paciente']) + '</b></td><td>' + esc(a['Profissional']) + '</td><td>' + esc(a['Dia da semana']) + '</td><td>' + esc(a['Hora']) + '</td><td>' + esc(a['Frequência'] || 'Semanal') + '</td><td>' + esc((a['Começa em'] || '…') + ' → ' + (a['Termina em'] || '…')) + '</td><td>' + (String(a['Ativo']) === 'Não' ? '<span class="tag cinza">pausado</span>' : '<span class="tag verde">ativo</span>') + '</td><td><button class="btn ter mini" type="button">Editar</button></td></tr>');
-    tr.querySelector('button').addEventListener('click', function () { recEdit = a; $("#r-pac").value = a['Paciente']; $("#r-prof").value = a['Profissional']; $("#r-dia").value = a['Dia da semana']; $("#r-hora").value = a['Hora']; $("#r-freq").value = a['Frequência'] || 'Semanal'; $("#r-ini").value = a['Começa em'] || ''; $("#r-fim").value = a['Termina em'] || ''; $("#r-ativo").value = String(a['Ativo']) === 'Não' ? 'Não' : 'Sim'; $("#r-obs").value = a['Observação'] || ''; mostrarInfo($("#r-pac-info"), a['Paciente']); $("#r-hint").textContent = 'Editando ' + a['Paciente'] + '. Mudou dia, hora ou profissional? Ao salvar, o app pergunta se vale a partir de hoje.'; $("#d-recbox").scrollIntoView({ behavior: 'smooth', block: 'start' }); });
+    var tr = el('<tr><td><b>' + esc(a['Paciente']) + '</b></td><td>' + esc(a['Profissional']) + '</td><td>' + esc(a['Dia da semana']) + '</td><td>' + esc(a['Hora']) + '</td><td>' + (a['Tipo'] ? '<span class="tag lilas">' + esc(String(a['Tipo']).toLowerCase()) + '</span>' : '<span class="muted">sessão</span>') + '</td><td>' + esc(a['Frequência'] || 'Semanal') + '</td><td>' + esc((a['Começa em'] || '…') + ' → ' + (a['Termina em'] || '…')) + '</td><td>' + (String(a['Ativo']) === 'Não' ? '<span class="tag cinza">pausado</span>' : '<span class="tag verde">ativo</span>') + '</td><td><button class="btn ter mini" type="button">Editar</button></td></tr>');
+    tr.querySelector('button').addEventListener('click', function () { recEdit = a; $("#r-pac").value = a['Paciente']; $("#r-prof").value = a['Profissional']; $("#r-dia").value = a['Dia da semana']; $("#r-hora").value = a['Hora']; $("#r-freq").value = a['Frequência'] || 'Semanal'; $("#r-ini").value = a['Começa em'] || ''; $("#r-fim").value = a['Termina em'] || ''; $("#r-ativo").value = String(a['Ativo']) === 'Não' ? 'Não' : 'Sim'; $("#r-obs").value = a['Observação'] || ''; $("#r-tipo").value = a['Tipo'] || ''; mostrarInfo($("#r-pac-info"), a['Paciente']); $("#r-hint").textContent = 'Editando ' + a['Paciente'] + '. Mudou dia, hora ou profissional? Ao salvar, o app pergunta se vale a partir de hoje.'; $("#d-recbox").scrollIntoView({ behavior: 'smooth', block: 'start' }); });
     tb.appendChild(tr);
   });
 }
-function limparRec() { recEdit = null; ['r-pac', 'r-hora', 'r-ini', 'r-fim', 'r-obs'].forEach(function (id) { $("#" + id).value = ''; }); $("#r-pac-info").textContent = ''; $("#r-freq").value = 'Semanal'; $("#r-ativo").value = 'Sim'; $("#r-hint").textContent = 'Nova recorrência.'; }
+function limparRec() { recEdit = null; ['r-pac', 'r-hora', 'r-ini', 'r-fim', 'r-obs'].forEach(function (id) { $("#" + id).value = ''; }); $("#r-pac-info").textContent = ''; $("#r-freq").value = 'Semanal'; $("#r-ativo").value = 'Sim'; $("#r-tipo").value = ''; $("#r-hint").textContent = 'Nova recorrência.'; }
 function alternarRec() { $("#d-recbox").hidden = !$("#d-recbox").hidden; $("#d-addbox").hidden = true; $("#d-expbox").hidden = true; if (!$("#d-recbox").hidden) { carregarRec(); $("#d-recbox").scrollIntoView({ behavior: 'smooth', block: 'start' }); } }
 $("#d-rec").addEventListener('click', alternarRec);
 $("#d-rec-topo").addEventListener('click', alternarRec); // botão visível no topo (gestão, 06/10): a recepção mantém os horários fixos
@@ -427,7 +428,7 @@ $("#r-ini").addEventListener('input', function () { this.value = mascaraData(thi
 $("#r-fim").addEventListener('input', function () { this.value = mascaraData(this.value); });
 $("#r-salvar").addEventListener('click', function () {
   var pac = $("#r-pac").value.trim(); if (!pacInfo(pac)) return toast('Escolha um paciente da lista');
-  var d = { id: recEdit ? recEdit.ID : '', paciente: pac, profissional: $("#r-prof").value, diaSemana: $("#r-dia").value, hora: $("#r-hora").value, frequencia: $("#r-freq").value, comecaEm: $("#r-ini").value, terminaEm: $("#r-fim").value, ativo: $("#r-ativo").value === 'Sim', observacao: $("#r-obs").value.trim() };
+  var d = { id: recEdit ? recEdit.ID : '', paciente: pac, profissional: $("#r-prof").value, diaSemana: $("#r-dia").value, hora: $("#r-hora").value, frequencia: $("#r-freq").value, comecaEm: $("#r-ini").value, terminaEm: $("#r-fim").value, ativo: $("#r-ativo").value === 'Sim', observacao: $("#r-obs").value.trim(), tipo: $("#r-tipo").value };
   if (recEdit && (recEdit['Dia da semana'] !== d.diaSemana || recEdit['Hora'] !== d.hora || recEdit['Profissional'] !== d.profissional)) {
     if (!$("#r-apartir")) { $("#r-hint").innerHTML = 'Dia, hora ou profissional mudou. <label class="check" style="display:inline-flex"><input type="checkbox" id="r-apartir" checked> vale a partir de hoje (encerra a antiga e guarda o histórico)</label> <button class="btn mini" type="button" id="r-confirma">Confirmar</button>'; $("#r-confirma").addEventListener('click', function () { d.encerrarAnterior = $("#r-apartir").checked; salvarRec(d); }); return; }
     d.encerrarAnterior = $("#r-apartir").checked;

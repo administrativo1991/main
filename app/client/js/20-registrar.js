@@ -140,15 +140,20 @@ function validarAt() {
   }
   return e;
 }
+var confirmouRepetido = false; // "É outro atendimento: gravar mesmo assim" depois do aviso de já registrado
 function salvarAt(voltar) {
   if (salvandoAt) return;
   var erros = validarAt(); $("#a-erros").innerHTML = erroBox(erros);
   if (erros.length) { $("#a-erros").scrollIntoView({ behavior: 'smooth', block: 'center' }); return; }
   if (pagadorDiferente() && decisaoPagador === null) { $("#a-pagador-nome").textContent = $("#a-quem").value.trim(); $("#a-pagador-novo").hidden = false; $("#a-pagador-novo").scrollIntoView({ behavior: 'smooth', block: 'center' }); toast('Pagou outra pessoa: decida se vira o pagador habitual'); return; }
   salvandoAt = true; $("#a-salvar").disabled = true; $("#a-salvar-outro").disabled = true;
-  var d = dadosAt();
+  var d = dadosAt(); if (confirmouRepetido) { d.confirmouRepetido = true; confirmouRepetido = false; }
   call('registrarAtendimento', d).then(function (r) {
-    if (!r.ok) { $("#a-erros").innerHTML = erroBox(r.erros || [], 'Não gravou'); return; }
+    if (!r.ok) {
+      $("#a-erros").innerHTML = erroBox(r.erros || [], r.repetido ? 'Já registrado' : 'Não gravou');
+      if (r.repetido) { var b = el('<div class="acoes"><button type="button" class="btn sec">É outro atendimento: gravar mesmo assim</button></div>'); $("#a-erros").appendChild(b); b.querySelector('button').addEventListener('click', function () { confirmouRepetido = true; salvarAt(voltar); }); }
+      return;
+    }
     if (d.tornarPagadorHabitual && cur) { cur.pagador = d.quemPagou; }
     if (typeof invalidarResumo === 'function') invalidarResumo();
     recarregarAT().catch(function () { }); // competências e cobranças atualizadas pro próximo registro

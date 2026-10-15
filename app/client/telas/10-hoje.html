@@ -66,10 +66,11 @@
         <label class="campo">Começa em<input id="r-ini" placeholder="dd/mm/aaaa" maxlength="10" inputmode="numeric"></label>
         <label class="campo">Termina em<input id="r-fim" placeholder="vazio = sem fim" maxlength="10" inputmode="numeric"></label>
         <label class="campo">Ativo<select id="r-ativo"><option>Sim</option><option>Não</option></select></label>
-        <label class="campo c3">Observação<input id="r-obs"></label>
+        <label class="campo">Tipo<select id="r-tipo"><option value="">Sessão / consulta</option><option>Aplicação de teste</option><option>Retorno</option></select></label>
+        <label class="campo c2">Observação<input id="r-obs"></label>
       </div>
       <div class="acoes"><button type="button" class="btn" id="r-salvar">Salvar recorrência</button><button type="button" class="btn ter" id="r-novo">Nova</button><span class="muted" id="r-hint">Nova recorrência.</span></div>
-      <div class="tabela-card"><div class="tabela-wrap"><table><thead><tr><th>Paciente</th><th>Profissional</th><th>Dia</th><th>Hora</th><th>Freq.</th><th>Vigência</th><th>Ativo</th><th></th></tr></thead><tbody id="r-lista"></tbody></table></div></div>
+      <div class="tabela-card"><div class="tabela-wrap"><table><thead><tr><th>Paciente</th><th>Profissional</th><th>Dia</th><th>Hora</th><th>Tipo</th><th>Freq.</th><th>Vigência</th><th>Ativo</th><th></th></tr></thead><tbody id="r-lista"></tbody></table></div></div>
     </div>
 
     <div id="d-carregando" class="carregando">Carregando a lista…</div>

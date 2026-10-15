@@ -209,6 +209,7 @@ API.registrarAtendimento = function (d) {
     var pac = indicePacientes_().filter(function (p) { return p.nome === paciente; })[0];
     if (!pac) return { ok: false, erros: ['Paciente não está em Pacientes. Cadastre primeiro em "+ Novo paciente".'] };
     var s = abaMes_(data), bloq = bloqueioPlanilha_([s]); if (bloq) return { ok: false, erros: [bloq] };
+    if (!d.confirmouRepetido) { var rep = jaRegistrado_(s, data, paciente, profissional, hora, oque); if (rep) return { ok: false, repetido: true, erros: ['Já está gravado: ' + paciente + ' · ' + profissional + ' · ' + oque.split(' (')[0] + ' em ' + fmtData_(data) + (hora ? ' às ' + hora : '') + ' (aba ' + s.getName() + ', linha ' + rep + '). Não gravei de novo. Se for outro atendimento, confira a hora.'] }; }
     var bloco = blocoPara_(paciente, profissional, data, procedimento, oque, pac);
     var recebeu = d.recebeu != null ? String(d.recebeu).trim() : '', pago, valor = '', recebido = 0;
     if (d.recebeu == null && d.pago != null) { pago = String(d.pago).trim(); valor = d.valor === '' || d.valor == null ? '' : numBR_(d.valor); } // chamada antiga (testes / correção)
@@ -217,6 +218,10 @@ API.registrarAtendimento = function (d) {
       if (bloco.recebeu) { valor = d.valor === '' || d.valor == null ? (bloco.valor == null ? '' : bloco.valor) : numBR_(d.valor); } else valor = bloco.valor == null ? '' : bloco.valor;
     }
     if (ehPerdido_(pago)) return { ok: false, erros: ['"' + PAGO_PERDIDO + '" só pela gestão, em Pendências → Lançamentos.'] };
+    // nunca grava "recebeu" sem a recepção ter respondido (o padrão do bloco só vale pra "Não")
+    var viaBloco = !(d.recebeu == null && d.pago != null);
+    if (viaBloco && !recebeu && (pago === 'Sim' || pago === 'Parcial')) erros.push('Responda: recebeu?');
+    else if (viaBloco && (pago === 'Sim' || pago === 'Parcial') && !String(d.forma || '').trim()) erros.push('Escolha a forma de pagamento.');
     if (pago === 'Sim' && !(valor > 0)) erros.push('Recebeu = Sim exige um valor maior que zero.');
     if (pago === 'Parcial') { recebido = numBR_(d.valorRecebido); if (!(valor > 0)) erros.push('Pago parcial exige o valor da sessão.'); else if (!(recebido > 0 && recebido < valor)) erros.push('Pago parcial: o valor recebido agora tem de ser maior que zero e menor que ' + brl_(valor) + '.'); }
     var detalhe = String(d.detalhe || '').replace(/\s+/g, ' ').trim();
@@ -255,12 +260,27 @@ API.registrarAtendimento = function (d) {
   } finally { lock.releaseLock(); }
 };
 
+// clique repetido / tela que demorou: mesmo paciente, profissional, dia, hora e "o que aconteceu" já gravados → linha (0 = não)
+function jaRegistrado_(s, data, paciente, profissional, hora, oque) {
+  var n = s.getLastRow(); if (n < 2) return 0;
+  var h = cabecalhos_(s), HM = CONFIG.HM, cols = [HM.DATA, HM.HORA, HM.PACIENTE, HM.PROFISSIONAL, HM.OQUE, HM.PROCEDIMENTO]; if (cols.some(function (k) { return !h[k]; })) return 0;
+  var vals = s.getRange(2, 1, n - 1, Math.max.apply(null, cols.map(function (k) { return h[k]; }))).getValues(), chave = fmtData_(data), hr = horaTxt_(hora);
+  for (var i = vals.length - 1; i >= 0; i--) {
+    var r = vals[i], g = function (k) { return r[h[k] - 1]; };
+    if (String(g(HM.PACIENTE) || '').trim() !== paciente || String(g(HM.PROFISSIONAL) || '').trim() !== profissional || String(g(HM.OQUE) || '').trim() !== oque) continue;
+    if (fmtData_(g(HM.DATA)) !== chave || horaTxt_(g(HM.HORA)) !== hr || ehLinhaExtra_(g(HM.PROCEDIMENTO))) continue;
+    return i + 2;
+  }
+  return 0;
+}
+
 /* ---------- Lista do dia com a frase "Cobrança hoje" por item ---------- */
 API.listaDoDia = function (d) {
   d = d || {};
   var data = parseData_(d.data) || new Date(), r = montarDia_(data), idx = {}; indicePacientes_().forEach(function (p) { idx[p.nome] = p; });
   r.itens.forEach(function (it) {
     var p = idx[it.paciente]; if (!p) { it.cobrancaHoje = null; return; }
+    if (it.extra) { it.cobrancaHoje = { situacao: 'linha-extra', cor: 'cinza', curto: it.tipo, frase: it.registro.procedimento }; return; }
     var proc = it.registro ? it.registro.procedimento : (/aplicação de teste/i.test(it.tipo || '') ? 'Aplicação de teste' : /retorno/i.test(it.tipo || '') ? 'Retorno' : '');
     try { var b = blocoPara_(it.paciente, it.profissional, data, proc, it.registro ? it.registro.oque : 'Atendido', p); it.cobrancaHoje = { situacao: b.situacao, cor: b.cor, curto: b.curto, frase: b.frase, apoio: b.apoio, valor: b.valor, valorMes: b.valorMes, guia: b.guia, nf: b.nf, decidido: b.decidido, obsLinha: b.obsLinha, aviso: b.aviso, linhas: Cobranca.linhasDoPaciente(cobrancasProf_(), it.paciente, data).map(Cobranca.resumoLinha) }; } catch (e) { it.cobrancaHoje = { situacao: 'erro', cor: 'cinza', curto: '—', frase: String(e && e.message || e) }; }
   });

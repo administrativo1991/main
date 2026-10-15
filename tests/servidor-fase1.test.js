@@ -44,7 +44,8 @@ global.Session = { getActiveUser: () => ({ getEmail: () => email }) };
 const API = (0, eval)(require('./carregar-servidor')());
 const ok = (r, msg) => { if (!r || r.ok === false) { console.error(msg, JSON.stringify(r)); process.exit(1); } return r; };
 const O = ss._m.Outubro, N = ss._m.Novembro, col = (s, nome) => s.d[0].indexOf(nome), cel = (s, linha, nome) => s.d[linha - 1][col(s, nome)];
-const reg = (d) => API.registrarAtendimento(Object.assign({ data: '15/10/2026', hora: '09:00', procedimento: 'Sessão de psicologia', oque: 'Atendido' }, d));
+// os casos abaixo repetem paciente × hora de propósito: confirmouRepetido pula a trava de lançamento repetido (testada no fim)
+const reg = (d) => API.registrarAtendimento(Object.assign({ data: '15/10/2026', hora: '09:00', procedimento: 'Sessão de psicologia', oque: 'Atendido', confirmouRepetido: true }, d));
 
 // bootstrap enxuto
 const b = ok(API.bootstrap(), 'bootstrap'); assert.deepStrictEqual(b.listas.cobrancas, ['Por sessão', 'Mensalidade fixa', 'Convênio', 'Pro bono', 'Permuta']); assert.strictEqual(b.params.vencimento_dia, 10); assert.ok(b._ms >= 0);
@@ -118,4 +119,36 @@ r = ok(reg({ paciente: 'Beatriz Nova', profissional: 'Dr. Victor Cunha', procedi
 sc = ok(API.salvarCobrancaProf({ id: sc.id, paciente: 'Beatriz Nova', profissional: 'Dr. Victor Cunha', cobranca: 'Por sessão', valorSessao: '200', pagamento: 'Posterior', decididoPor: 'Victor' }), 'cpp edit'); assert.deepStrictEqual(sc.alterados, ['Pagamento']);
 assert.ok(ss._m['Alterações de cadastro'].d.some(l => /Cobrança por profissional · Dr. Victor Cunha · Pagamento/.test(l[2])));
 email = 'recepcao@x'; assert.strictEqual(API.salvarCobrancaProf({ paciente: 'Beatriz Nova', profissional: 'Juliana Ribeiro', cobranca: 'Pro bono', decididoPor: 'x' }).ok, false);
+email = 'administrativo@clinicanascente.com.br';
+
+// lançamento repetido (13/10 na real: o mesmo "Desmarcou" gravado duas vezes, um minuto depois): recusa e diz onde está
+const rep1 = ok(API.registrarAtendimento({ paciente: 'Lays Teste', profissional: 'Giovana Grossi', data: '20/10/2026', hora: '14:00', procedimento: 'Sessão de psicologia', oque: 'Desmarcou com antecedência (≥ 24h)' }), 'rep1');
+const rep2 = API.registrarAtendimento({ paciente: 'Lays Teste', profissional: 'Giovana Grossi', data: '20/10/2026', hora: '14:00', procedimento: 'Sessão de psicologia', oque: 'Desmarcou com antecedência (≥ 24h)' });
+assert.strictEqual(rep2.ok, false); assert.strictEqual(rep2.repetido, true); assert.ok(new RegExp('linha ' + rep1.linha).test(rep2.erros[0]), rep2.erros[0]);
+ok(API.registrarAtendimento({ paciente: 'Lays Teste', profissional: 'Giovana Grossi', data: '20/10/2026', hora: '15:00', procedimento: 'Sessão de psicologia', oque: 'Desmarcou com antecedência (≥ 24h)' }), 'outra hora grava');
+ok(API.registrarAtendimento({ paciente: 'Lays Teste', profissional: 'Giovana Grossi', data: '20/10/2026', hora: '14:00', procedimento: 'Sessão de psicologia', oque: 'Desmarcou com antecedência (≥ 24h)', confirmouRepetido: true }), 'confirmado grava');
+// sem cobrança cadastrada (bloco pede Recebeu?): sem resposta não grava "Sim" sozinho; Sim sem forma também não
+let sr = reg({ paciente: 'Beatriz Nova', profissional: 'Juliana Ribeiro', data: '21/10/2026' }); assert.strictEqual(sr.ok, false, JSON.stringify(sr)); assert.ok(/recebeu\?/.test(sr.erros[0]), sr.erros[0]);
+sr = reg({ paciente: 'Beatriz Nova', profissional: 'Juliana Ribeiro', data: '21/10/2026', recebeu: 'Sim' }); assert.strictEqual(sr.ok, false); assert.ok(/forma/.test(sr.erros[0]), sr.erros[0]);
+assert.strictEqual(ok(reg({ paciente: 'Beatriz Nova', profissional: 'Juliana Ribeiro', data: '21/10/2026', recebeu: 'Não' }), 'sem linha não').pago, 'Não');
+console.log('lançamento repetido ok');
+
+// lista do dia: pagamento do mês e taxa de falta no mesmo dia da sessão não escondem a sessão (eram a mesma chave paciente × profissional)
+ok(reg({ paciente: 'Carlos Ant', profissional: 'Juliana Ribeiro', data: '19/10/2026', recebeu: '' }), 'carlos 19');
+ok(API.registrarPagamentoMes({ paciente: 'Carlos Ant', profissional: 'Juliana Ribeiro', competencias: ['Janeiro/2027'], valor: '210', data: '19/10/2026', forma: 'Pix' }), 'pagar no dia');
+const d19 = API.listaDoDia({ data: '19/10/2026' }), its19 = d19.itens.filter(i => i.paciente === 'Carlos Ant');
+assert.strictEqual(its19.length, 2, JSON.stringify(its19.map(i => [i.origem, i.registro && i.registro.procedimento])));
+assert.ok(its19.some(i => !i.extra && /^Sessão/.test(i.registro.procedimento)), 'a sessão continua na lista');
+assert.ok(its19.some(i => i.extra && /^Antecipado de janeiro/.test(i.registro.procedimento) && i.cobrancaHoje.situacao === 'linha-extra'), 'o pagamento vem como linha à parte');
+assert.ok(API.agendaSemana({ data: '19/10/2026' }).dias.every(dd => dd.itens.every(i => !i.extra)), 'a grade não mostra linhas extras');
+console.log('linhas extras na lista do dia ok');
+
+// Agenda recorrente: Tipo (coluna nova no fim, só quando alguém escolhe) → aplicação de teste sem cobrança e fora do antecipado
+const AR = ss._m['Agenda recorrente'];
+assert.strictEqual(API.salvarAgendaFixa({ paciente: 'Davi Teste', profissional: 'Giovana Grossi', diaSemana: 'Terça', hora: '13:00', tipo: 'Teste' }).ok, false);
+ok(API.salvarAgendaFixa({ paciente: 'Davi Teste', profissional: 'Juliana Ribeiro', diaSemana: 'Terça', hora: '16:00' }), 'sem tipo'); assert.ok(AR.d[0].indexOf('Tipo') < 0, 'sem escolher, não cria a coluna');
+const ft = ok(API.salvarAgendaFixa({ paciente: 'Davi Teste', profissional: 'Giovana Grossi', diaSemana: 'Terça', hora: '13:00', tipo: 'Aplicação de teste' }), 'com tipo');
+assert.strictEqual(AR.d[ft.linha - 1][AR.d[0].indexOf('Tipo')], 'Aplicação de teste');
+const it27 = API.listaDoDia({ data: '27/10/2026' }).itens.filter(i => i.paciente === 'Davi Teste' && i.profissional === 'Giovana Grossi')[0];
+assert.strictEqual(it27.tipo, 'Aplicação de teste'); assert.strictEqual(it27.cobrancaHoje.situacao, 'sem-cobranca-tipo');
 console.log('servidor-fase1.test.js ok');

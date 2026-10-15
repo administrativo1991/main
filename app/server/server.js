@@ -659,6 +659,7 @@ function saldo_(r) { return r.pago === 'Parcial' ? Math.max(0, Math.round((r.val
 API.agendaFixa = function () {
   return linhasComo_(planilha_().getSheetByName(CONFIG.ABA.AGENDA)).filter(function (r) { return r['Paciente']; }).map(function (r) { r['Hora'] = horaTxt_(r['Hora']); return r; });
 };
+var TIPOS_AGENDA = ['Aplicação de teste', 'Retorno']; // vazio = sessão ou consulta (o normal)
 API.salvarAgendaFixa = function (d) {
   d = d || {};
   var erros = [];
@@ -684,10 +685,14 @@ API.salvarAgendaFixa = function (d) {
     var freq = /quinzen/i.test(String(d.frequencia || '')) ? 'Quinzenal' : 'Semanal';
     if (freq === 'Quinzenal' && !comeca) comeca = new Date(); // a quinzena conta a partir de "começa em"
     var pares = { 'ID': id, 'Paciente': paciente, 'Profissional': profissional, 'Dia da semana': dia, 'Hora': hora, 'Frequência': freq, 'Começa em': comeca || '', 'Termina em': termina || '',
-      'Ativo': d.ativo === false || d.ativo === 'Não' ? 'Não' : 'Sim', 'Observação': String(d.observacao || '').trim(), 'Registrado por (app)': (u.email || 'app') + ' · ' + agora_() };
+      'Ativo': d.ativo === false || d.ativo === 'Não' ? 'Não' : 'Sim', 'Observação': String(d.observacao || '').trim(), 'Registrado por (app)': (u.email || 'app') + ' · ' + agora_()  };
+    // Tipo (coluna no fim, criada quando alguém escolhe): aplicação de teste e retorno saem sem cobrança na Agenda e não contam no antecipado
+    var tipo = String(d.tipo || '').trim(); if (tipo && TIPOS_AGENDA.indexOf(tipo) < 0) return { ok: false, erros: ['Tipo inválido.'] };
+    if (tipo || h['Tipo']) { h = garantirColunas_(s, ['Tipo']).h; pares['Tipo'] = tipo; }
     gravarCelulas_(s, linha, h, pares);
     ['Começa em', 'Termina em'].forEach(function (k) { if (h[k]) s.getRange(linha, h[k]).setNumberFormat('dd/MM/yyyy'); });
     if (h['Hora']) s.getRange(linha, h['Hora']).setNumberFormat('@');
+    if (typeof invalidar_ === 'function') invalidar_(['comp']); // sessões agendadas do mês mudam
     SpreadsheetApp.flush();
     return { ok: true, id: id, linha: linha };
   } finally { lock.releaseLock(); }
@@ -714,6 +719,8 @@ API.acrescentarAoDia = function (d) {
     return { ok: true, id: id };
   } finally { lock.releaseLock(); }
 };
+// linhas da aba do mês que não são sessão: recebimento do mês (app novo e antigo) e taxa de falta gerada pela gestão
+function ehLinhaExtra_(proc) { return /^(Mensalidade (de |– |- )|Antecipado de |Pagamento de |Plano .*\(compra\)|Taxa de falta)/i.test(String(proc || '').trim()); }
 // Monta o dia: agenda fixa do dia da semana (vigente) + acréscimos do dia + o que já foi registrado na aba do mês
 // cache (opcional) guarda as abas já lidas, pra semana da Agenda ler cada aba uma vez só
 function montarDia_(data, cache) {
@@ -752,7 +759,7 @@ function montarDia_(data, cache) {
     itens.push({ hora: horaTxt_(r['Hora']), paciente: r['Paciente'], profissional: r['Profissional'], origem: origem, listaId: r['ID'], obs: r['Observação'] || '', tipo: String(r['Tipo'] || '').trim() });
   });
   // registros do dia na aba do mês
-  var reg = {}, nm = nomeAbaMes_(data);
+  var reg = {}, extras = [], nm = nomeAbaMes_(data);
   if (!cache.mes[nm]) { var sm0 = planilha_().getSheetByName(nm); cache.mes[nm] = { existe: !!sm0, h: sm0 ? cabecalhos_(sm0) : {}, vals: sm0 && sm0.getLastRow() >= 2 ? sm0.getRange(2, 1, sm0.getLastRow() - 1, sm0.getLastColumn()).getValues() : [] }; }
   var cm = cache.mes[nm];
   if (cm.vals.length) {
@@ -763,8 +770,11 @@ function montarDia_(data, cache) {
       var k = pac + '|' + String(r[h[HM.PROFISSIONAL] - 1] || '').trim();
       var g = function (nome) { var c = h[HM[nome]] || h[nome]; return c ? r[c - 1] : ''; };
       // só leitura: a tela Hoje mostra o que já foi gravado na linha (valor, Pago?, NF, guia) pra fechar o dia sem abrir a planilha
-      reg[k] = { oque: String(g('OQUE') || ''), id: String(g('ID') || ''), procedimento: String(g('PROCEDIMENTO') || ''), hora: horaTxt_(g('HORA')),
+      var o = { oque: String(g('OQUE') || ''), id: String(g('ID') || ''), procedimento: String(g('PROCEDIMENTO') || ''), hora: horaTxt_(g('HORA')),
         valor: numBR_(g('VALOR')), recebido: numBR_(g('RECEBIDO')), pago: String(g('PAGO') || '').trim(), forma: String(g('FORMA') || ''), nf: String(g('NF') || '').trim(), guia: String(g('GUIA') || '').trim(), convenio: String(g('Convênio (auto)') || '').trim() };
+      // pagamento do mês e taxa de falta são linhas à parte: não tomam o lugar da sessão do mesmo paciente × profissional
+      if (ehLinhaExtra_(o.procedimento)) { extras.push({ paciente: pac, profissional: k.split('|')[1], registro: o }); return; }
+      reg[k] = o;
       if (!reg[pac]) reg[pac] = reg[k];
     });
   }
@@ -774,6 +784,7 @@ function montarDia_(data, cache) {
     if (k.indexOf('|') < 0) return; var pac = k.split('|')[0], prof = k.split('|')[1];
     if (!itens.some(function (it) { return it.paciente === pac && it.profissional === prof; })) itens.push({ hora: reg[k].hora || '', paciente: pac, profissional: prof, origem: 'Registrado', registro: reg[k] });
   });
+  extras.forEach(function (x) { var taxa = /^Taxa de falta/i.test(x.registro.procedimento); itens.push({ hora: x.registro.hora || '', paciente: x.paciente, profissional: x.profissional, origem: taxa ? 'Taxa de falta' : 'Pagamento do mês', tipo: taxa ? 'taxa de falta' : 'pagamento do mês', extra: true, registro: x.registro }); });
   itens.sort(function (a, b) { return (a.profissional + a.hora).localeCompare(b.profissional + b.hora); });
   return { data: chave, diaSemana: diaSemana, itens: itens, abaMes: nomeAbaMes_(data), abaMesExiste: cm.existe };
 }
@@ -805,7 +816,8 @@ API.agendaSemana = function (d) {
   var base = parseData_(d.data) || new Date(), seg = dataMais_(base, -((base.getDay() + 6) % 7)), prof = String(d.profissional || '').trim(), cache = {}, dias = [];
   for (var i = 0; i < 7; i++) {
     var r = montarDia_(dataMais_(seg, i), cache);
-    dias.push({ data: r.data, diaSemana: r.diaSemana, itens: prof ? r.itens.filter(function (it) { return it.profissional === prof; }) : r.itens });
+    var its = r.itens.filter(function (it) { return !it.extra; }); // a grade mostra horários; pagamento do mês e taxa de falta ficam na lista
+    dias.push({ data: r.data, diaSemana: r.diaSemana, itens: prof ? its.filter(function (it) { return it.profissional === prof; }) : its });
   }
   return { inicio: fmtData_(seg), profissional: prof, dias: dias };
 };
