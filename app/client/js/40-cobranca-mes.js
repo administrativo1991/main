@@ -46,12 +46,49 @@ function renderCobrancaMes() {
     var pg = it.pago === 'Sim' ? 'pago' + (it.data ? ' em ' + esc(it.data) : '') + (it.forma ? ' · ' + esc(it.forma) : '') + (it.nf ? '<div class="sub">NF: ' + esc(it.nf) + '</div>' : '<div class="sub">NF a emitir</div>') : it.pago === 'Parcial' ? 'pago em parte' + (it.recebido ? ' (' + esc(brlCurto(it.recebido)) + ')' : '') + (it.data ? ' em ' + esc(it.data) : '') : '<span class="muted">—</span>';
     var acao = it.pagamento === 'Posterior' ? (it.aReceber > 0 ? '<button type="button" class="btn mini" data-pg>Receber o mês</button>' : '') : '<button type="button" class="btn' + (it.pago === 'Sim' ? ' ter' : '') + ' mini" data-pg>' + (it.pago === 'Sim' ? 'Outro pagamento' : 'Registrar pagamento') + '</button>';
     if (ehGestao() && it.cobranca !== 'Mensalidade fixa' && it.pagamento !== 'Posterior') acao += '<button type="button" class="btn link mini" data-ed>Editar sessões</button>';
+    acao += botaoCobrarCM(it);
     var tr = el('<tr><td class="td-pac">' + esc(it.paciente) + '<div class="sub">' + esc(it.pagador && it.pagador !== it.paciente ? 'pagador: ' + it.pagador : '') + '</div></td><td>' + esc(profCurto(it.profissional)) + '<div class="sub">' + esc(it.rotulo.replace(/^[^:]+: /, '')) + (it.obs ? ' · ' + esc(it.obs) : '') + '</div></td><td>' + sess + '</td><td>' + valor + '</td><td><span class="tag ' + cor + '">' + esc(it.situacaoTxt) + '</span>' + (it.pago ? '<div class="sub">' + pg + '</div>' : '') + '</td><td class="no-print" style="text-align:right"><div class="acoes">' + acao + '</div></td></tr>');
     var bp = $('[data-pg]', tr); if (bp) bp.addEventListener('click', function () { abrirPagamentoMes($("#cm-pagbox"), { paciente: it.paciente, profissional: it.profissional, cobranca: it.cobranca, pagamento: it.pagamento, valor: it.valor, valorMes: it.pagamento === 'Posterior' ? it.aReceber : it.valorMes, chave: CM.chave, pagador: it.pagador, proximas: [CM.proximaChave] }, function () { carregarCobrancaMes(); recarregarAT().catch(function () { }); }); });
     var be = $('[data-ed]', tr); if (be) be.addEventListener('click', function () { abrirEditarSessoes(it); });
+    ligarCobrarCM(tr, it);
     tb.appendChild(tr);
   });
   root.appendChild(card);
+}
+/* ---------- Cobrar no WhatsApp (gestão, 15/10): texto oficial da clínica (app/shared/mensagens.js; a gestão troca em Parâmetros)
+   Mensalidade fixa e antecipado → "mensalidade referente a {mes}"; fim do mês por sessão → "consultas realizadas em {mes}".
+   Abrir o WhatsApp grava "Cobrança …" na aba Mensagens WhatsApp (competência e valor) e a linha mostra "cobrado em …". */
+function valorACobrarCM(it) {
+  if (Mensagens.tipoCobranca(it) === 'consultas') return it.aReceber || 0;
+  if (it.pago === 'Sim' || it.valorMes == null) return 0;
+  return Math.max(0, Math.round((it.valorMes - (it.pago === 'Parcial' ? (it.recebido || 0) : 0)) * 100) / 100);
+}
+function botaoCobrarCM(it) {
+  var v = valorACobrarCM(it); if (!(v > 0)) return '';
+  var cob = it.cobrado ? '<div class="sub">cobrado ' + esc(String(it.cobrado.quando || '').replace(/^(\d{2}\/\d{2})\/\d{4}/, '$1')) + '</div>' : '';
+  if (!it.fone) return '<button type="button" class="btn ter mini" data-cobrar title="Sem WhatsApp no cadastro: digite o número">' + ic('send', 13, 2.4) + ' Cobrar no WhatsApp</button>' + cob;
+  var tipo = Mensagens.tipoCobranca(it), msg = Mensagens.cobranca(tipo, CM.modelos && CM.modelos[tipo], it.pagador || it.paciente, CM.chave, v);
+  return '<a class="btn ' + (it.cobrado ? 'ter' : 'sec') + ' mini" data-cobrar target="_blank" rel="noopener" title="' + esc('WhatsApp ' + it.foneFmt + (it.foneDe !== 'pagador' ? ' (telefone do ' + it.foneDe + ')' : '') + ' · R$ ' + Mensagens.valorBR(v)) + '" href="' + esc(Mensagens.linkWhats(it.fone, msg)) + '">' + ic('send', 13, 2.4) + (it.cobrado ? ' Cobrar de novo' : ' Cobrar no WhatsApp') + '</a>' + cob;
+}
+function ligarCobrarCM(tr, it) {
+  var b = $('[data-cobrar]', tr); if (!b) return;
+  if (it.fone) return b.addEventListener('click', function () {
+    var tipo = Mensagens.tipoCobranca(it), v = valorACobrarCM(it);
+    call('marcarMensagemEnviada', { tipo: tipo === 'consultas' ? 'Cobrança consultas' : 'Cobrança mensalidade', competencia: CM.chave, pagador: it.pagador || it.paciente, fone: it.fone, itens: [{ paciente: it.paciente, profissional: it.profissional, valor: v }] }).then(function (r) {
+      if (!r.ok) return toast((r.erros || ['Não registrei a cobrança']).join(' '));
+      it.cobrado = { por: r.por, quando: r.quando }; setTimeout(function () { if (aindaNa('cobranca', navGen)) renderCobrancaMes(); }, 300);
+    }).catch(function (e) { toast('Não registrei a cobrança: ' + e.message); });
+  });
+  b.addEventListener('click', function () {
+    var n = window.prompt('WhatsApp de ' + (it.pagador || it.paciente) + ' (DDD + número). Vai para o cadastro do paciente:', '');
+    if (n == null) return; if (!Mensagens.fone(n)) return toast('WhatsApp inválido: DDD + número, ex.: (32) 9 9999-9999.');
+    b.disabled = true;
+    call('salvarWhats', { pacientes: [it.paciente], whats: n }).then(function (r) {
+      b.disabled = false; if (!r.ok) return toast((r.erros || ['Não gravou']).join(' '));
+      it.fone = r.fone; it.foneFmt = r.foneFmt; it.foneDe = 'pagador'; renderCobrancaMes(); toast('WhatsApp salvo no cadastro. Clique em "Cobrar no WhatsApp".');
+      if (typeof recarregarAT === 'function') recarregarAT().catch(function () { });
+    }).catch(function (e) { b.disabled = false; toast('Erro: ' + e.message); });
+  });
 }
 function mudarChave(n) { var m = cmChave.split('/'), i = Cobranca.MESES.indexOf(m[0]), a = parseInt(m[1], 10); i += n; if (i < 0) { i = 11; a--; } if (i > 11) { i = 0; a++; } cmChave = Cobranca.MESES[i] + '/' + a; carregarCobrancaMes(); }
 $("#cm-ant").addEventListener('click', function () { mudarChave(-1); });

@@ -63,7 +63,7 @@ function cardGrupoCF(g, itens) {
   var ac = $('.cf-acoes', c), msg = mensagemCF(g, msgItens);
   if (g.fone) {
     var a = el('<a class="btn" target="_blank" rel="noopener">' + ic('send', 15, 2.4) + ' Abrir WhatsApp' + (faltam.length ? '' : ' (de novo)') + '</a>');
-    a.href = 'https://wa.me/' + g.fone + '?text=' + encodeURIComponent(msg);
+    a.href = Mensagens.linkWhats(g.fone, msg);
     a.addEventListener('click', function () { marcarEnviadaCF(g, msgItens); });
     ac.appendChild(a);
   } else {

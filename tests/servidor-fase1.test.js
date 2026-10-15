@@ -196,4 +196,22 @@ const CP = ss._m['Cobrança por profissional']; CP.d.push(['C99', 'Julia Teste',
 invalidar_(['cpp']); assert.strictEqual(linhaVigente_('Julia Teste', 'Dr. Victor Cunha', new Date(2026, 9, 20, 12)).linha, null, 'linha inativa não vale');
 assert.strictEqual(Cobranca.linhaVigente(cobrancasProf_(), 'Julia Teste', 'Dr. Victor Cunha', '20/10/2026').linha, null, 'nem relida pelo módulo (tela)');
 assert.ok(Cobranca.linhasDoPaciente(cobrancasProf_(), 'Julia Teste', '20/10/2026').every(l => l.profissional !== 'Dr. Victor Cunha'));
+// Fase 2 · Cobrar no WhatsApp: Cobrança do mês traz o número (vazio até a recepção digitar), o texto oficial e a última cobrança
+let cd = ok(API.cobrancaMes({ chave: 'Dezembro/2026' }), 'cm dez whats').itens.filter(i => i.paciente === 'Carlos Ant')[0];
+assert.strictEqual(cd.fone, ''); assert.strictEqual(cd.cobrado, null); assert.strictEqual(Mensagens.tipoCobranca(cd), 'mensalidade');
+ok(API.salvarWhats({ pacientes: ['Carlos Ant'], whats: '(32) 98877-6655' }), 'whats carlos');
+cd = ok(API.cobrancaMes({ chave: 'Dezembro/2026' }), 'cm dez whats 2').itens.filter(i => i.paciente === 'Carlos Ant')[0];
+assert.strictEqual(cd.fone, '5532988776655'); assert.strictEqual(cd.foneDe, 'pagador');
+const txt = Mensagens.cobranca('mensalidade', '', 'Carlos', 'Dezembro/2026', cd.valorMes);
+assert.ok(txt.includes('referente a dezembro de 2026.') && txt.includes('💳 *Valor:* R$ 140,00') && txt.includes('52.763.088/0001-05'), txt);
+assert.ok(Mensagens.linkWhats(cd.fone, txt).startsWith('https://api.whatsapp.com/send?phone=5532988776655&text=Ol%C3%A1%2C%20Carlos!'));
+assert.strictEqual(Mensagens.tipoCobranca({ pagamento: 'Posterior', cobranca: 'Por sessão' }), 'consultas');
+assert.ok(Mensagens.cobranca('consultas', '', 'Bruno Lima', 'Outubro/2026', 175).includes('durante o mês de outubro de 2026.\n\n💳 *Valor total:* R$ 175,00'));
+assert.strictEqual(API.marcarMensagemEnviada({ tipo: 'Cobrança mensalidade', itens: [{ paciente: 'Carlos Ant', profissional: 'Juliana Ribeiro' }] }).ok, false, 'cobrança sem competência');
+ok(API.marcarMensagemEnviada({ tipo: 'Cobrança mensalidade', competencia: 'Dezembro/2026', pagador: 'Carlos', fone: cd.fone, itens: [{ paciente: 'Carlos Ant', profissional: 'Juliana Ribeiro', valor: 140 }] }), 'cobrou');
+const MW = ss._m['Mensagens WhatsApp'], ult = MW.d[MW.d.length - 1], cM = n => ult[MW.d[0].indexOf(n)];
+assert.strictEqual(cM('Tipo'), 'Cobrança mensalidade'); assert.strictEqual(cM('Competência'), 'Dezembro/2026'); assert.strictEqual(cM('Valor (R$)'), 140); assert.strictEqual(cM('Data da sessão'), '');
+cd = ok(API.cobrancaMes({ chave: 'Dezembro/2026' }), 'cm dez cobrado').itens.filter(i => i.paciente === 'Carlos Ant')[0];
+assert.ok(cd.cobrado && cd.cobrado.por, 'linha mostra "cobrado em"');
+console.log('cobrar no WhatsApp ok');
 console.log('servidor-fase1.test.js ok');
