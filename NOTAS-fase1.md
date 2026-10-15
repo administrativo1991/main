@@ -339,3 +339,8 @@ ControleOdonto de 07/10 dizia que não vinha" (D-20261015-134655-ap3/ap4); as li
 nº 6". Avaliação na prática (gestão): a Juliana faz a anamnese e a devolutiva; a Giovana aplica os testes; a Juliana segue
 atendendo em terapia alguns desses pacientes (Jhonne e Matheus Carmo têm sessão semanal com ela, com guia de sessão) —
 por isso a sessão da avaliação dela é marcada pelo procedimento, nunca deduzida.
+
+**14h**: Matheus Almeida Carmo 21/10 09:30 (Giovana): origem "Avulso" → "Aplicação de teste" (Lista do dia linha 87, gestão).
+Luiz Miguel Ventura Oliveira da Silva: a gestão vai ver com a Juliana quantas sessões ele fez (lançado: Juliana 10/09,
+23/09, 30/09 atendido e 17/09 falta; Giovana 23/09, 30/09, 07/10; a sessão das quartas 08:30 com a Juliana de 07/10 está
+"Confirmado" na Lista do dia, mas sem lançamento na aba Outubro, nem a de 14/10).
