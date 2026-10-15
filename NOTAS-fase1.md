@@ -344,3 +344,12 @@ por isso a sessão da avaliação dela é marcada pelo procedimento, nunca deduz
 Luiz Miguel Ventura Oliveira da Silva: a gestão vai ver com a Juliana quantas sessões ele fez (lançado: Juliana 10/09,
 23/09, 30/09 atendido e 17/09 falta; Giovana 23/09, 30/09, 07/10; a sessão das quartas 08:30 com a Juliana de 07/10 está
 "Confirmado" na Lista do dia, mas sem lançamento na aba Outubro, nem a de 14/10).
+
+**15h02 — linhas "a confirmar" (gestão)**: gravado na real (`Cobrança por profissional`, log "Alterações de cadastro"
+A369:G373): Paulo Henrique Souza e Silva × Tatiana R$ 130 na hora (mantido) e × Marileia **mensalidade fixa R$ 200 a partir
+de agora** (outubro no fim do mês, antecipado desde 01/11; em setembro era R$ 50 por sessão); Pedro Miosso × Giovana
+Ativo = Não (encerrado); Sergio Luiz da Silveira (pai da Daniela) R$ 70 na hora (mantido). "Valor decidido por" = "gestão
+15/10". **Ainda a confirmar (11)**: Naimara × Juliana (a gestão decide o valor); Ana Lucia, Danielle Borchert, Roberta
+Gray, Sarah, Luan (propostas: confirmar como estão, aguardando o OK); Emily Rocha Erculano (a gestão vai ver o que houve);
+Vitor Barcelos (sem linha; avaliação terminou?). Achado: o cadastro do Paulo Henrique (Pacientes linha 435, "Observação de
+cobrança", que a recepção lê) ainda diz "R$ 70 por sessão"; Mensalistas linha 34 diz "Plano de 4 consultas".
