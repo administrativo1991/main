@@ -52,7 +52,7 @@ function renderCorrecao() {
 }
 function renderGestao() {
   var r = GES, soma = function (l) { return (l || []).reduce(function (a, x) { return a + (x.valor || 0); }, 0); };
-  var faltas = (r.faltas || []).length, aReceber = (r.pagamentoPendente || []).reduce(function (a, x) { return a + saldoReg(x); }, 0);
+  var faltas = (r.faltas || []).length, faltasSemDecisao = (r.faltas || []).filter(function (x) { return !x.decisao; }), aReceber = (r.pagamentoPendente || []).reduce(function (a, x) { return a + saldoReg(x); }, 0);
   $("#g-atualizado").textContent = 'atualizado às ' + ('0' + gesHora.getHours()).slice(-2) + ':' + ('0' + gesHora.getMinutes()).slice(-2);
   $("#g-kpis").hidden = false; $("#g-kpis").innerHTML = '<div class="kpi"><b>' + r.total + '</b><span>atendimentos no mês</span></div><div class="kpi"><b>' + r.atendidos + '</b><span>atendidos' + (faltas ? ' · ' + faltas + ' falta' + (faltas === 1 ? '' : 's') : '') + '</span></div><div class="kpi roxo"><b>' + esc(brlCurto(r.recebido)) + '</b><span>recebido</span></div><div class="kpi amarela cheio"><b>' + esc(brlCurto(aReceber)) + '</b><span>a receber (particular)</span></div><div class="kpi"><b>' + (r.semGuia || []).length + '</b><span>convênio sem guia</span></div>';
   $("#g-export").hidden = !ehGestao(); $("#g-export-txt").textContent = 'Exportar ' + r.mes + ' (.xlsx)'; $("#g-export").disabled = !r.abaExiste;
@@ -63,7 +63,8 @@ function renderGestao() {
     { k: 'pag', cor: 'amarela', n: (r.pagamentoPendente || []).length, t: 'Particulares atendidos sem “Pago?”', s: (r.pagamentoPendente || []).length ? nomes(r.pagamentoPendente) + ' — a recepção cobra; linha amarela na planilha' : 'Todos os particulares atendidos têm Pago? preenchido.', acao: 'Ver lista', tabela: function () { return tabelaG('Particulares atendidos sem pagamento registrado', [['Data', D], ['Paciente', 'paciente'], ['Profissional', 'profissional'], ['Procedimento', 'procedimento'], ['Valor', V], ['Pago?', 'pago'], ['Em aberto', function (l) { return 'R$ ' + brl(saldoReg(l)); }], ['Obs.', 'obs']], r.pagamentoPendente, 'Nada pendente.', 'pag'); } },
     { k: 'nf', cor: 'laranja', n: (r.nfPendente || []).length, t: 'Pagos sem nota fiscal', s: (r.nfPendente || []).length ? brlCurto(soma(r.nfPendente)) + ' · emitir no Portal Nacional com o nome de “quem pagou”' : 'Nenhum pagamento sem NF.', acao: 'Ver lista', tabela: function () { return tabelaG('Pagos sem NF emitida', [['Data', D], ['Paciente', 'paciente'], ['Valor', V], ['Forma', 'forma'], ['Quem pagou', function (l) { return l.quem || '(pagador habitual)'; }], ['NF?', function (l) { return l.nf || '(em branco)'; }]], r.nfPendente, 'Nada pendente.', 'nf'); } },
     { k: 'guia', cor: 'lilas', n: (r.semGuia || []).length, t: 'Convênio sem guia assinada', s: (r.semGuia || []).length ? contarPor(r.semGuia, 'convenio') + ' — glosa certa se faturar assim' : 'Todas as guias de convênio assinadas.', acao: 'Ver lista', tabela: function () { return tabelaG('Convênio sem guia assinada', [['Data', D], ['Paciente', 'paciente'], ['Convênio', 'convenio'], ['Profissional', 'profissional'], ['Guia', function (l) { return l.guia || '(em branco)'; }]], r.semGuia, 'Nada pendente.', 'guia'); } },
-    { k: 'faltas', cor: 'vermelha', n: faltas, t: 'Faltas sem aviso de particular — taxa de falta?', s: 'Você decide caso a caso; se cobrar, entra no próximo agendamento', acao: 'Decidir', tabela: function () { return tabelaG('Faltas sem aviso de particular (taxa a decidir)', [['Data', D], ['Paciente', 'paciente'], ['Profissional', 'profissional'], ['O que aconteceu', 'oque'], ['Obs.', 'obs']], r.faltas, 'Nenhuma falta sem aviso.', 'obs'); } },
+    { k: 'faltas', cor: 'vermelha', n: faltasSemDecisao.length, t: 'Faltas → Decidir', s: faltasSemDecisao.length ? faltasSemDecisao.length + ' sem decisão de ' + faltas + ' no mês — não abate · abate no mês seguinte · cobrar taxa · relevar' : (faltas ? 'Todas as ' + faltas + ' faltas do mês já têm decisão.' : 'Nenhuma falta ou desmarcação no mês.'), acao: ehGestao() ? 'Decidir' : 'Ver lista', tabela: tabelaFaltas },
+    { k: 'cadincompleto', cor: 'laranja', n: (r.cadastroIncompleto || []).length, t: 'Atendidos sem cobrança cadastrada', s: (r.cadastroIncompleto || []).length ? (r.cadastroIncompleto || []).slice(0, 3).map(function (x) { return primeiroNome(x.paciente) + ' × ' + profCurto(x.profissional); }).join(' · ') + ((r.cadastroIncompleto || []).length > 3 ? ' · +' + ((r.cadastroIncompleto || []).length - 3) : '') + ' — o app cobrou pela tabela; cadastre em Pacientes → Cobrança por profissional' : 'Todo paciente atendido tem a cobrança cadastrada pro profissional.', acao: 'Ver lista', tabela: tabelaCadIncompleto },
     { k: 'pagador', cor: 'lilas', n: (r.pagadorDiferente || []).length, t: 'Pagou outra pessoa — conferir o nome na NF', s: (r.pagadorDiferente || []).length ? nomes(r.pagadorDiferente) + ' — se for sempre essa pessoa, promover a pagador habitual em Pacientes' : 'Ninguém pagou por outra pessoa.', acao: 'Revisar', tabela: function () { return tabelaG('Pagou outra pessoa (conferir nome na NF)', [['Data', D], ['Paciente', 'paciente'], ['Quem pagou', 'quem'], ['Valor', V], ['NF?', 'nf']], r.pagadorDiferente, 'Nenhum.', 'obs'); } }
   ];
   // Perdidos e glosas (só gestão): quanto se perdeu no mês; o Valor é a referência
@@ -88,11 +89,11 @@ function renderGestao() {
   else if (gesAberto === 'lanc') { if (LANC) lista.appendChild(tabelaLanc()); }
   else if (gesAberto) { var item = PEND.filter(function (p) { return p.k === gesAberto; })[0] || { tabela: (DISC.filter(function (x) { return x[0] === gesAberto; })[0] || [])[2] }; if (item.tabela) lista.appendChild(item.tabela()); }
   // virada do mês
-  var prox = MESES_PT[(MESES_PT.indexOf(r.mes) + 1) % 12], temAba = (r.mesesExistentes || []).indexOf(prox) >= 0;
+  var iMes = MESES_PT.indexOf(r.mes), prox = MESES_PT[(iMes + 1) % 12], temAba = (r.mesesExistentes || []).indexOf(prox) >= 0, anoProx = new Date().getFullYear() + (iMes === 11 ? 1 : 0), chaveProx = prox + '/' + anoProx, temCols = (r.competencias || []).indexOf(chaveProx) >= 0;
   var vir = $("#g-virada"); vir.innerHTML = '';
   var li = function (ok, html) { return el('<li><span class="' + (ok ? 'ok' : 'falta') + '">' + (ok ? ic('check', 12, 3.5) : '') + '</span><span>' + html + '</span></li>'); };
   var l1 = li(temAba, 'Aba <strong>' + esc(prox) + '</strong> ' + (temAba ? 'criada' : 'ainda não existe <button type="button" class="btn ter mini" id="g-aba" data-mes="' + esc(prox) + '">criar</button>'));
-  var l2 = li(false, 'Renovações dos pacotes antecipados <small class="muted">(tela <a href="#" id="g-ir-pacotes">Pacotes</a>)</small>');
+  var l2 = li(temCols, 'Colunas de <strong>' + esc(chaveProx) + '</strong> na aba Mensalistas ' + (temCols ? 'criadas' : 'ainda não existem <button type="button" class="btn ter mini" id="g-cols" data-chave="' + esc(chaveProx) + '">criar</button>') + ' <small class="muted">(mensalidades e antecipados: tela <a href="#" id="g-ir-cobranca">Cobrança do mês</a>)</small>');
   var l3 = li(false, 'Recorrências renovadas <small class="muted">(conferir na Agenda recorrente)</small>');
   var l4 = li(false, 'Exportar ' + esc(r.mes.toLowerCase()) + ' → pasta do Financeiro <small class="muted">(botão no topo)</small>');
   // aba em modo planilha (fórmula em F/G/H/N lendo o cadastro atual) → virar para o app: o convênio passa a ficar gravado na linha
@@ -102,8 +103,46 @@ function renderGestao() {
   [l0, l1, l2, l3, l4].forEach(function (x) { if (x) vir.appendChild(x); });
   var bv = $("#g-virar"); if (bv) bv.addEventListener('click', function () { var b = this, m = b.dataset.mes; doisCliques(b, 'Confirmar: virar ' + m + '? (as fórmulas viram valor)', function () { b.disabled = true; call('virarAbaMes', { mes: m }).then(function (r2) { if (!r2.ok) { b.disabled = false; return toast((r2.erros || ['Não virou']).join(' ')); } toast(r2.jaVirada ? r2.mensagem : r2.texto + ' · ' + r2.linhas + ' linhas'); carregarGestao(); }).catch(function (e) { b.disabled = false; toast('Erro: ' + e.message); }); }); });
   var ba = $("#g-aba"); if (ba) ba.addEventListener('click', function () { var b = this, m = b.dataset.mes; doisCliques(b, 'Confirmar: criar ' + m + '?', function () { b.disabled = true; call('criarAbaMes', { nome: m }).then(function (r2) { if (!r2.ok) return toast((r2.erros || ['Não criou']).join(' ')); toast('Aba ' + m + ' criada a partir de ' + r2.modelo); carregarGestao(); }).catch(function (e) { toast('Erro: ' + e.message); }); }); });
-  var gip = $("#g-ir-pacotes"); if (gip) gip.addEventListener('click', function (e) { e.preventDefault(); go('pacotes'); });
-  var comRegra = (AT ? AT.pacientes : []).filter(function (p) { return !!p.obsCobranca; }).length; $("#g-regras-n").textContent = comRegra || '';
+  var gip = $("#g-ir-cobranca"); if (gip) gip.addEventListener('click', function (e) { e.preventDefault(); go('cobranca'); });
+  var bcols = $("#g-cols"); if (bcols) bcols.addEventListener('click', function () { var b = this, ch = b.dataset.chave; doisCliques(b, 'Confirmar: criar colunas de ' + ch + '?', function () { b.disabled = true; call('criarColunasMes', { chave: ch }).then(function (r2) { if (!r2.ok) { b.disabled = false; return toast((r2.erros || ['Não criou']).join(' ')); } toast('Colunas de ' + ch + ' criadas em Mensalistas'); carregarGestao(); }).catch(function (e) { b.disabled = false; toast('Erro: ' + e.message); }); }); });
+  var comRegra = (AT ? AT.cobrancas : []).length; $("#g-regras-n").textContent = comRegra || '';
+}
+/* ---------- Faltas → Decidir (gestão, 15/10): toda falta e desmarcação do mês, com o Detalhe da recepção; a gestão decide ---------- */
+var DECISOES = [['não abate', 'Não abate', 'ter'], ['abate no mês seguinte', 'Abate no mês seguinte', 'ter'], ['cobrar taxa de falta', 'Cobrar taxa de falta', 'sec'], ['relevar', 'Relevar', 'ter']];
+function tabelaFaltas() {
+  var r = GES, l = (r.faltas || []).slice().sort(function (a, b) { return (a.decisao ? 1 : 0) - (b.decisao ? 1 : 0) || String(a.data).localeCompare(String(b.data)); });
+  var pct = (BOOT.params && BOOT.params.taxa_falta_pct) || 50;
+  var card = el('<div class="tabela-card"><div class="passo" style="padding:14px 18px 4px"><h2 style="font-size:15px">Faltas e desmarcações · ' + esc(r.mes) + '</h2><span class="tag ' + (l.some(function (x) { return !x.decisao; }) ? 'vermelha' : 'verde') + '">' + l.filter(function (x) { return !x.decisao; }).length + ' sem decisão</span><span class="muted" style="font-weight:500">' + (ehGestao() ? 'taxa de falta = ' + pct + '% do valor da sessão (parâmetro) · fica na aba do mês como linha a cobrar' : 'a gestão decide; a decisão aparece aqui e na linha da planilha') + '</span></div>' + (l.length ? '<div class="tabela-wrap"><table><thead><tr><th>Data</th><th>Paciente</th><th>Profissional</th><th>O que aconteceu</th><th>Detalhe (recepção)</th><th>Decisão</th>' + (ehGestao() ? '<th class="no-print"></th>' : '') + '</tr></thead><tbody></tbody></table></div>' : '<p class="muted" style="padding:0 18px 14px;margin:0">Nenhuma falta ou desmarcação no mês.</p>') + '</div>');
+  var tb = $('tbody', card);
+  l.forEach(function (x) {
+    var det = x.detalhe || String(x.obs || '').replace(/^Falta\/desmarcação — /, '').split(' | ')[0];
+    var tr = el('<tr' + (x.decisao ? ' class="apagada"' : '') + '><td>' + esc(x.data + (x.hora ? ' ' + x.hora : '')) + '</td><td><b>' + esc(x.paciente) + '</b></td><td>' + esc(profCurto(x.profissional)) + '</td><td>' + esc(x.oque) + '</td><td style="max-width:320px;white-space:normal">' + esc(det || '—') + '</td><td>' + (x.decisao ? '<span class="tag verde">' + esc(x.decisao) + '</span>' : '<span class="tag amarela">a decidir</span>') + '</td>' + (ehGestao() ? '<td class="no-print td-dec" style="text-align:right">' + (x.id ? '<div class="acoes" data-dec></div>' : '<span class="muted">sem ID: decida na planilha</span>') + '</td>' : '') + '</tr>');
+    var box = $('[data-dec]', tr);
+    if (box) DECISOES.forEach(function (dc) {
+      var b = el('<button type="button" class="btn ' + dc[2] + ' mini"' + (x.decisao === dc[0] ? ' disabled' : '') + '>' + dc[1] + '</button>');
+      b.addEventListener('click', function () {
+        var obs = window.prompt('Decisão: ' + dc[1] + ' — ' + x.paciente + ' (' + x.data + ').\nObservação (opcional, vai pra linha):', '');
+        if (obs === null) return;
+        var d = { aba: x.aba || r.mes, id: x.id, decisao: dc[0], observacao: obs.trim() };
+        if (dc[0] === 'cobrar taxa de falta') { var vt = window.prompt('Valor da taxa (vazio = ' + pct + '% do valor da sessão da linha de cobrança):', ''); if (vt === null) return; d.valorTaxa = vt.trim(); }
+        $$('button', box).forEach(function (y) { y.disabled = true; });
+        call('decidirFalta', d).then(function (r2) {
+          if (!r2.ok) { $$('button', box).forEach(function (y) { y.disabled = false; }); return toast((r2.erros || ['Não gravou']).join(' ')); }
+          toast('Decidido: ' + r2.decisao + (r2.taxa ? ' · taxa R$ ' + brl(r2.taxa.valor) + ' lançada (' + r2.taxa.id + ')' : ''));
+          if (typeof invalidarResumo === 'function') invalidarResumo(); carregarGestao();
+        }).catch(function (e) { $$('button', box).forEach(function (y) { y.disabled = false; }); toast('Erro: ' + e.message); });
+      });
+      box.appendChild(b);
+    });
+    tb.appendChild(tr);
+  });
+  return card;
+}
+function tabelaCadIncompleto() {
+  var r = GES, l = r.cadastroIncompleto || [];
+  var card = tabelaG('Atendidos no mês sem cobrança cadastrada pro profissional', [['1ª sessão', 'data'], ['Paciente', 'paciente'], ['Profissional', 'profissional'], ['Convênio', function (x) { return x.convenio || 'Particular'; }], ['Pago?', function (x) { return x.pago || '(vazio)'; }], ['Valor', function (x) { return x.valor ? 'R$ ' + brl(x.valor) : ''; }]], l, 'Nenhum.');
+  if (l.length) { var tb = $('tbody', card); $$('tr', tb).forEach(function (tr, i) { var x = l[i]; if (!x) return; var td = el('<td class="no-print" style="text-align:right"><button type="button" class="btn link mini">' + (ehGestao() ? 'Cadastrar cobrança' : 'Ver cadastro') + '</button></td>'); td.querySelector('button').addEventListener('click', function () { go('pacientes', { editar: x.paciente, voltar: 'gestao' }); }); tr.appendChild(td); }); $('thead tr', card).appendChild(el('<th class="no-print"></th>')); }
+  return card;
 }
 /* ---------- Lançamentos: achar qualquer linha (mês mostrado ou todos) e corrigir tudo ---------- */
 function buscarLanc() {
@@ -159,25 +198,3 @@ function salvarLembrete(encerrar) {
 $("#g-lemb-salvar").addEventListener('click', function () { salvarLembrete(false); });
 $("#g-lemb-encerrar").addEventListener('click', function () { salvarLembrete(true); });
 $("#g-lemb-ate").addEventListener('input', function () { this.value = mascaraData(this.value); });
-
-/* ---------- Virada de novembro (gestão, 08/10): propõe as trocas de cobrança; aplica só as marcadas ---------- */
-$("#g-vnov-ver").addEventListener('click', function () {
-  var b = this, box = $("#g-vnov-lista"); b.disabled = true; box.innerHTML = '<div class="carregando">Buscando…</div>';
-  call('viradaPropostas').then(function (r) {
-    if (!r.ok) { box.innerHTML = ''; return toast((r.erros || ['Não consegui']).join(' ')); }
-    if (!r.itens.length) { box.innerHTML = '<div class="muted" style="font-size:13px">Nenhuma troca pendente.</div>'; return; }
-    box.innerHTML = '<ul style="list-style:none;margin:8px 0;padding:0;display:flex;flex-direction:column;gap:6px;font-size:13px">' + r.itens.map(function (it, i) { return '<li><label class="check"><input type="checkbox" data-vn="' + i + '" checked> <span><b>' + esc(it.nome) + '</b><br><span class="muted">' + esc(it.de) + ' → </span>' + esc(it.para) + '</span></label></li>'; }).join('') + '</ul>' +
-      '<label class="campo">Quem decidiu<input id="g-vnov-quem" autocomplete="off" value="Gestão (virada de novembro)"></label><div class="acoes"><button type="button" class="btn" id="g-vnov-ok">Aplicar marcadas</button></div>';
-    $("#g-vnov-ok").addEventListener('click', function () {
-      var b2 = this, sel = $$('[data-vn]', box).filter(function (c) { return c.checked; }).map(function (c) { return r.itens[+c.dataset.vn]; });
-      if (!sel.length) return toast('Nenhuma marcada');
-      doisCliques(b2, 'Confirmar: trocar ' + sel.length + ' cadastro(s)?', function () {
-        b2.disabled = true;
-        call('aplicarAlteracoesLote', { itens: sel, quemInformou: $("#g-vnov-quem").value.trim() || 'Gestão (virada de novembro)' }).then(function (r2) {
-          (r2.feitos || []).forEach(function (nome) { var it = sel.filter(function (x) { return x.nome === nome; })[0], p = pacInfo(nome); if (p && it) Object.keys(it.campos).forEach(function (k) { p[k] = it.campos[k]; }); });
-          box.innerHTML = aviso((r2.erros || []).length ? 'laranja' : 'verde', (r2.feitos || []).length + ' cadastro(s) trocado(s)', esc((r2.erros || []).join(' · ')) + ' Registrado em “Alterações de cadastro”.');
-        }).catch(function (e) { b2.disabled = false; toast('Erro: ' + e.message); });
-      });
-    });
-  }).catch(function (e) { box.innerHTML = ''; toast('Erro: ' + e.message); }).finally(function () { b.disabled = false; });
-});

@@ -10,7 +10,7 @@
 
     <div class="card" id="p-busca" hidden>
       <label class="campo">Paciente
-        <div class="campo-wrap"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg><input id="c-pac" list="dl-pacientes" autocomplete="off" placeholder="Comece a digitar o nome…" style="font-weight:600"></div>
+        <div class="campo-wrap combo"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg><input id="c-pac" autocomplete="off" placeholder="Comece a digitar o nome…" style="font-weight:600"></div>
         <span class="hint" id="c-pac-info"></span>
       </label>
       <div id="c-carregando" class="carregando" hidden>Carregando o cadastro…</div>
@@ -53,37 +53,27 @@
 
 
     <section class="card">
-      <div class="titulo" style="align-items:baseline;gap:10px"><h2>Atendimento</h2><span class="muted">A <strong>cobrança</strong> diz <em>como</em> se calcula o valor; o <strong>pagamento</strong> diz <em>quando</em> se paga.</span></div>
+      <div class="titulo" style="align-items:baseline;gap:10px"><h2>Atendimento</h2><span class="muted">convênio e carteirinha · a cobrança fica por profissional, logo abaixo</span></div>
       <div class="grid">
         <label class="campo">Profissional de referência <span class="leg">(opcional: pode ser atendido por mais de um)</span><span class="req" id="n-prof-req" hidden>*</span><select id="n-prof"><option value="">—</option></select></label>
         <label class="campo" id="l-primeira">Data da 1ª consulta<input id="n-primeira" inputmode="numeric" autocomplete="off" placeholder="dd/mm/aaaa" maxlength="10"></label>
         <label class="campo">Convênio<select id="n-conv"></select></label>
         <label class="campo" id="l-cart" hidden>Nº da carteirinha<input id="n-cart" autocomplete="off"></label>
       </div>
-      <fieldset style="border:0;padding:0;margin:0;display:flex;flex-direction:column;gap:10px">
-        <legend class="campo" style="padding:0;margin-bottom:8px;display:block">Cobrança <span class="leg">— como o valor é calculado</span></legend>
-        <div class="dica" id="n-mod-guia" hidden>Escolha o profissional: a cobrança diz como cobra, o profissional diz qual tabela.</div>
-        <div class="cartoes" id="n-mods-tabela"></div>
-        <div class="muted" id="n-mods-antigo-t" hidden></div>
-        <div class="cartoes" id="n-mods-antigo"></div>
-        <select id="n-mod" class="sr" tabindex="-1" aria-hidden="true"></select>
-        <div id="n-modwarn"></div>
-        <div class="grid" id="n-cob-campos">
-          <label class="campo" id="l-valor-num" hidden><span id="n-valor-txt">Valor combinado por sessão</span> <span class="leg">— em branco = a definir</span><div class="campo-wrap"><span class="prefixo">R$</span><input id="n-valor-num" class="dinheiro" inputmode="decimal" autocomplete="off" placeholder="a definir"></div></label>
-          <label class="campo" id="l-pct-n" hidden>Sessões por pacote<input id="n-pct-n" inputmode="numeric" autocomplete="off" placeholder="4"></label>
-          <label class="campo" id="l-pct-v" hidden>Valor do pacote<div class="campo-wrap"><span class="prefixo">R$</span><input id="n-pct-v" class="dinheiro" inputmode="decimal" autocomplete="off"></div></label>
-          <label class="campo" id="l-pagamento">Pagamento <span class="leg" id="n-pag-leg">quando paga</span><select id="n-pagamento"></select></label>
-        </div>
-        <div class="dica">Paciente novo pediu desconto ou social? Não negocia: <strong>“Aguarde a avaliação da psicóloga.”</strong> Marca Tabela e anota na observação.</div>
-      </fieldset>
+      <div class="dica" id="n-cob-dica">Paciente novo pediu desconto ou social? Não negocia: <strong>“Aguarde a avaliação da psicóloga.”</strong> Cobra pela tabela e anota na observação; a gestão cadastra a cobrança por profissional depois.</div>
       <div class="grid" id="p-gestao-campos" hidden>
-        <label class="campo" hidden>Regra de cobrança<select id="c-regra"></select></label>
-        <label class="campo c3" id="l-c-valor">Histórico de cobrança (antigo) <span class="leg">só leitura · o que estava combinado antes de 08/10</span><input id="c-valor" autocomplete="off" readonly></label>
         <label class="campo c3">Observação de cobrança <span class="leg">o que a recepção precisa saber na hora de cobrar</span><textarea id="c-obs" rows="2"></textarea></label>
       </div>
       <div class="grid" id="p-quem-informou" hidden>
         <label class="campo c3">Quem informou <span class="req">*</span> <span class="leg">fonte da informação, pro histórico em “Alterações de cadastro”</span><input id="c-quem" autocomplete="off" placeholder="ex.: Juliana no grupo Tratamentos · a própria mãe · carteirinha apresentada"></label>
       </div>
+    </section>
+
+    <section class="card" id="p-cpp-card" hidden>
+      <div class="titulo" style="align-items:baseline;gap:10px"><h2>Cobrança por profissional</h2><span class="muted">uma linha por profissional: como cobra, quanto, quando paga, quem decidiu · aba “Cobrança por profissional”</span><span class="esp"></span><button type="button" class="btn ter so-gestao" id="p-cpp-add">+ Adicionar profissional</button></div>
+      <div id="p-cpp-lista" style="display:flex;flex-direction:column;gap:8px"></div>
+      <div id="p-cpp-form" class="painel" hidden></div>
+      <div class="muted so-recepcao" id="p-cpp-nota">Só a gestão altera. Viu algo diferente do combinado? Anote na observação do atendimento e avise a gestão.</div>
     </section>
     </div>
 

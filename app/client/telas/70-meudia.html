@@ -1,0 +1,29 @@
+<section class="tela coluna" id="s-meudia" hidden>
+  <div class="titulo">
+    <h1>Meu dia</h1>
+    <div class="acoes no-print" style="gap:4px">
+      <button type="button" class="btn icone p" id="md-ant" aria-label="Dia anterior"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg></button>
+      <span class="pill branca" id="md-dia" style="font-size:15px">hoje</span>
+      <button type="button" class="btn icone p" id="md-prox" aria-label="Próximo dia"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button>
+    </div>
+    <span class="muted so-pc">fechar o dia: o que ficou pra cobrar, o que entrou, guias e NFs</span>
+    <span class="esp"></span>
+    <button type="button" class="btn ter" id="md-copiar" title="Copia o resumo do dia como texto (pra mandar no grupo)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 012-2h10"/></svg> Copiar resumo</button>
+    <button type="button" class="btn ter imprimir so-pc"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9V3h12v6"/><rect x="3" y="9" width="18" height="9" rx="2"/><path d="M6 14h12v7H6z"/></svg>Imprimir</button>
+    <button type="button" class="btn" id="md-fechar">Fechar o dia</button>
+  </div>
+  <div id="md-carregando" class="carregando esqueleto"><div></div><div></div></div>
+  <div class="fd-resumo" id="md-resumo" hidden></div>
+  <div class="md-grid" id="md-corpo" hidden>
+    <div style="display:flex;flex-direction:column;gap:16px">
+      <section class="card compacto"><div class="passo" style="padding:0"><h2 style="font-size:15px">A cobrar</h2><span class="tag amarela" id="md-n-cobrar">0</span></div><div class="fd-lista" id="md-cobrar"></div></section>
+      <section class="card compacto"><div class="passo" style="padding:0"><h2 style="font-size:15px">Recebido</h2><span class="tag verde" id="md-n-recebido">0</span></div><div class="fd-lista" id="md-recebido"></div><div class="muted" id="md-formas"></div></section>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:16px">
+      <section class="card compacto"><div class="passo" style="padding:0"><h2 style="font-size:15px">Guias a pegar</h2><span class="tag lilas" id="md-n-guias">0</span></div><div class="fd-lista" id="md-guias"></div></section>
+      <section class="card compacto"><div class="passo" style="padding:0"><h2 style="font-size:15px">NF a emitir</h2><span class="tag laranja" id="md-n-nfs">0</span></div><div class="fd-lista" id="md-nfs"></div></section>
+      <section class="card compacto" id="md-antigas-card" hidden><div class="passo" style="padding:0"><h2 style="font-size:15px">Dos últimos 7 dias</h2><span class="muted">NF e guia que ficaram pra trás</span></div><div class="fd-lista" id="md-antigas"></div></section>
+    </div>
+  </div>
+  <div class="muted" id="md-status"></div>
+</section>

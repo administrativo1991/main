@@ -33,7 +33,7 @@
     <div id="d-addbox" class="painel" hidden>
       <div class="cab"><h2>Agendamento</h2><span class="tag lilas" id="d-add-dia"></span><span class="muted">paciente sem horário fixo: retorno, avaliação, reposição</span><span class="esp"></span><button type="button" class="btn icone p" id="d-add-cancel" aria-label="Fechar"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
       <div class="grid g4">
-        <label class="campo c2">Paciente<input id="d-add-pac" list="dl-pacientes" autocomplete="off" placeholder="Comece a digitar o nome…"><span class="hint" id="d-add-pac-info"></span></label>
+        <label class="campo c2">Paciente<div class="campo-wrap combo"><input id="d-add-pac" autocomplete="off" placeholder="Comece a digitar o nome…"></div><span class="hint" id="d-add-pac-info"></span></label>
         <label class="campo">Profissional<select id="d-add-prof"></select></label>
         <label class="campo">Hora<input id="d-add-hora" placeholder="hh:mm" maxlength="5" inputmode="numeric"></label>
         <label class="campo">Tipo<select id="d-add-origem"><option>Avulso</option><option>Primeira consulta</option><option>Retorno</option><option>Encaixe</option><option>Reposição</option></select></label>
@@ -58,7 +58,7 @@
     <div id="d-recbox" class="painel" hidden>
       <div class="cab"><h2>Agenda recorrente</h2><span class="muted">horários fixos de cada profissional · semanal ou quinzenal</span><span class="esp"></span><button type="button" class="btn icone p" id="d-rec-fechar" aria-label="Fechar"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
       <div class="grid g4">
-        <label class="campo c2">Paciente<input id="r-pac" list="dl-pacientes" autocomplete="off"><span class="hint" id="r-pac-info"></span></label>
+        <label class="campo c2">Paciente<div class="campo-wrap combo"><input id="r-pac" autocomplete="off"></div><span class="hint" id="r-pac-info"></span></label>
         <label class="campo">Profissional<select id="r-prof"></select></label>
         <label class="campo">Dia da semana<select id="r-dia"><option>Segunda</option><option>Terça</option><option>Quarta</option><option>Quinta</option><option>Sexta</option><option>Sábado</option><option>Domingo</option></select></label>
         <label class="campo">Hora<input id="r-hora" placeholder="hh:mm" maxlength="5" inputmode="numeric"></label>
@@ -76,7 +76,7 @@
     <div class="tabela-card dia-card" id="d-lista-card">
       <div class="tabela-wrap">
         <table class="dia">
-          <thead><tr><th class="th-hora">Hora</th><th>Paciente</th><th class="th-prof">Profissional · modalidade</th><th>Cobrança</th><th>Situação</th><th class="th-acao no-print"></th></tr></thead>
+          <thead><tr><th class="th-hora">Hora</th><th>Paciente</th><th class="th-prof">Profissional · cobrança</th><th>Cobrança hoje</th><th>Situação</th><th class="th-acao no-print"></th></tr></thead>
           <tbody id="d-list"></tbody>
         </table>
       </div>
@@ -96,11 +96,8 @@
       </section>
       <section class="card compacto fim-dia">
         <h2>Fim do dia</h2>
-        <label class="check"><input type="checkbox" id="fd-1"> Ninguém ficou em “Aguardando”</label>
-        <label class="check"><input type="checkbox" id="fd-2"> Um registro por paciente que chegou</label>
-        <label class="check"><input type="checkbox" id="fd-3"> NFs de quem pagou hoje emitidas</label>
-        <label class="check"><input type="checkbox" id="fd-4"> Dinheiro da gaveta = livro caixa</label>
-        <div class="acoes"><button type="button" class="btn ter roxo" id="fd-fechar">Fechar o dia</button><span class="muted" id="fd-status"></span></div>
+        <div class="muted">Antes de ir embora: confira o que foi cobrado, recebido, as guias e as NFs do dia na tela <b>Meu dia</b>.</div>
+        <div class="acoes"><button type="button" class="btn ter roxo" id="fd-fechar">Fechar o dia <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button><span id="fd-status"></span></div>
       </section>
     </div>
   </div>

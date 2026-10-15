@@ -1,22 +1,22 @@
 <section class="tela" id="s-registrar" hidden>
   <form class="principal" id="f-atend" novalidate>
     <div class="titulo" style="gap:12px">
-      <button type="button" class="voltar" data-go="hoje"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>Hoje</button>
+      <button type="button" class="voltar" data-go="hoje"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>Agenda</button>
       <h1 style="font-size:24px">Registrar atendimento</h1>
       <span class="pill branca" id="a-rascunho" hidden></span>
       <span class="esp"></span>
       <span class="muted" id="a-aba-nome"></span>
     </div>
 
-    <div id="a-carregando" class="carregando">Carregando…</div>
+    <div id="a-carregando" class="carregando esqueleto"><div></div><div></div><div></div></div>
 
     <section class="card" id="a-passo1" hidden>
       <div class="passo"><span class="num">1</span><h2>Quem</h2></div>
       <div class="grid">
         <label class="campo c2">Paciente
-          <div class="campo-wrap">
+          <div class="campo-wrap combo">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
-            <input id="a-pac" list="dl-pacientes" autocomplete="off" placeholder="Comece a digitar o nome…" style="font-weight:600">
+            <input id="a-pac" autocomplete="off" placeholder="Nome do paciente ou de quem paga…" style="font-weight:600">
             <button type="button" class="btn link" id="a-novo">+ Novo paciente</button>
           </div>
           <span class="hint" id="a-pac-hint">Só quem está em Pacientes.</span>
@@ -24,88 +24,51 @@
         <label class="campo">Profissional<select id="a-prof"><option value="">—</option></select></label>
         <label class="campo">Data<input id="a-data" inputmode="numeric" maxlength="10"></label>
         <label class="campo">Hora<input id="a-hora" inputmode="numeric" maxlength="5" placeholder="hh:mm"></label>
-        <label class="campo">Tipo<select id="a-tipo"></select></label>
+        <label class="campo">Tipo<select id="a-tipo"></select><span class="hint" id="a-proc-hint"></span></label>
       </div>
+      <label class="campo" id="l-proc" hidden>Procedimento (lista completa)<select id="a-proc"></select></label>
     </section>
 
-    <div id="a-avisos"></div>
-
-    <div id="a-renbox" class="painel" hidden></div>
-
-    <div id="a-antbox" class="painel" hidden>
-      <div class="cab"><h2>Pagamento antecipado · lançar sessões pagas</h2><span class="esp"></span><button type="button" class="btn icone p" id="a-ant-cancel" aria-label="Fechar"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
-      <p class="muted" style="margin:0">Lança agora uma linha por sessão, com o valor por sessão e Pago? = Sim, nas datas da agenda. Se o paciente faltar ou remarcar, corrija a sessão depois (Agenda → Corrigir lançamento).</p>
-      <div class="grid">
-        <label class="campo">Sessões<input id="a-ant-n" inputmode="numeric" value="4"></label>
-        <label class="campo">Valor por sessão<div class="campo-wrap"><span class="prefixo">R$</span><input id="a-ant-valor" class="dinheiro" inputmode="decimal"></div></label>
-        <label class="campo">Data do pagamento<input id="a-ant-datapag" inputmode="numeric" maxlength="10"></label>
-        <label class="campo">Forma<select id="a-ant-forma"></select></label>
-        <label class="campo">Quem pagou<input id="a-ant-quem" list="dl-pagadores" autocomplete="off"></label>
-        <label class="campo">NF emitida?<select id="a-ant-nf"><option>Não</option><option>Sim</option></select></label>
-        <label class="campo">Nº da NF<input id="a-ant-nfn" autocomplete="off"></label>
-        <label class="campo c2">Datas das sessões <span class="leg">(uma por linha: dd/mm/aaaa hh:mm)</span><textarea id="a-ant-datas" rows="4" placeholder="15/10/2026 09:30"></textarea></label>
-      </div>
-      <div class="faixa nota" id="a-ant-total"></div>
-      <div class="acoes"><button type="button" class="btn sec" id="a-ant-buscar">Buscar datas na agenda</button><button type="button" class="btn" id="a-ant-salvar">Lançar sessões pagas</button></div>
-    </div>
+    <div id="a-bloco"></div>
+    <div id="a-bloco-acoes" class="acoes" hidden><button type="button" class="btn" id="a-btn-pagmes">Registrar pagamento do mês</button><button type="button" class="btn ter" id="a-btn-cad" hidden>Ver cadastro</button></div>
+    <div id="a-pagmes" class="painel" hidden></div>
 
     <section class="card" id="a-passo2" hidden>
       <div class="passo"><span class="num">2</span><h2>O que aconteceu</h2></div>
       <div class="seg solto" id="a-oque-seg" role="group" aria-label="O que aconteceu"></div>
       <select id="a-oque" class="sr" tabindex="-1" aria-hidden="true"></select>
-      <label class="check forte" id="l-mesma-semana" hidden><input type="checkbox" id="a-mesma-semana"> Remarcada na mesma semana <span class="leg">(não gasta sessão do pacote)</span></label>
+      <label class="campo" id="l-detalhe" hidden>Detalhe <span class="leg" id="a-detalhe-leg">— o que o paciente ou o responsável disse, a que horas avisou, como avisou</span>
+        <textarea id="a-detalhe" rows="2" placeholder="ex.: desmarcou 3 h antes · não apareceu, não atendeu o telefone · mãe disse que não veio por causa da chuva · avisou às 7h que o filho acordou com febre"></textarea>
+      </label>
     </section>
 
     <section class="card" id="a-passo3" hidden>
-      <div class="passo"><span class="num">3</span><h2>Cobrança</h2><span class="esp"></span>
-        <span class="muted">Procedimento: <strong id="a-proc-view" style="color:var(--tx)">—</strong> <button type="button" class="btn link" id="a-proc-alterar" style="padding:0 0 0 6px;min-height:0">alterar</button></span>
-      </div>
-      <label class="campo" id="l-proc" hidden>Procedimento (lista completa)<select id="a-proc"></select></label>
-      <div id="a-cob-aviso"></div>
-      <div id="a-convbox" class="faixa cinza" hidden>
-        <span id="a-conv-txt"></span><span class="esp"></span>
-        <label class="check forte"><input type="checkbox" id="a-guia-chk"> Guia assinada antes da sessão</label>
-        <select id="a-guia" class="sr" tabindex="-1" aria-hidden="true"><option>Não</option><option>Sim</option></select>
-      </div>
-      <div id="a-pagbox" class="grid g4">
-        <div class="campo">Pago?
-          <div class="seg" id="a-pago-seg"><button type="button" data-v="Sim" aria-pressed="false">Sim</button><button type="button" data-v="Não" aria-pressed="false">Não</button><button type="button" data-v="Parcial" aria-pressed="false">Parcial</button></div>
-          <span class="hint" id="a-pago-outro"><button type="button" class="btn link" id="a-pago-mais" style="padding:0;min-height:0;font-size:12px">outra opção</button></span>
-          <select id="a-pago" class="sr" tabindex="-1" aria-hidden="true"></select>
-        </div>
+      <div class="passo"><span class="num">3</span><h2>Recebeu?</h2><span class="muted" id="a-recebeu-leg"></span></div>
+      <div class="seg grande" id="a-recebeu-seg" role="group" aria-label="Recebeu?"><button type="button" data-v="Sim" aria-pressed="false">Sim</button><button type="button" data-v="Não" aria-pressed="false">Não</button><button type="button" data-v="Parcial" aria-pressed="false">Parcial</button></div>
+      <div id="a-pagbox" class="grid g4" hidden>
         <label class="campo">Valor <span class="hint" id="a-valor-hint"></span>
-          <div class="campo-wrap"><span class="prefixo">R$</span><input id="a-valor" class="dinheiro" inputmode="decimal" readonly></div>
+          <div class="campo-wrap"><span class="prefixo">R$</span><input id="a-valor" class="dinheiro" inputmode="decimal"></div>
         </label>
-        <label class="campo">Forma<select id="a-forma"></select></label>
-        <label class="campo">Desconto<select id="a-desc-sel"><option value="">Nenhum</option><option value="sim">Aplicar desconto…</option></select></label>
         <label class="campo" id="l-recebido" hidden>Recebido agora <span class="hint">o resto fica em aberto</span>
           <div class="campo-wrap"><span class="prefixo">R$</span><input id="a-recebido" class="dinheiro" inputmode="decimal" placeholder="0,00"></div>
         </label>
-        <label class="campo" id="l-datapag" hidden>Data do pagamento<input id="a-datapag" inputmode="numeric" maxlength="10"></label>
-        <label class="campo c2">Quem pagou <span class="leg">(vai na nota)</span>
+        <label class="campo">Forma<select id="a-forma"></select></label>
+        <label class="campo">Data do pagamento<input id="a-datapag" inputmode="numeric" maxlength="10"></label>
+        <label class="campo c2">Quem pagou <span class="leg">(vai na nota) — só se foi outra pessoa</span>
           <div class="campo-wrap"><input id="a-quem" list="dl-pagadores" autocomplete="off"><span class="tag lilas" id="a-quem-tag" hidden>pagador habitual</span></div>
         </label>
-        <div class="campo">NF emitida?
-          <div class="seg" id="a-nf-seg"><button type="button" data-v="Sim" aria-pressed="false">Sim</button><button type="button" data-v="Não" aria-pressed="false">Depois</button></div>
-          <select id="a-nf" class="sr" tabindex="-1" aria-hidden="true"><option>Não</option><option>Sim</option><option>Não se aplica</option></select>
-        </div>
+        <label class="check forte" style="align-self:end"><input type="checkbox" id="a-nf-chk"> NF emitida</label>
         <label class="campo">Nº da NF<input id="a-nfn" autocomplete="off" placeholder="—"></label>
+        <select id="a-nf" class="sr" tabindex="-1" aria-hidden="true"><option>Não</option><option>Sim</option><option>Não se aplica</option></select>
       </div>
-      <div id="a-descbox" class="faixa cinza" hidden style="display:block">
-        <div class="grid" style="margin-bottom:8px">
-          <label class="campo">Desconto<input id="a-desc-val" placeholder="20 ou 10%" inputmode="decimal"></label>
-          <label class="campo">Quem autorizou (obrigatório)<input id="a-desc-motivo" placeholder="ex.: Juliana, no grupo Tratamentos"></label>
-          <label class="campo">Valor final<input id="a-desc-final" readonly></label>
-        </div>
-        <span class="muted">Vai pra Observação como "Desconto R$ X — motivo" e aparece na lista de descontos do mês, na tela Pendências.</span>
-      </div>
+      <div class="muted" id="a-nao-txt" hidden>Fica em aberto na linha, com o valor. Aparece em "a receber" (Meu dia e Cobrança do mês).</div>
     </section>
 
-    <div id="a-probono" class="faixa lilas" hidden>
-      <span class="num" style="width:26px;height:26px;border-radius:999px;background:var(--roxo);color:#fff;font-family:var(--fh);font-weight:600;font-size:13px;display:flex;align-items:center;justify-content:center;flex:none">3</span>
-      <div class="corpo" style="font-size:15px"><span id="a-probono-txt"></span></div>
-      <button type="button" class="btn link" id="a-cobrar-assim">Cobrar mesmo assim</button>
-    </div>
+    <section class="card" id="a-passo-guia" hidden>
+      <div class="passo"><span class="num">3</span><h2>Guia</h2></div>
+      <label class="check forte"><input type="checkbox" id="a-guia-chk"> Guia assinada (colhida na hora)</label>
+      <select id="a-guia" class="sr" tabindex="-1" aria-hidden="true"><option>Não</option><option>Sim</option></select>
+    </section>
 
     <section class="card" id="a-passo-obs" hidden>
       <label class="campo">Observação <span class="leg">— o que você descobriu na hora; a gestão decide se vai pro cadastro</span>
@@ -131,14 +94,11 @@
         <div style="min-width:0"><div id="a-pc-nome" style="font-family:var(--fh);font-weight:600;font-size:16px">Escolha o paciente</div><div class="muted" id="a-pc-nasc"></div></div>
       </div>
       <dl style="margin:0;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px 12px;font-size:13px">
-        <div><dt class="muted">Cobrança</dt><dd style="margin:0;font-weight:700" id="a-pc-mod">—</dd></div>
-        <div><dt class="muted">Valor da sessão</dt><dd style="margin:0;font-weight:700" id="a-pc-valor">—</dd></div>
-        <div><dt class="muted">Convênio</dt><dd style="margin:0;font-weight:700" id="a-pc-conv">—</dd></div>
         <div><dt class="muted">Pagador habitual</dt><dd style="margin:0;font-weight:700" id="a-pc-pag">—</dd></div>
-        <div><dt class="muted">Pagamento</dt><dd style="margin:0;font-weight:700" id="a-pc-quando">—</dd></div>
-        <div><dt class="muted">Profissional</dt><dd style="margin:0;font-weight:700" id="a-pc-prof">—</dd></div>
+        <div><dt class="muted">Convênio</dt><dd style="margin:0;font-weight:700" id="a-pc-conv">—</dd></div>
       </dl>
-      <div style="display:flex;gap:14px;font-size:13px;font-weight:700"><button type="button" class="btn link" id="a-editcad" style="padding:0;min-height:0">Ver cadastro</button><button type="button" class="btn link" id="a-hist" style="padding:0;min-height:0">Ver pacotes</button></div>
+      <details id="a-pc-cad"><summary class="muted" style="cursor:pointer;font-size:13px;font-weight:700">Cobrança no cadastro</summary><div id="a-pc-linhas" style="font-size:13px;line-height:1.6;margin-top:6px"></div></details>
+      <div style="display:flex;gap:14px;font-size:13px;font-weight:700"><button type="button" class="btn link" id="a-editcad" style="padding:0;min-height:0">Ver cadastro</button><button type="button" class="btn link" id="a-hist" style="padding:0;min-height:0">Cobrança do mês</button></div>
     </div>
     <div class="card compacto">
       <div class="eyebrow">Vai ser gravado</div>
@@ -147,7 +107,7 @@
   </aside>
 </section>
 <footer class="rodape" id="a-rodape" hidden>
-  <span class="nota">Nada é apagado: “excluir” depois vira “cancelado”.</span>
+  <span class="nota so-gestao">Nada é apagado: “excluir” depois vira “cancelado”.</span>
   <button type="button" class="btn ter grande" id="a-salvar-outro">Salvar e registrar outro</button>
   <button type="button" class="btn grande" id="a-salvar"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l5 5L20 7"/></svg>Salvar atendimento</button>
 </footer>
