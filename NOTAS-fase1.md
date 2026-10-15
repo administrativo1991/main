@@ -5,7 +5,7 @@ abertas pra gestão e como testar. Atualizado a cada item concluído. Data de in
 
 > **Estado em 15/10 (fim da tarde): Fase 1 no ar. Real = 2026-10-15-10, teste = 2026-10-15-09 (ver `docs/DEPLOYS.md`,
 > "No ar agora"). Das 16 linhas "a confirmar" só restam as 2 da Naimara × Juliana.** Pendências de dados no fim da seção 7
-> (Luiz Miguel: sessões da avaliação com a Juliana; aba Novembro antes de 01/11; lançamentos de 14 e 15/10).
+> (aba Novembro antes de 01/11; lançamentos de 14 e 15/10). Luiz Miguel: **resolvido em 15/10 (noite)**, ver o fim da seção 7.
 > Histórico: publicada no teste em 2026-10-15-01 e na real em 2026-10-15-02 ("amei, tá aprovado"). A Fase 2 (WhatsApp, conciliação, parcelas, perdas, confirmação da véspera,
 > check-in, alertas, alta, ficha) começa em chat novo, lendo este arquivo primeiro. Decisões da gestão em 15/10: (a) OK no plano e no relatório do item 0; (b) perguntas 1 e 2 da
 > seção 3: **sim** (coluna `Profissional` + 6 colunas por competência em `Mensalistas`; `Vigente desde/até`);
@@ -358,3 +358,9 @@ Silva vira mensalista social: Pacientes linha 435 (observação que a recepção
 (Modalidade = Mensalidade social). Log "Alterações de cadastro" A374:G381. Vitor Barcelos: sem linha (o pagamento da
 avaliação terminou, R$ 400 + R$ 400). **Única linha ainda "a confirmar"**: Naimara × Juliana (C-…-129 e -130; a gestão
 decide o valor). Emily × Juliana continua sem linha (sem sessão desde setembro).
+
+**15/10, noite — Luiz Miguel (gestão)**: "Luiz Miguel é terapia com a Juliana e avaliação com a Giovana". As sessões da
+Juliana (10, 23, 30/09…) **não** fazem parte da avaliação: ficam como sessão comum de convênio (Repasse: sessão Sabin
+normal). A contagem do pacote Sabin conta só as aplicações da Giovana (23/09, 30/09, 07/10 → 21/10 = "sessão 4 de 5"),
+que é o que o app já faz. Nada a gravar.
+
