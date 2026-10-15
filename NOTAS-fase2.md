@@ -11,6 +11,7 @@ Arquivo de retomada da Fase 2 (começou em 15/10/2026, à noite). Quem abrir um 
 | # | Item | Situação |
 |---|---|---|
 | 1 | **Confirmações + WhatsApp** (não só na véspera: a recepção escolhe amanhã, daqui a 2 dias, a semana) | feito · teste |
+| 1b | **Cobrar no WhatsApp** (Cobrança do mês, textos oficiais) | feito · teste |
 | 2 | Alertas | a fazer |
 | 3 | Ficha do paciente | a fazer |
 | 4 | Perdas | a fazer |
@@ -91,3 +92,26 @@ etc". Preenchido na CÓPIA TESTE: Dra. para todas as profissionais ativas, Dr. V
 junto com a promoção.
 
 **Falta (gestão)**: testar na CÓPIA TESTE; OK para a real (código + coluna `Nome na mensagem`).
+
+**Emojis (gestão, 15/10, print do WhatsApp)**: com o link `wa.me` os emojis chegavam como "�" (acentos e travessão
+chegavam certos). O texto que o app monta está certo; o defeito é conhecido do `wa.me` e o contorno relatado é
+`https://api.whatsapp.com/send?phone=…&text=…`. Trocado nas duas telas (`Mensagens.linkWhats`). **Confirmar no teste.**
+
+## 1b. Cobrar no WhatsApp (Cobrança do mês)
+
+**Pedido (15/10)**: textos oficiais da clínica para cobrança de mensalidade antecipada e de consultas no fim do mês.
+
+- Em cada linha em aberto da **Cobrança do mês**, botão **Cobrar no WhatsApp**. Texto escolhido pela forma de pagamento:
+  Mensalidade fixa e antecipado → "pagamento da mensalidade … referente a {mes}" com o valor do mês (o que falta, se pagou
+  em parte); Por sessão no fim do mês → "consultas realizadas … durante o mês de {mes}" com o total a receber do mês.
+- Pix (CNPJ 52.763.088/0001-05) e favorecido (Clínica Nascente LTDA.) estão no texto, como a gestão mandou.
+- Textos em `app/shared/mensagens.js`; a gestão troca em `Parâmetros` (linhas novas `msg_cobranca_mensalidade` e
+  `msg_cobranca_consultas`, com `{pagador}`, `{mes}`, `{valor}`).
+- Sem número: o botão pede o WhatsApp e grava no cadastro (com log), como em Confirmações.
+- Abrir o WhatsApp grava na aba `Mensagens WhatsApp` uma linha com Tipo "Cobrança mensalidade" / "Cobrança consultas",
+  `Competência` e `Valor (R$)` (colunas novas no fim da aba); a linha da Cobrança do mês mostra "cobrado dd/mm hh:mm" e o
+  botão vira "Cobrar de novo". É a base dos Alertas (item 2).
+- Uma mensagem por paciente × profissional (irmãs com mensalidade recebem uma cada). Juntar por família fica para depois,
+  se a gestão quiser.
+- Testes: `tests/servidor-fase1.test.js` (bloco "cobrar no WhatsApp"); simulação: digitar número → link → "cobrado".
+

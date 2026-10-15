@@ -91,6 +91,10 @@ Uma linha por paciente × profissional que paga **antecipado** (até o dia 10), 
 do mês (sessões agendadas × valor, menos as canceladas pela clínica), situação (em dia · vence dia 10 · tolerância até 15 ·
 atrasada · a receber) e **Registrar pagamento** (pode marcar mais de um mês = adiantamento).
 
+**Cobrar no WhatsApp** (linhas em aberto): abre a conversa com a mensagem oficial de cobrança (mensalidade, ou consultas
+do mês para quem paga no fim do mês), com valor, Pix e favorecido. Confira e envie no WhatsApp. A linha passa a mostrar
+"cobrado" com a data. Sem número no cadastro, o app pede o WhatsApp e guarda no paciente.
+
 ## 6. Perguntas frequentes
 
 - **Agendei duas vezes a mesma pessoa**: clique no item repetido → **Remover** → motivo "duplicado". A linha fica marcada
