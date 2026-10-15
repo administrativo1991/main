@@ -153,6 +153,11 @@ Convênio → `Convênio (fatura)`; pro bono/permuta/teste/retorno → `Não se 
 
 ## 3. Perguntas em aberto pra gestão (respondem antes do item correspondente; o resto não espera)
 
+> Relidas em 15/10 contra o pedido de 14/10: as perguntas 3, 4, 6 e 7 já estão respondidas pelo próprio pedido e a 5 não se
+> aplica (só a Alice estava em "Pacote de sessões" e `Mensalistas` já diz Mensalidade fixa R$ 150). **Faltam só a 1 e a 2.**
+> Decisão da gestão em 15/10: linhas de um segundo profissional podem ser acrescentadas a qualquer momento (nov, dez, fev…)
+> por "+ Adicionar profissional"; sem linha o app cobra pela tabela cheia e avisa "cadastro incompleto".
+
 1. **Mensalistas por paciente × profissional**: ok acrescentar a coluna `Profissional` no fim e as 6 colunas por
    competência (`NOVEMBRO/2026 — sessões agendadas`, `— valor cobrado`, `— pago?`, `— data`, `— forma`, `— NF`)?
    As colunas antigas (SETEMBRO/OUTUBRO) continuam lidas como estão.
