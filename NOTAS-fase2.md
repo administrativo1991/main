@@ -29,17 +29,28 @@ do paciente ou do responsável). Decisão da gestão: **pedir na hora** — na t
 um campo; a recepção digita uma vez e ele vai para `Pacientes` (coluna `WhatsApp do pagador`, já existente) com log em
 `Alterações de cadastro`. O cadastro se completa com o uso.
 
-**Texto**: provisório, até a gestão mandar o oficial ("pode colocar ele de placeholder"). Fica no código só como padrão;
-o oficial vai na aba `Parâmetros`, linha nova `msg_confirmacao` (coluna Valor), com `{pagador}` (primeiro nome) e
-`{sessoes}` (uma linha por sessão: "• Ana com Juliana Ribeiro — terça, 20/10, às 15:00"). Na célula, `\n` também quebra
-linha. Enquanto a linha não existir, a gestão vê a faixa "Texto provisório" na tela.
+**Texto**: o **oficial da clínica**, mandado pela gestão em 15/10 (noite). Está em `app/shared/mensagens.js` (o mesmo
+módulo no servidor e na tela). Com **uma sessão** sai exatamente como a gestão escreveu; com **várias sessões da família**
+no período sai "das suas consultas" e um bloco Data/Horário por sessão (com 👤 nome quando são vários pacientes e "com
+profissional" quando são vários profissionais). Hora no formato 09h30. A gestão pode trocar o texto na aba `Parâmetros`,
+linha nova `msg_confirmacao`, usando `{pagador}` (primeiro nome de quem paga; sem pagador, do paciente),
+`{da_sua_consulta}`, `{com_profissional}` e `{sessoes}`; `\n` escrito na célula quebra linha.
 
-Texto provisório:
 ```
-Olá, {pagador}! Aqui é da Clínica Nascente. Passando para confirmar:
+Olá, {pagador}! Passando para lembrar {da_sua_consulta} na Clínica Nascente{com_profissional}:
+
 {sessoes}
-Podemos confirmar? Se precisar desmarcar, é só responder por aqui.
+📍 *Local:* Av. Andradas, 547 – Térreo, Loja 5
+
+📋 *IMPORTANTE: É obrigatório passar pela recepção para registrar sua chegada antes de seguir para o consultório.*
+
+⚠️ Caso não possa comparecer, avise a recepção com pelo menos *24 horas de antecedência*. A falta sem aviso impede que o profissional disponibilize esse horário para outro paciente.
+
+Agradecemos a compreensão e a colaboração!
 ```
+
+Pergunta da gestão (15/10): a mensagem é só a de confirmação de consulta. **Mensagem de cobrança** (valor, mês, Pix) fica
+para o item 2 (Alertas), com o texto que a clínica usa.
 
 **Como funciona** (menu **Confirmações**, recepção e gestão):
 - Período: Amanhã · Daqui a 2 dias · Resto da semana · Próxima semana · Outro período (até 14 dias). Filtro por
@@ -71,4 +82,4 @@ Lista do dia nem duplicar a Agenda, Confirmou tira a sessão da mensagem, WhatsA
 cadastro com log); simulação Playwright 1280 e 390 px sem erro de console (Próxima semana, Confirmou, Ver mensagem,
 salvar WhatsApp, link `wa.me`, Não vem → Agenda com o formulário aberto).
 
-**Falta (gestão)**: testar na CÓPIA TESTE; mandar o texto oficial; OK para a real.
+**Falta (gestão)**: testar na CÓPIA TESTE; OK para a real.
