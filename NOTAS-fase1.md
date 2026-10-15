@@ -3,10 +3,13 @@
 Arquivo de retomada. Quem abrir um chat novo começa por aqui: diz o que foi feito, o que falta, as decisões, as perguntas
 abertas pra gestão e como testar. Atualizado a cada item concluído. Data de início: 15/10/2026.
 
-> **Estado em 15/10 (manhã): plano escrito, aguardando OK da gestão. Nenhum código tocado.**
-> O relatório do item 0 (cobrança por paciente × profissional, nome a nome) está sendo montado a partir da planilha
-> real e será entregue como arquivo fora do repositório (tem nome de paciente; a regra do projeto proíbe dado de paciente
-> em `docs/`). Depois do OK: carga da aba `Cobrança por profissional` na CÓPIA TESTE e início do código.
+> **Estado em 15/10: plano escrito e relatório do item 0 entregue; aguardando OK da gestão nos dois. Nenhum código tocado.**
+> O relatório (cobrança por paciente × profissional, nome a nome, 163 linhas propostas + 28 pares sem linha + 7 pontos a
+> decidir + 6 divergências) foi lido da planilha real em 15/10 e entregue como arquivo fora do repositório (tem nome de
+> paciente; a regra do projeto proíbe dado de paciente em `docs/`). A mesma lista está na aba
+> `_relatorio cobrança 15-10` da CÓPIA TESTE, com a coluna "OK? (gestão)" pra anotar. O script que gera o relatório
+> (`relatorio.js`) e os dados lidos ficam no scratchpad da sessão; se a sessão acabar, basta reler as abas da real e rodar
+> de novo. Depois do OK: carga da aba `Cobrança por profissional` na CÓPIA TESTE e início do código (passo 1).
 
 ---
 
@@ -175,4 +178,4 @@ Convênio → `Convênio (fatura)`; pro bono/permuta/teste/retorno → `Não se 
 | Data | Item | Feito | Falta |
 |---|---|---|---|
 | 15/10 | plano | NOTAS escritas; branch avançado até o código no ar | OK da gestão |
-| 15/10 | item 0 | relatório em montagem a partir da planilha real | OK da gestão; carga na cópia |
+| 15/10 | item 0 | relatório entregue (arquivo + aba `_relatorio cobrança 15-10` na cópia); regras aplicadas: social → Mensalidade fixa 200 (Antecipado desde 01/11; Posterior até 31/10 pra quem não adiantou outubro); especial → Mensalidade fixa com Mensalistas!C; ex-planos → Por sessão = cadastro AE (= Mensalistas!C ÷ 4), Posterior até 31/10 + Antecipado desde 01/11; Por sessão (combinado) → valor de AE; 2º profissional de outra especialidade → só o que as linhas de set/out mostram (tabela cheia = sem linha; Convênio/PLASC pelas linhas); aplicação de teste → sem linha; Davi × Giovana → Pro bono (obs. do cadastro) | OK da gestão; carga na cópia |
