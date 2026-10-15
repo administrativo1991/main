@@ -730,7 +730,7 @@ table.cm .acoes{justify-content:flex-end;gap:4px;flex-wrap:wrap}
         <label class="campo c2">Paciente<div class="campo-wrap combo"><input id="d-add-pac" autocomplete="off" placeholder="Comece a digitar o nome…"></div><span class="hint" id="d-add-pac-info"></span></label>
         <label class="campo">Profissional<select id="d-add-prof"></select></label>
         <label class="campo">Hora<input id="d-add-hora" placeholder="hh:mm" maxlength="5" inputmode="numeric"></label>
-        <label class="campo">Tipo<select id="d-add-origem"><option>Avulso</option><option>Primeira consulta</option><option>Retorno</option><option>Encaixe</option><option>Reposição</option></select></label>
+        <label class="campo">Tipo<select id="d-add-origem"><option>Avulso</option><option>Primeira consulta</option><option>Retorno</option><option>Aplicação de teste</option><option>Encaixe</option><option>Reposição</option></select></label>
         <label class="campo c3">Observação<input id="d-add-obs"></label>
       </div>
       <div class="acoes"><button type="button" class="btn" id="d-add-ok">Agendar no dia</button><button type="button" class="btn ter" id="d-add-rec">Tornar recorrente (toda semana)</button></div>
@@ -1801,7 +1801,7 @@ function procsDe(esps) { return AT.procedimentos.filter(function (p) { return !e
 function ehVariante(p, lista) { var i = p.nome.indexOf(' – '); if (i < 0) return false; var base = p.nome.slice(0, i); return lista.some(function (q) { return q.nome === base; }); }
 function tiposDe(esps) { var l = procsDe(esps); return l.filter(function (p) { return !ehVariante(p, l) && !/\(compra\)/.test(p.nome) && !/^Mensalidade|^Renovação|^Antecipado|^Taxa de falta/.test(p.nome); }); }
 function procObj(nome) { return AT.procedimentos.filter(function (p) { return p.nome === nome; })[0] || null; }
-function tipoCurto(it) { var t = String(it.tipo || '').trim(); if (t) return t.toLowerCase(); var o = String(it.origem || ''); if (/Primeira consulta|Retorno|Encaixe|Reposição|Avulso/i.test(o)) return o.toLowerCase(); var esp = espDoProf(it.profissional); return /Psicolog|Psican|ABA|Psicopedag/i.test(esp) ? 'sessão' : 'consulta'; }
+function tipoCurto(it) { var t = String(it.tipo || '').trim(); if (t) return t.toLowerCase(); var o = String(it.origem || ''); if (/Primeira consulta|Retorno|Aplicação de teste|Encaixe|Reposição|Avulso/i.test(o)) return o.toLowerCase(); var esp = espDoProf(it.profissional); return /Psicolog|Psican|ABA|Psicopedag/i.test(esp) ? 'sessão' : 'consulta'; }
 // lista própria de pacientes (no lugar do datalist nativo): busca por nome ou pagador, setas, Enter, clique
 function comboPacientes(input, aoEscolher) {
   var box = el('<div class="combo-lista" hidden role="listbox"></div>'), idx = -1, itens = [];
@@ -2196,7 +2196,7 @@ function acaoDia(ac, it) {
   if (ac === 'chegou') { marcarChegou(it, true); renderDia(); toast(it.paciente + ' chegou · ' + agoraHora()); return; }
   if (ac === 'deschegou') { marcarChegou(it, false); renderDia(); return; }
   if (ac === 'confirmou') { call('confirmar', { data: DIA.data, hora: it.hora || '', paciente: it.paciente, profissional: it.profissional }).then(function (r) { if (!r.ok) return toast((r.erros || ['Não gravou']).join(' ')); toast('Confirmado: ' + it.paciente); carregarDia(); }).catch(function (e) { toast('Erro: ' + e.message); }); return; }
-  if (ac === 'registrar') { go('registrar', { paciente: it.paciente, profissional: it.profissional, data: DIA.data, hora: it.hora || '' }); return; }
+  if (ac === 'registrar') { go('registrar', { paciente: it.paciente, profissional: it.profissional, data: DIA.data, hora: it.hora || '', tipo: it.tipo || '' }); return; }
   if (ac === 'cadastro') { go('pacientes', { editar: it.paciente, voltar: 'hoje' }); return; }
   if (ac === 'ver') { selecionar(it); return; }
   selecionar(it, ac); // naovem · remarcar · remover · corrigir: formulário dentro do painel do paciente
@@ -2625,7 +2625,7 @@ function abrirVaga(bt, prof, data, hora) {
   vagaPop = el('<div class="ag-pop" role="dialog" aria-label="Agendar ' + esc(hora) + '">' +
     '<div class="ag-pop-cab"><b>' + esc(hora) + ' · ' + esc(profCurto(prof)) + '</b><span>' + esc(diaSem + ' ' + data.slice(0, 5)) + '</span><button type="button" class="btn icone p" data-x aria-label="Fechar">' + ic('fechar', 14) + '</button></div>' +
     '<label class="campo">Paciente<input data-v="pac" list="dl-pacientes" autocomplete="off" placeholder="Comece a digitar o nome…"><span class="hint" data-v="info"></span></label>' +
-    '<label class="campo">Tipo<select data-v="origem"><option>Avulso</option><option>Primeira consulta</option><option>Retorno</option><option>Encaixe</option><option>Reposição</option></select></label>' +
+    '<label class="campo">Tipo<select data-v="origem"><option>Avulso</option><option>Primeira consulta</option><option>Retorno</option><option>Aplicação de teste</option><option>Encaixe</option><option>Reposição</option></select></label>' +
     '<label class="campo">Observação <span class="leg">(opcional)</span><input data-v="obs" autocomplete="off"></label>' +
     '<div class="acoes"><button type="button" class="btn" data-ok>Agendar</button><button type="button" class="btn ter" data-rec>Toda semana neste horário</button></div></div>');
   document.body.appendChild(vagaPop);
@@ -2796,6 +2796,11 @@ function aplicarBloco() {
   BL = prof ? blocoDe(cur.nome, prof, dt, $("#a-proc").value, $("#a-oque").value) : null;
   if (!BL) { box.innerHTML = '<div class="faixa cinza">Escolha o profissional pra ver o que cobrar.</div>'; p2.hidden = false; p3.hidden = true; pg.hidden = true; ac.hidden = true; $("#l-detalhe").hidden = true; atualizarPreview(); return; }
   box.innerHTML = blocoHtml(BL);
+  // aplicação de teste: sem número fixo; mostra quantas já foram registradas com este profissional
+  if (BL.situacao === 'sem-cobranca-tipo' && /^Aplicação de teste/i.test($("#a-proc").value) && AT && AT.aplicacoes) {
+    var la = AT.aplicacoes[cur.nome + '|' + prof] || [], y = dt.getFullYear() * 10000 + (dt.getMonth() + 1) * 100 + dt.getDate(), antes = la.filter(function (x) { return x < y; }), u = antes[antes.length - 1];
+    box.appendChild(el('<div class="muted" style="margin-top:6px">Aplicação nº <b>' + (antes.length + 1) + '</b> com ' + esc(profCurto(prof)) + (u ? ' · última em ' + ('0' + (u % 100)).slice(-2) + '/' + ('0' + Math.floor(u / 100) % 100).slice(-2) : ' · primeira') + '</div>'));
+  }
   var temAtalho = BL.botaoPagarMes || BL.situacao === 'sem-linha'; ac.hidden = !temAtalho; $("#a-btn-pagmes").hidden = !BL.botaoPagarMes; $("#a-btn-cad").hidden = BL.situacao !== 'sem-linha';
   $("#a-pagmes").hidden = true;
   p2.hidden = false;
@@ -3448,6 +3453,9 @@ function renderGestao() {
     { k: 'cadincompleto', cor: 'laranja', n: (r.cadastroIncompleto || []).length, t: 'Atendidos sem cobrança cadastrada', s: (r.cadastroIncompleto || []).length ? (r.cadastroIncompleto || []).slice(0, 3).map(function (x) { return primeiroNome(x.paciente) + ' × ' + profCurto(x.profissional); }).join(' · ') + ((r.cadastroIncompleto || []).length > 3 ? ' · +' + ((r.cadastroIncompleto || []).length - 3) : '') + ' — o app cobrou pela tabela; cadastre em Pacientes → Cobrança por profissional' : 'Todo paciente atendido tem a cobrança cadastrada pro profissional.', acao: 'Ver lista', tabela: tabelaCadIncompleto },
     { k: 'pagador', cor: 'lilas', n: (r.pagadorDiferente || []).length, t: 'Pagou outra pessoa — conferir o nome na NF', s: (r.pagadorDiferente || []).length ? nomes(r.pagadorDiferente) + ' — se for sempre essa pessoa, promover a pagador habitual em Pacientes' : 'Ninguém pagou por outra pessoa.', acao: 'Revisar', tabela: function () { return tabelaG('Pagou outra pessoa (conferir nome na NF)', [['Data', D], ['Paciente', 'paciente'], ['Quem pagou', 'quem'], ['Valor', V], ['NF?', 'nf']], r.pagadorDiferente, 'Nenhum.', 'obs'); } }
   ];
+  // Avaliações em andamento (gestão, 15/10): aplicações de teste sem número fixo; quantas cada paciente já fez
+  var av = r.avaliacoes || []; PEND.push({ k: 'avaliacoes', cor: 'lilas', n: av.length, t: 'Avaliações em andamento', s: av.length ? av.slice(0, 3).map(function (x) { return primeiroNome(x.paciente) + ' ' + x.n; }).join(' · ') + (av.length > 3 ? ' · +' + (av.length - 3) : '') + ' aplicações — sem número fixo; parou de vir? confira com a profissional' : 'Nenhuma aplicação de teste nos últimos 60 dias.', acao: 'Ver lista',
+    tabela: function () { return tabelaG('Avaliações em andamento (aplicações de teste nos últimos 60 dias)', [['Paciente', 'paciente'], ['Profissional', 'profissional'], ['Aplicações feitas', 'n'], ['Primeira', 'primeira'], ['Última', 'ultima'], ['Dias sem aplicação', 'diasSemVir']], av, 'Nenhuma avaliação em andamento.'); } });
   // Perdidos e glosas (só gestão): quanto se perdeu no mês; o Valor é a referência
   if (ehGestao()) { var perd = r.perdidos || []; PEND.push({ k: 'perdidos', cor: 'lilas', n: perd.length, t: 'Perdidos e glosas', s: perd.length ? brlCurto(soma(perd)) + ' perdidos no mês · ' + contarPor(perd, 'convenio') : 'Nenhum valor dado como perdido no mês.', acao: 'Ver lista',
     tabela: function () { return tabelaG('Perdidos e glosas · ' + brlCurto(soma(perd)), [['Data', D], ['Paciente', 'paciente'], ['Profissional', 'profissional'], ['Convênio', function (l) { return l.convenio || '—'; }], ['Valor de referência', V], ['Observação', 'obs']], perd, 'Nenhum valor dado como perdido no mês.'); } }); }

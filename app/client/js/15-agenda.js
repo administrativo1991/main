@@ -172,7 +172,7 @@ function abrirVaga(bt, prof, data, hora) {
   vagaPop = el('<div class="ag-pop" role="dialog" aria-label="Agendar ' + esc(hora) + '">' +
     '<div class="ag-pop-cab"><b>' + esc(hora) + ' · ' + esc(profCurto(prof)) + '</b><span>' + esc(diaSem + ' ' + data.slice(0, 5)) + '</span><button type="button" class="btn icone p" data-x aria-label="Fechar">' + ic('fechar', 14) + '</button></div>' +
     '<label class="campo">Paciente<input data-v="pac" list="dl-pacientes" autocomplete="off" placeholder="Comece a digitar o nome…"><span class="hint" data-v="info"></span></label>' +
-    '<label class="campo">Tipo<select data-v="origem"><option>Avulso</option><option>Primeira consulta</option><option>Retorno</option><option>Encaixe</option><option>Reposição</option></select></label>' +
+    '<label class="campo">Tipo<select data-v="origem"><option>Avulso</option><option>Primeira consulta</option><option>Retorno</option><option>Aplicação de teste</option><option>Encaixe</option><option>Reposição</option></select></label>' +
     '<label class="campo">Observação <span class="leg">(opcional)</span><input data-v="obs" autocomplete="off"></label>' +
     '<div class="acoes"><button type="button" class="btn" data-ok>Agendar</button><button type="button" class="btn ter" data-rec>Toda semana neste horário</button></div></div>');
   document.body.appendChild(vagaPop);

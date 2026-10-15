@@ -79,6 +79,11 @@ function aplicarBloco() {
   BL = prof ? blocoDe(cur.nome, prof, dt, $("#a-proc").value, $("#a-oque").value) : null;
   if (!BL) { box.innerHTML = '<div class="faixa cinza">Escolha o profissional pra ver o que cobrar.</div>'; p2.hidden = false; p3.hidden = true; pg.hidden = true; ac.hidden = true; $("#l-detalhe").hidden = true; atualizarPreview(); return; }
   box.innerHTML = blocoHtml(BL);
+  // aplicação de teste: sem número fixo; mostra quantas já foram registradas com este profissional
+  if (BL.situacao === 'sem-cobranca-tipo' && /^Aplicação de teste/i.test($("#a-proc").value) && AT && AT.aplicacoes) {
+    var la = AT.aplicacoes[cur.nome + '|' + prof] || [], y = dt.getFullYear() * 10000 + (dt.getMonth() + 1) * 100 + dt.getDate(), antes = la.filter(function (x) { return x < y; }), u = antes[antes.length - 1];
+    box.appendChild(el('<div class="muted" style="margin-top:6px">Aplicação nº <b>' + (antes.length + 1) + '</b> com ' + esc(profCurto(prof)) + (u ? ' · última em ' + ('0' + (u % 100)).slice(-2) + '/' + ('0' + Math.floor(u / 100) % 100).slice(-2) : ' · primeira') + '</div>'));
+  }
   var temAtalho = BL.botaoPagarMes || BL.situacao === 'sem-linha'; ac.hidden = !temAtalho; $("#a-btn-pagmes").hidden = !BL.botaoPagarMes; $("#a-btn-cad").hidden = BL.situacao !== 'sem-linha';
   $("#a-pagmes").hidden = true;
   p2.hidden = false;

@@ -274,7 +274,7 @@ function procsDe(esps) { return AT.procedimentos.filter(function (p) { return !e
 function ehVariante(p, lista) { var i = p.nome.indexOf(' – '); if (i < 0) return false; var base = p.nome.slice(0, i); return lista.some(function (q) { return q.nome === base; }); }
 function tiposDe(esps) { var l = procsDe(esps); return l.filter(function (p) { return !ehVariante(p, l) && !/\(compra\)/.test(p.nome) && !/^Mensalidade|^Renovação|^Antecipado|^Taxa de falta/.test(p.nome); }); }
 function procObj(nome) { return AT.procedimentos.filter(function (p) { return p.nome === nome; })[0] || null; }
-function tipoCurto(it) { var t = String(it.tipo || '').trim(); if (t) return t.toLowerCase(); var o = String(it.origem || ''); if (/Primeira consulta|Retorno|Encaixe|Reposição|Avulso/i.test(o)) return o.toLowerCase(); var esp = espDoProf(it.profissional); return /Psicolog|Psican|ABA|Psicopedag/i.test(esp) ? 'sessão' : 'consulta'; }
+function tipoCurto(it) { var t = String(it.tipo || '').trim(); if (t) return t.toLowerCase(); var o = String(it.origem || ''); if (/Primeira consulta|Retorno|Aplicação de teste|Encaixe|Reposição|Avulso/i.test(o)) return o.toLowerCase(); var esp = espDoProf(it.profissional); return /Psicolog|Psican|ABA|Psicopedag/i.test(esp) ? 'sessão' : 'consulta'; }
 // lista própria de pacientes (no lugar do datalist nativo): busca por nome ou pagador, setas, Enter, clique
 function comboPacientes(input, aoEscolher) {
   var box = el('<div class="combo-lista" hidden role="listbox"></div>'), idx = -1, itens = [];

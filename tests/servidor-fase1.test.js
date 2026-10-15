@@ -151,6 +151,25 @@ const ft = ok(API.salvarAgendaFixa({ paciente: 'Davi Teste', profissional: 'Giov
 assert.strictEqual(AR.d[ft.linha - 1][AR.d[0].indexOf('Tipo')], 'Aplicação de teste');
 const it27 = API.listaDoDia({ data: '27/10/2026' }).itens.filter(i => i.paciente === 'Davi Teste' && i.profissional === 'Giovana Grossi')[0];
 assert.strictEqual(it27.tipo, 'Aplicação de teste'); assert.strictEqual(it27.cobrancaHoje.situacao, 'sem-cobranca-tipo');
+// aplicações de teste (gestão, 15/10): agendamento avulso com tipo "Aplicação de teste", contagem por paciente × profissional
+const APL = 'Aplicação de teste – avaliação neuropsicológica';
+ok(reg({ paciente: 'Davi Teste', profissional: 'Giovana Grossi', data: '13/10/2026', procedimento: APL }), 'apl 1');
+ok(reg({ paciente: 'Davi Teste', profissional: 'Giovana Grossi', data: '14/10/2026', procedimento: APL }), 'apl 2');
+ok(reg({ paciente: 'Davi Teste', profissional: 'Giovana Grossi', data: '16/10/2026', procedimento: APL, oque: 'Desmarcou com antecedência (≥ 24h)' }), 'desmarcou não conta');
+// linha antiga (setembro importado) sem procedimento: conta pela observação
+ss._m.Setembro.d.push(linhaMes(24, 8, 'Davi Teste', 'Giovana Grossi', '', 'Atendido', '', 'Não se aplica (pro bono / permuta)', 'S9', { 'Observação': 'Pro bono (Giovana) — teste da avaliação neuropsicológica, sem cobrança' }));
+ss._m.Setembro.d.push(linhaMes(25, 8, 'Davi Teste', 'Giovana Grossi', '', 'Atendido', '', 'Não', 'S10', { 'Observação': 'sessão comum' }));
+invalidar_(['comp']);
+ok(API.acrescentarAoDia({ data: '23/10/2026', hora: '13:00', paciente: 'Davi Teste', profissional: 'Giovana Grossi', origem: 'Aplicação de teste' }), 'agendar aplicação');
+const it23 = API.listaDoDia({ data: '23/10/2026' }).itens.filter(i => i.paciente === 'Davi Teste' && i.profissional === 'Giovana Grossi')[0];
+assert.strictEqual(it23.tipo, 'Aplicação de teste'); assert.strictEqual(it23.cobrancaHoje.situacao, 'sem-cobranca-tipo'); assert.strictEqual(it23.aplicacao, 4); assert.strictEqual(it23.cobrancaHoje.curto, 'Aplicação nº 4 · sem cobrança');
+const it14 = API.listaDoDia({ data: '14/10/2026' }).itens.filter(i => i.paciente === 'Davi Teste' && i.profissional === 'Giovana Grossi' && i.registro && /^Atendido/.test(i.registro.oque))[0];
+assert.ok(it14 && it14.aplicacao === 3, 'registrada no dia: nº 3');
+assert.deepStrictEqual(ok(API.bootstrapAtendimento(), 'bootAt').aplicacoes['Davi Teste|Giovana Grossi'], [20260924, 20261013, 20261014]);
+const av = ok(API.gestaoResumo({ mes: 'Outubro' }), 'gestao av').avaliacoes.filter(x => x.paciente === 'Davi Teste' && x.profissional === 'Giovana Grossi')[0];
+assert.ok(av && av.n === 3 && av.primeira === '24/09/2026' && av.ultima === '14/10/2026' && av.diasSemVir === 1, JSON.stringify(av));
+console.log('aplicações de teste ok');
+
 // linha com Ativo = Não não vale (antes: a segunda normalização transformava false em "false" e a linha voltava a valer)
 const CP = ss._m['Cobrança por profissional']; CP.d.push(['C99', 'Julia Teste', 'Dr. Victor Cunha', 'Não', 'Convênio', 'Cedplan', '', '', 'Não se aplica', '', '', 'x', '15/10/2026', '', 'x']);
 invalidar_(['cpp']); assert.strictEqual(linhaVigente_('Julia Teste', 'Dr. Victor Cunha', new Date(2026, 9, 20, 12)).linha, null, 'linha inativa não vale');

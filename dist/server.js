@@ -1076,7 +1076,8 @@ function montarDia_(data, cache) {
       else itens.push({ hora: horaTxt_(r['Hora']), paciente: r['Paciente'], profissional: r['Profissional'], origem: 'Semanal', naoVem: origem, listaId: r['ID'], obs: r['Observação'] || '' });
       return;
     }
-    itens.push({ hora: horaTxt_(r['Hora']), paciente: r['Paciente'], profissional: r['Profissional'], origem: origem, listaId: r['ID'], obs: r['Observação'] || '', tipo: String(r['Tipo'] || '').trim() });
+    // agendamento avulso com tipo "Aplicação de teste" ou "Retorno" (gestão, 15/10): o tipo vem da Origem
+    itens.push({ hora: horaTxt_(r['Hora']), paciente: r['Paciente'], profissional: r['Profissional'], origem: origem, listaId: r['ID'], obs: r['Observação'] || '', tipo: String(r['Tipo'] || '').trim() || (/^(Aplicação de teste|Retorno)/i.test(origem) ? origem.split(' · ')[0] : '') });
   });
   // registros do dia na aba do mês
   var reg = {}, extras = [], nm = nomeAbaMes_(data);
@@ -1345,6 +1346,8 @@ API.gestaoResumo = function (d) {
     // Faltas → Decidir (gestão, 15/10): TODA falta e desmarcação entra, com o Detalhe da recepção e a decisão da gestão
     faltas: L.filter(function (r) { return /^(Faltou|Desmarcou)/i.test(r.oque) && !ehPerdido_(r.pago); }),
     cadastroIncompleto: cadastroIncompletoMes_(atend),
+    // aplicações de teste (gestão, 15/10): sem número fixo; quem fez aplicação nos últimos 60 dias, com quantas já fez
+    avaliacoes: avaliacoesEmAndamento_(),
     // relatório "Perdidos e glosas" (só gestão): o Valor é a referência do que se perdeu
     perdidos: usuario_().perfil === 'gestao' ? L.filter(function (r) { return ehPerdido_(r.pago); }) : [],
     descontos: L.filter(function (r) { return /^Desconto:/i.test(r.obs); }),
@@ -1559,7 +1562,7 @@ function versaoComp_() { if (MEMO_.compv === undefined) MEMO_.compv = cacheGet_(
 function invalidar_(ks) {
   var del = [];
   (ks || []).forEach(function (k) {
-    if (k === 'comp') { MEMO_.compv = String(new Date().getTime()); cachePut_('compv', MEMO_.compv); Object.keys(MEMO_).forEach(function (m) { if (m.indexOf('comp:') === 0) delete MEMO_[m]; }); }
+    if (k === 'comp') { MEMO_.compv = String(new Date().getTime()); cachePut_('compv', MEMO_.compv); Object.keys(MEMO_).forEach(function (m) { if (m.indexOf('comp:') === 0 || m.indexOf('apl:') === 0) delete MEMO_[m]; }); }
     else { delete MEMO_[k]; del.push(k); }
   });
   if (del.length) cacheDel_(del);
@@ -1726,7 +1729,7 @@ API.bootstrapAtendimento = function () {
   var hoje = new Date(), chave = chaveMes_(hoje), ant = chaveMes_(new Date(hoje.getFullYear(), hoje.getMonth() - 1, 1)), prox = chaveMes_(new Date(hoje.getFullYear(), hoje.getMonth() + 1, 1));
   var cpp = cobrancasProf_(), comp = {};
   cpp.forEach(function (l) { if (!l.ativo || !(l.pagamento === 'Antecipado' || l.pagamento === 'Posterior' || l.cobranca === 'Mensalidade fixa')) return; var k = l.paciente + '|' + l.profissional; comp[k] = comp[k] || {}; [ant, chave, prox].forEach(function (ch) { if (!comp[k][ch]) comp[k][ch] = competenciaDe_(l, ch); }); });
-  return { procedimentos: procedimentos_(), pacientes: indicePacientes_(), cobrancas: cpp, competencias: comp, hoje: hoje_(), chave: chave, abaMes: nomeAbaMes_(hoje), abaMesExiste: !!planilha_().getSheetByName(nomeAbaMes_(hoje)), params: parametros_(), valores: valoresSessao_() };
+  return { procedimentos: procedimentos_(), pacientes: indicePacientes_(), cobrancas: cpp, competencias: comp, aplicacoes: aplicacoes_(), hoje: hoje_(), chave: chave, abaMes: nomeAbaMes_(hoje), abaMesExiste: !!planilha_().getSheetByName(nomeAbaMes_(hoje)), params: parametros_(), valores: valoresSessao_() };
 };
 
 /* ---------- Registrar atendimento (Fase 1): a recepção responde "Recebeu?"; o Pago? (K) vem do bloco ---------- */
@@ -1810,6 +1813,40 @@ function jaRegistrado_(s, data, paciente, profissional, hora, oque) {
   return 0;
 }
 
+/* ---------- Aplicações de teste (gestão, 15/10): sem número fixo de aplicações; o app conta as já feitas ----------
+   Conta as linhas "Aplicação de teste…" com O que aconteceu = Atendido, de todas as abas de mês, por paciente × profissional.
+   Fica em cache junto com as competências (toda gravação na aba do mês invalida). */
+function ehAplicacao_(proc) { return /^Aplicação de teste/i.test(String(proc || '').trim()); }
+function ymdNum_(d) { return d.getFullYear() * 10000 + (d.getMonth() + 1) * 100 + d.getDate(); }
+function aplicacoes_() {
+  return cacheado_('apl:' + versaoComp_(), function () {
+    var out = {};
+    CONFIG.MESES.forEach(function (m) {
+      if (!planilha_().getSheetByName(m)) return;
+      linhasMes_(m).linhas.forEach(function (r) {
+        // setembro foi importado sem procedimento: ali a aplicação se reconhece pela observação ("Teste da avaliação…")
+        var apl = ehAplicacao_(r.procedimento) || (!String(r.procedimento || '').trim() && /teste da avalia|aplica[çc][ãa]o de teste/i.test(r.obs));
+        if (!apl || !/^Atendido/.test(r.oque)) return;
+        var d = parseData_(r.data); if (!d) return;
+        var k = r.paciente + '|' + String(r.profissional || '').trim(); (out[k] = out[k] || []).push(ymdNum_(d));
+      });
+    });
+    Object.keys(out).forEach(function (k) { out[k].sort(); });
+    return out;
+  });
+}
+// nº da aplicação nesta data = aplicações registradas antes dela + 1
+function numAplicacao_(paciente, profissional, data) { var l = aplicacoes_()[paciente + '|' + profissional] || [], y = ymdNum_(data); return l.filter(function (x) { return x < y; }).length + 1; }
+// Pendências → Avaliações em andamento: quem fez aplicação nos últimos 60 dias (a avaliação não tem número fixo de aplicações)
+function avaliacoesEmAndamento_() {
+  var hoje = ymdNum_(new Date()), lim = ymdNum_(new Date(new Date().getTime() - 60 * 864e5)), a = aplicacoes_(), out = [];
+  var txt = function (y) { return ('0' + (y % 100)).slice(-2) + '/' + ('0' + Math.floor(y / 100) % 100).slice(-2) + '/' + Math.floor(y / 10000); };
+  var dias = function (y) { var d = new Date(Math.floor(y / 10000), Math.floor(y / 100) % 100 - 1, y % 100, 12); return Math.round((new Date().getTime() - d.getTime()) / 864e5); };
+  Object.keys(a).forEach(function (k) { var l = a[k], u = l[l.length - 1]; if (!l.length || u < lim || u > hoje) return; out.push({ paciente: k.split('|')[0], profissional: k.split('|')[1], n: l.length, primeira: txt(l[0]), ultima: txt(u), diasSemVir: dias(u) }); });
+  out.sort(function (x, y) { return x.diasSemVir - y.diasSemVir || x.paciente.localeCompare(y.paciente); });
+  return out;
+}
+
 /* ---------- Lista do dia com a frase "Cobrança hoje" por item ---------- */
 API.listaDoDia = function (d) {
   d = d || {};
@@ -1818,7 +1855,9 @@ API.listaDoDia = function (d) {
     var p = idx[it.paciente]; if (!p) { it.cobrancaHoje = null; return; }
     if (it.extra) { it.cobrancaHoje = { situacao: 'linha-extra', cor: 'cinza', curto: it.tipo, frase: it.registro.procedimento }; return; }
     var proc = it.registro ? it.registro.procedimento : (/aplicação de teste/i.test(it.tipo || '') ? 'Aplicação de teste' : /retorno/i.test(it.tipo || '') ? 'Retorno' : '');
-    try { var b = blocoPara_(it.paciente, it.profissional, data, proc, it.registro ? it.registro.oque : 'Atendido', p); it.cobrancaHoje = { situacao: b.situacao, cor: b.cor, curto: b.curto, frase: b.frase, apoio: b.apoio, valor: b.valor, valorMes: b.valorMes, guia: b.guia, nf: b.nf, decidido: b.decidido, obsLinha: b.obsLinha, aviso: b.aviso, linhas: Cobranca.linhasDoPaciente(cobrancasProf_(), it.paciente, data).map(Cobranca.resumoLinha) }; } catch (e) { it.cobrancaHoje = { situacao: 'erro', cor: 'cinza', curto: '—', frase: String(e && e.message || e) }; }
+    var aplic = ehAplicacao_(proc);
+    try { var b = blocoPara_(it.paciente, it.profissional, data, proc, it.registro ? it.registro.oque : 'Atendido', p); it.cobrancaHoje = { situacao: b.situacao, cor: b.cor, curto: b.curto, frase: b.frase, apoio: b.apoio, valor: b.valor, valorMes: b.valorMes, guia: b.guia, nf: b.nf, decidido: b.decidido, obsLinha: b.obsLinha, aviso: b.aviso, linhas: Cobranca.linhasDoPaciente(cobrancasProf_(), it.paciente, data).map(Cobranca.resumoLinha) };
+      if (aplic && b.situacao === 'sem-cobranca-tipo') { it.aplicacao = numAplicacao_(it.paciente, it.profissional, data); it.cobrancaHoje.curto = 'Aplicação nº ' + it.aplicacao + ' · sem cobrança'; it.cobrancaHoje.frase += ' (aplicação nº ' + it.aplicacao + ')'; } } catch (e) { it.cobrancaHoje = { situacao: 'erro', cor: 'cinza', curto: '—', frase: String(e && e.message || e) }; }
   });
   r.pendencias = pendenciasDe_(r.itens.map(function (it) { return it.paciente; }), data);
   r.params = parametros_();

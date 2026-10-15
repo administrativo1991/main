@@ -756,7 +756,8 @@ function montarDia_(data, cache) {
       else itens.push({ hora: horaTxt_(r['Hora']), paciente: r['Paciente'], profissional: r['Profissional'], origem: 'Semanal', naoVem: origem, listaId: r['ID'], obs: r['Observação'] || '' });
       return;
     }
-    itens.push({ hora: horaTxt_(r['Hora']), paciente: r['Paciente'], profissional: r['Profissional'], origem: origem, listaId: r['ID'], obs: r['Observação'] || '', tipo: String(r['Tipo'] || '').trim() });
+    // agendamento avulso com tipo "Aplicação de teste" ou "Retorno" (gestão, 15/10): o tipo vem da Origem
+    itens.push({ hora: horaTxt_(r['Hora']), paciente: r['Paciente'], profissional: r['Profissional'], origem: origem, listaId: r['ID'], obs: r['Observação'] || '', tipo: String(r['Tipo'] || '').trim() || (/^(Aplicação de teste|Retorno)/i.test(origem) ? origem.split(' · ')[0] : '') });
   });
   // registros do dia na aba do mês
   var reg = {}, extras = [], nm = nomeAbaMes_(data);
@@ -1025,6 +1026,8 @@ API.gestaoResumo = function (d) {
     // Faltas → Decidir (gestão, 15/10): TODA falta e desmarcação entra, com o Detalhe da recepção e a decisão da gestão
     faltas: L.filter(function (r) { return /^(Faltou|Desmarcou)/i.test(r.oque) && !ehPerdido_(r.pago); }),
     cadastroIncompleto: cadastroIncompletoMes_(atend),
+    // aplicações de teste (gestão, 15/10): sem número fixo; quem fez aplicação nos últimos 60 dias, com quantas já fez
+    avaliacoes: avaliacoesEmAndamento_(),
     // relatório "Perdidos e glosas" (só gestão): o Valor é a referência do que se perdeu
     perdidos: usuario_().perfil === 'gestao' ? L.filter(function (r) { return ehPerdido_(r.pago); }) : [],
     descontos: L.filter(function (r) { return /^Desconto:/i.test(r.obs); }),
