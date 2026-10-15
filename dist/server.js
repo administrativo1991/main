@@ -327,7 +327,8 @@ if (typeof module !== 'undefined' && module.exports) module.exports = Cobranca;
    {pagador} = primeiro nome de quem paga (sem pagador, do paciente) · {da_sua_consulta} = "da sua consulta" / "das suas consultas"
    · {com_profissional} = " com Juliana Ribeiro" (vazio se forem profissionais diferentes) · {sessoes} = Data e Horário de cada
    sessão (com 👤 nome quando são vários pacientes, e "com profissional" quando são vários profissionais). "\n" escrito na
-   célula também quebra linha. */
+   célula também quebra linha. O profissional sai como na coluna "Nome na mensagem" da aba Profissionais (profMsg; ex.:
+   Dra. Juliana Ribeiro); vazia, sai o nome da aba. */
 var Mensagens = (function () {
   var CONFIRMACAO_PADRAO = 'Olá, {pagador}! Passando para lembrar {da_sua_consulta} na Clínica Nascente{com_profissional}:\n\n' +
     '{sessoes}\n📍 *Local:* Av. Andradas, 547 – Térreo, Loja 5\n\n' +
@@ -337,13 +338,13 @@ var Mensagens = (function () {
   function primeiroNome(n) { return String(n || '').trim().split(/\s+/)[0] || ''; }
   function hora(h) { var m = String(h || '').match(/^(\d{1,2}):(\d{2})/); return m ? ('0' + m[1]).slice(-2) + 'h' + m[2] : String(h || '').trim(); }
   function unicos(l) { return l.filter(function (x, i) { return l.indexOf(x) === i; }); }
-  // itens: [{ paciente, profissional, data: 'dd/mm/aaaa', hora: 'hh:mm' }]
+  // itens: [{ paciente, profissional, profMsg (opcional), data: 'dd/mm/aaaa', hora: 'hh:mm' }]
   function confirmacao(modelo, pagador, itens) {
     itens = itens || [];
-    var pacs = unicos(itens.map(function (x) { return x.paciente; })), profs = unicos(itens.map(function (x) { return x.profissional; })), umProf = profs.length === 1;
+    var pacs = unicos(itens.map(function (x) { return x.paciente; })), profs = unicos(itens.map(function (x) { return x.profMsg || x.profissional; })), umProf = profs.length === 1;
     var blocos = itens.map(function (x) {
       var l = [];
-      if (pacs.length > 1 || !umProf) l.push('👤 *' + primeiroNome(x.paciente) + '*' + (umProf ? '' : ' com ' + x.profissional));
+      if (pacs.length > 1 || !umProf) l.push('👤 *' + primeiroNome(x.paciente) + '*' + (umProf ? '' : ' com ' + (x.profMsg || x.profissional)));
       l.push('🗓️ *Data:* ' + x.data);
       if (x.hora) l.push('⏰ *Horário:* ' + hora(x.hora));
       return l.join('\n');
@@ -517,7 +518,7 @@ function lerProfissionais_() {
   return vals.map(function (r) {
     var horarios = {}; EXPEDIENTE.DIAS.forEach(function (d) { horarios[d] = txt(r, colExpediente_(d)); });
     var dur = parseInt(txt(r, EXPEDIENTE.DURACAO), 10);
-    return { nome: String(r[0] || '').trim(), especialidade: String(r[1] || '').trim(), horarios: horarios, duracao: dur > 0 ? dur : null, ativo: !/^n/i.test(txt(r, 'Ativo') || 'Sim') };
+    return { nome: String(r[0] || '').trim(), especialidade: String(r[1] || '').trim(), horarios: horarios, duracao: dur > 0 ? dur : null, ativo: !/^n/i.test(txt(r, 'Ativo') || 'Sim'), nomeMsg: txt(r, 'Nome na mensagem') }; // nomeMsg: como sai no WhatsApp (ex.: Dra. Juliana Ribeiro)
   }).filter(function (p) { return p.nome && p.ativo; }); // coluna "Ativo" = Não: saiu da clínica, some das listas (os lançamentos antigos ficam)
 }
 // "08:00-12:00, 13:00-19:00" → [[480,720],[780,1140]]; aceita "8h-12h", "08:00 às 12:00", travessão; null se inválido
@@ -2180,7 +2181,8 @@ API.confirmacoes = function (d) {
   var dias = Math.round((ate - de) / (24 * 3600 * 1000)) + 1;
   if (dias > CONFIRMACAO_MAX_DIAS) return { ok: false, erros: ['Escolha no máximo ' + CONFIRMACAO_MAX_DIAS + ' dias.'] };
   var idx = {}; indicePacientes_().forEach(function (p) { idx[p.nome] = p; });
-  var env = enviadas_(), cache = {}, grupos = {}, ordem = [], par = parametros_();
+  var env = enviadas_(), cache = {}, grupos = {}, ordem = [], par = parametros_(), nomeMsg = {};
+  profissionais_().forEach(function (p) { if (p.nomeMsg) nomeMsg[p.nome] = p.nomeMsg; }); // coluna "Nome na mensagem" (Profissionais)
   var modelo = String(par.msg_confirmacao || '').trim();
   for (var i = 0; i < dias; i++) {
     var dia = montarDia_(dataMais_(de, i), cache);
@@ -2194,7 +2196,7 @@ API.confirmacoes = function (d) {
       var g = grupos[chave];
       if (!g) { g = grupos[chave] = { chave: chave, pagador: p.pagador || '', fone: '', foneFmt: '', foneDe: '', itens: [] }; ordem.push(chave); }
       if (fone && !g.fone) { g.fone = fone; g.foneFmt = foneFmt_(fone); g.foneDe = deQuem; }
-      g.itens.push({ data: dia.data, diaSemana: dia.diaSemana, hora: horaTxt_(it.hora), paciente: it.paciente, profissional: it.profissional, tipo: it.tipo || '',
+      g.itens.push({ data: dia.data, diaSemana: dia.diaSemana, hora: horaTxt_(it.hora), paciente: it.paciente, profissional: it.profissional, profMsg: nomeMsg[it.profissional] || it.profissional, tipo: it.tipo || '',
         confirmado: it.confirmado || null, enviado: env[dia.data + '|' + it.paciente + '|' + it.profissional] || null, cadastrado: !!idx[it.paciente] });
     });
   }

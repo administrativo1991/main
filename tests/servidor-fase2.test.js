@@ -12,7 +12,7 @@ const ss = planilha({
   Pacientes: [HP, pac('Ana Irmã', 'Carla Souza', '(32) 9 8888-7777'), pac('Bia Irmã', 'Carla Souza'), pac('Carlos Sem', ''), pac('Julia Tem', 'Bruno Lima', '32988887766'), pac('Davi Ja', 'Marta')],
   'Parâmetros': [['Parâmetro', 'Valor', 'Descrição'], ['vencimento_dia', 10, '']],
   Listas: [['O que aconteceu', 'Pago?'], ['Atendido', 'Sim']],
-  Profissionais: [['Profissional', 'Especialidade', 'Ativo'], ['Juliana Ribeiro', 'Psicologia', 'Sim']],
+  Profissionais: [['Profissional', 'Especialidade', 'Ativo', 'Nome na mensagem'], ['Juliana Ribeiro', 'Psicologia', 'Sim', 'Dra. Juliana Ribeiro']],
   Procedimentos: [['Procedimento', 'Especialidade', 'Valor', 'Obs'], ['Sessão de psicologia', 'Psicologia', 120, '']],
   'Agenda recorrente': [['ID', 'Paciente', 'Profissional', 'Dia da semana', 'Hora', 'Frequência', 'Começa em', 'Termina em', 'Ativo', 'Observação', 'Registrado por (app)'],
     fixo('F1', 'Ana Irmã', 'Juliana Ribeiro', 'Sexta', '09:00'), fixo('F2', 'Bia Irmã', 'Juliana Ribeiro', 'Sexta', '10:00'), fixo('F3', 'Carlos Sem', 'Juliana Ribeiro', 'Sexta', '11:00'),
@@ -35,10 +35,10 @@ let r = ok(API.confirmacoes({}), 'amanhã');
 assert.strictEqual(r.de, '16/10/2026'); assert.strictEqual(r.ate, '16/10/2026'); assert.strictEqual(r.total, 3); assert.strictEqual(r.modelo, '');
 const irmas = r.grupos.find(g => g.pagador === 'Carla Souza');
 assert.deepStrictEqual(irmas.pacientes, ['Ana Irmã', 'Bia Irmã']); assert.strictEqual(irmas.fone, '5532988887777'); assert.strictEqual(irmas.foneFmt, '(32) 9 8888-7777');
-assert.ok(irmas.mensagem.startsWith('Olá, Carla! Passando para lembrar das suas consultas na Clínica Nascente com Juliana Ribeiro:\n\n👤 *Ana*\n🗓️ *Data:* 16/10/2026\n⏰ *Horário:* 09h00\n\n👤 *Bia*\n🗓️ *Data:* 16/10/2026\n⏰ *Horário:* 10h00\n📍 *Local:* Av. Andradas, 547 – Térreo, Loja 5\n\n📋 *IMPORTANTE:'), irmas.mensagem);
+assert.ok(irmas.mensagem.startsWith('Olá, Carla! Passando para lembrar das suas consultas na Clínica Nascente com Dra. Juliana Ribeiro:\n\n👤 *Ana*\n🗓️ *Data:* 16/10/2026\n⏰ *Horário:* 09h00\n\n👤 *Bia*\n🗓️ *Data:* 16/10/2026\n⏰ *Horário:* 10h00\n📍 *Local:* Av. Andradas, 547 – Térreo, Loja 5\n\n📋 *IMPORTANTE:'), irmas.mensagem);
 assert.ok(irmas.mensagem.endsWith('Agradecemos a compreensão e a colaboração!'));
 const carlos = r.grupos.find(g => g.pacientes[0] === 'Carlos Sem');
-assert.strictEqual(carlos.fone, ''); assert.ok(carlos.mensagem.startsWith('Olá, Carlos! Passando para lembrar da sua consulta na Clínica Nascente com Juliana Ribeiro:\n\n🗓️ *Data:* 16/10/2026\n⏰ *Horário:* 11h00\n📍'), 'sem pagador: nome do paciente; uma sessão = texto oficial'); 
+assert.strictEqual(carlos.fone, ''); assert.ok(carlos.mensagem.startsWith('Olá, Carlos! Passando para lembrar da sua consulta na Clínica Nascente com Dra. Juliana Ribeiro:\n\n🗓️ *Data:* 16/10/2026\n⏰ *Horário:* 11h00\n📍'), 'sem pagador: nome do paciente; uma sessão = texto oficial'); 
 assert.ok(!r.grupos.some(g => g.pacientes.includes('Davi Ja')), 'quem já avisou que não vem fica de fora');
 console.log('confirmações de amanhã ok');
 
@@ -87,7 +87,7 @@ const L = ss._m['Alterações de cadastro'].d; assert.strictEqual(L[L.length - 1
 assert.strictEqual(ok(API.confirmacoes({}), 'depois do whats').grupos.find(g => g.pacientes[0] === 'Carlos Sem').fone, '5532991234567');
 console.log('salvar WhatsApp ok');
 // profissionais diferentes: cada sessão diz com quem; o cabeçalho não nomeia profissional
-const m2 = (0, eval)('Mensagens').confirmacao('', 'Rita Lima', [{ paciente: 'Theo Lima', profissional: 'Juliana Ribeiro', data: '20/10/2026', hora: '9:30' }, { paciente: 'Theo Lima', profissional: 'Dr. Victor Cunha', data: '21/10/2026', hora: '' }]);
-assert.ok(m2.startsWith('Olá, Rita! Passando para lembrar das suas consultas na Clínica Nascente:\n\n👤 *Theo* com Juliana Ribeiro\n🗓️ *Data:* 20/10/2026\n⏰ *Horário:* 09h30\n\n👤 *Theo* com Dr. Victor Cunha\n🗓️ *Data:* 21/10/2026\n📍'), m2);
+const m2 = (0, eval)('Mensagens').confirmacao('', 'Rita Lima', [{ paciente: 'Theo Lima', profissional: 'Juliana Ribeiro', profMsg: 'Dra. Juliana Ribeiro', data: '20/10/2026', hora: '9:30' }, { paciente: 'Theo Lima', profissional: 'Dr. Victor Cunha', data: '21/10/2026', hora: '' }]);
+assert.ok(m2.startsWith('Olá, Rita! Passando para lembrar das suas consultas na Clínica Nascente:\n\n👤 *Theo* com Dra. Juliana Ribeiro\n🗓️ *Data:* 20/10/2026\n⏰ *Horário:* 09h30\n\n👤 *Theo* com Dr. Victor Cunha\n🗓️ *Data:* 21/10/2026\n📍'), m2);
 console.log('mensagem com dois profissionais ok');
 console.log('servidor-fase2: tudo ok');

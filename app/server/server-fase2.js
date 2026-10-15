@@ -36,7 +36,8 @@ API.confirmacoes = function (d) {
   var dias = Math.round((ate - de) / (24 * 3600 * 1000)) + 1;
   if (dias > CONFIRMACAO_MAX_DIAS) return { ok: false, erros: ['Escolha no máximo ' + CONFIRMACAO_MAX_DIAS + ' dias.'] };
   var idx = {}; indicePacientes_().forEach(function (p) { idx[p.nome] = p; });
-  var env = enviadas_(), cache = {}, grupos = {}, ordem = [], par = parametros_();
+  var env = enviadas_(), cache = {}, grupos = {}, ordem = [], par = parametros_(), nomeMsg = {};
+  profissionais_().forEach(function (p) { if (p.nomeMsg) nomeMsg[p.nome] = p.nomeMsg; }); // coluna "Nome na mensagem" (Profissionais)
   var modelo = String(par.msg_confirmacao || '').trim();
   for (var i = 0; i < dias; i++) {
     var dia = montarDia_(dataMais_(de, i), cache);
@@ -50,7 +51,7 @@ API.confirmacoes = function (d) {
       var g = grupos[chave];
       if (!g) { g = grupos[chave] = { chave: chave, pagador: p.pagador || '', fone: '', foneFmt: '', foneDe: '', itens: [] }; ordem.push(chave); }
       if (fone && !g.fone) { g.fone = fone; g.foneFmt = foneFmt_(fone); g.foneDe = deQuem; }
-      g.itens.push({ data: dia.data, diaSemana: dia.diaSemana, hora: horaTxt_(it.hora), paciente: it.paciente, profissional: it.profissional, tipo: it.tipo || '',
+      g.itens.push({ data: dia.data, diaSemana: dia.diaSemana, hora: horaTxt_(it.hora), paciente: it.paciente, profissional: it.profissional, profMsg: nomeMsg[it.profissional] || it.profissional, tipo: it.tipo || '',
         confirmado: it.confirmado || null, enviado: env[dia.data + '|' + it.paciente + '|' + it.profissional] || null, cadastrado: !!idx[it.paciente] });
     });
   }
