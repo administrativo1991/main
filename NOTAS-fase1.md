@@ -3,9 +3,11 @@
 Arquivo de retomada. Quem abrir um chat novo começa por aqui: diz o que foi feito, o que falta, as decisões, as perguntas
 abertas pra gestão e como testar. Atualizado a cada item concluído. Data de início: 15/10/2026.
 
-> **Estado em 15/10 (noite): Fase 1 codificada, testada na simulação e publicada no canal de teste (`arquivos`,
-> deploy 2026-10-15-01). Falta: casos reais na CÓPIA TESTE com prints, tempos antes/depois, OK da gestão e promoção
-> pra `arquivos_real`.** Decisões da gestão em 15/10: (a) OK no plano e no relatório do item 0; (b) perguntas 1 e 2 da
+> **Estado em 15/10 (noite): Fase 1 codificada, testada na simulação, publicada no teste (`arquivos`, 2026-10-15-01) e,
+> com o OK da gestão ("amei, tá aprovado"), promovida pra planilha real (`arquivos_real`, 2026-10-15-02).**
+> Ficam pra acompanhar nos primeiros dias de uso: tempos reais (rodapé da gestão), as 16 linhas "a confirmar" e
+> os casos reais do passo 5.3 observados no uso. A Fase 2 (WhatsApp, conciliação, parcelas, perdas, confirmação da véspera,
+> check-in, alertas, alta, ficha) começa em chat novo, lendo este arquivo primeiro. Decisões da gestão em 15/10: (a) OK no plano e no relatório do item 0; (b) perguntas 1 e 2 da
 > seção 3: **sim** (coluna `Profissional` + 6 colunas por competência em `Mensalistas`; `Vigente desde/até`);
 > (c) os 13 pares "a decidir" do relatório **não bloqueiam**: foram carregados com o valor proposto e a observação
 > "migração 15/10 — a confirmar" (16 linhas; a gestão confirma quando quiser em Pacientes → Cobrança por profissional);

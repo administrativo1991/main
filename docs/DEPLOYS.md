@@ -23,7 +23,7 @@ coluna E não afeta o app. Atualizar `E2` faz parte de toda publicação (passo 
 
 | Canal | Deploy | Peças | Commit |
 |---|---|---|---|
-| Real (`arquivos_real`) | **2026-10-10-02** | 41 (duplicatas 1 · server 12 · index 28); ativas = 459–499; `antigo25:` = as 40 do 2026-10-09-08 | branch `claude/kind-franklin-q0je9a` |
+| Real (`arquivos_real`) | **2026-10-15-02** (Fase 1 do financeiro) | 45 (duplicatas 3 · server 13 · index 29); ativas = 500–544; `antigo27:` = as 41 do 2026-10-10-02 (459–499) | branch `claude/bold-edison-l0keb0`, commit 24d34fa |
 | Teste (`arquivos`) | **2026-10-15-01** (Fase 1 do financeiro) | 45 (duplicatas 3 · server 13 · index 29), linhas 43–87; as 41 do 2026-10-10-01 (linhas 2–42) viraram `antigo27:` | branch `claude/bold-edison-l0keb0`, commit 24d34fa |
 | Carregador real | 2026-10-06-02 (`dist/Code.real.gs`, implantado pela Roberta) | — | 4ad0272 |
 | Carregador teste | 2026-10-04-01 + nova versão pendente desde 05/10 (permissão do Drive, ver `COMO-INSTALAR.md`) | — | — |
@@ -48,6 +48,14 @@ Modelo:
 ```
 
 ## Lista
+
+### 2026-10-15-02 · Real · Fase 1 do financeiro
+- **O que mudou**: o mesmo código do 2026-10-15-01 (teste). Aprovado pela gestão em 15/10 ("amei, tá aprovado").
+- **Peças**: 45 em `arquivos_real!A500:C544` (gravadas com prefixo `novo:`, lidas de volta e conferidas 45/45 contra
+  `dist/pedacos.json`); então A459:A499 → `antigo27:` e `novo:` removido. E2 carimbado.
+- **Voltar**: `antigo27:` → nome e A500:A544 → `antigo28:` (as abas de dados novas não atrapalham o código antigo).
+- **Commit**: 24d34fa · **Aprovação**: gestão, 15/10.
+
 
 ### 2026-10-15-01 · Teste · Fase 1 do financeiro (cobrança por profissional, bloco "O que fazer agora", Cobrança do mês, Meu dia)
 - **O que mudou**: ver `NOTAS-fase1.md` (seções 1 e 5). Resumo: cobrança por paciente × profissional (aba nova), módulo
