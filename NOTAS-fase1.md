@@ -315,3 +315,12 @@ Achado para a gestão decidir: no Repasse, cada aplicação de teste de paciente
 neuropsicológica", pacote R$ 475) e entra com previsto de R$ 475 por linha (outubro: Luiz Miguel 07/10, Jhonne 06/10,
 Matheus Carmo 07/10 = R$ 1.425 a mais no previsto do Sabin). O repasse da Giovana é 0%, então ninguém recebe a mais; o
 efeito é só no "previsto". Não foi mexido; por isso também não se preencheu o procedimento das linhas de setembro.
+
+**13h30**: agendadas pela Lista do dia (origem "Aplicação de teste"): Luiz Miguel 21/10 09:00 e Davi Maia 22/10 13:00
+(D-20261015-132850-ap1/ap2); conferido: "Aplicação nº 4" e "nº 6". Jhonne 20/10 e Igor 21/10 **não** foram lançados:
+a carga da agenda do ControleOdonto (07/10) já diz "Não vem · fora da agenda do ControleOdonto" pros dois — a gestão
+confirma. Matheus Almeida Carmo 21/10 09:30 está como "Avulso" (SABIN): se for aplicação, mudar a origem.
+Repasse das aplicações: commit 4a07d6f (aplicação de convênio = previsto 0) **não publicado**: a gestão lembrou que o
+pacote Sabin de R$ 475 são 5 sessões, e as 5 misturam sessões da Juliana e aplicações da Giovana (ex.: Luiz Miguel:
+Juliana 10, 23, 30/09 + Giovana 23, 30/09). Hoje as sessões da Juliana do pacote entram como sessão Sabin comum (R$ 40,
+80%). Falta a gestão decidir quanto vale cada sessão do pacote no previsto (R$ 95?) e o repasse da Juliana nelas.
