@@ -1,3 +1,6 @@
+> **Desatualizado desde 15/10/2026 (Fase 1 do financeiro).** Pacotes, planos e a cobrança no cadastro do paciente saíram do app.
+> O texto atual pra recepção é `docs/POP-RECEPCAO-COBRANCA.md`. Este arquivo fica só como histórico.
+
 # Recepção · Cobrança, Pagamento, pacotes e mensalidades (a partir de 09/10/2026)
 
 Texto curto para a recepção. Pode ser colado no grupo ou impresso.

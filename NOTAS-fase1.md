@@ -3,13 +3,25 @@
 Arquivo de retomada. Quem abrir um chat novo começa por aqui: diz o que foi feito, o que falta, as decisões, as perguntas
 abertas pra gestão e como testar. Atualizado a cada item concluído. Data de início: 15/10/2026.
 
-> **Estado em 15/10: plano escrito e relatório do item 0 entregue; aguardando OK da gestão nos dois. Nenhum código tocado.**
-> O relatório (cobrança por paciente × profissional, nome a nome, 163 linhas propostas + 28 pares sem linha + 7 pontos a
-> decidir + 6 divergências) foi lido da planilha real em 15/10 e entregue como arquivo fora do repositório (tem nome de
-> paciente; a regra do projeto proíbe dado de paciente em `docs/`). A mesma lista está na aba
-> `_relatorio cobrança 15-10` da CÓPIA TESTE, com a coluna "OK? (gestão)" pra anotar. O script que gera o relatório
-> (`relatorio.js`) e os dados lidos ficam no scratchpad da sessão; se a sessão acabar, basta reler as abas da real e rodar
-> de novo. Depois do OK: carga da aba `Cobrança por profissional` na CÓPIA TESTE e início do código (passo 1).
+> **Estado em 15/10 (noite): Fase 1 codificada, testada na simulação e publicada no canal de teste (`arquivos`,
+> deploy 2026-10-15-01). Falta: casos reais na CÓPIA TESTE com prints, tempos antes/depois, OK da gestão e promoção
+> pra `arquivos_real`.** Decisões da gestão em 15/10: (a) OK no plano e no relatório do item 0; (b) perguntas 1 e 2 da
+> seção 3: **sim** (coluna `Profissional` + 6 colunas por competência em `Mensalistas`; `Vigente desde/até`);
+> (c) os 13 pares "a decidir" do relatório **não bloqueiam**: foram carregados com o valor proposto e a observação
+> "migração 15/10 — a confirmar" (16 linhas; a gestão confirma quando quiser em Pacientes → Cobrança por profissional);
+> (d) a carga de dados foi feita **direto na planilha real** (a gestão achou que não compensa passar pela cópia: o app
+> foi pouco usado pela recepção); (e) celular não é prioridade: "o app é usado, via de regra, pelo computador".
+>
+> **Já na planilha real** (15/10): abas novas `Cobrança por profissional` (165 linhas, IDs `C-20261015-001…165`),
+> `Valores por sessão` (A1:D34), `Parâmetros` (A1:C9), `_relatorio cobrança 15-10` (192 linhas, só leitura);
+> `Listas!K1:M6` (Cobrança/Pagamento por profissional, Feriados); log das 165 linhas em `Alterações de cadastro`
+> (A189:G353). A CÓPIA TESTE recebeu as mesmas abas e as 14 abas de dados da real atualizadas em 15/10 (as antigas viraram
+> `_antes 15-10 …`). **Nenhuma coluna existente foi renomeada, movida ou apagada.**
+>
+> **Como retomar**: `git log` (commits 08dedba servidor, 24d34fa cliente, e os seguintes), `node build.js && for t in
+> tests/*.test.js; do node $t; done`, simulação com `node <scratchpad>/sim.js` (script de Playwright; se o scratchpad sumiu,
+> abrir `dist/index.html` no navegador e passar pelas telas: Agenda numa segunda-feira, Registrar, Cobrança do mês, Meu dia,
+> Pendências, Pacientes → editar). Depois os casos reais do passo 5.3 na CÓPIA TESTE (`appUrlCopia`).
 
 ---
 
@@ -184,3 +196,20 @@ Convênio → `Convênio (fatura)`; pro bono/permuta/teste/retorno → `Não se 
 |---|---|---|---|
 | 15/10 | plano | NOTAS escritas; branch avançado até o código no ar | OK da gestão |
 | 15/10 | item 0 | relatório entregue (arquivo + aba `_relatorio cobrança 15-10` na cópia); regras aplicadas: social → Mensalidade fixa 200 (Antecipado desde 01/11; Posterior até 31/10 pra quem não adiantou outubro); especial → Mensalidade fixa com Mensalistas!C; ex-planos → Por sessão = cadastro AE (= Mensalistas!C ÷ 4), Posterior até 31/10 + Antecipado desde 01/11; Por sessão (combinado) → valor de AE; 2º profissional de outra especialidade → só o que as linhas de set/out mostram (tabela cheia = sem linha; Convênio/PLASC pelas linhas); aplicação de teste → sem linha; Davi × Giovana → Pro bono (obs. do cadastro) | OK da gestão; carga na cópia |
+| 15/10 | decisões | perguntas 1 e 2 = sim; 13 "a decidir" carregados como "a confirmar"; carga direto na real; celular secundário | — |
+| 15/10 | carga | real: `Cobrança por profissional` 165 linhas · `Valores por sessão` · `Parâmetros` · `Listas!K:M` · `_relatorio cobrança 15-10` · log A189:G353; cópia: idem + 14 abas de dados atualizadas | gestão confirmar as 16 linhas "a confirmar" |
+| 15/10 | passos 2–3 | `app/shared/cobranca.js` (bloco, K, situação da competência; 9 grupos de teste) · servidor `app/server/server-cobranca.js` (cache, CPP, competências, `cobrancaMes`, `registrarPagamentoMes`, `editarSessoesCompetencia`, `criarColunasMes`, `decidirFalta`, `cobrancasDoPaciente`, `salvarCobrancaProf`, `_ms` em toda resposta) · `server.js` sem pacotes/planos · `tests/servidor-fase1.test.js` | — |
+| 15/10 | passo 4 | tela inteira: menu por perfil, Registrar (bloco + Recebeu? + Detalhe + lista própria), Agenda (Cobrança hoje, tipo, Chegou, tiles, Fechar o dia, menu "…" pra cima, lista própria no Agendamento e na recorrente), Cobrança do mês (substitui Pacotes; `abrirPagamentoMes` com várias competências; gestão edita sessões; criar colunas), Meu dia (4 listas, resumo por forma, Copiar resumo, Imprimir, NF/guia dos últimos 7 dias), Pendências (Faltas → Decidir com 4 botões, Atendidos sem cobrança cadastrada, colunas de Mensalistas na Virada do mês; some a Virada de novembro), Pacientes (seção Cobrança por profissional; some a cobrança antiga do cadastro), rodapé de tempos (gestão), aviso > 20 s, esqueleto, `aindaNa` | layout estreito (≤ 900 px) só o que já existia: prioridade baixa (decisão 15/10) |
+| 15/10 | passo 5 | simulação Playwright 1280 px: 0 erros de console nas 7 telas, prints em `docs/prints-fase1/` (dados fictícios da simulação); `node tests/*.test.js` todos ok; publicado em `arquivos` (teste) = deploy **2026-10-15-01**, commit 24d34fa; POP em `docs/POP-RECEPCAO-COBRANCA.md` | casos reais 9.3 na cópia com prints · tempos antes/depois · OK da gestão · `arquivos_real` · atualizar `docs/README-RECEPCAO.md` e `ESTADO-ATUAL.md` |
+
+## 6. O que a gestão precisa olhar (15/10)
+
+1. **16 linhas "a confirmar"** em `Cobrança por profissional` (observação começa com "migração 15/10 — a confirmar"):
+   abrir Pacientes → Buscar / editar → seção Cobrança por profissional → Editar (ou corrigir direto na aba; o app relê em 5 min).
+2. **Mensalistas**: as 44 linhas antigas ainda **não** têm a coluna `Profissional` preenchida; o app usa a linha do paciente
+   sem profissional pra todas as linhas dele até a gestão (ou o primeiro pagamento pelo app) gravar o profissional.
+   As colunas de `Novembro/2026` são criadas por "Criar colunas" (Pendências → Virada do mês, ou Cobrança do mês) ou
+   sozinhas no primeiro pagamento registrado.
+3. **Taxa de falta**: 50 % do valor da sessão (`Parâmetros!taxa_falta_pct`). `Procedimentos` diz R$ 120 integral; a linha
+   gerada usa o parâmetro. Mudar? É só trocar o número na aba.
+4. **Testar na CÓPIA TESTE** (`appUrlCopia`): os casos do passo 5.3. O canal de teste já está com o código novo.

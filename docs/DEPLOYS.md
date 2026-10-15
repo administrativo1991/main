@@ -24,7 +24,7 @@ coluna E não afeta o app. Atualizar `E2` faz parte de toda publicação (passo 
 | Canal | Deploy | Peças | Commit |
 |---|---|---|---|
 | Real (`arquivos_real`) | **2026-10-10-02** | 41 (duplicatas 1 · server 12 · index 28); ativas = 459–499; `antigo25:` = as 40 do 2026-10-09-08 | branch `claude/kind-franklin-q0je9a` |
-| Teste (`arquivos`) | **2026-10-10-01** (real 2026-10-09-08 + convênio gravado na linha) | 41 (duplicatas 1 · server 12 · index 28), linhas 2–42, como valor (montadas por fórmula sobre `arquivos_real` + `lits_teste` e congeladas) | branch `claude/kind-franklin-q0je9a` |
+| Teste (`arquivos`) | **2026-10-15-01** (Fase 1 do financeiro) | 45 (duplicatas 3 · server 13 · index 29), linhas 43–87; as 41 do 2026-10-10-01 (linhas 2–42) viraram `antigo27:` | branch `claude/bold-edison-l0keb0`, commit 24d34fa |
 | Carregador real | 2026-10-06-02 (`dist/Code.real.gs`, implantado pela Roberta) | — | 4ad0272 |
 | Carregador teste | 2026-10-04-01 + nova versão pendente desde 05/10 (permissão do Drive, ver `COMO-INSTALAR.md`) | — | — |
 
@@ -48,6 +48,22 @@ Modelo:
 ```
 
 ## Lista
+
+### 2026-10-15-01 · Teste · Fase 1 do financeiro (cobrança por profissional, bloco "O que fazer agora", Cobrança do mês, Meu dia)
+- **O que mudou**: ver `NOTAS-fase1.md` (seções 1 e 5). Resumo: cobrança por paciente × profissional (aba nova), módulo
+  compartilhado das frases, cache de 5 min no servidor, Registrar com Recebeu? Sim/Não/Parcial e Detalhe da falta, Agenda
+  com "Cobrança hoje" e tiles, tela Cobrança do mês no lugar de Pacotes, tela Meu dia (Fechar o dia), Pendências com
+  Faltas → Decidir e Atendidos sem cobrança cadastrada, Pacientes com a seção Cobrança por profissional. `duplicatas.js`
+  na planilha passa a conter também `app/shared/cobranca.js`; `server.js` passa a conter também `app/server/server-cobranca.js`
+  (o carregador não mudou).
+- **Dados** (planilha real e cópia, 15/10, antes do código): abas `Cobrança por profissional` (165 linhas), `Valores por
+  sessão`, `Parâmetros`, `_relatorio cobrança 15-10`; `Listas!K:M`; log em `Alterações de cadastro` A189:G353. Colunas por
+  competência em `Mensalistas` e `Detalhe da falta`/`Decisão da gestão` na aba do mês são criadas pelo app quando precisar.
+- **Peças**: 45 em `arquivos!A43:C87` (gravadas com prefixo `novo:` e conferidas 45/45 contra `dist/pedacos.json` antes de
+  ativar); então A2:A42 → `antigo27:` e `novo:` removido. E2 carimbado.
+- **Voltar**: `antigo27:` → nome e A43:A87 → `antigo28:`.
+- **Commit**: 24d34fa · **Aprovação**: pendente (canal de teste; a gestão testa na CÓPIA TESTE).
+
 
 ### 2026-10-10-02 · Real · convênio gravado na linha + virada de Setembro e Outubro
 - **O que mudou**: o mesmo código do 2026-10-10-01 (teste), autorizado pela gestão em 09/10 à noite.
