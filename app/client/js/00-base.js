@@ -13,6 +13,9 @@ function ic(nome, s, w) {
     alerta: '<path d="M12 9v4M12 17h.01M10.3 3.9L1.8 18a2 2 0 001.7 3h17a2 2 0 001.7-3L13.7 3.9a2 2 0 00-3.4 0z"/>',
     info: '<circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/>',
     check: '<path d="M5 12l5 5L20 7"/>',
+    phone: '<path d="M22 16.9v3a2 2 0 01-2.2 2 19.8 19.8 0 01-8.6-3.1 19.5 19.5 0 01-6-6A19.8 19.8 0 012.1 4.2 2 2 0 014.1 2h3a2 2 0 012 1.7c.1.9.4 1.8.7 2.7a2 2 0 01-.5 2.1L8 9.8a16 16 0 006 6l1.3-1.3a2 2 0 012.1-.5c.9.3 1.8.6 2.7.7a2 2 0 011.7 2z"/>',
+    send: '<path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/>',
+    copy: '<rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 012-2h10"/>',
     seta: '<path d="M5 12h14M13 6l6 6-6 6"/>',
     direita: '<path d="M9 6l6 6-6 6"/>',
     mais: '<path d="M12 5v14M5 12h14"/>',
@@ -46,6 +49,7 @@ function call(nome, dados) {
 }
 /*__MOCK_INICIO__*/ // simulação local (dist/index.html); o build tira este bloco da versão publicada
 window.__ev = function (s) { return eval(s); }; // testes da simulação enxergam o escopo do app
+var mockWhats = { 'Theo Barreto Lima': '(32) 9 8888-1111', 'Beatriz Almeida Rocha': '(32) 9 9999-2222', 'Igor Modelo Silva': '(32) 9 7777-3333' }, mockEnviadas = {};
 var mockReg = [], mockDia = [], mockPendOk = [], mockPagos = {}, mockMens = {}, mockDecisoes = {};
 var mockProfs = [{ nome: "Juliana Ribeiro", especialidade: "Psicologia", esp: 'Psicologia', horarios: { Segunda: '08:00-12:00, 13:00-19:00', 'Terça': '08:00-12:00', Quarta: '13:00-19:00', Quinta: '08:00-12:00, 13:00-18:00', Sexta: '', 'Sábado': '' }, duracao: 30 },
   { nome: "Giovana Grossi", especialidade: "Psicologia (estágio)", esp: 'Psicologia', horarios: { Segunda: '10:00-12:00, 13:00-16:00', 'Terça': '', Quarta: '', Quinta: '', Sexta: '', 'Sábado': '' }, duracao: null },
@@ -147,6 +151,25 @@ function mock(nome, d) {
     if (nome === 'salvarAgendaFixa') { var id = d.id || ('F-' + (mockAgenda.length + 1)); var ex = mockAgenda.filter(function (a) { return a.ID === id; })[0]; var row = { ID: id, Paciente: d.paciente, Profissional: d.profissional, 'Dia da semana': d.diaSemana, Hora: d.hora, 'Frequência': d.frequencia || 'Semanal', 'Começa em': d.comecaEm || '', 'Termina em': d.terminaEm || '', Ativo: d.ativo === false ? 'Não' : 'Sim', 'Observação': d.observacao || '', Tipo: d.tipo || '' }; if (ex) Object.assign(ex, row); else mockAgenda.push(row); return res({ ok: true, id: id }); }
     if (nome === 'acrescentarAoDia') { var nid = 'D-' + (mockDia.length + 1); mockDia.push({ id: nid, data: d.data, hora: d.hora, paciente: d.paciente, profissional: d.profissional, origem: d.origem || 'Avulso' }); return res({ ok: true, id: nid }); }
     if (nome === 'remarcar') { mockDia.push({ id: 'D-x' + mockDia.length, data: d.de, hora: d.horaDe, paciente: d.paciente, profissional: d.profissional, origem: 'Não vem · remarcado para ' + d.para }); mockDia.push({ id: 'D-y' + mockDia.length, data: d.para, hora: d.horaPara || d.horaDe, paciente: d.paciente, profissional: d.profissional, origem: 'Remarcação de ' + d.de }); return res({ ok: true }); }
+    if (nome === 'confirmacoes') { // simulação: todo dia útil repete a agenda fixa de segunda
+      var cde = dataObj(d.de), cate = dataObj(d.ate) || cde; if (!cde) return res({ ok: false, erros: ['Data inválida.'] });
+      var grp = {}, ordC = [], molde = 'Olá, {pagador}! Aqui é da Clínica Nascente. Passando para confirmar:\n{sessoes}\nPodemos confirmar? Se precisar desmarcar, é só responder por aqui.';
+      for (var cd = new Date(cde.getTime()); cd <= cate; cd.setDate(cd.getDate() + 1)) {
+        if (cd.getDay() === 0 || cd.getDay() === 6) continue; var cds = ('0' + cd.getDate()).slice(-2) + '/' + ('0' + (cd.getMonth() + 1)).slice(-2) + '/' + cd.getFullYear();
+        mockAgenda.filter(function (a) { return a['Dia da semana'] === 'Segunda' && a.Ativo !== 'Não'; }).forEach(function (a) {
+          var mp = mockPacientes.filter(function (p) { return p.nome === a.Paciente; })[0] || {}, fone = String(mockWhats[a.Paciente] || '').replace(/\D/g, ''), k = mp.pagador ? 'p:' + mp.pagador : 'x:' + a.Paciente;
+          if (!grp[k]) { grp[k] = { chave: k, pagador: mp.pagador || '', fone: '', foneFmt: '', foneDe: '', itens: [] }; ordC.push(k); }
+          if (fone && !grp[k].fone) { grp[k].fone = '55' + fone; grp[k].foneFmt = mockWhats[a.Paciente]; grp[k].foneDe = 'pagador'; }
+          var conf = mockDia.filter(function (x) { return x.data === cds && x.paciente === a.Paciente && x.profissional === a.Profissional && x.origem === 'Confirmado'; })[0];
+          grp[k].itens.push({ data: cds, diaSemana: DIAS_PT[cd.getDay()], hora: a.Hora, paciente: a.Paciente, profissional: a.Profissional, tipo: a.Tipo === 'sessão' ? '' : (a.Tipo || ''), confirmado: conf ? { por: 'simulacao@local', quando: '' } : null, enviado: mockEnviadas[cds + '|' + a.Paciente + '|' + a.Profissional] || null,
+            linha: '• ' + a.Paciente.split(' ')[0] + ' com ' + a.Profissional + ' — ' + DIAS_PT[cd.getDay()].toLowerCase() + ', ' + cds.slice(0, 5) + ', às ' + a.Hora });
+        });
+      }
+      var gsC = ordC.map(function (k) { var g = grp[k]; g.pacientes = g.itens.map(function (x) { return x.paciente; }).filter(function (x, j, a) { return a.indexOf(x) === j; }); g.aConfirmar = g.itens.filter(function (x) { return !x.confirmado; }).length;
+        g.molde = molde.replace('{pagador}', String(g.pagador).split(' ')[0]).replace(/,\s*!/, '!'); g.mensagem = g.molde.replace('{sessoes}', g.itens.map(function (x) { return x.linha; }).join('\n')); return g; });
+      return res({ ok: true, de: d.de, ate: d.ate || d.de, grupos: gsC, modeloProvisorio: true, total: gsC.reduce(function (n, g) { return n + g.itens.length; }, 0) }); }
+    if (nome === 'marcarMensagemEnviada') { (d.itens || []).forEach(function (x) { mockEnviadas[x.data + '|' + x.paciente + '|' + x.profissional] = { por: 'simulacao@local', quando: hojeStr() + ' ' + agoraHora() }; }); return res({ ok: true, n: (d.itens || []).length, por: 'simulacao@local', quando: hojeStr() + ' ' + agoraHora() }); }
+    if (nome === 'salvarWhats') { var dg = String(d.whats || '').replace(/\D/g, ''); if (dg.length < 10 || dg.length > 11) return res({ ok: false, erros: ['WhatsApp inválido: DDD + número, ex.: (32) 9 9999-9999.'] }); (d.pacientes || []).forEach(function (p) { mockWhats[p] = mascaraFone(dg); }); return res({ ok: true, salvos: d.pacientes, fone: '55' + dg, foneFmt: mascaraFone(dg) }); }
     if (nome === 'confirmar') { mockDia.push({ id: 'D-c' + mockDia.length, data: d.data, hora: d.hora, paciente: d.paciente, profissional: d.profissional, origem: 'Confirmado' }); return res({ ok: true }); }
     if (nome === 'removerDoDia') { mockDia = mockDia.filter(function (x) { return x.id !== d.id; }); return res({ ok: true }); }
     if (nome === 'lerCadastro') { var pc = (AT ? AT.pacientes : []).filter(function (p) { return p.nome === d.nome; })[0]; if (!pc) return res({ ok: false, erros: ['Paciente não encontrado em Pacientes.'] }); return res({ ok: true, nome: pc.nome, nasc: pc.nasc, cpfFinal: String(pc.cpf || '').replace(/\D/g, '').slice(-4), indicacao: '', primeira: '', campos: { convenio: pc.convenio, carteirinha: '', obsCobranca: pc.obsCobranca, pagador: pc.pagador, whats: '', telPac: pc.telPac || '', profRef: '', pagadorCpf: '', respNome: pc.resp || '', respPar: pc.respPar || '', respTel: '', respCpf: '' } }); }
@@ -410,8 +433,8 @@ function corrigirValidar(c, reg) {
   return e;
 }
 
-var TELAS = { hoje: 's-hoje', registrar: 's-registrar', pacientes: 's-pacientes', cobranca: 's-cobranca', meudia: 's-meudia', gestao: 's-gestao', repasse: 's-repasse' };
-var TITULOS = { hoje: 'Agenda', registrar: 'Registrar atendimento', pacientes: 'Pacientes', cobranca: 'Cobrança do mês', meudia: 'Meu dia', gestao: 'Pendências', repasse: 'Repasse' };
+var TELAS = { hoje: 's-hoje', confirmar: 's-confirmar', registrar: 's-registrar', pacientes: 's-pacientes', cobranca: 's-cobranca', meudia: 's-meudia', gestao: 's-gestao', repasse: 's-repasse' };
+var TITULOS = { hoje: 'Agenda', confirmar: 'Confirmações', registrar: 'Registrar atendimento', pacientes: 'Pacientes', cobranca: 'Cobrança do mês', meudia: 'Meu dia', gestao: 'Pendências', repasse: 'Repasse' };
 var SO_GESTAO = { gestao: true, repasse: true };
 var telaAtual = 'hoje', navGen = 0;
 var INICIAR = {};

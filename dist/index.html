@@ -620,6 +620,18 @@ table.cm .sub{font-size:12px;color:var(--tx3);font-weight:400}
 table.cm .acoes{justify-content:flex-end;gap:4px;flex-wrap:wrap}
 .td-dec .acoes{justify-content:flex-end;gap:4px;flex-wrap:wrap;max-width:360px;margin-left:auto}
 
+/* Confirmações (Fase 2) */
+.cf-lista{display:flex;flex-direction:column;gap:14px}
+.cf-grupo.ok{opacity:.75}
+.cf-cab{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:6px 14px}
+.cf-quem{font-family:var(--fh);font-weight:600;font-size:16px;color:var(--roxo-h)}
+.cf-itens{display:flex;flex-direction:column;gap:6px}
+.cf-quando{font-weight:700;color:var(--tx2);min-width:120px}
+.cf-acoes{display:flex;flex-wrap:wrap;align-items:center;gap:8px}
+.cf-fone{display:inline-flex;flex-wrap:wrap;gap:8px;align-items:center}
+.cf-fone input{width:220px}
+.cf-msg{white-space:pre-wrap;font-family:inherit;font-size:14px;background:var(--bg);border-radius:10px;padding:12px 14px;margin:0}
+
 </style>
 </head>
 <body>
@@ -657,6 +669,7 @@ table.cm .acoes{justify-content:flex-end;gap:4px;flex-wrap:wrap}
 </g>
 </svg></a>
   <button type="button" data-go="hoje" aria-current="page"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>Agenda</button>
+  <button type="button" data-go="confirmar"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 11.5a8.4 8.4 0 01-9 8.4 8.6 8.6 0 01-3.8-.9L3 21l1.9-5.2A8.4 8.4 0 1121 11.5z"/><path d="M8.5 11.5l2.5 2.5 4.5-4.5"/></svg>Confirmações</button>
   <button type="button" data-go="registrar"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>Registrar</button>
   <button type="button" data-go="pacientes"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0116 0"/></svg>Pacientes</button>
   <button type="button" data-go="cobranca"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="6" width="18" height="12" rx="2"/><path d="M3 10h18"/></svg>Cobrança do mês</button>
@@ -825,6 +838,30 @@ table.cm .acoes{justify-content:flex-end;gap:4px;flex-wrap:wrap}
       <div class="pp-links"><button type="button" class="btn link" id="pp-corrigir" hidden>Corrigir lançamento</button><span class="sep" id="pp-corrigir-sep" hidden>·</span><button type="button" class="btn link" id="pp-cadastro">Ver cadastro</button><span class="sep">·</span><button type="button" class="btn link perigo" id="pp-remover">Remover da lista</button></div>
     </div>
   </aside>
+</section>
+
+<section class="tela coluna" id="s-confirmar" hidden>
+  <div class="titulo">
+    <h1>Confirmações</h1>
+    <span class="muted so-pc">mensagem pronta no WhatsApp: uma por família, com todas as sessões do período</span>
+  </div>
+  <div class="filtros no-print">
+    <div class="seg mini" id="cf-periodo" role="group" aria-label="Período">
+      <button type="button" data-v="amanha" aria-pressed="true">Amanhã</button>
+      <button type="button" data-v="dois" aria-pressed="false">Daqui a 2 dias</button>
+      <button type="button" data-v="semana" aria-pressed="false">Resto da semana</button>
+      <button type="button" data-v="proxima" aria-pressed="false">Próxima semana</button>
+      <button type="button" data-v="outro" aria-pressed="false">Outro período</button>
+    </div>
+    <span id="cf-outro" hidden><label>de <input id="cf-de" placeholder="dd/mm/aaaa" maxlength="10" inputmode="numeric" style="width:110px"></label> <label>até <input id="cf-ate" placeholder="dd/mm/aaaa" maxlength="10" inputmode="numeric" style="width:110px"></label> <button type="button" class="btn ter mini" id="cf-ver">Ver</button></span>
+    <select id="cf-prof" aria-label="Profissional" class="auto"><option value="">Todos os profissionais</option></select>
+    <div class="seg mini" id="cf-mostrar" role="group" aria-label="Mostrar"><button type="button" data-v="falta" aria-pressed="true">A confirmar</button><button type="button" data-v="todos" aria-pressed="false">Todos</button></div>
+  </div>
+  <div class="fd-resumo" id="cf-resumo" hidden></div>
+  <div id="cf-aviso" class="faixa amarela" hidden></div>
+  <div id="cf-carregando" class="carregando esqueleto"><div></div><div></div></div>
+  <div class="cf-lista" id="cf-lista"></div>
+  <div class="muted" id="cf-status"></div>
 </section>
 
 <section class="tela" id="s-registrar" hidden>
@@ -1189,6 +1226,7 @@ table.cm .acoes{justify-content:flex-end;gap:4px;flex-wrap:wrap}
 
 <nav class="tabbar" aria-label="Principal (celular)">
   <button type="button" data-go="hoje" aria-current="page"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>Agenda</button>
+  <button type="button" data-go="confirmar"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 11.5a8.4 8.4 0 01-9 8.4 8.6 8.6 0 01-3.8-.9L3 21l1.9-5.2A8.4 8.4 0 1121 11.5z"/><path d="M8.5 11.5l2.5 2.5 4.5-4.5"/></svg>Confirmar</button>
   <button type="button" data-go="registrar"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>Registrar</button>
   <button type="button" data-go="pacientes"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0116 0"/></svg>Pacientes</button>
   <button type="button" data-go="cobranca"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="6" width="18" height="12" rx="2"/><path d="M3 10h18"/></svg>Cobrança</button>
@@ -1544,6 +1582,9 @@ function ic(nome, s, w) {
     alerta: '<path d="M12 9v4M12 17h.01M10.3 3.9L1.8 18a2 2 0 001.7 3h17a2 2 0 001.7-3L13.7 3.9a2 2 0 00-3.4 0z"/>',
     info: '<circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/>',
     check: '<path d="M5 12l5 5L20 7"/>',
+    phone: '<path d="M22 16.9v3a2 2 0 01-2.2 2 19.8 19.8 0 01-8.6-3.1 19.5 19.5 0 01-6-6A19.8 19.8 0 012.1 4.2 2 2 0 014.1 2h3a2 2 0 012 1.7c.1.9.4 1.8.7 2.7a2 2 0 01-.5 2.1L8 9.8a16 16 0 006 6l1.3-1.3a2 2 0 012.1-.5c.9.3 1.8.6 2.7.7a2 2 0 011.7 2z"/>',
+    send: '<path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/>',
+    copy: '<rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 012-2h10"/>',
     seta: '<path d="M5 12h14M13 6l6 6-6 6"/>',
     direita: '<path d="M9 6l6 6-6 6"/>',
     mais: '<path d="M12 5v14M5 12h14"/>',
@@ -1577,6 +1618,7 @@ function call(nome, dados) {
 }
 /*__MOCK_INICIO__*/ // simulação local (dist/index.html); o build tira este bloco da versão publicada
 window.__ev = function (s) { return eval(s); }; // testes da simulação enxergam o escopo do app
+var mockWhats = { 'Theo Barreto Lima': '(32) 9 8888-1111', 'Beatriz Almeida Rocha': '(32) 9 9999-2222', 'Igor Modelo Silva': '(32) 9 7777-3333' }, mockEnviadas = {};
 var mockReg = [], mockDia = [], mockPendOk = [], mockPagos = {}, mockMens = {}, mockDecisoes = {};
 var mockProfs = [{ nome: "Juliana Ribeiro", especialidade: "Psicologia", esp: 'Psicologia', horarios: { Segunda: '08:00-12:00, 13:00-19:00', 'Terça': '08:00-12:00', Quarta: '13:00-19:00', Quinta: '08:00-12:00, 13:00-18:00', Sexta: '', 'Sábado': '' }, duracao: 30 },
   { nome: "Giovana Grossi", especialidade: "Psicologia (estágio)", esp: 'Psicologia', horarios: { Segunda: '10:00-12:00, 13:00-16:00', 'Terça': '', Quarta: '', Quinta: '', Sexta: '', 'Sábado': '' }, duracao: null },
@@ -1678,6 +1720,25 @@ function mock(nome, d) {
     if (nome === 'salvarAgendaFixa') { var id = d.id || ('F-' + (mockAgenda.length + 1)); var ex = mockAgenda.filter(function (a) { return a.ID === id; })[0]; var row = { ID: id, Paciente: d.paciente, Profissional: d.profissional, 'Dia da semana': d.diaSemana, Hora: d.hora, 'Frequência': d.frequencia || 'Semanal', 'Começa em': d.comecaEm || '', 'Termina em': d.terminaEm || '', Ativo: d.ativo === false ? 'Não' : 'Sim', 'Observação': d.observacao || '', Tipo: d.tipo || '' }; if (ex) Object.assign(ex, row); else mockAgenda.push(row); return res({ ok: true, id: id }); }
     if (nome === 'acrescentarAoDia') { var nid = 'D-' + (mockDia.length + 1); mockDia.push({ id: nid, data: d.data, hora: d.hora, paciente: d.paciente, profissional: d.profissional, origem: d.origem || 'Avulso' }); return res({ ok: true, id: nid }); }
     if (nome === 'remarcar') { mockDia.push({ id: 'D-x' + mockDia.length, data: d.de, hora: d.horaDe, paciente: d.paciente, profissional: d.profissional, origem: 'Não vem · remarcado para ' + d.para }); mockDia.push({ id: 'D-y' + mockDia.length, data: d.para, hora: d.horaPara || d.horaDe, paciente: d.paciente, profissional: d.profissional, origem: 'Remarcação de ' + d.de }); return res({ ok: true }); }
+    if (nome === 'confirmacoes') { // simulação: todo dia útil repete a agenda fixa de segunda
+      var cde = dataObj(d.de), cate = dataObj(d.ate) || cde; if (!cde) return res({ ok: false, erros: ['Data inválida.'] });
+      var grp = {}, ordC = [], molde = 'Olá, {pagador}! Aqui é da Clínica Nascente. Passando para confirmar:\n{sessoes}\nPodemos confirmar? Se precisar desmarcar, é só responder por aqui.';
+      for (var cd = new Date(cde.getTime()); cd <= cate; cd.setDate(cd.getDate() + 1)) {
+        if (cd.getDay() === 0 || cd.getDay() === 6) continue; var cds = ('0' + cd.getDate()).slice(-2) + '/' + ('0' + (cd.getMonth() + 1)).slice(-2) + '/' + cd.getFullYear();
+        mockAgenda.filter(function (a) { return a['Dia da semana'] === 'Segunda' && a.Ativo !== 'Não'; }).forEach(function (a) {
+          var mp = mockPacientes.filter(function (p) { return p.nome === a.Paciente; })[0] || {}, fone = String(mockWhats[a.Paciente] || '').replace(/\D/g, ''), k = mp.pagador ? 'p:' + mp.pagador : 'x:' + a.Paciente;
+          if (!grp[k]) { grp[k] = { chave: k, pagador: mp.pagador || '', fone: '', foneFmt: '', foneDe: '', itens: [] }; ordC.push(k); }
+          if (fone && !grp[k].fone) { grp[k].fone = '55' + fone; grp[k].foneFmt = mockWhats[a.Paciente]; grp[k].foneDe = 'pagador'; }
+          var conf = mockDia.filter(function (x) { return x.data === cds && x.paciente === a.Paciente && x.profissional === a.Profissional && x.origem === 'Confirmado'; })[0];
+          grp[k].itens.push({ data: cds, diaSemana: DIAS_PT[cd.getDay()], hora: a.Hora, paciente: a.Paciente, profissional: a.Profissional, tipo: a.Tipo === 'sessão' ? '' : (a.Tipo || ''), confirmado: conf ? { por: 'simulacao@local', quando: '' } : null, enviado: mockEnviadas[cds + '|' + a.Paciente + '|' + a.Profissional] || null,
+            linha: '• ' + a.Paciente.split(' ')[0] + ' com ' + a.Profissional + ' — ' + DIAS_PT[cd.getDay()].toLowerCase() + ', ' + cds.slice(0, 5) + ', às ' + a.Hora });
+        });
+      }
+      var gsC = ordC.map(function (k) { var g = grp[k]; g.pacientes = g.itens.map(function (x) { return x.paciente; }).filter(function (x, j, a) { return a.indexOf(x) === j; }); g.aConfirmar = g.itens.filter(function (x) { return !x.confirmado; }).length;
+        g.molde = molde.replace('{pagador}', String(g.pagador).split(' ')[0]).replace(/,\s*!/, '!'); g.mensagem = g.molde.replace('{sessoes}', g.itens.map(function (x) { return x.linha; }).join('\n')); return g; });
+      return res({ ok: true, de: d.de, ate: d.ate || d.de, grupos: gsC, modeloProvisorio: true, total: gsC.reduce(function (n, g) { return n + g.itens.length; }, 0) }); }
+    if (nome === 'marcarMensagemEnviada') { (d.itens || []).forEach(function (x) { mockEnviadas[x.data + '|' + x.paciente + '|' + x.profissional] = { por: 'simulacao@local', quando: hojeStr() + ' ' + agoraHora() }; }); return res({ ok: true, n: (d.itens || []).length, por: 'simulacao@local', quando: hojeStr() + ' ' + agoraHora() }); }
+    if (nome === 'salvarWhats') { var dg = String(d.whats || '').replace(/\D/g, ''); if (dg.length < 10 || dg.length > 11) return res({ ok: false, erros: ['WhatsApp inválido: DDD + número, ex.: (32) 9 9999-9999.'] }); (d.pacientes || []).forEach(function (p) { mockWhats[p] = mascaraFone(dg); }); return res({ ok: true, salvos: d.pacientes, fone: '55' + dg, foneFmt: mascaraFone(dg) }); }
     if (nome === 'confirmar') { mockDia.push({ id: 'D-c' + mockDia.length, data: d.data, hora: d.hora, paciente: d.paciente, profissional: d.profissional, origem: 'Confirmado' }); return res({ ok: true }); }
     if (nome === 'removerDoDia') { mockDia = mockDia.filter(function (x) { return x.id !== d.id; }); return res({ ok: true }); }
     if (nome === 'lerCadastro') { var pc = (AT ? AT.pacientes : []).filter(function (p) { return p.nome === d.nome; })[0]; if (!pc) return res({ ok: false, erros: ['Paciente não encontrado em Pacientes.'] }); return res({ ok: true, nome: pc.nome, nasc: pc.nasc, cpfFinal: String(pc.cpf || '').replace(/\D/g, '').slice(-4), indicacao: '', primeira: '', campos: { convenio: pc.convenio, carteirinha: '', obsCobranca: pc.obsCobranca, pagador: pc.pagador, whats: '', telPac: pc.telPac || '', profRef: '', pagadorCpf: '', respNome: pc.resp || '', respPar: pc.respPar || '', respTel: '', respCpf: '' } }); }
@@ -1941,8 +2002,8 @@ function corrigirValidar(c, reg) {
   return e;
 }
 
-var TELAS = { hoje: 's-hoje', registrar: 's-registrar', pacientes: 's-pacientes', cobranca: 's-cobranca', meudia: 's-meudia', gestao: 's-gestao', repasse: 's-repasse' };
-var TITULOS = { hoje: 'Agenda', registrar: 'Registrar atendimento', pacientes: 'Pacientes', cobranca: 'Cobrança do mês', meudia: 'Meu dia', gestao: 'Pendências', repasse: 'Repasse' };
+var TELAS = { hoje: 's-hoje', confirmar: 's-confirmar', registrar: 's-registrar', pacientes: 's-pacientes', cobranca: 's-cobranca', meudia: 's-meudia', gestao: 's-gestao', repasse: 's-repasse' };
+var TITULOS = { hoje: 'Agenda', confirmar: 'Confirmações', registrar: 'Registrar atendimento', pacientes: 'Pacientes', cobranca: 'Cobrança do mês', meudia: 'Meu dia', gestao: 'Pendências', repasse: 'Repasse' };
 var SO_GESTAO = { gestao: true, repasse: true };
 var telaAtual = 'hoje', navGen = 0;
 var INICIAR = {};
@@ -2047,12 +2108,15 @@ function cobHojeHtml(it) {
 }
 function idadeCurta(p) { if (!p || !p.nasc) return ''; var i = idade(p.nasc); if (!i) return ''; var n = parseInt(i, 10); return n >= 18 ? 'adulto' : i; }
 
-INICIAR.hoje = function () {
+// extra (vindo de Confirmações): { data, paciente, profissional, form } abre o dia com o paciente selecionado e o formulário aberto
+INICIAR.hoje = function (extra) {
+  if (extra && dataObj(extra.data)) $("#d-data").value = dataParaISO(dataObj(extra.data));
   if (!$("#d-data").value) $("#d-data").value = dataParaISO(new Date());
   quandoAT(function () {
     if (!$("#d-add-prof").options.length) { preencherSelect($("#d-add-prof"), BOOT.profissionais); preencherSelect($("#r-prof"), BOOT.profissionais); }
     mostrarLembrete();
-    carregarDia();
+    var p = carregarDia();
+    if (extra && extra.paciente && p) p.then(function () { var it = DIA && DIA.itens.filter(function (x) { return x.paciente === extra.paciente && x.profissional === extra.profissional; })[0]; if (it) selecionar(it, extra.form || null); });
   });
 };
 // faixa pêssego: o lembrete ativo que a gestão escreveu (aba Lembretes)
@@ -2453,6 +2517,124 @@ $("#r-salvar").addEventListener('click', function () {
   salvarRec(d);
 });
 function salvarRec(d) { $("#r-salvar").disabled = true; call('salvarAgendaFixa', d).then(function (r) { if (!r.ok) return toast((r.erros || ['Não gravou']).join(' ')); toast('Recorrência salva'); limparRec(); carregarRec(); carregarDia(); }).catch(function (e) { toast('Erro: ' + e.message); }).finally(function () { $("#r-salvar").disabled = false; }); }
+
+/* ===== 12-confirmar.js ===== */
+/* ================= CONFIRMAÇÕES — WhatsApp (Fase 2, 15/10) =================
+   A recepção escolhe o período (amanhã, daqui a 2 dias, a semana), vê as sessões agrupadas por pagador e abre o WhatsApp
+   com a mensagem pronta (texto em Parâmetros!msg_confirmacao). Abrir o WhatsApp grava "mensagem enviada" (aba Mensagens
+   WhatsApp); a resposta da família vira "Confirmou" (Lista do dia) ou "Não vem / remarcar" na Agenda do dia.
+   Sem número no cadastro: a recepção digita o WhatsApp uma vez e ele vai para Pacientes (com log). */
+var CF = null, cfPeriodo = 'amanha', cfMostrar = 'falta', cfProf = '', cfGen = 0;
+INICIAR.confirmar = function () { quandoAT(carregarConfirmacoes); };
+function ddmm(dt) { return ('0' + dt.getDate()).slice(-2) + '/' + ('0' + (dt.getMonth() + 1)).slice(-2) + '/' + dt.getFullYear(); }
+function maisDias(dt, n) { return new Date(dt.getFullYear(), dt.getMonth(), dt.getDate() + n); }
+function periodoCF() {
+  var h = dataObj(hojeStr()) || new Date(), am = maisDias(h, 1);
+  if (cfPeriodo === 'dois') return { de: ddmm(maisDias(h, 2)), ate: ddmm(maisDias(h, 2)) };
+  if (cfPeriodo === 'semana') { var sab = maisDias(am, (6 - am.getDay() + 7) % 7); return { de: ddmm(am), ate: ddmm(sab) }; }
+  if (cfPeriodo === 'proxima') { var seg2 = maisDias(h, ((8 - h.getDay()) % 7) || 7); return { de: ddmm(seg2), ate: ddmm(maisDias(seg2, 5)) }; }
+  if (cfPeriodo === 'outro') return { de: $("#cf-de").value, ate: $("#cf-ate").value || $("#cf-de").value };
+  return { de: ddmm(am), ate: ddmm(am) };
+}
+function carregarConfirmacoes() {
+  var p = periodoCF(), gen = ++cfGen;
+  if (cfPeriodo === 'outro' && !dataObj(p.de)) { $("#cf-carregando").hidden = true; $("#cf-status").textContent = 'Escolha as datas (dd/mm/aaaa) e clique em Ver.'; return; }
+  $("#cf-carregando").hidden = false; $("#cf-lista").innerHTML = ''; $("#cf-resumo").hidden = true; $("#cf-aviso").hidden = true; $("#cf-status").textContent = '';
+  call('confirmacoes', p).then(function (r) {
+    if (!aindaNa('confirmar', navGen) || gen !== cfGen) return;
+    $("#cf-carregando").hidden = true;
+    if (!r.ok) { $("#cf-status").textContent = (r.erros || ['Não consegui carregar.']).join(' '); return; }
+    CF = r; preencherProfsCF(); renderConfirmacoes();
+  }).catch(function (e) { if (gen !== cfGen) return; $("#cf-carregando").hidden = true; $("#cf-status").textContent = 'Não consegui carregar: ' + e.message; });
+}
+function preencherProfsCF() {
+  var profs = []; CF.grupos.forEach(function (g) { g.itens.forEach(function (x) { if (profs.indexOf(x.profissional) < 0) profs.push(x.profissional); }); });
+  profs.sort(); var sel = $("#cf-prof"); sel.innerHTML = '<option value="">Todos os profissionais</option>';
+  profs.forEach(function (p) { var o = document.createElement('option'); o.value = p; o.textContent = profCurto(p); sel.appendChild(o); });
+  if (profs.indexOf(cfProf) < 0) cfProf = ''; sel.value = cfProf;
+}
+function situacaoCF(x) {
+  if (x.confirmado) return '<span class="tag verde">' + ic('check', 12, 3) + 'Confirmado</span>';
+  if (x.enviado) return '<span class="tag lilas" title="por ' + esc(x.enviado.por) + '">Mensagem enviada ' + esc(String(x.enviado.quando || '').replace(/^(\d{2}\/\d{2})\/\d{4}/, '$1')) + '</span>';
+  return '<span class="tag amarela">A confirmar</span>';
+}
+function renderConfirmacoes() {
+  var gs = CF.grupos.map(function (g) { return { g: g, itens: g.itens.filter(function (x) { return !cfProf || x.profissional === cfProf; }) }; }).filter(function (o) { return o.itens.length; });
+  var todos = [].concat.apply([], gs.map(function (o) { return o.itens; }));
+  var conf = todos.filter(function (x) { return x.confirmado; }).length, env = todos.filter(function (x) { return !x.confirmado && x.enviado; }).length, semFone = gs.filter(function (o) { return !o.g.fone && o.itens.some(function (x) { return !x.confirmado; }); }).length;
+  $("#cf-resumo").hidden = false;
+  $("#cf-resumo").innerHTML = '<div><b>' + todos.length + '</b><span>sessões · ' + esc(CF.de === CF.ate ? CF.de.slice(0, 5) : CF.de.slice(0, 5) + ' a ' + CF.ate.slice(0, 5)) + '</span></div><div><b>' + conf + '</b><span>confirmadas</span></div><div><b>' + env + '</b><span>mensagem enviada, sem resposta</span></div><div><b>' + (todos.length - conf - env) + '</b><span>a confirmar</span></div><div class="' + (semFone ? 'atencao' : '') + '"><b>' + semFone + '</b><span>famílias sem WhatsApp</span></div>';
+  if (CF.modeloProvisorio && ehGestao()) { $("#cf-aviso").hidden = false; $("#cf-aviso").innerHTML = '<strong>Texto provisório.</strong>&nbsp;Para usar o texto oficial, escreva-o na aba Parâmetros, linha <code>msg_confirmacao</code> (use {pagador} e {sessoes}).'; }
+  var vis = gs.filter(function (o) { return cfMostrar === 'todos' || o.itens.some(function (x) { return !x.confirmado; }); });
+  var box = $("#cf-lista"); box.innerHTML = '';
+  if (!vis.length) { box.innerHTML = '<div class="card compacto"><div class="muted">' + (todos.length ? 'Todas as sessões do período estão confirmadas.' : 'Nenhuma sessão na agenda neste período.') + '</div></div>'; return; }
+  vis.forEach(function (o) { box.appendChild(cardGrupoCF(o.g, o.itens)); });
+}
+function cardGrupoCF(g, itens) {
+  var faltam = itens.filter(function (x) { return !x.confirmado; }), msgItens = faltam.length ? faltam : itens;
+  var titulo = g.pagador ? esc(g.pagador) : esc(g.pacientes.join(', '));
+  var fone = g.fone ? '<span class="muted">' + ic('phone', 13, 2.4) + ' ' + esc(g.foneFmt) + (g.foneDe && g.foneDe !== 'pagador' ? ' (telefone do ' + esc(g.foneDe) + ')' : '') + '</span>' : '<span class="tag laranja">sem WhatsApp no cadastro</span>';
+  var c = el('<div class="card compacto cf-grupo' + (faltam.length ? '' : ' ok') + '"><div class="cf-cab"><div><b class="cf-quem">' + titulo + '</b>' + (g.pagador ? '<span class="muted"> · ' + esc(g.pacientes.map(primeiroNome).join(', ')) + '</span>' : '') + '</div>' + fone + '</div><div class="cf-itens"></div><div class="cf-acoes"></div><pre class="cf-msg" hidden></pre></div>');
+  var li = $('.cf-itens', c);
+  itens.forEach(function (x) {
+    var r = el('<div class="fd-item"><span class="cf-quando">' + esc(x.diaSemana.slice(0, 3).toLowerCase() + ' ' + x.data.slice(0, 5) + (x.hora ? ' · ' + x.hora : '')) + '</span><span class="quem">' + esc(x.paciente) + '</span><span class="muted">' + esc(profCurto(x.profissional) + (x.tipo ? ' · ' + x.tipo.toLowerCase() : '')) + '</span><span class="esp"></span>' + situacaoCF(x) +
+      (x.confirmado ? '' : '<button type="button" class="btn ter mini" data-ac="confirmou">Confirmou</button><button type="button" class="btn link mini" data-ac="naovem" title="Abre a Agenda do dia para marcar Não vem ou Remarcar">Não vem / remarcar</button>') + '</div>');
+    $$('button', r).forEach(function (b) { b.addEventListener('click', function () { acaoItemCF(b.dataset.ac, x, b); }); });
+    li.appendChild(r);
+  });
+  var ac = $('.cf-acoes', c), msg = mensagemCF(g, msgItens);
+  if (g.fone) {
+    var a = el('<a class="btn" target="_blank" rel="noopener">' + ic('send', 15, 2.4) + ' Abrir WhatsApp' + (faltam.length ? '' : ' (de novo)') + '</a>');
+    a.href = 'https://wa.me/' + g.fone + '?text=' + encodeURIComponent(msg);
+    a.addEventListener('click', function () { marcarEnviadaCF(g, msgItens); });
+    ac.appendChild(a);
+  } else {
+    var f = el('<span class="cf-fone"><input placeholder="WhatsApp: (32) 9 9999-9999" inputmode="tel" maxlength="16" autocomplete="off" aria-label="WhatsApp do pagador"><button type="button" class="btn sec mini">Salvar no cadastro</button></span>');
+    var inp = $('input', f); inp.addEventListener('input', function () { this.value = mascaraFone(this.value); });
+    $('button', f).addEventListener('click', function () {
+      var b = this; if (String(inp.value).replace(/\D/g, '').length < 10) { toast('Digite o DDD e o número.'); inp.focus(); return; }
+      b.disabled = true;
+      call('salvarWhats', { pacientes: g.pacientes, whats: inp.value }).then(function (r) {
+        b.disabled = false; if (!r.ok) return toast((r.erros || ['Não gravou']).join(' '));
+        g.fone = r.fone; g.foneFmt = r.foneFmt; g.foneDe = 'pagador'; toast('WhatsApp salvo no cadastro' + (r.salvos && r.salvos.length > 1 ? ' de ' + r.salvos.length + ' pacientes' : '')); renderConfirmacoes();
+        if (typeof recarregarAT === 'function') recarregarAT();
+      }).catch(function (e) { b.disabled = false; toast('Erro: ' + e.message); });
+    });
+    ac.appendChild(f);
+  }
+  var bc = el('<button type="button" class="btn ter mini">' + ic('copy', 14, 2.2) + ' Copiar mensagem</button>');
+  bc.addEventListener('click', function () {
+    var ok = function () { toast('Mensagem copiada'); }, falha = function () { window.prompt('Copie a mensagem:', msg); };
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(msg).then(ok, falha); else falha();
+  });
+  var bv = el('<button type="button" class="btn link mini">Ver mensagem</button>'), pre = $('.cf-msg', c);
+  bv.addEventListener('click', function () { pre.hidden = !pre.hidden; pre.textContent = msg; bv.textContent = pre.hidden ? 'Ver mensagem' : 'Esconder mensagem'; });
+  ac.appendChild(bc); ac.appendChild(bv);
+  return c;
+}
+// o molde vem do servidor com o pagador já trocado; a tela junta as linhas das sessões mostradas (filtro de profissional)
+function mensagemCF(g, itens) { return g.molde.replace(/\{sessoes\}/g, itens.map(function (x) { return x.linha; }).join('\n')); }
+function marcarEnviadaCF(g, itens) {
+  call('marcarMensagemEnviada', { pagador: g.pagador, fone: g.fone, itens: itens.map(function (x) { return { data: x.data, hora: x.hora, paciente: x.paciente, profissional: x.profissional }; }) }).then(function (r) {
+    if (!r.ok) return toast((r.erros || ['Não registrei o envio']).join(' '));
+    itens.forEach(function (x) { if (!x.confirmado) x.enviado = { por: r.por, quando: r.quando }; });
+    if (aindaNa('confirmar', navGen)) renderConfirmacoes();
+  }).catch(function (e) { toast('Não registrei o envio: ' + e.message); });
+}
+function acaoItemCF(ac, x, b) {
+  if (ac === 'confirmou') {
+    b.disabled = true;
+    call('confirmar', { data: x.data, hora: x.hora || '', paciente: x.paciente, profissional: x.profissional }).then(function (r) {
+      if (!r.ok) { b.disabled = false; return toast((r.erros || ['Não gravou']).join(' ')); }
+      x.confirmado = { por: quemSou(), quando: agoraHora() }; toast('Confirmado: ' + x.paciente); renderConfirmacoes();
+    }).catch(function (e) { b.disabled = false; toast('Erro: ' + e.message); });
+  } else if (ac === 'naovem') go('hoje', { data: x.data, paciente: x.paciente, profissional: x.profissional, form: 'naovem' });
+}
+$$('button', $("#cf-periodo")).forEach(function (b) { b.addEventListener('click', function () { cfPeriodo = b.dataset.v; seg($("#cf-periodo"), cfPeriodo); $("#cf-outro").hidden = cfPeriodo !== 'outro'; if (cfPeriodo === 'outro') { if (!$("#cf-de").value) $("#cf-de").focus(); else carregarConfirmacoes(); } else carregarConfirmacoes(); }); });
+$$('button', $("#cf-mostrar")).forEach(function (b) { b.addEventListener('click', function () { cfMostrar = b.dataset.v; seg($("#cf-mostrar"), cfMostrar); if (CF) renderConfirmacoes(); }); });
+["#cf-de", "#cf-ate"].forEach(function (s) { $(s).addEventListener('input', function () { this.value = mascaraData(this.value); }); $(s).addEventListener('keydown', function (e) { if (e.key === 'Enter') carregarConfirmacoes(); }); });
+$("#cf-ver").addEventListener('click', carregarConfirmacoes);
+$("#cf-prof").addEventListener('change', function () { cfProf = this.value; if (CF) renderConfirmacoes(); });
 
 /* ===== 15-agenda.js ===== */
 /* ================= AGENDA (grade de horários na tela Agenda) =================

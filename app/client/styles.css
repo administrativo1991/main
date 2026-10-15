@@ -610,3 +610,15 @@ table.cm .sub{font-size:12px;color:var(--tx3);font-weight:400}
 .md-grid>div{display:flex;flex-direction:column;gap:16px;min-width:0}
 table.cm .acoes{justify-content:flex-end;gap:4px;flex-wrap:wrap}
 .td-dec .acoes{justify-content:flex-end;gap:4px;flex-wrap:wrap;max-width:360px;margin-left:auto}
+
+/* Confirmações (Fase 2) */
+.cf-lista{display:flex;flex-direction:column;gap:14px}
+.cf-grupo.ok{opacity:.75}
+.cf-cab{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:6px 14px}
+.cf-quem{font-family:var(--fh);font-weight:600;font-size:16px;color:var(--roxo-h)}
+.cf-itens{display:flex;flex-direction:column;gap:6px}
+.cf-quando{font-weight:700;color:var(--tx2);min-width:120px}
+.cf-acoes{display:flex;flex-wrap:wrap;align-items:center;gap:8px}
+.cf-fone{display:inline-flex;flex-wrap:wrap;gap:8px;align-items:center}
+.cf-fone input{width:220px}
+.cf-msg{white-space:pre-wrap;font-family:inherit;font-size:14px;background:var(--bg);border-radius:10px;padding:12px 14px;margin:0}

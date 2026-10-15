@@ -30,12 +30,15 @@ function cobHojeHtml(it) {
 }
 function idadeCurta(p) { if (!p || !p.nasc) return ''; var i = idade(p.nasc); if (!i) return ''; var n = parseInt(i, 10); return n >= 18 ? 'adulto' : i; }
 
-INICIAR.hoje = function () {
+// extra (vindo de Confirmações): { data, paciente, profissional, form } abre o dia com o paciente selecionado e o formulário aberto
+INICIAR.hoje = function (extra) {
+  if (extra && dataObj(extra.data)) $("#d-data").value = dataParaISO(dataObj(extra.data));
   if (!$("#d-data").value) $("#d-data").value = dataParaISO(new Date());
   quandoAT(function () {
     if (!$("#d-add-prof").options.length) { preencherSelect($("#d-add-prof"), BOOT.profissionais); preencherSelect($("#r-prof"), BOOT.profissionais); }
     mostrarLembrete();
-    carregarDia();
+    var p = carregarDia();
+    if (extra && extra.paciente && p) p.then(function () { var it = DIA && DIA.itens.filter(function (x) { return x.paciente === extra.paciente && x.profissional === extra.profissional; })[0]; if (it) selecionar(it, extra.form || null); });
   });
 };
 // faixa pêssego: o lembrete ativo que a gestão escreveu (aba Lembretes)

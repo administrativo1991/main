@@ -1,0 +1,23 @@
+<section class="tela coluna" id="s-confirmar" hidden>
+  <div class="titulo">
+    <h1>Confirmações</h1>
+    <span class="muted so-pc">mensagem pronta no WhatsApp: uma por família, com todas as sessões do período</span>
+  </div>
+  <div class="filtros no-print">
+    <div class="seg mini" id="cf-periodo" role="group" aria-label="Período">
+      <button type="button" data-v="amanha" aria-pressed="true">Amanhã</button>
+      <button type="button" data-v="dois" aria-pressed="false">Daqui a 2 dias</button>
+      <button type="button" data-v="semana" aria-pressed="false">Resto da semana</button>
+      <button type="button" data-v="proxima" aria-pressed="false">Próxima semana</button>
+      <button type="button" data-v="outro" aria-pressed="false">Outro período</button>
+    </div>
+    <span id="cf-outro" hidden><label>de <input id="cf-de" placeholder="dd/mm/aaaa" maxlength="10" inputmode="numeric" style="width:110px"></label> <label>até <input id="cf-ate" placeholder="dd/mm/aaaa" maxlength="10" inputmode="numeric" style="width:110px"></label> <button type="button" class="btn ter mini" id="cf-ver">Ver</button></span>
+    <select id="cf-prof" aria-label="Profissional" class="auto"><option value="">Todos os profissionais</option></select>
+    <div class="seg mini" id="cf-mostrar" role="group" aria-label="Mostrar"><button type="button" data-v="falta" aria-pressed="true">A confirmar</button><button type="button" data-v="todos" aria-pressed="false">Todos</button></div>
+  </div>
+  <div class="fd-resumo" id="cf-resumo" hidden></div>
+  <div id="cf-aviso" class="faixa amarela" hidden></div>
+  <div id="cf-carregando" class="carregando esqueleto"><div></div><div></div></div>
+  <div class="cf-lista" id="cf-lista"></div>
+  <div class="muted" id="cf-status"></div>
+</section>

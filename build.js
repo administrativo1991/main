@@ -5,8 +5,8 @@ const raiz = __dirname, C = p => path.join(raiz, 'app/client', p);
 const ler = p => fs.readFileSync(p, 'utf8');
 // 'duplicatas.js' na planilha de código = duplicatas + o módulo compartilhado de cobrança (o carregador não muda)
 const dup = ler(path.join(raiz, 'app/server/duplicatas.js')) + '\n' + ler(path.join(raiz, 'app/shared/cobranca.js'));
-// server.js na planilha de código = server.js + server-cobranca.js (mesmo escopo), terminando com a expressão `API`
-const server = ler(path.join(raiz, 'app/server/server.js')).replace(/\nAPI;\s*$/, '\n') + '\n' + ler(path.join(raiz, 'app/server/server-cobranca.js')) + '\nAPI;\n';
+// server.js na planilha de código = server.js + server-cobranca.js + server-fase2.js (mesmo escopo), terminando com a expressão `API`
+const server = ler(path.join(raiz, 'app/server/server.js')).replace(/\nAPI;\s*$/, '\n') + '\n' + ler(path.join(raiz, 'app/server/server-cobranca.js')) + '\n' + ler(path.join(raiz, 'app/server/server-fase2.js')) + '\nAPI;\n';
 const loader = ler(path.join(raiz, 'app/loader/Code.gs'));
 const cfg = JSON.parse(ler(path.join(raiz, 'app/config.json')));
 

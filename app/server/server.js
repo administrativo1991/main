@@ -120,7 +120,7 @@ function lerPacientes_() {
   var H = CONFIG.H, col = function (k) { return h[H[k]] ? h[H[k]] - 1 : -1; };
   var cNome = col('NOME'), cCpf = col('CPF'), cNasc = col('NASC'), cAtivo = col('ATIVO'), cMod = col('MODALIDADE'),
       cPag = col('PAGADOR'), cConv = col('CONVENIO'), cRegra = col('REGRA'), cObs = col('OBS_COBRANCA'), cVal = col('VALOR_COMB'),
-      cResp = col('RESP'), cTel = col('TEL_PAC'), cRespPar = col('RESP_PAR'), cRespTel = col('RESP_TEL'),
+      cResp = col('RESP'), cTel = col('TEL_PAC'), cWhats = col('WHATS'), cRespPar = col('RESP_PAR'), cRespTel = col('RESP_TEL'),
       cVN = col('VALOR_NUM'), cPN = col('PCT_N'), cPV = col('PCT_V'), cPg = col('PAGAMENTO');
   var numOu = function (r, c) { if (c < 0) return null; var v = r[c]; if (v === '' || v == null) return null; var n = numBR_(v); return isNaN(n) ? null : n; };
   var out = [];
@@ -139,7 +139,7 @@ function lerPacientes_() {
       obsCobranca: cObs >= 0 ? String(r[cObs] || '').trim() : '',
       valorCombinado: cVal >= 0 ? String(r[cVal] || '').trim() : '',
       valorNum: numOu(r, cVN), pctN: numOu(r, cPN), pctV: numOu(r, cPV), pagamento: cPg >= 0 ? pagNorm_(r[cPg]) : '',
-      telPac: cTel >= 0 ? String(r[cTel] || '').trim() : '', resp: cResp >= 0 ? String(r[cResp] || '').trim() : '', respPar: cRespPar >= 0 ? String(r[cRespPar] || '').trim() : '', respTel: cRespTel >= 0 ? String(r[cRespTel] || '').trim() : ''
+      telPac: cTel >= 0 ? String(r[cTel] || '').trim() : '', resp: cResp >= 0 ? String(r[cResp] || '').trim() : '', respPar: cRespPar >= 0 ? String(r[cRespPar] || '').trim() : '', respTel: cRespTel >= 0 ? String(r[cRespTel] || '').trim() : '', whats: cWhats >= 0 ? String(r[cWhats] || '').trim() : ''
     });
   });
   return out;
