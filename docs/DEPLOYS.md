@@ -24,7 +24,7 @@ coluna E não afeta o app. Atualizar `E2` faz parte de toda publicação (passo 
 | Canal | Deploy | Peças | Commit |
 |---|---|---|---|
 | Real (`arquivos_real`) | **2026-10-15-02** (Fase 1 do financeiro) | 45 (duplicatas 3 · server 13 · index 29); ativas = 500–544; `antigo27:` = as 41 do 2026-10-10-02 (459–499) | branch `claude/bold-edison-l0keb0`, commit 24d34fa |
-| Teste (`arquivos`) | **2026-10-15-03** (melhorias pós-Fase 1) | 46 (duplicatas 3 · server 14 · index 29), linhas 88–133; as 45 do 2026-10-15-01 (43–87) viraram `antigo28:` | branch `claude/compassionate-sagan-hpb0p1`, commit 7a184e1 |
+| Teste (`arquivos`) | **2026-10-15-05** (melhorias pós-Fase 1 + linha inativa) | 46: duplicatas 134–136 · server 91–104 · index 105–133; `antigo29:` = duplicatas do 03 (88–90); `antigo28:` = as 45 do 01 (43–87) | branch `claude/compassionate-sagan-hpb0p1`, commit 8a5eade |
 | Carregador real | 2026-10-06-02 (`dist/Code.real.gs`, implantado pela Roberta) | — | 4ad0272 |
 | Carregador teste | 2026-10-04-01 + nova versão pendente desde 05/10 (permissão do Drive, ver `COMO-INSTALAR.md`) | — | — |
 
@@ -49,6 +49,18 @@ Modelo:
 
 ## Lista
 
+### 2026-10-15-05 · Teste · linha de cobrança inativa deixa de valer
+- **O que mudou**: `Cobranca.linhaDe` (módulo compartilhado) normalizava de novo uma linha já normalizada e transformava
+  `ativo: false` em `"false"`, que não começa com "N": uma linha com Ativo = Não continuava valendo na Agenda e no
+  Registrar (só a Cobrança do mês respeitava). Achado com o Gabriel × Juliana (inativada em 15/10). **O defeito também
+  está na real** (2026-10-15-02) até a promoção. Teste novo em `tests/servidor-fase1.test.js` (falha sem a correção).
+- **Peças**: só as 3 de `duplicatas.js` mudam; gravadas em `arquivos!A134:C136` com `novo:` por fórmula a partir das
+  ativas (88–90), congeladas e lidas de volta: 3/3 iguais ao build; duplicatas + server remontados = `dist/server.js`; as 43
+  de server/index ativas iguais ao build novo. Ativação numa gravação só (A88:A136): 88–90 → `antigo29:`, 134–136 ativas.
+  E2 carimbado.
+- **Voltar**: 134–136 → `antigo30:` e `antigo29:` → nome (88–90).
+- **Commit**: 8a5eade · **Aprovação**: gestão, 15/10 (teste).
+
 ### 2026-10-15-04 · Real (dados) · correções de cobrança aprovadas pela gestão
 - **O que mudou** (planilha real, 15/10 12:46–12:55, tudo com log em "Alterações de cadastro" A354:G361 e
   "Alterações de lançamento" A46:I47): Helena e Igor sem "Vigente desde" (pagaram outubro); Borchert × Dr. Victor
@@ -60,6 +72,11 @@ Modelo:
   Faltas → Decidir. Mensalistas J conferida célula a célula (a linha 7, Bernardo, saiu errada na 1ª gravação e foi corrigida).
 - **Pendente**: `Outubro!S157` (observação "lançado em duplicidade") foi barrada pela permissão; a linha 47 de
   "Alterações de lançamento" descreve essa observação.
+- **13:00, mesma rodada**: Gabriel × Juliana (C-…-060) Ativo = Não; Samantha × Giovana com 2 linhas novas (C-20261015-168
+  Posterior até 31/10, -169 Antecipado desde 01/11, R$ 200); Mensalistas J17 e J44 = Giovana; Silvana (Outubro linha
+  138, 08/10): Pago? → "Não se aplica (pro bono / permuta)", NF → "Não se aplica", observação "veio conversar sobre a
+  filha; não houve sessão cobrada". Logs: "Alterações de cadastro" A362:G366 e "Alterações de lançamento" A48:I50.
+  Conferido com o app: Samantha "fim do mês R$ 200" em outubro e antecipado em novembro; Silvana sem pendência na chegada.
 - **Código**: nenhum. **Aprovação**: gestão, 15/10.
 
 ### 2026-10-15-03 · Teste · melhorias pós-Fase 1

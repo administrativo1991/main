@@ -289,3 +289,8 @@ agora** (a clínica fecha para recesso antes do Natal, data a definir; aí se pr
 a gestão perguntou à Juliana. Gabriel: a confirmar. 14 e 15/10: a recepção atendeu e não lançou; a gestão lança depois.
 Falta, quando a gestão quiser: Tipo = Aplicação de teste nos 4 horários da Giovana (Jhonne, Igor, Luiz Miguel, Davi);
 16 linhas "a confirmar"; Emily × Tatiana; promover o 2026-10-15-03 para a real depois do teste na cópia.
+
+**13h (15/10)**: Gabriel e Samantha = Giovana (gravado; Samantha com mensalidade social R$ 200 na regra dos sociais);
+Silvana veio falar da filha, a sessão de 08/10 não foi cobrada (linha 138 → sem cobrança). Defeito achado no caminho:
+linha com Ativo = Não continuava valendo na Agenda/Registrar; corrigido no commit 8a5eade, publicado no teste
+(2026-10-15-05); **vai para a real junto com o 03** quando a gestão aprovar.
