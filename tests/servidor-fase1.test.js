@@ -168,12 +168,27 @@ assert.ok(it14 && it14.aplicacao === 3, 'registrada no dia: nº 3');
 assert.deepStrictEqual(ok(API.bootstrapAtendimento(), 'bootAt').aplicacoes['Davi Teste|Giovana Grossi'], [20260924, 20261013, 20261014]);
 const av = ok(API.gestaoResumo({ mes: 'Outubro' }), 'gestao av').avaliacoes.filter(x => x.paciente === 'Davi Teste' && x.profissional === 'Giovana Grossi')[0];
 assert.ok(av && av.n === 3 && av.primeira === '24/09/2026' && av.ultima === '14/10/2026' && av.diasSemVir === 1, JSON.stringify(av));
-// repasse: aplicação de teste gravada como "Convênio (fatura)" (linhas de outubro anteriores à Fase 1) entra com previsto 0
+// repasse (gestão, 15/10): sessão da avaliação de convênio vale o valor da regra da avaliação (Sabin: R$ 475 / 5 = R$ 95), 0% pra todos
 ss._m.Outubro.d.push(linhaMes(7, 9, 'Ana Conv', 'Giovana Grossi', APL, 'Atendido', '', 'Convênio (fatura)', 'OAP', { 'Convênio (auto)': 'Cedplan' }));
 ss._m.Outubro.d.push(linhaMes(8, 9, 'Ana Conv', 'Juliana Ribeiro', 'Sessão de psicologia – convênio', 'Atendido', '', 'Convênio (fatura)', 'OSE', { 'Convênio (auto)': 'Cedplan' }));
-ss._m['Regras de repasse'] = ss.insertSheet('Regras de repasse'); ss._m['Regras de repasse'].d = [['Ativa', 'Profissional', 'Convênio', 'Procedimento (contém)', '% repasse', 'Valor da sessão (convênio) (R$)', 'Observação', 'Alterado por (app)'], ['Sim', 'Todos', 'Cedplan', '', 40, 120, '', ''], ['Sim', 'Todos', 'Cedplan', 'Avaliação neuropsicológica', 0, 475, '', '']];
+ss._m.Setembro.d.push(linhaMes(29, 8, 'Ana Conv', 'Giovana Grossi', '', 'Atendido', '', 'Convênio (fatura)', 'SAP', { 'Convênio (auto)': 'Cedplan', 'Observação': 'Teste da avaliação neuropsicológica (Giovana)' }));
+ss._m['Regras de repasse'] = ss.insertSheet('Regras de repasse'); ss._m['Regras de repasse'].d = [['Ativa', 'Profissional', 'Convênio', 'Procedimento (contém)', '% repasse', 'Valor da sessão (convênio) (R$)', 'Observação', 'Alterado por (app)'], ['Sim', 'Todos', 'Cedplan', '', 40, 120, '', ''], ['Sim', 'Todos', 'Cedplan', 'Avaliação neuropsicológica', 0, 95, '', '']];
 const rp = ok(API.repasseMes({ mes: 'Outubro' }), 'repasse'), lAp = rp.linhas.filter(l => l.id === 'OAP')[0], lSe = rp.linhas.filter(l => l.id === 'OSE')[0];
-assert.strictEqual(lAp.basePrev, 0, JSON.stringify(lAp)); assert.ok(/aplicação de teste/.test(lAp.situacao)); assert.strictEqual(lSe.basePrev, 120, 'sessão de convênio continua com o valor da regra');
+assert.strictEqual(lAp.basePrev, 95, JSON.stringify(lAp)); assert.strictEqual(lAp.pct, 0); assert.strictEqual(lSe.basePrev, 120, 'sessão de convênio continua com o valor da regra'); assert.strictEqual(lSe.pct, 40);
+const lSap = ok(API.repasseMes({ mes: 'Setembro' }), 'repasse set').linhas.filter(l => l.id === 'SAP')[0]; assert.strictEqual(lSap.basePrev, 95, 'setembro sem procedimento: pela observação'); assert.strictEqual(lSap.pct, 0);
+// aplicação de teste de paciente de convênio (sem linha com a Giovana; cadastro Cedplan): Convênio (fatura) com guia, não "Não se aplica"
+const apC = ok(reg({ paciente: 'Ana Conv', profissional: 'Giovana Grossi', data: '20/10/2026', procedimento: APL, guia: 'Sim' }), 'apl conv');
+assert.strictEqual(apC.pago, 'Convênio (fatura)'); assert.strictEqual(cel(O, apC.linha, 'Guia assinada? (convênio)'), 'Sim');
+// sessão da avaliação feita pela psicóloga + aplicações: contagem por paciente; depois de 5, "adicional"
+ok(reg({ paciente: 'Ana Conv', profissional: 'Juliana Ribeiro', data: '21/10/2026', procedimento: 'Avaliação neuropsicológica – sessão – convênio', guia: 'Sim' }), 'sessão aval');
+ok(API.acrescentarAoDia({ data: '27/10/2026', hora: '10:00', paciente: 'Ana Conv', profissional: 'Giovana Grossi', origem: 'Aplicação de teste' }), 'agendar apl conv');
+let i27 = API.listaDoDia({ data: '27/10/2026' }).itens.filter(i => i.paciente === 'Ana Conv' && i.profissional === 'Giovana Grossi')[0];
+// antes de 27/10: 29/09 (setembro, pela observação), 07/10, 20/10 e 21/10 (Juliana) = 4 → esta é a 5ª
+assert.strictEqual(i27.avaliacao.n, 5, JSON.stringify(i27.avaliacao)); assert.strictEqual(i27.cobrancaHoje.curto, 'Avaliação Cedplan: sessão 5 de 5');
+ok(reg({ paciente: 'Ana Conv', profissional: 'Giovana Grossi', data: '22/10/2026', procedimento: APL, guia: 'Sim' }), 'mais uma');
+i27 = API.listaDoDia({ data: '27/10/2026' }).itens.filter(i => i.paciente === 'Ana Conv' && i.profissional === 'Giovana Grossi')[0];
+assert.strictEqual(i27.cobrancaHoje.curto, 'Avaliação Cedplan: sessão 6 · adicional'); assert.ok(/autorização/.test(i27.cobrancaHoje.frase));
+assert.deepStrictEqual(ok(API.bootstrapAtendimento(), 'bootAv').avaliacoes['Ana Conv'], [20260929, 20261007, 20261020, 20261021, 20261022]);
 console.log('aplicações de teste ok');
 
 // linha com Ativo = Não não vale (antes: a segunda normalização transformava false em "false" e a linha voltava a valer)

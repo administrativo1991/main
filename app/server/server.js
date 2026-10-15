@@ -1084,14 +1084,14 @@ function regraPara_(regras, prof, conv, proc, soValor) {
 }
 // uma linha da aba do mês → base e repasse. "pago" = o que já entrou (ou o convênio já faturado); "previsto" = inclui o que está em aberto
 function repasseLinha_(l, regras) {
-  var conv = convenioDaLinha_(l), g = regraPara_(regras, l.profissional, conv, l.procedimento), pct = g ? g.pct : null, gv = regraPara_(regras, l.profissional, conv, l.procedimento, true);
+  // setembro foi importado sem procedimento: a aplicação de teste (reconhecida pela observação) usa a regra da avaliação
+  var procR = l.procedimento || (typeof ehAplicacaoLinha_ === 'function' && ehAplicacaoLinha_(l) ? 'Aplicação de teste – avaliação neuropsicológica' : '');
+  var conv = convenioDaLinha_(l), g = regraPara_(regras, l.profissional, conv, procR), pct = g ? g.pct : null, gv = regraPara_(regras, l.profissional, conv, procR, true);
   var sit, basePago = 0, basePrev = 0, v = Number(l.valor) || 0;
   if (ehPerdido_(l.pago)) sit = 'perdido';
   else if (/fatura d[ao] /i.test(l.pago)) { basePago = basePrev = v || (gv ? gv.valorRef : 0); sit = 'faturado pela profissional'; } // ela recebeu direto: o % (negativo) abate
   else if (/^Não se aplica/i.test(l.pago)) sit = 'sem cobrança';
   else if (/^(Pacote|Plano|Incluída|Mensalista)/i.test(l.pago) && !v) sit = 'incluída no pacote/mensalidade';
-  // aplicação de teste (gestão, 15/10): o convênio paga o pacote uma vez, na linha da avaliação; a aplicação entra com previsto 0
-  else if ((/^Convênio/i.test(l.pago) || (conv !== 'Particular' && !l.pago)) && !v && ehAplicacaoLinha_(l)) sit = 'aplicação de teste (o pacote conta na avaliação)';
   else if (/^Convênio/i.test(l.pago) || (conv !== 'Particular' && !l.pago)) { basePrev = v || (gv ? gv.valorRef : 0); sit = 'convênio a receber'; }
   else if (l.pago === 'Sim') { basePago = basePrev = v; sit = 'pago'; }
   else if (l.pago === 'Parcial') { basePago = Number(l.recebido) || 0; basePrev = v; sit = 'pago em parte'; }

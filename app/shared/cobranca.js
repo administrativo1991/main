@@ -111,6 +111,10 @@ var Cobranca = (function () {
       b.curto = curtoO; b.pagoFixo = ''; b.detalhe = true; b.detalheObrigatorio = /sem aviso|em cima da hora/i.test(oque); b.obsAuto = 'Falta/desmarcação — ';
       return b;
     }
+    // aplicação de teste de paciente de convênio (gestão, 15/10): faz parte do pacote da avaliação faturado ao convênio
+    // (Sabin: 5 sessões; depois, adicionais autorizadas uma a uma) → Convênio (fatura), com guia. Particular: já pago na avaliação.
+    var convAp = l ? (l.cobranca === 'Convênio' ? l.convenio : '') : (ctx.convenioPaciente && !/^Particular$/i.test(ctx.convenioPaciente) ? ctx.convenioPaciente : '');
+    if (tipo === 'aplicação de teste' && convAp) { b.situacao = 'convenio'; b.cor = 'azul'; b.convenio = convAp; b.frase = 'Não cobrar — convênio ' + convAp + ' (aplicação de teste da avaliação)'; b.apoio = 'guia assinada obrigatória'; b.curto = 'Convênio ' + convAp + ' · aplicação'; b.pagoFixo = PAGO.CONVENIO; b.valor = 0; b.guia = true; return b; }
     if (tipo) { b.situacao = 'sem-cobranca-tipo'; b.cor = 'cinza'; b.frase = 'Não cobrar — ' + tipo; b.apoio = 'já incluído'; b.curto = cap(tipo) + ' · sem cobrança'; b.pagoFixo = PAGO.NA; b.valor = ''; return b; }
     if (!l) {
       var cheio = num(ctx.valorCheio);
@@ -119,7 +123,7 @@ var Cobranca = (function () {
     }
     var cob = l.cobranca, pg = l.pagamento, v = l.valorSessao, vm = l.valorMensal, pago = String(c.pago || '').trim(), mesPago = pago === 'Sim', parcial = pago === 'Parcial';
     var atraso = dia > P.tolerancia_dia, venc = dia <= P.vencimento_dia ? 'vence dia ' + P.vencimento_dia : 'tolerância até ' + P.tolerancia_dia;
-    if (cob === 'Convênio') { b.situacao = 'convenio'; b.cor = 'azul'; b.frase = 'Não cobrar — convênio ' + (l.convenio || ''); b.apoio = 'guia assinada obrigatória'; b.curto = 'Convênio ' + (l.convenio || '') + ' · guia'; b.pagoFixo = PAGO.CONVENIO; b.valor = 0; b.guia = true; return b; }
+    if (cob === 'Convênio') { b.situacao = 'convenio'; b.cor = 'azul'; b.convenio = l.convenio || ''; b.frase = 'Não cobrar — convênio ' + (l.convenio || ''); b.apoio = 'guia assinada obrigatória'; b.curto = 'Convênio ' + (l.convenio || '') + ' · guia'; b.pagoFixo = PAGO.CONVENIO; b.valor = 0; b.guia = true; return b; }
     if (cob === 'Pro bono' || cob === 'Permuta') { b.situacao = cob === 'Permuta' ? 'permuta' : 'pro-bono'; b.cor = 'cinza'; b.frase = 'Não cobrar — ' + cob.toLowerCase(); b.apoio = l.ate ? 'até ' + l.ate : ''; b.curto = cob + (l.ate ? ' até ' + l.ate.slice(0, 5) : ''); b.pagoFixo = PAGO.NA; b.valor = ''; return b; }
     if (cob === 'Mensalidade fixa') {
       b.valorMes = vm; b.pagoFixo = PAGO.INCLUIDA; b.valor = '';

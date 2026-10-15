@@ -79,8 +79,14 @@ function aplicarBloco() {
   BL = prof ? blocoDe(cur.nome, prof, dt, $("#a-proc").value, $("#a-oque").value) : null;
   if (!BL) { box.innerHTML = '<div class="faixa cinza">Escolha o profissional pra ver o que cobrar.</div>'; p2.hidden = false; p3.hidden = true; pg.hidden = true; ac.hidden = true; $("#l-detalhe").hidden = true; atualizarPreview(); return; }
   box.innerHTML = blocoHtml(BL);
+  // avaliação de convênio (aplicação de teste ou sessão da avaliação): nº da sessão do paciente; Sabin: pacote de 5, depois autorização
+  var procA = $("#a-proc").value;
+  if (BL.situacao === 'convenio' && /^(Aplicação de teste|Avaliação neuropsicológica – sessão)/i.test(procA) && AT && AT.avaliacoes) {
+    var lv = AT.avaliacoes[cur.nome] || [], yv = dt.getFullYear() * 10000 + (dt.getMonth() + 1) * 100 + dt.getDate(), nv = lv.filter(function (x) { return x < yv; }).length + 1, pk = Number(BOOT && BOOT.params && BOOT.params.avaliacao_pacote_sessoes) || 5;
+    box.appendChild(el('<div class="' + (nv > pk ? 'faixa amarela' : 'muted') + '" style="margin-top:6px">Avaliação ' + esc(BL.convenio || '') + ': sessão <b>' + nv + '</b>' + (nv <= pk ? ' de ' + pk + ' do pacote' : ' · <b>adicional</b>: confira a autorização do convênio (guia) antes de atender') + '</div>'));
+  }
   // aplicação de teste: sem número fixo; mostra quantas já foram registradas com este profissional
-  if (BL.situacao === 'sem-cobranca-tipo' && /^Aplicação de teste/i.test($("#a-proc").value) && AT && AT.aplicacoes) {
+  else if (BL.situacao === 'sem-cobranca-tipo' && /^Aplicação de teste/i.test($("#a-proc").value) && AT && AT.aplicacoes) {
     var la = AT.aplicacoes[cur.nome + '|' + prof] || [], y = dt.getFullYear() * 10000 + (dt.getMonth() + 1) * 100 + dt.getDate(), antes = la.filter(function (x) { return x < y; }), u = antes[antes.length - 1];
     box.appendChild(el('<div class="muted" style="margin-top:6px">Aplicação nº <b>' + (antes.length + 1) + '</b> com ' + esc(profCurto(prof)) + (u ? ' · última em ' + ('0' + (u % 100)).slice(-2) + '/' + ('0' + Math.floor(u / 100) % 100).slice(-2) : ' · primeira') + '</div>'));
   }

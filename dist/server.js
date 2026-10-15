@@ -252,6 +252,10 @@ var Cobranca = (function () {
       b.curto = curtoO; b.pagoFixo = ''; b.detalhe = true; b.detalheObrigatorio = /sem aviso|em cima da hora/i.test(oque); b.obsAuto = 'Falta/desmarcação — ';
       return b;
     }
+    // aplicação de teste de paciente de convênio (gestão, 15/10): faz parte do pacote da avaliação faturado ao convênio
+    // (Sabin: 5 sessões; depois, adicionais autorizadas uma a uma) → Convênio (fatura), com guia. Particular: já pago na avaliação.
+    var convAp = l ? (l.cobranca === 'Convênio' ? l.convenio : '') : (ctx.convenioPaciente && !/^Particular$/i.test(ctx.convenioPaciente) ? ctx.convenioPaciente : '');
+    if (tipo === 'aplicação de teste' && convAp) { b.situacao = 'convenio'; b.cor = 'azul'; b.convenio = convAp; b.frase = 'Não cobrar — convênio ' + convAp + ' (aplicação de teste da avaliação)'; b.apoio = 'guia assinada obrigatória'; b.curto = 'Convênio ' + convAp + ' · aplicação'; b.pagoFixo = PAGO.CONVENIO; b.valor = 0; b.guia = true; return b; }
     if (tipo) { b.situacao = 'sem-cobranca-tipo'; b.cor = 'cinza'; b.frase = 'Não cobrar — ' + tipo; b.apoio = 'já incluído'; b.curto = cap(tipo) + ' · sem cobrança'; b.pagoFixo = PAGO.NA; b.valor = ''; return b; }
     if (!l) {
       var cheio = num(ctx.valorCheio);
@@ -260,7 +264,7 @@ var Cobranca = (function () {
     }
     var cob = l.cobranca, pg = l.pagamento, v = l.valorSessao, vm = l.valorMensal, pago = String(c.pago || '').trim(), mesPago = pago === 'Sim', parcial = pago === 'Parcial';
     var atraso = dia > P.tolerancia_dia, venc = dia <= P.vencimento_dia ? 'vence dia ' + P.vencimento_dia : 'tolerância até ' + P.tolerancia_dia;
-    if (cob === 'Convênio') { b.situacao = 'convenio'; b.cor = 'azul'; b.frase = 'Não cobrar — convênio ' + (l.convenio || ''); b.apoio = 'guia assinada obrigatória'; b.curto = 'Convênio ' + (l.convenio || '') + ' · guia'; b.pagoFixo = PAGO.CONVENIO; b.valor = 0; b.guia = true; return b; }
+    if (cob === 'Convênio') { b.situacao = 'convenio'; b.cor = 'azul'; b.convenio = l.convenio || ''; b.frase = 'Não cobrar — convênio ' + (l.convenio || ''); b.apoio = 'guia assinada obrigatória'; b.curto = 'Convênio ' + (l.convenio || '') + ' · guia'; b.pagoFixo = PAGO.CONVENIO; b.valor = 0; b.guia = true; return b; }
     if (cob === 'Pro bono' || cob === 'Permuta') { b.situacao = cob === 'Permuta' ? 'permuta' : 'pro-bono'; b.cor = 'cinza'; b.frase = 'Não cobrar — ' + cob.toLowerCase(); b.apoio = l.ate ? 'até ' + l.ate : ''; b.curto = cob + (l.ate ? ' até ' + l.ate.slice(0, 5) : ''); b.pagoFixo = PAGO.NA; b.valor = ''; return b; }
     if (cob === 'Mensalidade fixa') {
       b.valorMes = vm; b.pagoFixo = PAGO.INCLUIDA; b.valor = '';
@@ -1404,14 +1408,14 @@ function regraPara_(regras, prof, conv, proc, soValor) {
 }
 // uma linha da aba do mês → base e repasse. "pago" = o que já entrou (ou o convênio já faturado); "previsto" = inclui o que está em aberto
 function repasseLinha_(l, regras) {
-  var conv = convenioDaLinha_(l), g = regraPara_(regras, l.profissional, conv, l.procedimento), pct = g ? g.pct : null, gv = regraPara_(regras, l.profissional, conv, l.procedimento, true);
+  // setembro foi importado sem procedimento: a aplicação de teste (reconhecida pela observação) usa a regra da avaliação
+  var procR = l.procedimento || (typeof ehAplicacaoLinha_ === 'function' && ehAplicacaoLinha_(l) ? 'Aplicação de teste – avaliação neuropsicológica' : '');
+  var conv = convenioDaLinha_(l), g = regraPara_(regras, l.profissional, conv, procR), pct = g ? g.pct : null, gv = regraPara_(regras, l.profissional, conv, procR, true);
   var sit, basePago = 0, basePrev = 0, v = Number(l.valor) || 0;
   if (ehPerdido_(l.pago)) sit = 'perdido';
   else if (/fatura d[ao] /i.test(l.pago)) { basePago = basePrev = v || (gv ? gv.valorRef : 0); sit = 'faturado pela profissional'; } // ela recebeu direto: o % (negativo) abate
   else if (/^Não se aplica/i.test(l.pago)) sit = 'sem cobrança';
   else if (/^(Pacote|Plano|Incluída|Mensalista)/i.test(l.pago) && !v) sit = 'incluída no pacote/mensalidade';
-  // aplicação de teste (gestão, 15/10): o convênio paga o pacote uma vez, na linha da avaliação; a aplicação entra com previsto 0
-  else if ((/^Convênio/i.test(l.pago) || (conv !== 'Particular' && !l.pago)) && !v && ehAplicacaoLinha_(l)) sit = 'aplicação de teste (o pacote conta na avaliação)';
   else if (/^Convênio/i.test(l.pago) || (conv !== 'Particular' && !l.pago)) { basePrev = v || (gv ? gv.valorRef : 0); sit = 'convênio a receber'; }
   else if (l.pago === 'Sim') { basePago = basePrev = v; sit = 'pago'; }
   else if (l.pago === 'Parcial') { basePago = Number(l.recebido) || 0; basePrev = v; sit = 'pago em parte'; }
@@ -1564,7 +1568,7 @@ function versaoComp_() { if (MEMO_.compv === undefined) MEMO_.compv = cacheGet_(
 function invalidar_(ks) {
   var del = [];
   (ks || []).forEach(function (k) {
-    if (k === 'comp') { MEMO_.compv = String(new Date().getTime()); cachePut_('compv', MEMO_.compv); Object.keys(MEMO_).forEach(function (m) { if (m.indexOf('comp:') === 0 || m.indexOf('apl:') === 0) delete MEMO_[m]; }); }
+    if (k === 'comp') { MEMO_.compv = String(new Date().getTime()); cachePut_('compv', MEMO_.compv); Object.keys(MEMO_).forEach(function (m) { if (/^(comp|apl|avp):/.test(m)) delete MEMO_[m]; }); }
     else { delete MEMO_[k]; del.push(k); }
   });
   if (del.length) cacheDel_(del);
@@ -1710,7 +1714,7 @@ function blocoPara_(paciente, profissional, data, procedimento, oque, pac) {
   var dt = data instanceof Date ? data : (parseData_(data) || new Date()), v = linhaVigente_(paciente, profissional, dt), l = v.linha, chave = chaveMes_(dt);
   var comp = l ? competenciaDe_(l, chave) : null, esp = espDoProf_(profissional), p = pac || indicePacientes_().filter(function (x) { return x.nome === paciente; })[0] || {};
   var procV = null; if (procedimento) { var pr = procedimentos_().filter(function (x) { return x.nome === procedimento; })[0]; procV = pr ? pr.valor : null; }
-  var b = Cobranca.calcular({ linha: l, profissional: profissional, especialidade: esp, valorCheio: valorCheio_(esp), procedimento: procedimento, procValor: procV, oque: oque, competencia: comp, hoje: dt, params: parametros_(), pagador: p.pagador || '', avisoLinha: v.aviso });
+  var b = Cobranca.calcular({ linha: l, profissional: profissional, especialidade: esp, valorCheio: valorCheio_(esp), procedimento: procedimento, procValor: procV, oque: oque, competencia: comp, hoje: dt, params: parametros_(), pagador: p.pagador || '', avisoLinha: v.aviso, convenioPaciente: p.convenio || '' });
   b.esp = esp; return b;
 }
 
@@ -1731,7 +1735,7 @@ API.bootstrapAtendimento = function () {
   var hoje = new Date(), chave = chaveMes_(hoje), ant = chaveMes_(new Date(hoje.getFullYear(), hoje.getMonth() - 1, 1)), prox = chaveMes_(new Date(hoje.getFullYear(), hoje.getMonth() + 1, 1));
   var cpp = cobrancasProf_(), comp = {};
   cpp.forEach(function (l) { if (!l.ativo || !(l.pagamento === 'Antecipado' || l.pagamento === 'Posterior' || l.cobranca === 'Mensalidade fixa')) return; var k = l.paciente + '|' + l.profissional; comp[k] = comp[k] || {}; [ant, chave, prox].forEach(function (ch) { if (!comp[k][ch]) comp[k][ch] = competenciaDe_(l, ch); }); });
-  return { procedimentos: procedimentos_(), pacientes: indicePacientes_(), cobrancas: cpp, competencias: comp, aplicacoes: aplicacoes_(), hoje: hoje_(), chave: chave, abaMes: nomeAbaMes_(hoje), abaMesExiste: !!planilha_().getSheetByName(nomeAbaMes_(hoje)), params: parametros_(), valores: valoresSessao_() };
+  return { procedimentos: procedimentos_(), pacientes: indicePacientes_(), cobrancas: cpp, competencias: comp, aplicacoes: aplicacoes_(), avaliacoes: avaliacoesPac_(), hoje: hoje_(), chave: chave, abaMes: nomeAbaMes_(hoje), abaMesExiste: !!planilha_().getSheetByName(nomeAbaMes_(hoje)), params: parametros_(), valores: valoresSessao_() };
 };
 
 /* ---------- Registrar atendimento (Fase 1): a recepção responde "Recebeu?"; o Pago? (K) vem do bloco ---------- */
@@ -1837,6 +1841,28 @@ function aplicacoes_() {
     return out;
   });
 }
+// sessão da avaliação feita pela psicóloga em paciente de convênio (procedimento próprio, gestão 15/10)
+function ehAvaliacaoSessao_(proc) { return /^Avaliação neuropsicológica – sessão/i.test(String(proc || '').trim()); }
+// avaliação de convênio por paciente (todas as profissionais): aplicações + sessões da avaliação, Atendido, convênio na linha.
+// Sabin: as primeiras N (parâmetro avaliacao_pacote_sessoes, 5) são o pacote; depois, cada sessão é autorizada à parte.
+function avaliacoesPac_() {
+  return cacheado_('avp:' + versaoComp_(), function () {
+    var out = {};
+    CONFIG.MESES.forEach(function (m) {
+      if (!planilha_().getSheetByName(m)) return;
+      linhasMes_(m).linhas.forEach(function (r) {
+        if (!(ehAplicacaoLinha_(r) || ehAvaliacaoSessao_(r.procedimento)) || !/^Atendido/.test(r.oque)) return;
+        if (!String(r.convenio || '').trim() || /^Particular$/i.test(r.convenio)) return;
+        var d = parseData_(r.data); if (!d) return; (out[r.paciente] = out[r.paciente] || []).push(ymdNum_(d));
+      });
+    });
+    Object.keys(out).forEach(function (k) { out[k].sort(); });
+    return out;
+  });
+}
+function numAvaliacao_(paciente, data) { var l = avaliacoesPac_()[paciente] || [], y = ymdNum_(data); return l.filter(function (x) { return x < y; }).length + 1; }
+function pacoteAvaliacao_() { var n = Number(parametros_().avaliacao_pacote_sessoes); return n > 0 ? n : 5; }
+function textoAvaliacao_(n, pk) { return n <= pk ? 'sessão ' + n + ' de ' + pk + ' do pacote' : 'sessão ' + n + ' · adicional: confira a autorização do convênio (guia)'; }
 // nº da aplicação nesta data = aplicações registradas antes dela + 1
 function numAplicacao_(paciente, profissional, data) { var l = aplicacoes_()[paciente + '|' + profissional] || [], y = ymdNum_(data); return l.filter(function (x) { return x < y; }).length + 1; }
 // Pendências → Avaliações em andamento: quem fez aplicação nos últimos 60 dias (a avaliação não tem número fixo de aplicações)
@@ -1859,7 +1885,8 @@ API.listaDoDia = function (d) {
     var proc = it.registro ? it.registro.procedimento : (/aplicação de teste/i.test(it.tipo || '') ? 'Aplicação de teste' : /retorno/i.test(it.tipo || '') ? 'Retorno' : '');
     var aplic = ehAplicacao_(proc);
     try { var b = blocoPara_(it.paciente, it.profissional, data, proc, it.registro ? it.registro.oque : 'Atendido', p); it.cobrancaHoje = { situacao: b.situacao, cor: b.cor, curto: b.curto, frase: b.frase, apoio: b.apoio, valor: b.valor, valorMes: b.valorMes, guia: b.guia, nf: b.nf, decidido: b.decidido, obsLinha: b.obsLinha, aviso: b.aviso, linhas: Cobranca.linhasDoPaciente(cobrancasProf_(), it.paciente, data).map(Cobranca.resumoLinha) };
-      if (aplic && b.situacao === 'sem-cobranca-tipo') { it.aplicacao = numAplicacao_(it.paciente, it.profissional, data); it.cobrancaHoje.curto = 'Aplicação nº ' + it.aplicacao + ' · sem cobrança'; it.cobrancaHoje.frase += ' (aplicação nº ' + it.aplicacao + ')'; } } catch (e) { it.cobrancaHoje = { situacao: 'erro', cor: 'cinza', curto: '—', frase: String(e && e.message || e) }; }
+      if ((aplic || ehAvaliacaoSessao_(proc)) && b.situacao === 'convenio') { var nA = numAvaliacao_(it.paciente, data), pk = pacoteAvaliacao_(); it.avaliacao = { n: nA, pacote: pk }; it.cobrancaHoje.curto = 'Avaliação ' + (b.convenio || '') + ': ' + (nA <= pk ? 'sessão ' + nA + ' de ' + pk : 'sessão ' + nA + ' · adicional'); it.cobrancaHoje.frase += ' — ' + textoAvaliacao_(nA, pk); }
+      else if (aplic && b.situacao === 'sem-cobranca-tipo') { it.aplicacao = numAplicacao_(it.paciente, it.profissional, data); it.cobrancaHoje.curto = 'Aplicação nº ' + it.aplicacao + ' · sem cobrança'; it.cobrancaHoje.frase += ' (aplicação nº ' + it.aplicacao + ')'; } } catch (e) { it.cobrancaHoje = { situacao: 'erro', cor: 'cinza', curto: '—', frase: String(e && e.message || e) }; }
   });
   r.pendencias = pendenciasDe_(r.itens.map(function (it) { return it.paciente; }), data);
   r.params = parametros_();
