@@ -209,6 +209,7 @@ Convênio → `Convênio (fatura)`; pro bono/permuta/teste/retorno → `Não se 
 
 1. **16 linhas "a confirmar"** em `Cobrança por profissional` (observação começa com "migração 15/10 — a confirmar"):
    abrir Pacientes → Buscar / editar → seção Cobrança por profissional → Editar (ou corrigir direto na aba; o app relê em 5 min).
+   **Atualização 15/10, 15h11: só restam as 2 da Naimara × Juliana** (ver o fim da seção 7).
 2. **Mensalistas**: as 44 linhas antigas ainda **não** têm a coluna `Profissional` preenchida; o app usa a linha do paciente
    sem profissional pra todas as linhas dele até a gestão (ou o primeiro pagamento pelo app) gravar o profissional.
    As colunas de `Novembro/2026` são criadas por "Criar colunas" (Pendências → Virada do mês, ou Cobrança do mês) ou
@@ -349,7 +350,11 @@ Luiz Miguel Ventura Oliveira da Silva: a gestão vai ver com a Juliana quantas s
 A369:G373): Paulo Henrique Souza e Silva × Tatiana R$ 130 na hora (mantido) e × Marileia **mensalidade fixa R$ 200 a partir
 de agora** (outubro no fim do mês, antecipado desde 01/11; em setembro era R$ 50 por sessão); Pedro Miosso × Giovana
 Ativo = Não (encerrado); Sergio Luiz da Silveira (pai da Daniela) R$ 70 na hora (mantido). "Valor decidido por" = "gestão
-15/10". **Ainda a confirmar (11)**: Naimara × Juliana (a gestão decide o valor); Ana Lucia, Danielle Borchert, Roberta
-Gray, Sarah, Luan (propostas: confirmar como estão, aguardando o OK); Emily Rocha Erculano (a gestão vai ver o que houve);
-Vitor Barcelos (sem linha; avaliação terminou?). Achado: o cadastro do Paulo Henrique (Pacientes linha 435, "Observação de
-cobrança", que a recepção lê) ainda diz "R$ 70 por sessão"; Mensalistas linha 34 diz "Plano de 4 consultas".
+15/10".
+
+**15h11**: confirmadas como estavam Ana Lucia, Danielle Borchert, Roberta Gray, Sarah e Luan (9 linhas). Emily Rocha
+Erculano × Dra. Tatiana: particular, Por sessão R$ 180 na hora ("quando ela for, é particular"). Paulo Henrique Souza e
+Silva vira mensalista social: Pacientes linha 435 (observação que a recepção lê + histórico) e Mensalistas linha 34
+(Modalidade = Mensalidade social). Log "Alterações de cadastro" A374:G381. Vitor Barcelos: sem linha (o pagamento da
+avaliação terminou, R$ 400 + R$ 400). **Única linha ainda "a confirmar"**: Naimara × Juliana (C-…-129 e -130; a gestão
+decide o valor). Emily × Juliana continua sem linha (sem sessão desde setembro).
