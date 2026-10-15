@@ -23,8 +23,8 @@ coluna E não afeta o app. Atualizar `E2` faz parte de toda publicação (passo 
 
 | Canal | Deploy | Peças | Commit |
 |---|---|---|---|
-| Real (`arquivos_real`) | **2026-10-15-06** (melhorias pós-Fase 1 + linha inativa) | 46 (duplicatas 3 · server 14 · index 29); ativas = 545–590; `antigo28:` = as 45 do 2026-10-15-02 (500–544) | branch `claude/compassionate-sagan-hpb0p1`, commit 8a5eade |
-| Teste (`arquivos`) | **2026-10-15-05** (melhorias pós-Fase 1 + linha inativa) | 46: duplicatas 134–136 · server 91–104 · index 105–133; `antigo29:` = duplicatas do 03 (88–90); `antigo28:` = as 45 do 01 (43–87) | branch `claude/compassionate-sagan-hpb0p1`, commit 8a5eade |
+| Real (`arquivos_real`) | **2026-10-15-08** (aplicações de teste) | 46 (duplicatas 3 · server 14 · index 29); ativas = 591–636; `antigo29:` = as do 2026-10-15-06 (545–590) | branch `claude/compassionate-sagan-hpb0p1`, commit 5fdbeb4 |
+| Teste (`arquivos`) | **2026-10-15-07** (aplicações de teste) | 46, linhas 137–182; `antigo30:` = as do 05 (91–136) | branch `claude/compassionate-sagan-hpb0p1`, commit 5fdbeb4 |
 | Carregador real | 2026-10-06-02 (`dist/Code.real.gs`, implantado pela Roberta) | — | 4ad0272 |
 | Carregador teste | 2026-10-04-01 + nova versão pendente desde 05/10 (permissão do Drive, ver `COMO-INSTALAR.md`) | — | — |
 
@@ -48,6 +48,24 @@ Modelo:
 ```
 
 ## Lista
+
+### 2026-10-15-08 · Real · aplicações de teste (+ dados)
+- **O que mudou**: o mesmo código do 2026-10-15-07: Agendamento com tipo "Aplicação de teste" (sem cobrança na Agenda);
+  contagem das aplicações por paciente × profissional ("Aplicação nº N" na Agenda e no Registrar; setembro, importado sem
+  procedimento, conta pela observação "Teste da avaliação…"); card "Avaliações em andamento" em Pendências; Agenda →
+  Registrar leva o tipo; horários fixos mostram "consulta" para médicos.
+- **Peças**: 46 em `arquivos_real!A591:C636` (fórmulas sobre 545–590, congeladas), lidas de volta 46/46 iguais ao build,
+  index e duplicatas + server remontados iguais. Ativação numa gravação só (A545:A636); ativas = só 591–636. E2 carimbado.
+- **Dados (13:15–13:24)**: Agenda recorrente ganhou a coluna L `Tipo`; Jhonne (gio-10), Igor (gio-14), Luiz Miguel
+  (gio-15) e Davi Maia (gio-19) com Tipo = Aplicação de teste e depois **Ativo = Não** (aplicações agendadas uma a uma).
+  Logs: "Alterações de cadastro" A367 e A368.
+- **Voltar**: `antigo29:` → nome (545–590) e 591–636 → `antigo30:`; horários: Ativo = Sim.
+- **Commit**: 5fdbeb4 · **Aprovação**: gestão, 15/10 ("ótimo", "pode desativar").
+
+### 2026-10-15-07 · Teste · aplicações de teste
+- **Peças**: 46 em `arquivos!A137:C182` (fórmulas sobre as ativas 134–136 e 91–133), 46/46 iguais ao build; ativação
+  numa gravação só (A91:A182: 91–136 → `antigo30:`). E2 carimbado.
+- **Commit**: 5fdbeb4 · **Aprovação**: gestão, 15/10.
 
 ### 2026-10-15-06 · Real · melhorias pós-Fase 1 + linha inativa
 - **O que mudou**: o mesmo código do teste (2026-10-15-03 + 05): pagamento do mês e taxa de falta como linhas à parte na

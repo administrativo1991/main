@@ -306,3 +306,12 @@ Luiz Miguel gio-15, Davi gio-19) = Aplicação de teste (log "Alterações de ca
 recorrentes para sempre e propôs a recepção agendar e o app contar as sessões feitas (em discussão).
 Aplicações já feitas (set/out): Jhonne 6 · Igor 5 · Davi 5 · Luiz Miguel 3 · Ana Luiza 2 · Matheus Almeida Carmo 1 ·
 Francisco Couto 1.
+
+**13h25 — aplicações de teste (decisão da gestão)**: não são recorrentes nem têm número fixo; a recepção agenda cada uma
+(Agendamento → Tipo "Aplicação de teste") e o app conta ("Aplicação nº N"; Pendências → Avaliações em andamento). No ar
+no teste (07) e na real (08). Os 4 horários fixos da Giovana foram pausados (Ativo = Não): **as próximas aplicações
+(Jhonne ter 20/10, Igor e Luiz Miguel qua 21/10, Davi qui 22/10) precisam ser agendadas pela recepção.**
+Achado para a gestão decidir: no Repasse, cada aplicação de teste de paciente Sabin recebe a regra 23 ("Avaliação
+neuropsicológica", pacote R$ 475) e entra com previsto de R$ 475 por linha (outubro: Luiz Miguel 07/10, Jhonne 06/10,
+Matheus Carmo 07/10 = R$ 1.425 a mais no previsto do Sabin). O repasse da Giovana é 0%, então ninguém recebe a mais; o
+efeito é só no "previsto". Não foi mexido; por isso também não se preencheu o procedimento das linhas de setembro.

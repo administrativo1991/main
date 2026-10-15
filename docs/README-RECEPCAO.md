@@ -44,10 +44,16 @@ Agenda → **Horários fixos**. Paciente, profissional, dia, hora, frequência (
 
 - **Sessão / consulta** (o normal).
 - **Aplicação de teste** ou **Retorno**: a Agenda já mostra "sem cobrança" e esses horários não entram na conta do
-  antecipado do mês.
+  antecipado do mês. (Aplicação de teste em geral não é horário fixo: veja "Aplicações de teste" abaixo.)
 
 Mudou dia, hora ou profissional: Editar → ao salvar, deixe marcado "vale a partir de hoje" (encerra o horário antigo e
 guarda o histórico). Paciente parou por um tempo: Ativo = Não.
+
+### Aplicações de teste (avaliação neuropsicológica)
+
+Não são horário fixo: agende **cada aplicação** pelo **+ Agendamento** (ou clicando na vaga da grade) com Tipo =
+**Aplicação de teste**. A Agenda mostra "Aplicação nº N · sem cobrança", contando as que o paciente já fez com aquele
+profissional. Não há número fixo de aplicações: a profissional avisa quando a avaliação termina.
 
 ## 4. Pacientes
 
