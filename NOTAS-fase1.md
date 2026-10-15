@@ -294,3 +294,7 @@ Falta, quando a gestão quiser: Tipo = Aplicação de teste nos 4 horários da G
 Silvana veio falar da filha, a sessão de 08/10 não foi cobrada (linha 138 → sem cobrança). Defeito achado no caminho:
 linha com Ativo = Não continuava valendo na Agenda/Registrar; corrigido no commit 8a5eade, publicado no teste
 (2026-10-15-05); **vai para a real junto com o 03** quando a gestão aprovar.
+
+**Real atualizada (15/10, tarde)**: deploy **2026-10-15-06** em `arquivos_real` (o mesmo código do teste 03 + 05), com o OK
+da gestão. Próximo: marcar Tipo = Aplicação de teste nos horários fixos da Giovana (Jhonne, Igor, Luiz Miguel, Davi) —
+pela tela (Agenda → Horários fixos → Editar → Tipo) ou por mim, com o OK da gestão.

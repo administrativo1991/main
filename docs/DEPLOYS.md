@@ -23,7 +23,7 @@ coluna E não afeta o app. Atualizar `E2` faz parte de toda publicação (passo 
 
 | Canal | Deploy | Peças | Commit |
 |---|---|---|---|
-| Real (`arquivos_real`) | **2026-10-15-02** (Fase 1 do financeiro) | 45 (duplicatas 3 · server 13 · index 29); ativas = 500–544; `antigo27:` = as 41 do 2026-10-10-02 (459–499) | branch `claude/bold-edison-l0keb0`, commit 24d34fa |
+| Real (`arquivos_real`) | **2026-10-15-06** (melhorias pós-Fase 1 + linha inativa) | 46 (duplicatas 3 · server 14 · index 29); ativas = 545–590; `antigo28:` = as 45 do 2026-10-15-02 (500–544) | branch `claude/compassionate-sagan-hpb0p1`, commit 8a5eade |
 | Teste (`arquivos`) | **2026-10-15-05** (melhorias pós-Fase 1 + linha inativa) | 46: duplicatas 134–136 · server 91–104 · index 105–133; `antigo29:` = duplicatas do 03 (88–90); `antigo28:` = as 45 do 01 (43–87) | branch `claude/compassionate-sagan-hpb0p1`, commit 8a5eade |
 | Carregador real | 2026-10-06-02 (`dist/Code.real.gs`, implantado pela Roberta) | — | 4ad0272 |
 | Carregador teste | 2026-10-04-01 + nova versão pendente desde 05/10 (permissão do Drive, ver `COMO-INSTALAR.md`) | — | — |
@@ -48,6 +48,17 @@ Modelo:
 ```
 
 ## Lista
+
+### 2026-10-15-06 · Real · melhorias pós-Fase 1 + linha inativa
+- **O que mudou**: o mesmo código do teste (2026-10-15-03 + 05): pagamento do mês e taxa de falta como linhas à parte na
+  Agenda; trava de lançamento repetido; Recebeu? obrigatório no servidor; Tipo na Agenda recorrente; linha de cobrança
+  com Ativo = Não deixa de valer.
+- **Peças**: 46 em `arquivos_real!A545:C590`, gravadas com `novo:` como fórmulas sobre as ativas (500–544, conferidas
+  45/45 iguais ao build 24d34fa antes), congeladas como texto e lidas de volta: **46/46 iguais a `dist/pedacos.json`**;
+  index = `dist/index.publicado.html`, duplicatas + server = `dist/server.js`. Ativação numa gravação só (A500:A590):
+  500–544 → `antigo28:`; lido de volta: ativas = só 545–590. E2 carimbado.
+- **Voltar**: `antigo28:` → nome (500–544) e 545–590 → `antigo29:`.
+- **Commit**: 8a5eade · **Aprovação**: gestão, 15/10 ("ok, vamos seguir").
 
 ### 2026-10-15-05 · Teste · linha de cobrança inativa deixa de valer
 - **O que mudou**: `Cobranca.linhaDe` (módulo compartilhado) normalizava de novo uma linha já normalizada e transformava
