@@ -203,7 +203,7 @@ Convênio → `Convênio (fatura)`; pro bono/permuta/teste/retorno → `Não se 
 | 15/10 | passos 2–3 | `app/shared/cobranca.js` (bloco, K, situação da competência; 9 grupos de teste) · servidor `app/server/server-cobranca.js` (cache, CPP, competências, `cobrancaMes`, `registrarPagamentoMes`, `editarSessoesCompetencia`, `criarColunasMes`, `decidirFalta`, `cobrancasDoPaciente`, `salvarCobrancaProf`, `_ms` em toda resposta) · `server.js` sem pacotes/planos · `tests/servidor-fase1.test.js` | — |
 | 15/10 | passo 4 | tela inteira: menu por perfil, Registrar (bloco + Recebeu? + Detalhe + lista própria), Agenda (Cobrança hoje, tipo, Chegou, tiles, Fechar o dia, menu "…" pra cima, lista própria no Agendamento e na recorrente), Cobrança do mês (substitui Pacotes; `abrirPagamentoMes` com várias competências; gestão edita sessões; criar colunas), Meu dia (4 listas, resumo por forma, Copiar resumo, Imprimir, NF/guia dos últimos 7 dias), Pendências (Faltas → Decidir com 4 botões, Atendidos sem cobrança cadastrada, colunas de Mensalistas na Virada do mês; some a Virada de novembro), Pacientes (seção Cobrança por profissional; some a cobrança antiga do cadastro), rodapé de tempos (gestão), aviso > 20 s, esqueleto, `aindaNa` | layout estreito (≤ 900 px) só o que já existia: prioridade baixa (decisão 15/10) |
 | 15/10 | passo 5 | simulação Playwright 1280 px: 0 erros de console nas 7 telas, prints em `docs/prints-fase1/` (dados fictícios da simulação); `node tests/*.test.js` todos ok; publicado em `arquivos` (teste) = deploy **2026-10-15-01**, commit 24d34fa; POP em `docs/POP-RECEPCAO-COBRANCA.md` | casos reais 9.3 na cópia com prints · tempos antes/depois · OK da gestão · `arquivos_real` · atualizar `docs/README-RECEPCAO.md` e `ESTADO-ATUAL.md` |
-| 15/10 noite | conferência com dados reais | servidor rodado em node sobre a cópia de leitura da real (Agenda 01/10–06/11, 436 itens; casos do passo 5.3; Cobrança do mês out/nov): ver seção 7 · melhorias de código no commit 7a184e1 (testes ok, simulação sem erros) · peças em `arquivos!A88:C133` com `novo:` conferidas 46/46 | ativar no teste (barrado pela permissão da sessão) · decisões de dados da seção 7 · casos na CÓPIA TESTE com o app de verdade |
+| 15/10 tarde | conferência com dados reais | servidor rodado em node sobre a cópia de leitura da real (Agenda 01/10–06/11, 436 itens; casos do passo 5.3; Cobrança do mês out/nov): ver seção 7 · melhorias de código no commit 7a184e1 (testes ok, simulação sem erros) · peças em `arquivos!A88:C133` com `novo:` conferidas 46/46 | ativar no teste (barrado pela permissão da sessão) · decisões de dados da seção 7 · casos na CÓPIA TESTE com o app de verdade |
 
 ## 6. O que a gestão precisa olhar (15/10)
 
@@ -217,7 +217,7 @@ Convênio → `Convênio (fatura)`; pro bono/permuta/teste/retorno → `Não se 
    gerada usa o parâmetro. Mudar? É só trocar o número na aba.
 4. **Testar na CÓPIA TESTE** (`appUrlCopia`): os casos do passo 5.3. O canal de teste já está com o código novo.
 
-## 7. Conferência com os dados reais (15/10, noite) e melhorias
+## 7. Conferência com os dados reais (15/10, tarde) e melhorias
 
 **Como foi feita**: as abas da planilha real foram baixadas só para leitura e o servidor (o mesmo código do ar) rodou em
 node sobre uma planilha falsa montada com elas: Agenda dia a dia de 01/10 a 06/11 (436 itens), os casos do passo 5.3 pelo
@@ -265,3 +265,19 @@ cobre (5 segundas × valor).
    preenchidas automaticamente; Gabriel depende do item 4; Lays não é mais mensalista; Alice e Samantha dependem do item 5.
 10. **Uso**: a aba Outubro não tem nenhum lançamento de 14/10 nem de 15/10 (só até 09/10 e dois de 13/10). Se a recepção
     está atendendo, os registros estão ficando de fora.
+
+**Respostas da gestão (15/10, ~12h45) e o que foi gravado na real**:
+- Item 3 (Helena, Igor): **gravado**. `Cobrança por profissional!J64:J65` ("Vigente desde" 01/11/2026 → vazio); log em
+  `Alterações de cadastro!A354:G355`.
+- Item 8 (Ana Luiza): **gravado em parte**. `Outubro!I157` → "Cancelado pela clínica" (log `Alterações de lançamento!A46`).
+  A Observação (S157) e o carimbo (U157) foram **barrados pela permissão da sessão**, e a linha 47 de "Alterações de
+  lançamento" (que descreve a Observação) ficou gravada sem a mudança correspondente: falta escrever em `Outubro!S157`
+  "Lançado em duplicidade — repetição da linha 156 (A-20261013-110409-s03); não houve outro atendimento (gestão 15/10)".
+- Item 9 (Mensalistas → Profissional): aprovado, **não gravado** (barrado). Valores prontos: J1 = "Profissional", J2:J44 com
+  39 preenchidos (Juliana 20 · Giovana 18 · Marileia 1); vazios: Gabriel Rodrigues Pereira, Lays, Alice, Samantha.
+- Feriados: a gestão decide a partir da lista (até dezembro). Borchert × Victor: a gestão perguntou se o "não cobrar" é por
+  convênio ou pro bono (é convênio, ver item 2). Gabriel: a confirmar. Alice: começou no fim de setembro. Samantha e
+  Silvana: a gestão vai perguntar à Juliana.
+- Pergunta da gestão sobre o Tipo: ele não marca nada como pago; diz à Agenda que o horário é aplicação de teste (sem
+  cobrança) e tira esse horário da conta do antecipado. No Registrar, escolher o procedimento "Aplicação de teste" já não
+  cobra (isso já está no ar).

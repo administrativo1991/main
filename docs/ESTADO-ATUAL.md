@@ -1,6 +1,6 @@
 # Estado atual do app — retomar daqui
 
-Atualizado em 15/10/2026 (noite). Ao abrir um chat novo, leia nesta ordem:
+Atualizado em 15/10/2026 (tarde). Ao abrir um chat novo, leia nesta ordem:
 
 1. **`docs/DEPLOYS.md`**, seção "No ar agora": o que roda em cada canal (teste e real), com commit e linhas da planilha de código.
 2. **`NOTAS-fase1.md`** (raiz): o modelo de cobrança da Fase 1, as decisões da gestão, o que falta e o que a gestão precisa olhar.

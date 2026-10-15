@@ -62,7 +62,7 @@ Modelo:
   O canal de teste continua no 2026-10-15-01; E2 continua com o carimbo do 01. Para ativar: gravar essa troca de nomes
   numa chamada só e carimbar E2 com `2026-10-15-03 · commit 7a184e1 · 46 peças · teste (CÓPIA TESTE) · melhorias pós-Fase 1`.
 - **Voltar** (depois de ativado): `antigo28:` → nome e A88:A133 → `antigo29:`.
-- **Commit**: 7a184e1 · **Aprovação**: gestão pediu para pôr as melhorias em vigor (15/10, noite); real só depois do teste.
+- **Commit**: 7a184e1 · **Aprovação**: gestão pediu para pôr as melhorias em vigor (15/10, tarde); real só depois do teste.
 
 ### 2026-10-15-02 · Real · Fase 1 do financeiro
 - **O que mudou**: o mesmo código do 2026-10-15-01 (teste). Aprovado pela gestão em 15/10 ("amei, tá aprovado").
