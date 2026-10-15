@@ -203,6 +203,7 @@ Convênio → `Convênio (fatura)`; pro bono/permuta/teste/retorno → `Não se 
 | 15/10 | passos 2–3 | `app/shared/cobranca.js` (bloco, K, situação da competência; 9 grupos de teste) · servidor `app/server/server-cobranca.js` (cache, CPP, competências, `cobrancaMes`, `registrarPagamentoMes`, `editarSessoesCompetencia`, `criarColunasMes`, `decidirFalta`, `cobrancasDoPaciente`, `salvarCobrancaProf`, `_ms` em toda resposta) · `server.js` sem pacotes/planos · `tests/servidor-fase1.test.js` | — |
 | 15/10 | passo 4 | tela inteira: menu por perfil, Registrar (bloco + Recebeu? + Detalhe + lista própria), Agenda (Cobrança hoje, tipo, Chegou, tiles, Fechar o dia, menu "…" pra cima, lista própria no Agendamento e na recorrente), Cobrança do mês (substitui Pacotes; `abrirPagamentoMes` com várias competências; gestão edita sessões; criar colunas), Meu dia (4 listas, resumo por forma, Copiar resumo, Imprimir, NF/guia dos últimos 7 dias), Pendências (Faltas → Decidir com 4 botões, Atendidos sem cobrança cadastrada, colunas de Mensalistas na Virada do mês; some a Virada de novembro), Pacientes (seção Cobrança por profissional; some a cobrança antiga do cadastro), rodapé de tempos (gestão), aviso > 20 s, esqueleto, `aindaNa` | layout estreito (≤ 900 px) só o que já existia: prioridade baixa (decisão 15/10) |
 | 15/10 | passo 5 | simulação Playwright 1280 px: 0 erros de console nas 7 telas, prints em `docs/prints-fase1/` (dados fictícios da simulação); `node tests/*.test.js` todos ok; publicado em `arquivos` (teste) = deploy **2026-10-15-01**, commit 24d34fa; POP em `docs/POP-RECEPCAO-COBRANCA.md` | casos reais 9.3 na cópia com prints · tempos antes/depois · OK da gestão · `arquivos_real` · atualizar `docs/README-RECEPCAO.md` e `ESTADO-ATUAL.md` |
+| 15/10 noite | conferência com dados reais | servidor rodado em node sobre a cópia de leitura da real (Agenda 01/10–06/11, 436 itens; casos do passo 5.3; Cobrança do mês out/nov): ver seção 7 · melhorias de código no commit 7a184e1 (testes ok, simulação sem erros) · peças em `arquivos!A88:C133` com `novo:` conferidas 46/46 | ativar no teste (barrado pela permissão da sessão) · decisões de dados da seção 7 · casos na CÓPIA TESTE com o app de verdade |
 
 ## 6. O que a gestão precisa olhar (15/10)
 
@@ -215,3 +216,52 @@ Convênio → `Convênio (fatura)`; pro bono/permuta/teste/retorno → `Não se 
 3. **Taxa de falta**: 50 % do valor da sessão (`Parâmetros!taxa_falta_pct`). `Procedimentos` diz R$ 120 integral; a linha
    gerada usa o parâmetro. Mudar? É só trocar o número na aba.
 4. **Testar na CÓPIA TESTE** (`appUrlCopia`): os casos do passo 5.3. O canal de teste já está com o código novo.
+
+## 7. Conferência com os dados reais (15/10, noite) e melhorias
+
+**Como foi feita**: as abas da planilha real foram baixadas só para leitura e o servidor (o mesmo código do ar) rodou em
+node sobre uma planilha falsa montada com elas: Agenda dia a dia de 01/10 a 06/11 (436 itens), os casos do passo 5.3 pelo
+Registrar e a Cobrança do mês de outubro e novembro. Nada foi gravado na real. Resultado: a virada de 01/11 (vigência)
+está certa; as frases batem com o pedido de 14/10 (Inglidy, Borchert × Juliana/Giovana, Oziel, Pâmela, Lays, Julia em
+out/nov, Sabin, Cedplan, Davi trocando de profissional, falta com Detalhe em Faltas → Decidir, cancelado pela clínica
+abatendo em novembro). Mês de 5 semanas: nenhum antecipado da real cai em segunda-feira em novembro; o teste automático
+cobre (5 segundas × valor).
+
+**Defeitos de código achados e corrigidos** (commit 7a184e1, **ainda não ativos**: ver DEPLOYS 2026-10-15-03):
+1. Pagamento do mês (Mensalidade de…, Antecipado de…, Pagamento de…) e Taxa de falta gravados no mesmo dia de uma sessão
+   ocupavam o lugar da sessão na Agenda (mesma chave paciente × profissional): a sessão sumia, ou o pagamento sumia do
+   "Recebido hoje". Agora são itens à parte, cinza, fora da grade e da contagem de presença.
+2. Lançamento repetido: em 13/10 a Ana Luiza (Giovana, 13:30, Desmarcou) foi gravada duas vezes, com um minuto de
+   diferença. O servidor agora recusa o mesmo paciente + profissional + dia + hora + "o que aconteceu" e diz a linha; o
+   Registrar oferece "É outro atendimento: gravar mesmo assim".
+3. O servidor gravava Pago? = Sim (com o valor da tabela e sem forma) se a chamada chegasse sem resposta ao Recebeu? num
+   paciente sem cobrança cadastrada. A tela sempre pergunta, mas agora o servidor também recusa.
+4. Agenda recorrente sem **Tipo**: as aplicações de teste semanais (Giovana) apareciam na Agenda como "R$ 120 · cobrar ·
+   sem cadastro". Campo Tipo (Sessão/consulta · Aplicação de teste · Retorno) no formulário de horários fixos; a coluna
+   `Tipo` é criada no fim da aba na primeira vez que alguém escolhe.
+
+**Decisões de dados para a gestão** (nada foi gravado; cada item é uma correção pequena na planilha real):
+1. **Feriados vazios** (`Listas!M`): o antecipado conta sessão em feriado. Ex.: Elisa (sexta) em novembro sai 4 × R$ 100
+   em vez de 3 (20/11). Proposta: 02/11, 20/11, 25/12, 01/01/2027 e os municipais de Juiz de Fora que a clínica fecha.
+2. **Borchert × Dr. Victor** (Matheus C-…-119 e Miguel C-…-127): carregados como `Convênio` com convênio "Particular". Em
+   outubro as consultas foram particulares (R$ 200, Pago? Não; aviso "Particular — NÃO é Cedplan"). Do jeito que está, o
+   app manda "Não cobrar — convênio Particular" e grava R$ 0. Proposta: `Por sessão` R$ 200 (tabela), Pagamento a definir
+   (Na hora ou Posterior).
+3. **Helena (Giovana) e Igor (Juliana)**: pagaram outubro adiantado e ficaram só com a linha de mensalidade "a partir de
+   01/11"; em outubro o app diz "sem cobrança cadastrada — cobrar R$ 120". Proposta: apagar o "Vigente desde" dessas duas
+   linhas (C-…-063 e C-…-064).
+4. **Gabriel Rodrigues Pereira**: tem mensalidade com a Giovana **e** com a Juliana; passou pra Giovana em 03/10. Proposta:
+   linha da Juliana com Ativo = Não.
+5. **Sem linha nenhuma**: Alice Oliveira Mendes de Souza (Mensalistas: R$ 150/mês fixo; está **duas vezes** em Pacientes),
+   Samantha Hadassa (Mensalistas: social R$ 200; com quem?), Silvana Aparecida Dotano Silva (Juliana, valor?), Vitor
+   Barcelos Aroni (avaliação neuropsicológica R$ 400). Os pacientes do Dr. Victor e da Dra. Tatiana sem linha saem pela
+   tabela cheia (R$ 200 / R$ 180), que é o combinado.
+6. **Aplicações de teste semanais** na Agenda recorrente (Giovana): Jhonne (ter 16:00), Igor (qua 08:30), Luiz Miguel
+   (qua 09:00), Davi Maia (qui 13:00). Marcar Tipo = Aplicação de teste quando o código estiver no ar.
+7. **Emily Rocha Erculano × Dra. Tatiana**: `Convênio` sem nome (ela saiu do Sabin para o PLASC, que a clínica não atende).
+8. **Ana Luiza Oliveira Barros da Cunha**, Outubro, 13/10 13:30: duas linhas iguais (A-20261013-110409-s03 e
+   A-20261013-110515-nca). Proposta: a segunda vira "Cancelado pela clínica" com observação "lançado em duplicidade".
+9. **Mensalistas → Profissional**: 39 das 43 linhas têm um profissional só na `Cobrança por profissional` e podem ser
+   preenchidas automaticamente; Gabriel depende do item 4; Lays não é mais mensalista; Alice e Samantha dependem do item 5.
+10. **Uso**: a aba Outubro não tem nenhum lançamento de 14/10 nem de 15/10 (só até 09/10 e dois de 13/10). Se a recepção
+    está atendendo, os registros estão ficando de fora.

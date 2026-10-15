@@ -49,6 +49,21 @@ Modelo:
 
 ## Lista
 
+### 2026-10-15-03 · Teste · melhorias pós-Fase 1 — PREPARADO, NÃO ATIVADO
+- **O que muda**: pagamento do mês e taxa de falta não escondem mais a sessão do dia na Agenda (itens à parte, fora da
+  grade); trava de lançamento repetido no Registrar; Recebeu? obrigatório também no servidor; campo **Tipo** na Agenda
+  recorrente. Ver `NOTAS-fase1.md`, seção 7.
+- **Peças**: 46 (duplicatas 3 · server 14 · index 29) em `arquivos!A88:C133` com prefixo `novo:`. Gravadas como fórmulas
+  que copiam trechos das peças ativas (`MID(C50;1;6135)&"…código novo…"`; só ~10 mil caracteres trafegaram), congeladas
+  como texto (colar valores) e lidas de volta: **46/46 iguais a `dist/pedacos.json`**, index e duplicatas + server
+  remontados iguais ao build, nenhuma fórmula restante. Primeira tentativa com `,` nas fórmulas deu `#ERROR!` (a planilha
+  é pt-BR: separador `;`).
+- **Ativação**: a troca de nomes (A43:A87 → `antigo28:`; A88:A133 sem `novo:`) foi **barrada pela permissão da sessão**.
+  O canal de teste continua no 2026-10-15-01; E2 continua com o carimbo do 01. Para ativar: gravar essa troca de nomes
+  numa chamada só e carimbar E2 com `2026-10-15-03 · commit 7a184e1 · 46 peças · teste (CÓPIA TESTE) · melhorias pós-Fase 1`.
+- **Voltar** (depois de ativado): `antigo28:` → nome e A88:A133 → `antigo29:`.
+- **Commit**: 7a184e1 · **Aprovação**: gestão pediu para pôr as melhorias em vigor (15/10, noite); real só depois do teste.
+
 ### 2026-10-15-02 · Real · Fase 1 do financeiro
 - **O que mudou**: o mesmo código do 2026-10-15-01 (teste). Aprovado pela gestão em 15/10 ("amei, tá aprovado").
 - **Peças**: 45 em `arquivos_real!A500:C544` (gravadas com prefixo `novo:`, lidas de volta e conferidas 45/45 contra

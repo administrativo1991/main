@@ -47,7 +47,12 @@ gestão, aba `Parâmetros`).
 Mês atrasado (bloco vermelho) · paciente sem cobrança cadastrada (laranja) · valor diferente do que a pessoa diz ·
 qualquer correção de linha já gravada · falta com dúvida (descreva no Detalhe, a decisão é dela).
 
-## 6. Se o app demorar
+## 6. "Já registrado"
+
+O app não grava duas vezes o mesmo paciente, profissional, dia, hora e "o que aconteceu": ele mostra a aba e a linha onde
+já está. Se for mesmo outro atendimento, confira a hora ou clique em **É outro atendimento: gravar mesmo assim**.
+
+## 7. Se o app demorar
 
 Depois de 20 s aparece "Demorou mais que o normal": espere mais um pouco ou clique em **tentar de novo**. O que você
 digitou fica guardado no computador por 2 h (rascunho). Trocar de tela pelo menu sempre funciona.
