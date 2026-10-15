@@ -12,7 +12,7 @@ Arquivo de retomada da Fase 2 (começou em 15/10/2026, à noite). Quem abrir um 
 |---|---|---|
 | 1 | **Confirmações + WhatsApp** (não só na véspera: a recepção escolhe amanhã, daqui a 2 dias, a semana) | **real** (14) |
 | 1b | **Cobrar no WhatsApp** (Cobrança do mês, textos oficiais) | **real** (14) |
-| 2 | **Lançar o dia em lote** (Meu dia) | feito · teste |
+| 2 | **Lançar o dia em lote** (Meu dia) | teste (15) |
 | 3 | Carga de telefones do ControleOdonto | a fazer (gestão manda a exportação) |
 | 4 | Ficha do paciente | a fazer |
 | 5 | Perdas → Parcelas → Conciliação | a fazer |

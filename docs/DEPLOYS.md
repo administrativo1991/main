@@ -24,7 +24,7 @@ coluna E não afeta o app. Atualizar `E2` faz parte de toda publicação (passo 
 | Canal | Deploy | Peças | Commit |
 |---|---|---|---|
 | Real (`arquivos_real`) | **2026-10-15-14** (Fase 2: Confirmações + Cobrar no WhatsApp) | 48 (duplicatas 3 · server 15 · index 30); ativas = 683–730; `antigo31:` = as do 2026-10-15-10 (637–682) | branch `claude/sweet-wozniak-aviy8u`, commit b3cb7b6 |
-| Teste (`arquivos`) | **2026-10-15-13** (link api.whatsapp.com + Cobrar no WhatsApp) | 48 (duplicatas 3 · server 15 · index 30), linhas 325–372; `antigo34:` = as do 12 (277–324) | branch `claude/sweet-wozniak-aviy8u`, commit b3cb7b6 |
+| Teste (`arquivos`) | **2026-10-15-15** (Lançar o dia em lote) | 49 (duplicatas 3 · server 15 · index 31), linhas 373–421; `antigo35:` = as do 13 (325–372) | branch `claude/sweet-wozniak-aviy8u`, commit 9fe7855 |
 | Carregador real | 2026-10-06-02 (`dist/Code.real.gs`, implantado pela Roberta) | — | 4ad0272 |
 | Carregador teste | 2026-10-04-01 + nova versão pendente desde 05/10 (permissão do Drive, ver `COMO-INSTALAR.md`) | — | — |
 
@@ -48,6 +48,16 @@ Modelo:
 ```
 
 ## Lista
+
+### 2026-10-15-15 · Teste · Lançar o dia em lote (Meu dia)
+- **O que mudou**: seção **Lançar o dia** no topo do Meu dia (ver `NOTAS-fase2.md`, item 2): quem estava na agenda sem
+  registro, Veio/Faltou/Em cima da hora/Desmarcou/Clínica cancelou, Recebeu?/forma/guia/Detalhe quando o bloco pede,
+  gravação em lote (`API.registrarLote` → `registrarAtendimento` linha a linha).
+- **Peças**: 49 em `arquivos!A373:C421` com `novo:`; 39 iguais ao 13 copiadas por "colar valores", 10 gravadas (2 agentes).
+  Lidas de volta (direto em arquivo): **49/49 iguais a `dist/pedacos.json`**; index e duplicatas + server remontados iguais.
+  Ativação numa gravação só (A325:A421): 325–372 → `antigo35:`; ativas = só 373–421. E2 carimbado.
+- **Dados**: nenhum. **Voltar**: `antigo35:` → nome (325–372) e 373–421 → `antigo36:`.
+- **Commit**: 9fe7855 · **Aprovação**: só teste. Real continua no 2026-10-15-14.
 
 ### 2026-10-15-14 · Real · Fase 2: Confirmações + Cobrar no WhatsApp (+ dados)
 - **O que mudou**: o mesmo código do teste 2026-10-15-13 (11 + 12 + 13): tela **Confirmações** (período escolhido, uma
