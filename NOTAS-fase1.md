@@ -281,3 +281,11 @@ cobre (5 segundas × valor).
 - Pergunta da gestão sobre o Tipo: ele não marca nada como pago; diz à Agenda que o horário é aplicação de teste (sem
   cobrança) e tira esse horário da conta do antecipado. No Registrar, escolher o procedimento "Aplicação de teste" já não
   cobra (isso já está no ar).
+
+**Segunda rodada (15/10, ~12h55)**: canal de teste **ativado** no 2026-10-15-03. Gravado na real (DEPLOYS 2026-10-15-04):
+Borchert × Victor = Por sessão R$ 200 · Na hora ("Ped é na hora"); Alice com mensalidade R$ 150 (Posterior até 31/10,
+Antecipado desde 01/11) e o cadastro repetido (linha 601) inativado; Mensalistas → Profissional (39). Feriados: **não
+agora** (a clínica fecha para recesso antes do Natal, data a definir; aí se preenche `Listas!M`). Samantha e Silvana:
+a gestão perguntou à Juliana. Gabriel: a confirmar. 14 e 15/10: a recepção atendeu e não lançou; a gestão lança depois.
+Falta, quando a gestão quiser: Tipo = Aplicação de teste nos 4 horários da Giovana (Jhonne, Igor, Luiz Miguel, Davi);
+16 linhas "a confirmar"; Emily × Tatiana; promover o 2026-10-15-03 para a real depois do teste na cópia.

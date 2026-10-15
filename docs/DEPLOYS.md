@@ -24,7 +24,7 @@ coluna E não afeta o app. Atualizar `E2` faz parte de toda publicação (passo 
 | Canal | Deploy | Peças | Commit |
 |---|---|---|---|
 | Real (`arquivos_real`) | **2026-10-15-02** (Fase 1 do financeiro) | 45 (duplicatas 3 · server 13 · index 29); ativas = 500–544; `antigo27:` = as 41 do 2026-10-10-02 (459–499) | branch `claude/bold-edison-l0keb0`, commit 24d34fa |
-| Teste (`arquivos`) | **2026-10-15-01** (Fase 1 do financeiro) | 45 (duplicatas 3 · server 13 · index 29), linhas 43–87; as 41 do 2026-10-10-01 (linhas 2–42) viraram `antigo27:` | branch `claude/bold-edison-l0keb0`, commit 24d34fa |
+| Teste (`arquivos`) | **2026-10-15-03** (melhorias pós-Fase 1) | 46 (duplicatas 3 · server 14 · index 29), linhas 88–133; as 45 do 2026-10-15-01 (43–87) viraram `antigo28:` | branch `claude/compassionate-sagan-hpb0p1`, commit 7a184e1 |
 | Carregador real | 2026-10-06-02 (`dist/Code.real.gs`, implantado pela Roberta) | — | 4ad0272 |
 | Carregador teste | 2026-10-04-01 + nova versão pendente desde 05/10 (permissão do Drive, ver `COMO-INSTALAR.md`) | — | — |
 
@@ -49,7 +49,20 @@ Modelo:
 
 ## Lista
 
-### 2026-10-15-03 · Teste · melhorias pós-Fase 1 — PREPARADO, NÃO ATIVADO
+### 2026-10-15-04 · Real (dados) · correções de cobrança aprovadas pela gestão
+- **O que mudou** (planilha real, 15/10 12:46–12:55, tudo com log em "Alterações de cadastro" A354:G361 e
+  "Alterações de lançamento" A46:I47): Helena e Igor sem "Vigente desde" (pagaram outubro); Borchert × Dr. Victor
+  (C-…-119, -127) de Convênio "Particular" para Por sessão R$ 200 · Na hora; Alice com 2 linhas novas (C-20261015-166
+  Posterior até 31/10, -167 Antecipado desde 01/11, R$ 150, Juliana); Pacientes linha 601 (Alice repetida) Ativo = Não;
+  Mensalistas coluna J "Profissional" (39 preenchidas); Outubro linha 157 (Ana Luiza, duplicada) → "Cancelado pela clínica".
+- **Conferência**: abas baixadas de novo e o servidor rodado sobre elas: Borchert "Cobrar R$ 200 agora", Alice "fim do
+  mês R$ 150" em outubro e antecipado em novembro, Helena/Igor "mensalidade de outubro paga", Ana Luiza uma vez só em
+  Faltas → Decidir. Mensalistas J conferida célula a célula (a linha 7, Bernardo, saiu errada na 1ª gravação e foi corrigida).
+- **Pendente**: `Outubro!S157` (observação "lançado em duplicidade") foi barrada pela permissão; a linha 47 de
+  "Alterações de lançamento" descreve essa observação.
+- **Código**: nenhum. **Aprovação**: gestão, 15/10.
+
+### 2026-10-15-03 · Teste · melhorias pós-Fase 1
 - **O que muda**: pagamento do mês e taxa de falta não escondem mais a sessão do dia na Agenda (itens à parte, fora da
   grade); trava de lançamento repetido no Registrar; Recebeu? obrigatório também no servidor; campo **Tipo** na Agenda
   recorrente. Ver `NOTAS-fase1.md`, seção 7.
@@ -58,11 +71,11 @@ Modelo:
   como texto (colar valores) e lidas de volta: **46/46 iguais a `dist/pedacos.json`**, index e duplicatas + server
   remontados iguais ao build, nenhuma fórmula restante. Primeira tentativa com `,` nas fórmulas deu `#ERROR!` (a planilha
   é pt-BR: separador `;`).
-- **Ativação**: a troca de nomes (A43:A87 → `antigo28:`; A88:A133 sem `novo:`) foi **barrada pela permissão da sessão**.
-  O canal de teste continua no 2026-10-15-01; E2 continua com o carimbo do 01. Para ativar: gravar essa troca de nomes
-  numa chamada só e carimbar E2 com `2026-10-15-03 · commit 7a184e1 · 46 peças · teste (CÓPIA TESTE) · melhorias pós-Fase 1`.
+- **Ativação** (15/10, ~12h50, com o OK da gestão "pode ativar o teste"; a primeira tentativa tinha sido barrada pela
+  permissão da sessão): A43:A87 → `antigo28:` e A88:A133 sem `novo:`, numa gravação só; lido de volta: ativas = só as 46
+  das linhas 88–133 (duplicatas 0–2 · server 0–13 · index 0–28). E2 carimbado.
 - **Voltar** (depois de ativado): `antigo28:` → nome e A88:A133 → `antigo29:`.
-- **Commit**: 7a184e1 · **Aprovação**: gestão pediu para pôr as melhorias em vigor (15/10, tarde); real só depois do teste.
+- **Commit**: 7a184e1 · **Aprovação**: gestão, 15/10 ("pode ativar o teste"); real só depois do teste na CÓPIA TESTE.
 
 ### 2026-10-15-02 · Real · Fase 1 do financeiro
 - **O que mudou**: o mesmo código do 2026-10-15-01 (teste). Aprovado pela gestão em 15/10 ("amei, tá aprovado").
