@@ -168,6 +168,12 @@ assert.ok(it14 && it14.aplicacao === 3, 'registrada no dia: nº 3');
 assert.deepStrictEqual(ok(API.bootstrapAtendimento(), 'bootAt').aplicacoes['Davi Teste|Giovana Grossi'], [20260924, 20261013, 20261014]);
 const av = ok(API.gestaoResumo({ mes: 'Outubro' }), 'gestao av').avaliacoes.filter(x => x.paciente === 'Davi Teste' && x.profissional === 'Giovana Grossi')[0];
 assert.ok(av && av.n === 3 && av.primeira === '24/09/2026' && av.ultima === '14/10/2026' && av.diasSemVir === 1, JSON.stringify(av));
+// repasse: aplicação de teste gravada como "Convênio (fatura)" (linhas de outubro anteriores à Fase 1) entra com previsto 0
+ss._m.Outubro.d.push(linhaMes(7, 9, 'Ana Conv', 'Giovana Grossi', APL, 'Atendido', '', 'Convênio (fatura)', 'OAP', { 'Convênio (auto)': 'Cedplan' }));
+ss._m.Outubro.d.push(linhaMes(8, 9, 'Ana Conv', 'Juliana Ribeiro', 'Sessão de psicologia – convênio', 'Atendido', '', 'Convênio (fatura)', 'OSE', { 'Convênio (auto)': 'Cedplan' }));
+ss._m['Regras de repasse'] = ss.insertSheet('Regras de repasse'); ss._m['Regras de repasse'].d = [['Ativa', 'Profissional', 'Convênio', 'Procedimento (contém)', '% repasse', 'Valor da sessão (convênio) (R$)', 'Observação', 'Alterado por (app)'], ['Sim', 'Todos', 'Cedplan', '', 40, 120, '', ''], ['Sim', 'Todos', 'Cedplan', 'Avaliação neuropsicológica', 0, 475, '', '']];
+const rp = ok(API.repasseMes({ mes: 'Outubro' }), 'repasse'), lAp = rp.linhas.filter(l => l.id === 'OAP')[0], lSe = rp.linhas.filter(l => l.id === 'OSE')[0];
+assert.strictEqual(lAp.basePrev, 0, JSON.stringify(lAp)); assert.ok(/aplicação de teste/.test(lAp.situacao)); assert.strictEqual(lSe.basePrev, 120, 'sessão de convênio continua com o valor da regra');
 console.log('aplicações de teste ok');
 
 // linha com Ativo = Não não vale (antes: a segunda normalização transformava false em "false" e a linha voltava a valer)

@@ -1410,6 +1410,8 @@ function repasseLinha_(l, regras) {
   else if (/fatura d[ao] /i.test(l.pago)) { basePago = basePrev = v || (gv ? gv.valorRef : 0); sit = 'faturado pela profissional'; } // ela recebeu direto: o % (negativo) abate
   else if (/^Não se aplica/i.test(l.pago)) sit = 'sem cobrança';
   else if (/^(Pacote|Plano|Incluída|Mensalista)/i.test(l.pago) && !v) sit = 'incluída no pacote/mensalidade';
+  // aplicação de teste (gestão, 15/10): o convênio paga o pacote uma vez, na linha da avaliação; a aplicação entra com previsto 0
+  else if ((/^Convênio/i.test(l.pago) || (conv !== 'Particular' && !l.pago)) && !v && ehAplicacaoLinha_(l)) sit = 'aplicação de teste (o pacote conta na avaliação)';
   else if (/^Convênio/i.test(l.pago) || (conv !== 'Particular' && !l.pago)) { basePrev = v || (gv ? gv.valorRef : 0); sit = 'convênio a receber'; }
   else if (l.pago === 'Sim') { basePago = basePrev = v; sit = 'pago'; }
   else if (l.pago === 'Parcial') { basePago = Number(l.recebido) || 0; basePrev = v; sit = 'pago em parte'; }
@@ -1817,6 +1819,8 @@ function jaRegistrado_(s, data, paciente, profissional, hora, oque) {
    Conta as linhas "Aplicação de teste…" com O que aconteceu = Atendido, de todas as abas de mês, por paciente × profissional.
    Fica em cache junto com as competências (toda gravação na aba do mês invalida). */
 function ehAplicacao_(proc) { return /^Aplicação de teste/i.test(String(proc || '').trim()); }
+// linha da aba do mês que é aplicação de teste; setembro foi importado sem procedimento: ali vale a observação ("Teste da avaliação…")
+function ehAplicacaoLinha_(r) { return ehAplicacao_(r.procedimento) || (!String(r.procedimento || '').trim() && /teste da avalia|aplica[çc][ãa]o de teste/i.test(r.obs || '')); }
 function ymdNum_(d) { return d.getFullYear() * 10000 + (d.getMonth() + 1) * 100 + d.getDate(); }
 function aplicacoes_() {
   return cacheado_('apl:' + versaoComp_(), function () {
@@ -1824,9 +1828,7 @@ function aplicacoes_() {
     CONFIG.MESES.forEach(function (m) {
       if (!planilha_().getSheetByName(m)) return;
       linhasMes_(m).linhas.forEach(function (r) {
-        // setembro foi importado sem procedimento: ali a aplicação se reconhece pela observação ("Teste da avaliação…")
-        var apl = ehAplicacao_(r.procedimento) || (!String(r.procedimento || '').trim() && /teste da avalia|aplica[çc][ãa]o de teste/i.test(r.obs));
-        if (!apl || !/^Atendido/.test(r.oque)) return;
+        if (!ehAplicacaoLinha_(r) || !/^Atendido/.test(r.oque)) return;
         var d = parseData_(r.data); if (!d) return;
         var k = r.paciente + '|' + String(r.profissional || '').trim(); (out[k] = out[k] || []).push(ymdNum_(d));
       });

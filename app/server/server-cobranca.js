@@ -278,6 +278,8 @@ function jaRegistrado_(s, data, paciente, profissional, hora, oque) {
    Conta as linhas "Aplicação de teste…" com O que aconteceu = Atendido, de todas as abas de mês, por paciente × profissional.
    Fica em cache junto com as competências (toda gravação na aba do mês invalida). */
 function ehAplicacao_(proc) { return /^Aplicação de teste/i.test(String(proc || '').trim()); }
+// linha da aba do mês que é aplicação de teste; setembro foi importado sem procedimento: ali vale a observação ("Teste da avaliação…")
+function ehAplicacaoLinha_(r) { return ehAplicacao_(r.procedimento) || (!String(r.procedimento || '').trim() && /teste da avalia|aplica[çc][ãa]o de teste/i.test(r.obs || '')); }
 function ymdNum_(d) { return d.getFullYear() * 10000 + (d.getMonth() + 1) * 100 + d.getDate(); }
 function aplicacoes_() {
   return cacheado_('apl:' + versaoComp_(), function () {
@@ -285,9 +287,7 @@ function aplicacoes_() {
     CONFIG.MESES.forEach(function (m) {
       if (!planilha_().getSheetByName(m)) return;
       linhasMes_(m).linhas.forEach(function (r) {
-        // setembro foi importado sem procedimento: ali a aplicação se reconhece pela observação ("Teste da avaliação…")
-        var apl = ehAplicacao_(r.procedimento) || (!String(r.procedimento || '').trim() && /teste da avalia|aplica[çc][ãa]o de teste/i.test(r.obs));
-        if (!apl || !/^Atendido/.test(r.oque)) return;
+        if (!ehAplicacaoLinha_(r) || !/^Atendido/.test(r.oque)) return;
         var d = parseData_(r.data); if (!d) return;
         var k = r.paciente + '|' + String(r.profissional || '').trim(); (out[k] = out[k] || []).push(ymdNum_(d));
       });

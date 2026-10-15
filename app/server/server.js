@@ -1090,6 +1090,8 @@ function repasseLinha_(l, regras) {
   else if (/fatura d[ao] /i.test(l.pago)) { basePago = basePrev = v || (gv ? gv.valorRef : 0); sit = 'faturado pela profissional'; } // ela recebeu direto: o % (negativo) abate
   else if (/^Não se aplica/i.test(l.pago)) sit = 'sem cobrança';
   else if (/^(Pacote|Plano|Incluída|Mensalista)/i.test(l.pago) && !v) sit = 'incluída no pacote/mensalidade';
+  // aplicação de teste (gestão, 15/10): o convênio paga o pacote uma vez, na linha da avaliação; a aplicação entra com previsto 0
+  else if ((/^Convênio/i.test(l.pago) || (conv !== 'Particular' && !l.pago)) && !v && ehAplicacaoLinha_(l)) sit = 'aplicação de teste (o pacote conta na avaliação)';
   else if (/^Convênio/i.test(l.pago) || (conv !== 'Particular' && !l.pago)) { basePrev = v || (gv ? gv.valorRef : 0); sit = 'convênio a receber'; }
   else if (l.pago === 'Sim') { basePago = basePrev = v; sit = 'pago'; }
   else if (l.pago === 'Parcial') { basePago = Number(l.recebido) || 0; basePrev = v; sit = 'pago em parte'; }
