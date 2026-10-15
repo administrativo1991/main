@@ -4,7 +4,8 @@ Arquivo de retomada da Fase 2 (começou em 15/10/2026, à noite). Quem abrir um 
 ("No ar agora"), este arquivo, `NOTAS-fase1.md` (modelo de cobrança e decisões da Fase 1) e `docs/ESTADO-ATUAL.md` (mapa).
 
 > **Estado em 15/10 (noite)**: item 1 (Confirmações + WhatsApp) e 1b (Cobrar no WhatsApp) **no ar na real** = deploy
-> **2026-10-15-14** (teste = 13, mesmo código; ver DEPLOYS). Próximo: item 2, Alertas.
+> **2026-10-15-14**; item 2 (Lançar o dia) no ar na real = **2026-10-15-16** (teste = 15, mesmo código). Próximo: item 3,
+> carga de telefones do ControleOdonto (depende da exportação da gestão) e item 4, Ficha do paciente.
 
 ## Ordem combinada com a gestão (15/10; revista à noite: "sua ordem está perfeita")
 
@@ -12,7 +13,7 @@ Arquivo de retomada da Fase 2 (começou em 15/10/2026, à noite). Quem abrir um 
 |---|---|---|
 | 1 | **Confirmações + WhatsApp** (não só na véspera: a recepção escolhe amanhã, daqui a 2 dias, a semana) | **real** (14) |
 | 1b | **Cobrar no WhatsApp** (Cobrança do mês, textos oficiais) | **real** (14) |
-| 2 | **Lançar o dia em lote** (Meu dia) | teste (15) |
+| 2 | **Lançar o dia em lote** (Meu dia) | **real** (16) |
 | 3 | Carga de telefones do ControleOdonto | a fazer (gestão manda a exportação) |
 | 4 | Ficha do paciente | a fazer |
 | 5 | Perdas → Parcelas → Conciliação | a fazer |

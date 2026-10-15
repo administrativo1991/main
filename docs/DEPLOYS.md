@@ -23,7 +23,7 @@ coluna E não afeta o app. Atualizar `E2` faz parte de toda publicação (passo 
 
 | Canal | Deploy | Peças | Commit |
 |---|---|---|---|
-| Real (`arquivos_real`) | **2026-10-15-14** (Fase 2: Confirmações + Cobrar no WhatsApp) | 48 (duplicatas 3 · server 15 · index 30); ativas = 683–730; `antigo31:` = as do 2026-10-15-10 (637–682) | branch `claude/sweet-wozniak-aviy8u`, commit b3cb7b6 |
+| Real (`arquivos_real`) | **2026-10-15-16** (Lançar o dia em lote) | 49 (duplicatas 3 · server 15 · index 31); ativas = 731–779; `antigo32:` = as do 2026-10-15-14 (683–730) | branch `claude/sweet-wozniak-aviy8u`, commit 9fe7855 |
 | Teste (`arquivos`) | **2026-10-15-15** (Lançar o dia em lote) | 49 (duplicatas 3 · server 15 · index 31), linhas 373–421; `antigo35:` = as do 13 (325–372) | branch `claude/sweet-wozniak-aviy8u`, commit 9fe7855 |
 | Carregador real | 2026-10-06-02 (`dist/Code.real.gs`, implantado pela Roberta) | — | 4ad0272 |
 | Carregador teste | 2026-10-04-01 + nova versão pendente desde 05/10 (permissão do Drive, ver `COMO-INSTALAR.md`) | — | — |
@@ -49,6 +49,14 @@ Modelo:
 
 ## Lista
 
+### 2026-10-15-16 · Real · Lançar o dia em lote
+- **O que mudou**: o mesmo código do teste 2026-10-15-15 (seção **Lançar o dia** no Meu dia).
+- **Peças**: 49 em `arquivos_real!A731:C779`: nomes com `novo:` e conteúdo copiado por "colar valores" das ativas do teste
+  (`arquivos!C373:C421`). Lidas de volta: **49/49 iguais a `dist/pedacos.json`**; index e duplicatas + server remontados
+  iguais. Ativação numa gravação só (A683:A779): 683–730 → `antigo32:`; ativas = só 731–779. E2 carimbado.
+- **Dados**: nenhum. **Voltar**: `antigo32:` → nome (683–730) e 731–779 → `antigo33:`.
+- **Commit**: 9fe7855 · **Aprovação**: gestão, 15/10 ("ótimo, vi aqui no teste, pode colocar no app oficial").
+
 ### 2026-10-15-15 · Teste · Lançar o dia em lote (Meu dia)
 - **O que mudou**: seção **Lançar o dia** no topo do Meu dia (ver `NOTAS-fase2.md`, item 2): quem estava na agenda sem
   registro, Veio/Faltou/Em cima da hora/Desmarcou/Clínica cancelou, Recebeu?/forma/guia/Detalhe quando o bloco pede,
@@ -57,7 +65,7 @@ Modelo:
   Lidas de volta (direto em arquivo): **49/49 iguais a `dist/pedacos.json`**; index e duplicatas + server remontados iguais.
   Ativação numa gravação só (A325:A421): 325–372 → `antigo35:`; ativas = só 373–421. E2 carimbado.
 - **Dados**: nenhum. **Voltar**: `antigo35:` → nome (325–372) e 373–421 → `antigo36:`.
-- **Commit**: 9fe7855 · **Aprovação**: só teste. Real continua no 2026-10-15-14.
+- **Commit**: 9fe7855 · **Aprovação**: só teste (promovido no 2026-10-15-16).
 
 ### 2026-10-15-14 · Real · Fase 2: Confirmações + Cobrar no WhatsApp (+ dados)
 - **O que mudou**: o mesmo código do teste 2026-10-15-13 (11 + 12 + 13): tela **Confirmações** (período escolhido, uma
