@@ -23,8 +23,8 @@ coluna E não afeta o app. Atualizar `E2` faz parte de toda publicação (passo 
 
 | Canal | Deploy | Peças | Commit |
 |---|---|---|---|
-| Real (`arquivos_real`) | **2026-10-15-08** (aplicações de teste) | 46 (duplicatas 3 · server 14 · index 29); ativas = 591–636; `antigo29:` = as do 2026-10-15-06 (545–590) | branch `claude/compassionate-sagan-hpb0p1`, commit 5fdbeb4 |
-| Teste (`arquivos`) | **2026-10-15-07** (aplicações de teste) | 46, linhas 137–182; `antigo30:` = as do 05 (91–136) | branch `claude/compassionate-sagan-hpb0p1`, commit 5fdbeb4 |
+| Real (`arquivos_real`) | **2026-10-15-10** (avaliação de convênio) | 46 (duplicatas 3 · server 14 · index 29); ativas = 637–682; `antigo30:` = as do 2026-10-15-08 (591–636) | branch `claude/compassionate-sagan-hpb0p1`, commit e79f8fd |
+| Teste (`arquivos`) | **2026-10-15-09** (avaliação de convênio) | 46, linhas 183–228; `antigo31:` = as do 07 (137–182) | branch `claude/compassionate-sagan-hpb0p1`, commit e79f8fd |
 | Carregador real | 2026-10-06-02 (`dist/Code.real.gs`, implantado pela Roberta) | — | 4ad0272 |
 | Carregador teste | 2026-10-04-01 + nova versão pendente desde 05/10 (permissão do Drive, ver `COMO-INSTALAR.md`) | — | — |
 
@@ -48,6 +48,26 @@ Modelo:
 ```
 
 ## Lista
+
+### 2026-10-15-10 · Real · avaliação neuropsicológica de convênio (+ dados)
+- **Regra (gestão, 15/10)**: o pacote Sabin (R$ 475) são 5 sessões, somando sessões da psicóloga e aplicações de teste; da 6ª
+  em diante, cada sessão é autorizada à parte, R$ 95; repasse 0% (inclusive Juliana).
+- **O que mudou no app**: aplicação de teste de paciente de convênio grava "Convênio (fatura)" e pede guia (desde a Fase 1
+  saía "Não se aplica"); contagem da avaliação por paciente (todas as profissionais): "Avaliação Sabin Sinai: sessão N de 5"
+  e, depois, "sessão N · adicional" (Registrar: faixa amarela "confira a autorização do convênio"); Repasse: aplicação de
+  setembro (sem procedimento) usa a regra da avaliação pela observação. O commit 4a07d6f (aplicação = previsto 0) nunca foi
+  publicado e foi desfeito.
+- **Dados (13:45)**: Procedimentos linha 65 "Avaliação neuropsicológica – sessão – convênio" (Psicologia, 0); Parâmetros
+  linha 10 `avaliacao_pacote_sessoes` = 5; Regras de repasse linha 23 (Sabin · Avaliação neuropsicológica · 0%) valor
+  475 → **95**. Efeito no previsto Sabin da Giovana: set R$ 760 → R$ 1.145 (7 aplicações a R$ 95), out R$ 1.585 → R$ 445.
+- **Peças**: 46 em `arquivos_real!A637:C682` (fórmulas sobre 591–636), 46/46 iguais ao build; ativação numa gravação só
+  (A591:A682); ativas = só 637–682. E2 carimbado.
+- **Voltar**: `antigo30:` → nome (591–636) e 637–682 → `antigo31:`; regra 23 de volta a 475 se voltar o código.
+- **Commit**: e79f8fd · **Aprovação**: gestão, 15/10 (R$ 95; Juliana 0%; procedimento próprio).
+
+### 2026-10-15-09 · Teste · avaliação neuropsicológica de convênio
+- **Peças**: 46 em `arquivos!A183:C228` (fórmulas sobre 137–182), 46/46 iguais ao build; ativação A137:A228 (137–182 →
+  `antigo31:`). E2 carimbado. **Commit**: e79f8fd.
 
 ### 2026-10-15-08 · Real · aplicações de teste (+ dados)
 - **O que mudou**: o mesmo código do 2026-10-15-07: Agendamento com tipo "Aplicação de teste" (sem cobrança na Agenda);

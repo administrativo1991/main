@@ -324,3 +324,11 @@ Repasse das aplicações: commit 4a07d6f (aplicação de convênio = previsto 0)
 pacote Sabin de R$ 475 são 5 sessões, e as 5 misturam sessões da Juliana e aplicações da Giovana (ex.: Luiz Miguel:
 Juliana 10, 23, 30/09 + Giovana 23, 30/09). Hoje as sessões da Juliana do pacote entram como sessão Sabin comum (R$ 40,
 80%). Falta a gestão decidir quanto vale cada sessão do pacote no previsto (R$ 95?) e o repasse da Juliana nelas.
+
+**13h50 — avaliação neuropsicológica de convênio (no ar: teste 09, real 10)**: pacote Sabin = 5 sessões (psicóloga +
+aplicações), depois adicionais autorizadas uma a uma; R$ 95 por sessão no previsto; 0% de repasse. Aplicação de convênio
+volta a "Convênio (fatura)" com guia. Sessões da avaliação feitas pela Juliana: procedimento "Avaliação neuropsicológica –
+sessão – convênio" (no Registrar, tipo "Avaliação neuropsicológica"). Pendências da gestão: (1) as sessões da Juliana da
+avaliação já feitas (ex.: Luiz Miguel 10, 23 e 30/09) estão como sessão comum — sem marcar, a contagem do Luiz diz "sessão
+4 de 5" em 21/10 quando seria a 7ª (adicional), e o repasse de setembro da Juliana as conta a 80% de R$ 40; (2) Jhonne 20/10
+e Igor 21/10 (ControleOdonto diz "não vem"); (3) Matheus Almeida Carmo 21/10 09:30 "Avulso": é aplicação?

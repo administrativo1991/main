@@ -55,6 +55,12 @@ Não são horário fixo: agende **cada aplicação** pelo **+ Agendamento** (ou 
 **Aplicação de teste**. A Agenda mostra "Aplicação nº N · sem cobrança", contando as que o paciente já fez com aquele
 profissional. Não há número fixo de aplicações: a profissional avisa quando a avaliação termina.
 
+**Avaliação de convênio (Sabin)**: o pacote são 5 sessões, somando as da psicóloga e as aplicações de teste; da 6ª em
+diante, **cada sessão precisa de autorização do convênio** (guia). A Agenda e o Registrar mostram "Avaliação Sabin Sinai:
+sessão 3 de 5" e, depois, "sessão 6 · adicional" (confira a autorização antes de atender). Sessão da avaliação feita pela
+psicóloga: no Registrar, tipo **Avaliação neuropsicológica** (para paciente de convênio o app grava a sessão do pacote).
+Aplicação de teste de paciente de convênio pede a **guia assinada**, como qualquer sessão de convênio.
+
 ## 4. Pacientes
 
 - **Novo paciente**: dados pessoais, quem paga, convênio e carteirinha. O app avisa se já existe alguém parecido (nome,
