@@ -1,10 +1,11 @@
 # Estado atual do app — retomar daqui
 
-Atualizado em 15/10/2026 (tarde). Ao abrir um chat novo, leia nesta ordem:
+Atualizado em 15/10/2026 (noite, início da Fase 2). Ao abrir um chat novo, leia nesta ordem:
 
 1. **`docs/DEPLOYS.md`**, seção "No ar agora": o que roda em cada canal (teste e real), com commit e linhas da planilha de código.
 2. **`NOTAS-fase1.md`** (raiz): o modelo de cobrança da Fase 1, as decisões da gestão, o que falta e o que a gestão precisa olhar.
-3. Este arquivo: o mapa do projeto.
+3. **`NOTAS-fase2.md`** (raiz): a Fase 2 em andamento (ordem dos itens, decisões, o que está no teste).
+4. Este arquivo: o mapa do projeto.
 
 O histórico deste arquivo até 08/10 (planos, pacotes, Mensalistas como tela) está no git. Aquele modelo saiu do app em 15/10.
 
@@ -20,7 +21,7 @@ pra testar antes. O código fica numa terceira planilha, **"Recepção Nascente 
 
 | O quê | Onde |
 |---|---|
-| Servidor | `app/server/server.js` + `app/server/server-cobranca.js` (Fase 1; mesmo escopo) + `app/server/duplicatas.js` |
+| Servidor | `app/server/server.js` + `app/server/server-cobranca.js` (Fase 1) + `app/server/server-fase2.js` (Fase 2), os três no mesmo escopo, + `app/server/duplicatas.js` |
 | Regra de cobrança (servidor e tela) | `app/shared/cobranca.js`: a única fonte das frases do bloco "O que fazer agora" |
 | Tela | `app/client/` (`layout.html`, `telas/*.html`, `js/00-base.js … 90-boot.js`, `styles.css`) |
 | Build | `node build.js` → `dist/index.html` (simulação local, dados falsos), `dist/pedacos.json` (peças ≤ 12.000 caracteres), `dist/Code.gs` / `dist/Code.real.gs` |
@@ -28,9 +29,9 @@ pra testar antes. O código fica numa terceira planilha, **"Recepção Nascente 
 | Publicação | `docs/DEPLOYS.md` ("Como registrar um deploy novo") e `docs/PLANO-IMPLEMENTACAO.md`, seção 10 |
 | Manuais | recepção: `docs/POP-RECEPCAO-COBRANCA.md` (cobrança) e `docs/README-RECEPCAO.md`; gestão: `docs/README-GESTAO.md` |
 
-## Telas (Fase 1)
+## Telas
 
-Recepção: **Agenda · Registrar · Pacientes · Cobrança do mês · Meu dia**. Gestão: tudo isso + **Pendências · Repasse**.
+Recepção: **Agenda · Confirmações (Fase 2) · Registrar · Pacientes · Cobrança do mês · Meu dia**. Gestão: tudo isso + **Pendências · Repasse**.
 
 ## Jeito de trabalhar (combinado com a gestão)
 

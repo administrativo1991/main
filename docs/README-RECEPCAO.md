@@ -5,7 +5,7 @@ certa, com a hora e o seu e-mail. Nada é apagado. Errou? Avise a gestão, que c
 
 Abra pelo link que a gestão passou, logada com o e-mail da clínica. O app é feito pra usar no computador.
 
-Menu: **Agenda · Registrar · Pacientes · Cobrança do mês · Meu dia**.
+Menu: **Agenda · Confirmações · Registrar · Pacientes · Cobrança do mês · Meu dia**.
 
 **Cobrança** (o bloco colorido "O que fazer agora", a pergunta **Recebeu?** e o que cada frase quer dizer): está tudo no
 **`docs/POP-RECEPCAO-COBRANCA.md`**, de uma página. Este guia cobre o resto.
@@ -25,6 +25,21 @@ Menu: **Agenda · Registrar · Pacientes · Cobrança do mês · Meu dia**.
 
 Linhas cinzas "pagamento do mês" ou "taxa de falta" na lista do dia são lançamentos à parte (o recebimento de uma
 mensalidade, a taxa decidida pela gestão). Não são atendimentos e não contam na presença.
+
+## 1a. Confirmações (WhatsApp)
+
+1. Menu **Confirmações** → escolha o período: **Amanhã**, **Daqui a 2 dias**, **Resto da semana**, **Próxima semana** ou
+   **Outro período**. Dá pra filtrar por profissional.
+2. Cada cartão é uma família (irmãos com o mesmo pagador ficam juntos, numa mensagem só).
+3. **Abrir WhatsApp**: abre a conversa com a mensagem pronta. Confira e aperte enviar no WhatsApp. O app anota "mensagem
+   enviada" com a hora.
+4. Sem número ("sem WhatsApp no cadastro"): pergunte ou procure o número, digite no campo e **Salvar no cadastro**. Fica
+   gravado no paciente (e nos irmãos) para as próximas vezes.
+5. A família respondeu:
+   - confirmou → **Confirmou** (a Agenda do dia passa a mostrar "confirmado");
+   - não vem ou quer outro horário → **Não vem / remarcar**: abre a Agenda daquele dia com o paciente e o formulário
+     "Não vem hoje" aberto (o **Remarcar** fica ao lado). Escreva o Detalhe, como sempre.
+6. **Copiar mensagem**: para mandar por outro caminho (ex.: celular da clínica).
 
 ## 2. Registrar
 
