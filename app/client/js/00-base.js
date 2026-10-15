@@ -153,7 +153,7 @@ function mock(nome, d) {
     if (nome === 'remarcar') { mockDia.push({ id: 'D-x' + mockDia.length, data: d.de, hora: d.horaDe, paciente: d.paciente, profissional: d.profissional, origem: 'Não vem · remarcado para ' + d.para }); mockDia.push({ id: 'D-y' + mockDia.length, data: d.para, hora: d.horaPara || d.horaDe, paciente: d.paciente, profissional: d.profissional, origem: 'Remarcação de ' + d.de }); return res({ ok: true }); }
     if (nome === 'confirmacoes') { // simulação: todo dia útil repete a agenda fixa de segunda
       var cde = dataObj(d.de), cate = dataObj(d.ate) || cde; if (!cde) return res({ ok: false, erros: ['Data inválida.'] });
-      var grp = {}, ordC = [], molde = 'Olá, {pagador}! Aqui é da Clínica Nascente. Passando para confirmar:\n{sessoes}\nPodemos confirmar? Se precisar desmarcar, é só responder por aqui.';
+      var grp = {}, ordC = [];
       for (var cd = new Date(cde.getTime()); cd <= cate; cd.setDate(cd.getDate() + 1)) {
         if (cd.getDay() === 0 || cd.getDay() === 6) continue; var cds = ('0' + cd.getDate()).slice(-2) + '/' + ('0' + (cd.getMonth() + 1)).slice(-2) + '/' + cd.getFullYear();
         mockAgenda.filter(function (a) { return a['Dia da semana'] === 'Segunda' && a.Ativo !== 'Não'; }).forEach(function (a) {
@@ -161,13 +161,12 @@ function mock(nome, d) {
           if (!grp[k]) { grp[k] = { chave: k, pagador: mp.pagador || '', fone: '', foneFmt: '', foneDe: '', itens: [] }; ordC.push(k); }
           if (fone && !grp[k].fone) { grp[k].fone = '55' + fone; grp[k].foneFmt = mockWhats[a.Paciente]; grp[k].foneDe = 'pagador'; }
           var conf = mockDia.filter(function (x) { return x.data === cds && x.paciente === a.Paciente && x.profissional === a.Profissional && x.origem === 'Confirmado'; })[0];
-          grp[k].itens.push({ data: cds, diaSemana: DIAS_PT[cd.getDay()], hora: a.Hora, paciente: a.Paciente, profissional: a.Profissional, tipo: a.Tipo === 'sessão' ? '' : (a.Tipo || ''), confirmado: conf ? { por: 'simulacao@local', quando: '' } : null, enviado: mockEnviadas[cds + '|' + a.Paciente + '|' + a.Profissional] || null,
-            linha: '• ' + a.Paciente.split(' ')[0] + ' com ' + a.Profissional + ' — ' + DIAS_PT[cd.getDay()].toLowerCase() + ', ' + cds.slice(0, 5) + ', às ' + a.Hora });
+          grp[k].itens.push({ data: cds, diaSemana: DIAS_PT[cd.getDay()], hora: a.Hora, paciente: a.Paciente, profissional: a.Profissional, tipo: a.Tipo === 'sessão' ? '' : (a.Tipo || ''), confirmado: conf ? { por: 'simulacao@local', quando: '' } : null, enviado: mockEnviadas[cds + '|' + a.Paciente + '|' + a.Profissional] || null });
         });
       }
       var gsC = ordC.map(function (k) { var g = grp[k]; g.pacientes = g.itens.map(function (x) { return x.paciente; }).filter(function (x, j, a) { return a.indexOf(x) === j; }); g.aConfirmar = g.itens.filter(function (x) { return !x.confirmado; }).length;
-        g.molde = molde.replace('{pagador}', String(g.pagador).split(' ')[0]).replace(/,\s*!/, '!'); g.mensagem = g.molde.replace('{sessoes}', g.itens.map(function (x) { return x.linha; }).join('\n')); return g; });
-      return res({ ok: true, de: d.de, ate: d.ate || d.de, grupos: gsC, modeloProvisorio: true, total: gsC.reduce(function (n, g) { return n + g.itens.length; }, 0) }); }
+        g.mensagem = Mensagens.confirmacao('', g.pagador, g.itens); return g; });
+      return res({ ok: true, de: d.de, ate: d.ate || d.de, grupos: gsC, modelo: '', total: gsC.reduce(function (n, g) { return n + g.itens.length; }, 0) }); }
     if (nome === 'marcarMensagemEnviada') { (d.itens || []).forEach(function (x) { mockEnviadas[x.data + '|' + x.paciente + '|' + x.profissional] = { por: 'simulacao@local', quando: hojeStr() + ' ' + agoraHora() }; }); return res({ ok: true, n: (d.itens || []).length, por: 'simulacao@local', quando: hojeStr() + ' ' + agoraHora() }); }
     if (nome === 'salvarWhats') { var dg = String(d.whats || '').replace(/\D/g, ''); if (dg.length < 10 || dg.length > 11) return res({ ok: false, erros: ['WhatsApp inválido: DDD + número, ex.: (32) 9 9999-9999.'] }); (d.pacientes || []).forEach(function (p) { mockWhats[p] = mascaraFone(dg); }); return res({ ok: true, salvos: d.pacientes, fone: '55' + dg, foneFmt: mascaraFone(dg) }); }
     if (nome === 'confirmar') { mockDia.push({ id: 'D-c' + mockDia.length, data: d.data, hora: d.hora, paciente: d.paciente, profissional: d.profissional, origem: 'Confirmado' }); return res({ ok: true }); }

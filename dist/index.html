@@ -858,7 +858,6 @@ table.cm .acoes{justify-content:flex-end;gap:4px;flex-wrap:wrap}
     <div class="seg mini" id="cf-mostrar" role="group" aria-label="Mostrar"><button type="button" data-v="falta" aria-pressed="true">A confirmar</button><button type="button" data-v="todos" aria-pressed="false">Todos</button></div>
   </div>
   <div class="fd-resumo" id="cf-resumo" hidden></div>
-  <div id="cf-aviso" class="faixa amarela" hidden></div>
   <div id="cf-carregando" class="carregando esqueleto"><div></div><div></div></div>
   <div class="cf-lista" id="cf-lista"></div>
   <div class="muted" id="cf-status"></div>
@@ -1562,6 +1561,42 @@ var Cobranca = (function () {
     tipoSemCobranca: tipoSemCobranca, calcular: calcular, pagoK: pagoK, situacaoCompetencia: situacaoCompetencia, params: params };
 })();
 if (typeof module !== 'undefined' && module.exports) module.exports = Cobranca;
+
+/* Mensagens de WhatsApp (Fase 2) — o mesmo código no servidor e na tela, pra mensagem nunca divergir.
+   Confirmação: texto oficial da clínica (gestão, 15/10). A gestão pode trocar em Parâmetros!msg_confirmacao, com:
+   {pagador} = primeiro nome de quem paga (sem pagador, do paciente) · {da_sua_consulta} = "da sua consulta" / "das suas consultas"
+   · {com_profissional} = " com Juliana Ribeiro" (vazio se forem profissionais diferentes) · {sessoes} = Data e Horário de cada
+   sessão (com 👤 nome quando são vários pacientes, e "com profissional" quando são vários profissionais). "\n" escrito na
+   célula também quebra linha. */
+var Mensagens = (function () {
+  var CONFIRMACAO_PADRAO = 'Olá, {pagador}! Passando para lembrar {da_sua_consulta} na Clínica Nascente{com_profissional}:\n\n' +
+    '{sessoes}\n📍 *Local:* Av. Andradas, 547 – Térreo, Loja 5\n\n' +
+    '📋 *IMPORTANTE: É obrigatório passar pela recepção para registrar sua chegada antes de seguir para o consultório.*\n\n' +
+    '⚠️ Caso não possa comparecer, avise a recepção com pelo menos *24 horas de antecedência*. A falta sem aviso impede que o profissional disponibilize esse horário para outro paciente.\n\n' +
+    'Agradecemos a compreensão e a colaboração!';
+  function primeiroNome(n) { return String(n || '').trim().split(/\s+/)[0] || ''; }
+  function hora(h) { var m = String(h || '').match(/^(\d{1,2}):(\d{2})/); return m ? ('0' + m[1]).slice(-2) + 'h' + m[2] : String(h || '').trim(); }
+  function unicos(l) { return l.filter(function (x, i) { return l.indexOf(x) === i; }); }
+  // itens: [{ paciente, profissional, data: 'dd/mm/aaaa', hora: 'hh:mm' }]
+  function confirmacao(modelo, pagador, itens) {
+    itens = itens || [];
+    var pacs = unicos(itens.map(function (x) { return x.paciente; })), profs = unicos(itens.map(function (x) { return x.profissional; })), umProf = profs.length === 1;
+    var blocos = itens.map(function (x) {
+      var l = [];
+      if (pacs.length > 1 || !umProf) l.push('👤 *' + primeiroNome(x.paciente) + '*' + (umProf ? '' : ' com ' + x.profissional));
+      l.push('🗓️ *Data:* ' + x.data);
+      if (x.hora) l.push('⏰ *Horário:* ' + hora(x.hora));
+      return l.join('\n');
+    });
+    return String(modelo || CONFIRMACAO_PADRAO).replace(/\\n/g, '\n')
+      .replace(/\{pagador\}/g, primeiroNome(pagador || pacs[0]))
+      .replace(/\{da_sua_consulta\}/g, itens.length > 1 ? 'das suas consultas' : 'da sua consulta')
+      .replace(/\{com_profissional\}/g, umProf && profs[0] ? ' com ' + profs[0] : '')
+      .replace(/\{sessoes\}/g, blocos.join('\n\n'))
+      .replace(/,\s*!/g, '!');
+  }
+  return { CONFIRMACAO_PADRAO: CONFIRMACAO_PADRAO, confirmacao: confirmacao, hora: hora };
+})();
 </script>
 <script>
 (function(){
@@ -1722,7 +1757,7 @@ function mock(nome, d) {
     if (nome === 'remarcar') { mockDia.push({ id: 'D-x' + mockDia.length, data: d.de, hora: d.horaDe, paciente: d.paciente, profissional: d.profissional, origem: 'Não vem · remarcado para ' + d.para }); mockDia.push({ id: 'D-y' + mockDia.length, data: d.para, hora: d.horaPara || d.horaDe, paciente: d.paciente, profissional: d.profissional, origem: 'Remarcação de ' + d.de }); return res({ ok: true }); }
     if (nome === 'confirmacoes') { // simulação: todo dia útil repete a agenda fixa de segunda
       var cde = dataObj(d.de), cate = dataObj(d.ate) || cde; if (!cde) return res({ ok: false, erros: ['Data inválida.'] });
-      var grp = {}, ordC = [], molde = 'Olá, {pagador}! Aqui é da Clínica Nascente. Passando para confirmar:\n{sessoes}\nPodemos confirmar? Se precisar desmarcar, é só responder por aqui.';
+      var grp = {}, ordC = [];
       for (var cd = new Date(cde.getTime()); cd <= cate; cd.setDate(cd.getDate() + 1)) {
         if (cd.getDay() === 0 || cd.getDay() === 6) continue; var cds = ('0' + cd.getDate()).slice(-2) + '/' + ('0' + (cd.getMonth() + 1)).slice(-2) + '/' + cd.getFullYear();
         mockAgenda.filter(function (a) { return a['Dia da semana'] === 'Segunda' && a.Ativo !== 'Não'; }).forEach(function (a) {
@@ -1730,13 +1765,12 @@ function mock(nome, d) {
           if (!grp[k]) { grp[k] = { chave: k, pagador: mp.pagador || '', fone: '', foneFmt: '', foneDe: '', itens: [] }; ordC.push(k); }
           if (fone && !grp[k].fone) { grp[k].fone = '55' + fone; grp[k].foneFmt = mockWhats[a.Paciente]; grp[k].foneDe = 'pagador'; }
           var conf = mockDia.filter(function (x) { return x.data === cds && x.paciente === a.Paciente && x.profissional === a.Profissional && x.origem === 'Confirmado'; })[0];
-          grp[k].itens.push({ data: cds, diaSemana: DIAS_PT[cd.getDay()], hora: a.Hora, paciente: a.Paciente, profissional: a.Profissional, tipo: a.Tipo === 'sessão' ? '' : (a.Tipo || ''), confirmado: conf ? { por: 'simulacao@local', quando: '' } : null, enviado: mockEnviadas[cds + '|' + a.Paciente + '|' + a.Profissional] || null,
-            linha: '• ' + a.Paciente.split(' ')[0] + ' com ' + a.Profissional + ' — ' + DIAS_PT[cd.getDay()].toLowerCase() + ', ' + cds.slice(0, 5) + ', às ' + a.Hora });
+          grp[k].itens.push({ data: cds, diaSemana: DIAS_PT[cd.getDay()], hora: a.Hora, paciente: a.Paciente, profissional: a.Profissional, tipo: a.Tipo === 'sessão' ? '' : (a.Tipo || ''), confirmado: conf ? { por: 'simulacao@local', quando: '' } : null, enviado: mockEnviadas[cds + '|' + a.Paciente + '|' + a.Profissional] || null });
         });
       }
       var gsC = ordC.map(function (k) { var g = grp[k]; g.pacientes = g.itens.map(function (x) { return x.paciente; }).filter(function (x, j, a) { return a.indexOf(x) === j; }); g.aConfirmar = g.itens.filter(function (x) { return !x.confirmado; }).length;
-        g.molde = molde.replace('{pagador}', String(g.pagador).split(' ')[0]).replace(/,\s*!/, '!'); g.mensagem = g.molde.replace('{sessoes}', g.itens.map(function (x) { return x.linha; }).join('\n')); return g; });
-      return res({ ok: true, de: d.de, ate: d.ate || d.de, grupos: gsC, modeloProvisorio: true, total: gsC.reduce(function (n, g) { return n + g.itens.length; }, 0) }); }
+        g.mensagem = Mensagens.confirmacao('', g.pagador, g.itens); return g; });
+      return res({ ok: true, de: d.de, ate: d.ate || d.de, grupos: gsC, modelo: '', total: gsC.reduce(function (n, g) { return n + g.itens.length; }, 0) }); }
     if (nome === 'marcarMensagemEnviada') { (d.itens || []).forEach(function (x) { mockEnviadas[x.data + '|' + x.paciente + '|' + x.profissional] = { por: 'simulacao@local', quando: hojeStr() + ' ' + agoraHora() }; }); return res({ ok: true, n: (d.itens || []).length, por: 'simulacao@local', quando: hojeStr() + ' ' + agoraHora() }); }
     if (nome === 'salvarWhats') { var dg = String(d.whats || '').replace(/\D/g, ''); if (dg.length < 10 || dg.length > 11) return res({ ok: false, erros: ['WhatsApp inválido: DDD + número, ex.: (32) 9 9999-9999.'] }); (d.pacientes || []).forEach(function (p) { mockWhats[p] = mascaraFone(dg); }); return res({ ok: true, salvos: d.pacientes, fone: '55' + dg, foneFmt: mascaraFone(dg) }); }
     if (nome === 'confirmar') { mockDia.push({ id: 'D-c' + mockDia.length, data: d.data, hora: d.hora, paciente: d.paciente, profissional: d.profissional, origem: 'Confirmado' }); return res({ ok: true }); }
@@ -2521,7 +2555,7 @@ function salvarRec(d) { $("#r-salvar").disabled = true; call('salvarAgendaFixa',
 /* ===== 12-confirmar.js ===== */
 /* ================= CONFIRMAÇÕES — WhatsApp (Fase 2, 15/10) =================
    A recepção escolhe o período (amanhã, daqui a 2 dias, a semana), vê as sessões agrupadas por pagador e abre o WhatsApp
-   com a mensagem pronta (texto em Parâmetros!msg_confirmacao). Abrir o WhatsApp grava "mensagem enviada" (aba Mensagens
+   com a mensagem pronta (texto oficial em app/shared/mensagens.js; a gestão troca em Parâmetros!msg_confirmacao). Abrir o WhatsApp grava "mensagem enviada" (aba Mensagens
    WhatsApp); a resposta da família vira "Confirmou" (Lista do dia) ou "Não vem / remarcar" na Agenda do dia.
    Sem número no cadastro: a recepção digita o WhatsApp uma vez e ele vai para Pacientes (com log). */
 var CF = null, cfPeriodo = 'amanha', cfMostrar = 'falta', cfProf = '', cfGen = 0;
@@ -2539,7 +2573,7 @@ function periodoCF() {
 function carregarConfirmacoes() {
   var p = periodoCF(), gen = ++cfGen;
   if (cfPeriodo === 'outro' && !dataObj(p.de)) { $("#cf-carregando").hidden = true; $("#cf-status").textContent = 'Escolha as datas (dd/mm/aaaa) e clique em Ver.'; return; }
-  $("#cf-carregando").hidden = false; $("#cf-lista").innerHTML = ''; $("#cf-resumo").hidden = true; $("#cf-aviso").hidden = true; $("#cf-status").textContent = '';
+  $("#cf-carregando").hidden = false; $("#cf-lista").innerHTML = ''; $("#cf-resumo").hidden = true; $("#cf-status").textContent = '';
   call('confirmacoes', p).then(function (r) {
     if (!aindaNa('confirmar', navGen) || gen !== cfGen) return;
     $("#cf-carregando").hidden = true;
@@ -2564,7 +2598,6 @@ function renderConfirmacoes() {
   var conf = todos.filter(function (x) { return x.confirmado; }).length, env = todos.filter(function (x) { return !x.confirmado && x.enviado; }).length, semFone = gs.filter(function (o) { return !o.g.fone && o.itens.some(function (x) { return !x.confirmado; }); }).length;
   $("#cf-resumo").hidden = false;
   $("#cf-resumo").innerHTML = '<div><b>' + todos.length + '</b><span>sessões · ' + esc(CF.de === CF.ate ? CF.de.slice(0, 5) : CF.de.slice(0, 5) + ' a ' + CF.ate.slice(0, 5)) + '</span></div><div><b>' + conf + '</b><span>confirmadas</span></div><div><b>' + env + '</b><span>mensagem enviada, sem resposta</span></div><div><b>' + (todos.length - conf - env) + '</b><span>a confirmar</span></div><div class="' + (semFone ? 'atencao' : '') + '"><b>' + semFone + '</b><span>famílias sem WhatsApp</span></div>';
-  if (CF.modeloProvisorio && ehGestao()) { $("#cf-aviso").hidden = false; $("#cf-aviso").innerHTML = '<strong>Texto provisório.</strong>&nbsp;Para usar o texto oficial, escreva-o na aba Parâmetros, linha <code>msg_confirmacao</code> (use {pagador} e {sessoes}).'; }
   var vis = gs.filter(function (o) { return cfMostrar === 'todos' || o.itens.some(function (x) { return !x.confirmado; }); });
   var box = $("#cf-lista"); box.innerHTML = '';
   if (!vis.length) { box.innerHTML = '<div class="card compacto"><div class="muted">' + (todos.length ? 'Todas as sessões do período estão confirmadas.' : 'Nenhuma sessão na agenda neste período.') + '</div></div>'; return; }
@@ -2612,8 +2645,8 @@ function cardGrupoCF(g, itens) {
   ac.appendChild(bc); ac.appendChild(bv);
   return c;
 }
-// o molde vem do servidor com o pagador já trocado; a tela junta as linhas das sessões mostradas (filtro de profissional)
-function mensagemCF(g, itens) { return g.molde.replace(/\{sessoes\}/g, itens.map(function (x) { return x.linha; }).join('\n')); }
+// a mesma função do servidor (app/shared/mensagens.js), só com as sessões mostradas (filtro de profissional)
+function mensagemCF(g, itens) { return Mensagens.confirmacao(CF.modelo, g.pagador, itens); }
 function marcarEnviadaCF(g, itens) {
   call('marcarMensagemEnviada', { pagador: g.pagador, fone: g.fone, itens: itens.map(function (x) { return { data: x.data, hora: x.hora, paciente: x.paciente, profissional: x.profissional }; }) }).then(function (r) {
     if (!r.ok) return toast((r.erros || ['Não registrei o envio']).join(' '));

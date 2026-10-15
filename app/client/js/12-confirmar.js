@@ -1,6 +1,6 @@
 /* ================= CONFIRMAÇÕES — WhatsApp (Fase 2, 15/10) =================
    A recepção escolhe o período (amanhã, daqui a 2 dias, a semana), vê as sessões agrupadas por pagador e abre o WhatsApp
-   com a mensagem pronta (texto em Parâmetros!msg_confirmacao). Abrir o WhatsApp grava "mensagem enviada" (aba Mensagens
+   com a mensagem pronta (texto oficial em app/shared/mensagens.js; a gestão troca em Parâmetros!msg_confirmacao). Abrir o WhatsApp grava "mensagem enviada" (aba Mensagens
    WhatsApp); a resposta da família vira "Confirmou" (Lista do dia) ou "Não vem / remarcar" na Agenda do dia.
    Sem número no cadastro: a recepção digita o WhatsApp uma vez e ele vai para Pacientes (com log). */
 var CF = null, cfPeriodo = 'amanha', cfMostrar = 'falta', cfProf = '', cfGen = 0;
@@ -18,7 +18,7 @@ function periodoCF() {
 function carregarConfirmacoes() {
   var p = periodoCF(), gen = ++cfGen;
   if (cfPeriodo === 'outro' && !dataObj(p.de)) { $("#cf-carregando").hidden = true; $("#cf-status").textContent = 'Escolha as datas (dd/mm/aaaa) e clique em Ver.'; return; }
-  $("#cf-carregando").hidden = false; $("#cf-lista").innerHTML = ''; $("#cf-resumo").hidden = true; $("#cf-aviso").hidden = true; $("#cf-status").textContent = '';
+  $("#cf-carregando").hidden = false; $("#cf-lista").innerHTML = ''; $("#cf-resumo").hidden = true; $("#cf-status").textContent = '';
   call('confirmacoes', p).then(function (r) {
     if (!aindaNa('confirmar', navGen) || gen !== cfGen) return;
     $("#cf-carregando").hidden = true;
@@ -43,7 +43,6 @@ function renderConfirmacoes() {
   var conf = todos.filter(function (x) { return x.confirmado; }).length, env = todos.filter(function (x) { return !x.confirmado && x.enviado; }).length, semFone = gs.filter(function (o) { return !o.g.fone && o.itens.some(function (x) { return !x.confirmado; }); }).length;
   $("#cf-resumo").hidden = false;
   $("#cf-resumo").innerHTML = '<div><b>' + todos.length + '</b><span>sessões · ' + esc(CF.de === CF.ate ? CF.de.slice(0, 5) : CF.de.slice(0, 5) + ' a ' + CF.ate.slice(0, 5)) + '</span></div><div><b>' + conf + '</b><span>confirmadas</span></div><div><b>' + env + '</b><span>mensagem enviada, sem resposta</span></div><div><b>' + (todos.length - conf - env) + '</b><span>a confirmar</span></div><div class="' + (semFone ? 'atencao' : '') + '"><b>' + semFone + '</b><span>famílias sem WhatsApp</span></div>';
-  if (CF.modeloProvisorio && ehGestao()) { $("#cf-aviso").hidden = false; $("#cf-aviso").innerHTML = '<strong>Texto provisório.</strong>&nbsp;Para usar o texto oficial, escreva-o na aba Parâmetros, linha <code>msg_confirmacao</code> (use {pagador} e {sessoes}).'; }
   var vis = gs.filter(function (o) { return cfMostrar === 'todos' || o.itens.some(function (x) { return !x.confirmado; }); });
   var box = $("#cf-lista"); box.innerHTML = '';
   if (!vis.length) { box.innerHTML = '<div class="card compacto"><div class="muted">' + (todos.length ? 'Todas as sessões do período estão confirmadas.' : 'Nenhuma sessão na agenda neste período.') + '</div></div>'; return; }
@@ -91,8 +90,8 @@ function cardGrupoCF(g, itens) {
   ac.appendChild(bc); ac.appendChild(bv);
   return c;
 }
-// o molde vem do servidor com o pagador já trocado; a tela junta as linhas das sessões mostradas (filtro de profissional)
-function mensagemCF(g, itens) { return g.molde.replace(/\{sessoes\}/g, itens.map(function (x) { return x.linha; }).join('\n')); }
+// a mesma função do servidor (app/shared/mensagens.js), só com as sessões mostradas (filtro de profissional)
+function mensagemCF(g, itens) { return Mensagens.confirmacao(CF.modelo, g.pagador, itens); }
 function marcarEnviadaCF(g, itens) {
   call('marcarMensagemEnviada', { pagador: g.pagador, fone: g.fone, itens: itens.map(function (x) { return { data: x.data, hora: x.hora, paciente: x.paciente, profissional: x.profissional }; }) }).then(function (r) {
     if (!r.ok) return toast((r.erros || ['Não registrei o envio']).join(' '));

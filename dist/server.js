@@ -322,6 +322,42 @@ var Cobranca = (function () {
 })();
 if (typeof module !== 'undefined' && module.exports) module.exports = Cobranca;
 
+/* Mensagens de WhatsApp (Fase 2) — o mesmo código no servidor e na tela, pra mensagem nunca divergir.
+   Confirmação: texto oficial da clínica (gestão, 15/10). A gestão pode trocar em Parâmetros!msg_confirmacao, com:
+   {pagador} = primeiro nome de quem paga (sem pagador, do paciente) · {da_sua_consulta} = "da sua consulta" / "das suas consultas"
+   · {com_profissional} = " com Juliana Ribeiro" (vazio se forem profissionais diferentes) · {sessoes} = Data e Horário de cada
+   sessão (com 👤 nome quando são vários pacientes, e "com profissional" quando são vários profissionais). "\n" escrito na
+   célula também quebra linha. */
+var Mensagens = (function () {
+  var CONFIRMACAO_PADRAO = 'Olá, {pagador}! Passando para lembrar {da_sua_consulta} na Clínica Nascente{com_profissional}:\n\n' +
+    '{sessoes}\n📍 *Local:* Av. Andradas, 547 – Térreo, Loja 5\n\n' +
+    '📋 *IMPORTANTE: É obrigatório passar pela recepção para registrar sua chegada antes de seguir para o consultório.*\n\n' +
+    '⚠️ Caso não possa comparecer, avise a recepção com pelo menos *24 horas de antecedência*. A falta sem aviso impede que o profissional disponibilize esse horário para outro paciente.\n\n' +
+    'Agradecemos a compreensão e a colaboração!';
+  function primeiroNome(n) { return String(n || '').trim().split(/\s+/)[0] || ''; }
+  function hora(h) { var m = String(h || '').match(/^(\d{1,2}):(\d{2})/); return m ? ('0' + m[1]).slice(-2) + 'h' + m[2] : String(h || '').trim(); }
+  function unicos(l) { return l.filter(function (x, i) { return l.indexOf(x) === i; }); }
+  // itens: [{ paciente, profissional, data: 'dd/mm/aaaa', hora: 'hh:mm' }]
+  function confirmacao(modelo, pagador, itens) {
+    itens = itens || [];
+    var pacs = unicos(itens.map(function (x) { return x.paciente; })), profs = unicos(itens.map(function (x) { return x.profissional; })), umProf = profs.length === 1;
+    var blocos = itens.map(function (x) {
+      var l = [];
+      if (pacs.length > 1 || !umProf) l.push('👤 *' + primeiroNome(x.paciente) + '*' + (umProf ? '' : ' com ' + x.profissional));
+      l.push('🗓️ *Data:* ' + x.data);
+      if (x.hora) l.push('⏰ *Horário:* ' + hora(x.hora));
+      return l.join('\n');
+    });
+    return String(modelo || CONFIRMACAO_PADRAO).replace(/\\n/g, '\n')
+      .replace(/\{pagador\}/g, primeiroNome(pagador || pacs[0]))
+      .replace(/\{da_sua_consulta\}/g, itens.length > 1 ? 'das suas consultas' : 'da sua consulta')
+      .replace(/\{com_profissional\}/g, umProf && profs[0] ? ' com ' + profs[0] : '')
+      .replace(/\{sessoes\}/g, blocos.join('\n\n'))
+      .replace(/,\s*!/g, '!');
+  }
+  return { CONFIRMACAO_PADRAO: CONFIRMACAO_PADRAO, confirmacao: confirmacao, hora: hora };
+})();
+
 /* Recepção Nascente — servidor (Google Apps Script, runtime V8).
    Este arquivo é carregado pelo app/loader/Code.gs a partir do Drive e avaliado em tempo de execução,
    por isso define tudo dentro de `API` e termina com a expressão `API`.
@@ -2110,10 +2146,10 @@ Object.keys(API).forEach(function (k) {
    Confirmações por WhatsApp (gestão, 15/10): a recepção escolhe o período (amanhã, daqui a 2 dias, a semana), vê as sessões
    agrupadas por pagador e abre o WhatsApp com a mensagem pronta. "Mensagem enviada" fica na aba própria `Mensagens WhatsApp`
    (o código antigo não lê essa aba: voltar o código não duplica nada na Agenda). "Confirmou" continua sendo a linha
-   "Confirmado" da Lista do dia (API.confirmar). O texto vem de Parâmetros!msg_confirmacao; o padrão abaixo é provisório. */
+   "Confirmado" da Lista do dia (API.confirmar). O texto é o oficial da clínica (app/shared/mensagens.js, o mesmo na tela);
+   a gestão pode trocar em Parâmetros!msg_confirmacao. */
 var ABA_MSG = 'Mensagens WhatsApp';
 var HMSG = ['ID', 'Data/hora', 'Tipo', 'Pagador', 'WhatsApp', 'Paciente', 'Profissional', 'Data da sessão', 'Hora', 'Registrado por (app)'];
-var MSG_CONFIRMACAO_PADRAO = 'Olá, {pagador}! Aqui é da Clínica Nascente. Passando para confirmar:\n{sessoes}\nPodemos confirmar? Se precisar desmarcar, é só responder por aqui.';
 var CONFIRMACAO_MAX_DIAS = 14;
 
 // número pro link do WhatsApp: só dígitos, com 55 na frente; vazio se não parece celular/fixo do Brasil
@@ -2127,17 +2163,6 @@ function foneFmt_(t) {
   var d = foneWhats_(t).slice(2); if (!d) return '';
   return d.length === 11 ? '(' + d.slice(0, 2) + ') ' + d.slice(2, 3) + ' ' + d.slice(3, 7) + '-' + d.slice(7) : '(' + d.slice(0, 2) + ') ' + d.slice(2, 6) + '-' + d.slice(6);
 }
-function primeiroNome_(n) { return String(n || '').trim().split(/\s+/)[0] || ''; }
-// a mensagem de um pagador: {pagador} = primeiro nome; {sessoes} = uma linha por sessão. Na planilha, "\n" escrito também quebra linha.
-// O servidor manda o molde (pagador já trocado) e a linha de cada sessão: a tela junta só as sessões que mostra (filtro de profissional).
-function moldeConfirmacao_(modelo, pagador) {
-  return String(modelo || MSG_CONFIRMACAO_PADRAO).replace(/\\n/g, '\n').replace(/\{pagador\}/g, primeiroNome_(pagador)).replace(/,\s*!/g, '!');
-}
-function linhaSessao_(it) {
-  var dt = parseData_(it.data);
-  return '• ' + primeiroNome_(it.paciente) + ' com ' + it.profissional + ' — ' + (dt ? CONFIG.DIAS[dt.getDay()].toLowerCase() + ', ' : '') + String(it.data).slice(0, 5) + (it.hora ? ', às ' + it.hora : '');
-}
-function mensagemConfirmacao_(molde, itens) { return molde.replace(/\{sessoes\}/g, itens.map(function (x) { return x.linha; }).join('\n')); }
 function enviadas_() {
   var s = planilha_().getSheetByName(ABA_MSG), out = {};
   linhasComo_(s).forEach(function (r) {
@@ -2170,20 +2195,20 @@ API.confirmacoes = function (d) {
       if (!g) { g = grupos[chave] = { chave: chave, pagador: p.pagador || '', fone: '', foneFmt: '', foneDe: '', itens: [] }; ordem.push(chave); }
       if (fone && !g.fone) { g.fone = fone; g.foneFmt = foneFmt_(fone); g.foneDe = deQuem; }
       g.itens.push({ data: dia.data, diaSemana: dia.diaSemana, hora: horaTxt_(it.hora), paciente: it.paciente, profissional: it.profissional, tipo: it.tipo || '',
-        confirmado: it.confirmado || null, linha: '', enviado: env[dia.data + '|' + it.paciente + '|' + it.profissional] || null, cadastrado: !!idx[it.paciente] });
+        confirmado: it.confirmado || null, enviado: env[dia.data + '|' + it.paciente + '|' + it.profissional] || null, cadastrado: !!idx[it.paciente] });
     });
   }
   var lista = ordem.map(function (k) {
-    var g = grupos[k]; g.itens.forEach(function (x) { x.linha = linhaSessao_(x); });
+    var g = grupos[k];
     g.pacientes = g.itens.map(function (x) { return x.paciente; }).filter(function (x, j, a) { return a.indexOf(x) === j; });
     g.aConfirmar = g.itens.filter(function (x) { return !x.confirmado; }).length;
     var faltam = g.itens.filter(function (x) { return !x.confirmado; });
-    g.molde = moldeConfirmacao_(modelo, g.pagador); g.mensagem = mensagemConfirmacao_(g.molde, faltam.length ? faltam : g.itens);
+    g.mensagem = Mensagens.confirmacao(modelo, g.pagador, faltam.length ? faltam : g.itens); // a tela refaz com o filtro de profissional
     return g;
   });
   // primeiro quem ainda falta confirmar; dentro disso, pela primeira sessão
   lista.sort(function (a, b) { return (b.aConfirmar ? 1 : 0) - (a.aConfirmar ? 1 : 0) || (ymdNum_(parseData_(a.itens[0].data)) - ymdNum_(parseData_(b.itens[0].data))) || String(a.itens[0].hora).localeCompare(String(b.itens[0].hora)); });
-  return { ok: true, de: fmtData_(de), ate: fmtData_(ate), grupos: lista, modeloProvisorio: !modelo, total: lista.reduce(function (n, g) { return n + g.itens.length; }, 0) };
+  return { ok: true, de: fmtData_(de), ate: fmtData_(ate), grupos: lista, modelo: modelo, total: lista.reduce(function (n, g) { return n + g.itens.length; }, 0) };
 };
 
 // "Abri o WhatsApp": uma linha por sessão na aba Mensagens WhatsApp (não é prova de envio; é o que a recepção fez)

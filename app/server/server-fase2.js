@@ -2,10 +2,10 @@
    Confirmações por WhatsApp (gestão, 15/10): a recepção escolhe o período (amanhã, daqui a 2 dias, a semana), vê as sessões
    agrupadas por pagador e abre o WhatsApp com a mensagem pronta. "Mensagem enviada" fica na aba própria `Mensagens WhatsApp`
    (o código antigo não lê essa aba: voltar o código não duplica nada na Agenda). "Confirmou" continua sendo a linha
-   "Confirmado" da Lista do dia (API.confirmar). O texto vem de Parâmetros!msg_confirmacao; o padrão abaixo é provisório. */
+   "Confirmado" da Lista do dia (API.confirmar). O texto é o oficial da clínica (app/shared/mensagens.js, o mesmo na tela);
+   a gestão pode trocar em Parâmetros!msg_confirmacao. */
 var ABA_MSG = 'Mensagens WhatsApp';
 var HMSG = ['ID', 'Data/hora', 'Tipo', 'Pagador', 'WhatsApp', 'Paciente', 'Profissional', 'Data da sessão', 'Hora', 'Registrado por (app)'];
-var MSG_CONFIRMACAO_PADRAO = 'Olá, {pagador}! Aqui é da Clínica Nascente. Passando para confirmar:\n{sessoes}\nPodemos confirmar? Se precisar desmarcar, é só responder por aqui.';
 var CONFIRMACAO_MAX_DIAS = 14;
 
 // número pro link do WhatsApp: só dígitos, com 55 na frente; vazio se não parece celular/fixo do Brasil
@@ -19,17 +19,6 @@ function foneFmt_(t) {
   var d = foneWhats_(t).slice(2); if (!d) return '';
   return d.length === 11 ? '(' + d.slice(0, 2) + ') ' + d.slice(2, 3) + ' ' + d.slice(3, 7) + '-' + d.slice(7) : '(' + d.slice(0, 2) + ') ' + d.slice(2, 6) + '-' + d.slice(6);
 }
-function primeiroNome_(n) { return String(n || '').trim().split(/\s+/)[0] || ''; }
-// a mensagem de um pagador: {pagador} = primeiro nome; {sessoes} = uma linha por sessão. Na planilha, "\n" escrito também quebra linha.
-// O servidor manda o molde (pagador já trocado) e a linha de cada sessão: a tela junta só as sessões que mostra (filtro de profissional).
-function moldeConfirmacao_(modelo, pagador) {
-  return String(modelo || MSG_CONFIRMACAO_PADRAO).replace(/\\n/g, '\n').replace(/\{pagador\}/g, primeiroNome_(pagador)).replace(/,\s*!/g, '!');
-}
-function linhaSessao_(it) {
-  var dt = parseData_(it.data);
-  return '• ' + primeiroNome_(it.paciente) + ' com ' + it.profissional + ' — ' + (dt ? CONFIG.DIAS[dt.getDay()].toLowerCase() + ', ' : '') + String(it.data).slice(0, 5) + (it.hora ? ', às ' + it.hora : '');
-}
-function mensagemConfirmacao_(molde, itens) { return molde.replace(/\{sessoes\}/g, itens.map(function (x) { return x.linha; }).join('\n')); }
 function enviadas_() {
   var s = planilha_().getSheetByName(ABA_MSG), out = {};
   linhasComo_(s).forEach(function (r) {
@@ -62,20 +51,20 @@ API.confirmacoes = function (d) {
       if (!g) { g = grupos[chave] = { chave: chave, pagador: p.pagador || '', fone: '', foneFmt: '', foneDe: '', itens: [] }; ordem.push(chave); }
       if (fone && !g.fone) { g.fone = fone; g.foneFmt = foneFmt_(fone); g.foneDe = deQuem; }
       g.itens.push({ data: dia.data, diaSemana: dia.diaSemana, hora: horaTxt_(it.hora), paciente: it.paciente, profissional: it.profissional, tipo: it.tipo || '',
-        confirmado: it.confirmado || null, linha: '', enviado: env[dia.data + '|' + it.paciente + '|' + it.profissional] || null, cadastrado: !!idx[it.paciente] });
+        confirmado: it.confirmado || null, enviado: env[dia.data + '|' + it.paciente + '|' + it.profissional] || null, cadastrado: !!idx[it.paciente] });
     });
   }
   var lista = ordem.map(function (k) {
-    var g = grupos[k]; g.itens.forEach(function (x) { x.linha = linhaSessao_(x); });
+    var g = grupos[k];
     g.pacientes = g.itens.map(function (x) { return x.paciente; }).filter(function (x, j, a) { return a.indexOf(x) === j; });
     g.aConfirmar = g.itens.filter(function (x) { return !x.confirmado; }).length;
     var faltam = g.itens.filter(function (x) { return !x.confirmado; });
-    g.molde = moldeConfirmacao_(modelo, g.pagador); g.mensagem = mensagemConfirmacao_(g.molde, faltam.length ? faltam : g.itens);
+    g.mensagem = Mensagens.confirmacao(modelo, g.pagador, faltam.length ? faltam : g.itens); // a tela refaz com o filtro de profissional
     return g;
   });
   // primeiro quem ainda falta confirmar; dentro disso, pela primeira sessão
   lista.sort(function (a, b) { return (b.aConfirmar ? 1 : 0) - (a.aConfirmar ? 1 : 0) || (ymdNum_(parseData_(a.itens[0].data)) - ymdNum_(parseData_(b.itens[0].data))) || String(a.itens[0].hora).localeCompare(String(b.itens[0].hora)); });
-  return { ok: true, de: fmtData_(de), ate: fmtData_(ate), grupos: lista, modeloProvisorio: !modelo, total: lista.reduce(function (n, g) { return n + g.itens.length; }, 0) };
+  return { ok: true, de: fmtData_(de), ate: fmtData_(ate), grupos: lista, modelo: modelo, total: lista.reduce(function (n, g) { return n + g.itens.length; }, 0) };
 };
 
 // "Abri o WhatsApp": uma linha por sessão na aba Mensagens WhatsApp (não é prova de envio; é o que a recepção fez)

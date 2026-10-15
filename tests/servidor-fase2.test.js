@@ -32,13 +32,13 @@ const ok = (r, msg) => { if (!r || r.ok === false) { console.error(msg, JSON.str
 
 // padrão = amanhã (sexta 16/10): Ana e Bia numa mensagem só (mesmo pagador, número da Ana); Carlos sem número; Davi já avisou que não vem
 let r = ok(API.confirmacoes({}), 'amanhã');
-assert.strictEqual(r.de, '16/10/2026'); assert.strictEqual(r.ate, '16/10/2026'); assert.strictEqual(r.total, 3); assert.ok(r.modeloProvisorio);
+assert.strictEqual(r.de, '16/10/2026'); assert.strictEqual(r.ate, '16/10/2026'); assert.strictEqual(r.total, 3); assert.strictEqual(r.modelo, '');
 const irmas = r.grupos.find(g => g.pagador === 'Carla Souza');
 assert.deepStrictEqual(irmas.pacientes, ['Ana Irmã', 'Bia Irmã']); assert.strictEqual(irmas.fone, '5532988887777'); assert.strictEqual(irmas.foneFmt, '(32) 9 8888-7777');
-assert.ok(/^Olá, Carla! Aqui é da Clínica Nascente/.test(irmas.mensagem), irmas.mensagem);
-assert.ok(irmas.mensagem.includes('• Ana com Juliana Ribeiro — sexta, 16/10, às 09:00\n• Bia com Juliana Ribeiro — sexta, 16/10, às 10:00'), irmas.mensagem);
+assert.ok(irmas.mensagem.startsWith('Olá, Carla! Passando para lembrar das suas consultas na Clínica Nascente com Juliana Ribeiro:\n\n👤 *Ana*\n🗓️ *Data:* 16/10/2026\n⏰ *Horário:* 09h00\n\n👤 *Bia*\n🗓️ *Data:* 16/10/2026\n⏰ *Horário:* 10h00\n📍 *Local:* Av. Andradas, 547 – Térreo, Loja 5\n\n📋 *IMPORTANTE:'), irmas.mensagem);
+assert.ok(irmas.mensagem.endsWith('Agradecemos a compreensão e a colaboração!'));
 const carlos = r.grupos.find(g => g.pacientes[0] === 'Carlos Sem');
-assert.strictEqual(carlos.fone, ''); assert.ok(/^Olá! Aqui é/.test(carlos.mensagem), 'sem pagador: "Olá!" sem vírgula');
+assert.strictEqual(carlos.fone, ''); assert.ok(carlos.mensagem.startsWith('Olá, Carlos! Passando para lembrar da sua consulta na Clínica Nascente com Juliana Ribeiro:\n\n🗓️ *Data:* 16/10/2026\n⏰ *Horário:* 11h00\n📍'), 'sem pagador: nome do paciente; uma sessão = texto oficial'); 
 assert.ok(!r.grupos.some(g => g.pacientes.includes('Davi Ja')), 'quem já avisou que não vem fica de fora');
 console.log('confirmações de amanhã ok');
 
@@ -53,8 +53,8 @@ console.log('período e confirmados ok');
 ss._m['Parâmetros'].d.push(['msg_confirmacao', 'Oi {pagador}!\\n{sessoes}\\nAté lá.', 'texto da confirmação']);
 API.limparCache && (global.Session = { getActiveUser: () => ({ getEmail: () => 'administrativo@clinicanascente.com.br' }) }, API.limparCache());
 r = ok(API.confirmacoes({}), 'modelo');
-assert.strictEqual(r.modeloProvisorio, false);
-assert.strictEqual(r.grupos.find(g => g.pagador === 'Carla Souza').mensagem, 'Oi Carla!\n• Ana com Juliana Ribeiro — sexta, 16/10, às 09:00\n• Bia com Juliana Ribeiro — sexta, 16/10, às 10:00\nAté lá.');
+assert.ok(r.modelo);
+assert.strictEqual(r.grupos.find(g => g.pagador === 'Carla Souza').mensagem, 'Oi Carla!\n👤 *Ana*\n🗓️ *Data:* 16/10/2026\n⏰ *Horário:* 09h00\n\n👤 *Bia*\n🗓️ *Data:* 16/10/2026\n⏰ *Horário:* 10h00\nAté lá.');
 global.Session = { getActiveUser: () => ({ getEmail: () => 'recepcao@clinicanascente.com.br' }) };
 console.log('modelo da planilha ok');
 
@@ -73,7 +73,8 @@ console.log('mensagem enviada ok');
 ok(API.confirmar({ data: '16/10/2026', hora: '09:00', paciente: 'Ana Irmã', profissional: 'Juliana Ribeiro' }), 'confirmar');
 r = ok(API.confirmacoes({}), 'depois de confirmar');
 assert.strictEqual(r.grupos.find(g => g.pagador === 'Carla Souza').aConfirmar, 1);
-assert.ok(!r.grupos.find(g => g.pagador === 'Carla Souza').mensagem.includes('Ana com'), 'a mensagem leva só quem falta confirmar');
+const soBia = r.grupos.find(g => g.pagador === 'Carla Souza').mensagem;
+assert.strictEqual(soBia, 'Oi Carla!\n🗓️ *Data:* 16/10/2026\n⏰ *Horário:* 10h00\nAté lá.', 'a mensagem leva só quem falta confirmar (sem 👤 quando é um paciente só)');
 console.log('confirmou ok');
 
 // WhatsApp digitado na tela: vai pro cadastro (com log); inválido é recusado
@@ -85,4 +86,8 @@ assert.strictEqual(P.d[lc][P.d[0].indexOf('WhatsApp do pagador')], '(32) 9 9123-
 const L = ss._m['Alterações de cadastro'].d; assert.strictEqual(L[L.length - 1][1], 'Carlos Sem'); assert.strictEqual(L[L.length - 1][2], 'WhatsApp do pagador');
 assert.strictEqual(ok(API.confirmacoes({}), 'depois do whats').grupos.find(g => g.pacientes[0] === 'Carlos Sem').fone, '5532991234567');
 console.log('salvar WhatsApp ok');
+// profissionais diferentes: cada sessão diz com quem; o cabeçalho não nomeia profissional
+const m2 = (0, eval)('Mensagens').confirmacao('', 'Rita Lima', [{ paciente: 'Theo Lima', profissional: 'Juliana Ribeiro', data: '20/10/2026', hora: '9:30' }, { paciente: 'Theo Lima', profissional: 'Dr. Victor Cunha', data: '21/10/2026', hora: '' }]);
+assert.ok(m2.startsWith('Olá, Rita! Passando para lembrar das suas consultas na Clínica Nascente:\n\n👤 *Theo* com Juliana Ribeiro\n🗓️ *Data:* 20/10/2026\n⏰ *Horário:* 09h30\n\n👤 *Theo* com Dr. Victor Cunha\n🗓️ *Data:* 21/10/2026\n📍'), m2);
+console.log('mensagem com dois profissionais ok');
 console.log('servidor-fase2: tudo ok');
