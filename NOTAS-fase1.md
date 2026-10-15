@@ -298,3 +298,11 @@ linha com Ativo = Não continuava valendo na Agenda/Registrar; corrigido no comm
 **Real atualizada (15/10, tarde)**: deploy **2026-10-15-06** em `arquivos_real` (o mesmo código do teste 03 + 05), com o OK
 da gestão. Próximo: marcar Tipo = Aplicação de teste nos horários fixos da Giovana (Jhonne, Igor, Luiz Miguel, Davi) —
 pela tela (Agenda → Horários fixos → Editar → Tipo) ou por mim, com o OK da gestão.
+
+**13h15**: Agenda recorrente da real ganhou a coluna L `Tipo` e os 4 horários da Giovana (Jhonne gio-10, Igor gio-14,
+Luiz Miguel gio-15, Davi gio-19) = Aplicação de teste (log "Alterações de cadastro" A367); conferido: aparecem
+"Aplicação de teste · sem cobrança". Commit seguinte (não publicado): na lista de horários fixos, Tipo vazio mostra
+"consulta" para médicos (antes dizia "sessão" pra todos). A gestão observou que as aplicações de teste não são
+recorrentes para sempre e propôs a recepção agendar e o app contar as sessões feitas (em discussão).
+Aplicações já feitas (set/out): Jhonne 6 · Igor 5 · Davi 5 · Luiz Miguel 3 · Ana Luiza 2 · Matheus Almeida Carmo 1 ·
+Francisco Couto 1.
