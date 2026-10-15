@@ -332,3 +332,10 @@ sessão – convênio" (no Registrar, tipo "Avaliação neuropsicológica"). Pen
 avaliação já feitas (ex.: Luiz Miguel 10, 23 e 30/09) estão como sessão comum — sem marcar, a contagem do Luiz diz "sessão
 4 de 5" em 21/10 quando seria a 7ª (adicional), e o repasse de setembro da Juliana as conta a 80% de R$ 40; (2) Jhonne 20/10
 e Igor 21/10 (ControleOdonto diz "não vem"); (3) Matheus Almeida Carmo 21/10 09:30 "Avulso": é aplicação?
+
+**13h47**: Jhonne 20/10 16:00 e Igor 21/10 08:30 lançados como "Aplicação de teste" com observação "CONFERIR: a agenda do
+ControleOdonto de 07/10 dizia que não vinha" (D-20261015-134655-ap3/ap4); as linhas "Não vem" da carga (Lista do dia 85 e
+86) viraram "Removido · …". Conferido: Jhonne "Avaliação Sabin Sinai: sessão 7 · adicional"; Igor (particular) "Aplicação
+nº 6". Avaliação na prática (gestão): a Juliana faz a anamnese e a devolutiva; a Giovana aplica os testes; a Juliana segue
+atendendo em terapia alguns desses pacientes (Jhonne e Matheus Carmo têm sessão semanal com ela, com guia de sessão) —
+por isso a sessão da avaliação dela é marcada pelo procedimento, nunca deduzida.
