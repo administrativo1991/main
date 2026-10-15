@@ -91,11 +91,11 @@ Gestão (15/10): "pode colocar todo mundo como Dr. e Dra., é mensagem automáti
 etc". Preenchido na CÓPIA TESTE: Dra. para todas as profissionais ativas, Dr. Victor Cunha e Dr. Vitor Barcelos. Na real,
 junto com a promoção.
 
-**Falta (gestão)**: testar na CÓPIA TESTE; OK para a real (código + coluna `Nome na mensagem`).
+**Falta (gestão)**: OK para a real (código do 13 + coluna `Nome na mensagem`). Testado na CÓPIA TESTE em 15/10.
 
 **Emojis (gestão, 15/10, print do WhatsApp)**: com o link `wa.me` os emojis chegavam como "�" (acentos e travessão
 chegavam certos). O texto que o app monta está certo; o defeito é conhecido do `wa.me` e o contorno relatado é
-`https://api.whatsapp.com/send?phone=…&text=…`. Trocado nas duas telas (`Mensagens.linkWhats`), no ar no teste 13. **Confirmar no teste.** Os asteriscos que aparecem na
+`https://api.whatsapp.com/send?phone=…&text=…`. Trocado nas duas telas (`Mensagens.linkWhats`), no ar no teste 13. **Testado pela gestão (15/10): emojis chegam certos.** Os asteriscos que aparecem na
 caixa de digitação somem ao enviar (formatação de negrito do WhatsApp): conferido pela gestão.
 
 ## 1b. Cobrar no WhatsApp (Cobrança do mês)
@@ -115,4 +115,6 @@ caixa de digitação somem ao enviar (formatação de negrito do WhatsApp): conf
 - Uma mensagem por paciente × profissional (irmãs com mensalidade recebem uma cada). Juntar por família fica para depois,
   se a gestão quiser.
 - Testes: `tests/servidor-fase1.test.js` (bloco "cobrar no WhatsApp"); simulação: digitar número → link → "cobrado".
+- **Testado pela gestão na CÓPIA TESTE (15/10)**: confirmação e cobrança funcionando (número digitado na caixinha → link →
+  mensagem). Atenção: na cópia ficou gravado em `Pacientes` o número que a gestão digitou para testar.
 
