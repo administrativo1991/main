@@ -3,8 +3,8 @@
 Arquivo de retomada da Fase 2 (começou em 15/10/2026, à noite). Quem abrir um chat novo lê, nesta ordem: `docs/DEPLOYS.md`
 ("No ar agora"), este arquivo, `NOTAS-fase1.md` (modelo de cobrança e decisões da Fase 1) e `docs/ESTADO-ATUAL.md` (mapa).
 
-> **Estado em 15/10 (noite)**: item 1 (Confirmações + WhatsApp) feito, testado em simulação e **publicado no teste**
-> (ver DEPLOYS). Real continua no 2026-10-15-10 até o OK da gestão.
+> **Estado em 15/10 (noite)**: item 1 (Confirmações + WhatsApp) feito, testado em simulação e **publicado no teste** = deploy
+> **2026-10-15-11** (ver DEPLOYS). Real continua no 2026-10-15-10 até o OK da gestão.
 
 ## Ordem combinada com a gestão (15/10)
 

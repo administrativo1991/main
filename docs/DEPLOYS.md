@@ -24,7 +24,7 @@ coluna E não afeta o app. Atualizar `E2` faz parte de toda publicação (passo 
 | Canal | Deploy | Peças | Commit |
 |---|---|---|---|
 | Real (`arquivos_real`) | **2026-10-15-10** (avaliação de convênio) | 46 (duplicatas 3 · server 14 · index 29); ativas = 637–682; `antigo30:` = as do 2026-10-15-08 (591–636) | branch `claude/compassionate-sagan-hpb0p1`, commit e79f8fd |
-| Teste (`arquivos`) | **2026-10-15-09** (avaliação de convênio) | 46, linhas 183–228; `antigo31:` = as do 07 (137–182) | branch `claude/compassionate-sagan-hpb0p1`, commit e79f8fd |
+| Teste (`arquivos`) | **2026-10-15-11** (Fase 2: Confirmações por WhatsApp) | 48 (duplicatas 3 · server 15 · index 30), linhas 229–276; `antigo32:` = as do 09 (183–228) | branch `claude/sweet-wozniak-aviy8u`, commit 80e62b4 |
 | Carregador real | 2026-10-06-02 (`dist/Code.real.gs`, implantado pela Roberta) | — | 4ad0272 |
 | Carregador teste | 2026-10-04-01 + nova versão pendente desde 05/10 (permissão do Drive, ver `COMO-INSTALAR.md`) | — | — |
 
@@ -48,6 +48,22 @@ Modelo:
 ```
 
 ## Lista
+
+### 2026-10-15-11 · Teste · Fase 2: Confirmações por WhatsApp
+- **O que mudou**: tela nova **Confirmações** (menu, recepção e gestão): período escolhido (amanhã · daqui a 2 dias · resto
+  da semana · próxima semana · outro, até 14 dias), uma mensagem por família, **Abrir WhatsApp** com o texto pronto
+  (provisório; oficial em `Parâmetros!msg_confirmacao`), "mensagem enviada" gravada na aba nova `Mensagens WhatsApp`
+  (criada no primeiro envio), **Confirmou** = linha "Confirmado" da Lista do dia, **Não vem / remarcar** abre a Agenda do
+  dia com o formulário; sem número, a recepção digita e ele vai para `Pacientes` (WhatsApp do pagador) com log. Detalhes em
+  `NOTAS-fase2.md`.
+- **Peças**: 48 em `arquivos!A229:C276` com `novo:`; 10 iguais ao 09 copiadas por "colar valores" das ativas, 38 gravadas
+  (4 agentes em paralelo; uma peça saiu errada na 1ª gravação e foi regravada). Lidas de volta: **48/48 iguais a
+  `dist/pedacos.json`**; index = `dist/index.publicado.html`, duplicatas + server = `dist/server.js`. Ativação numa
+  gravação só (A183:A276): 183–228 → `antigo32:`; lido de volta: ativas = só 229–276. E2 carimbado.
+- **Dados**: nenhum. A aba `Mensagens WhatsApp` da CÓPIA TESTE nasce no primeiro envio.
+- **Voltar**: `antigo32:` → nome (183–228) e 229–276 → `antigo33:`. Seguro mesmo com linhas na aba nova (o código antigo
+  não a lê).
+- **Commit**: 80e62b4 · **Aprovação**: só teste; real espera o OK da gestão.
 
 ### 2026-10-15-10 · Real · avaliação neuropsicológica de convênio (+ dados)
 - **Regra (gestão, 15/10)**: o pacote Sabin (R$ 475) são 5 sessões, somando sessões da psicóloga e aplicações de teste; da 6ª
