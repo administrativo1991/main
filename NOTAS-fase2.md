@@ -3,15 +3,15 @@
 Arquivo de retomada da Fase 2 (começou em 15/10/2026, à noite). Quem abrir um chat novo lê, nesta ordem: `docs/DEPLOYS.md`
 ("No ar agora"), este arquivo, `NOTAS-fase1.md` (modelo de cobrança e decisões da Fase 1) e `docs/ESTADO-ATUAL.md` (mapa).
 
-> **Estado em 15/10 (noite)**: item 1 (Confirmações + WhatsApp) feito, testado em simulação e **publicado no teste** = deploy
-> **2026-10-15-13** (ver DEPLOYS): texto oficial, `Nome na mensagem`, link api.whatsapp.com e Cobrar no WhatsApp. Real continua no 2026-10-15-10 até o OK da gestão.
+> **Estado em 15/10 (noite)**: item 1 (Confirmações + WhatsApp) e 1b (Cobrar no WhatsApp) **no ar na real** = deploy
+> **2026-10-15-14** (teste = 13, mesmo código; ver DEPLOYS). Próximo: item 2, Alertas.
 
 ## Ordem combinada com a gestão (15/10)
 
 | # | Item | Situação |
 |---|---|---|
-| 1 | **Confirmações + WhatsApp** (não só na véspera: a recepção escolhe amanhã, daqui a 2 dias, a semana) | feito · teste |
-| 1b | **Cobrar no WhatsApp** (Cobrança do mês, textos oficiais) | feito · teste |
+| 1 | **Confirmações + WhatsApp** (não só na véspera: a recepção escolhe amanhã, daqui a 2 dias, a semana) | **real** (14) |
+| 1b | **Cobrar no WhatsApp** (Cobrança do mês, textos oficiais) | **real** (14) |
 | 2 | Alertas | a fazer |
 | 3 | Ficha do paciente | a fazer |
 | 4 | Perdas | a fazer |
@@ -91,7 +91,7 @@ Gestão (15/10): "pode colocar todo mundo como Dr. e Dra., é mensagem automáti
 etc". Preenchido na CÓPIA TESTE: Dra. para todas as profissionais ativas, Dr. Victor Cunha e Dr. Vitor Barcelos. Na real,
 junto com a promoção.
 
-**Falta (gestão)**: OK para a real (código do 13 + coluna `Nome na mensagem`). Testado na CÓPIA TESTE em 15/10.
+Na real desde o deploy 2026-10-15-14 (código + coluna `Nome na mensagem`), com o OK da gestão.
 
 **Emojis (gestão, 15/10, print do WhatsApp)**: com o link `wa.me` os emojis chegavam como "�" (acentos e travessão
 chegavam certos). O texto que o app monta está certo; o defeito é conhecido do `wa.me` e o contorno relatado é

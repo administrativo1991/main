@@ -23,7 +23,7 @@ coluna E não afeta o app. Atualizar `E2` faz parte de toda publicação (passo 
 
 | Canal | Deploy | Peças | Commit |
 |---|---|---|---|
-| Real (`arquivos_real`) | **2026-10-15-10** (avaliação de convênio) | 46 (duplicatas 3 · server 14 · index 29); ativas = 637–682; `antigo30:` = as do 2026-10-15-08 (591–636) | branch `claude/compassionate-sagan-hpb0p1`, commit e79f8fd |
+| Real (`arquivos_real`) | **2026-10-15-14** (Fase 2: Confirmações + Cobrar no WhatsApp) | 48 (duplicatas 3 · server 15 · index 30); ativas = 683–730; `antigo31:` = as do 2026-10-15-10 (637–682) | branch `claude/sweet-wozniak-aviy8u`, commit b3cb7b6 |
 | Teste (`arquivos`) | **2026-10-15-13** (link api.whatsapp.com + Cobrar no WhatsApp) | 48 (duplicatas 3 · server 15 · index 30), linhas 325–372; `antigo34:` = as do 12 (277–324) | branch `claude/sweet-wozniak-aviy8u`, commit b3cb7b6 |
 | Carregador real | 2026-10-06-02 (`dist/Code.real.gs`, implantado pela Roberta) | — | 4ad0272 |
 | Carregador teste | 2026-10-04-01 + nova versão pendente desde 05/10 (permissão do Drive, ver `COMO-INSTALAR.md`) | — | — |
@@ -48,6 +48,22 @@ Modelo:
 ```
 
 ## Lista
+
+### 2026-10-15-14 · Real · Fase 2: Confirmações + Cobrar no WhatsApp (+ dados)
+- **O que mudou**: o mesmo código do teste 2026-10-15-13 (11 + 12 + 13): tela **Confirmações** (período escolhido, uma
+  mensagem por família, texto oficial, "Dra./Dr." pela coluna `Nome na mensagem`), **Cobrar no WhatsApp** na Cobrança do
+  mês (textos oficiais de cobrança), link `api.whatsapp.com/send` (emojis certos, testado pela gestão), WhatsApp digitado
+  vai para o cadastro com log, envios na aba `Mensagens WhatsApp` (criada pelo app no primeiro envio).
+- **Peças**: 48 em `arquivos_real!A683:C730`: nomes com `novo:` e conteúdo copiado por "colar valores" das ativas do teste
+  (`arquivos!C325:C372`, já conferidas). Lidas de volta: **48/48 iguais a `dist/pedacos.json`**; index e duplicatas + server
+  remontados iguais. Ativação numa gravação só (A637:A730): 637–682 → `antigo31:`; lido de volta: ativas = só 683–730.
+  E2 carimbado.
+- **Dados (real)**: `Profissionais` ganhou 1 coluna no fim (L) **`Nome na mensagem`**, igual à cópia: Dra. para as
+  profissionais ativas, Dr. Victor Cunha e Dr. Vitor Barcelos; inativos vazios. Lido de volta. Nada mais mexido.
+- **Voltar**: `antigo31:` → nome (637–682) e 683–730 → `antigo32:`. Seguro: o código antigo não lê `Mensagens WhatsApp`
+  nem a coluna `Nome na mensagem`.
+- **Commit**: b3cb7b6 · **Aprovação**: gestão, 15/10 ("ok", depois de testar confirmação e cobrança na CÓPIA TESTE).
+  A primeira tentativa foi barrada pelo modo Auto da sessão ("Production Deploy"); a gestão trocou o modo e mandou seguir.
 
 ### 2026-10-15-13 · Teste · link api.whatsapp.com + Cobrar no WhatsApp
 - **O que mudou**: (1) os links do WhatsApp passam de `wa.me` para `api.whatsapp.com/send` (com `wa.me` os emojis chegavam
