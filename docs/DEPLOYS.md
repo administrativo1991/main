@@ -24,7 +24,7 @@ coluna E não afeta o app. Atualizar `E2` faz parte de toda publicação (passo 
 | Canal | Deploy | Peças | Commit |
 |---|---|---|---|
 | Real (`arquivos_real`) | **2026-10-15-10** (avaliação de convênio) | 46 (duplicatas 3 · server 14 · index 29); ativas = 637–682; `antigo30:` = as do 2026-10-15-08 (591–636) | branch `claude/compassionate-sagan-hpb0p1`, commit e79f8fd |
-| Teste (`arquivos`) | **2026-10-15-12** (Confirmações: texto oficial + Nome na mensagem) | 48 (duplicatas 3 · server 15 · index 30), linhas 277–324; `antigo33:` = as do 11 (229–276) | branch `claude/sweet-wozniak-aviy8u`, commit 053a9f9 |
+| Teste (`arquivos`) | **2026-10-15-13** (link api.whatsapp.com + Cobrar no WhatsApp) | 48 (duplicatas 3 · server 15 · index 30), linhas 325–372; `antigo34:` = as do 12 (277–324) | branch `claude/sweet-wozniak-aviy8u`, commit b3cb7b6 |
 | Carregador real | 2026-10-06-02 (`dist/Code.real.gs`, implantado pela Roberta) | — | 4ad0272 |
 | Carregador teste | 2026-10-04-01 + nova versão pendente desde 05/10 (permissão do Drive, ver `COMO-INSTALAR.md`) | — | — |
 
@@ -48,6 +48,19 @@ Modelo:
 ```
 
 ## Lista
+
+### 2026-10-15-13 · Teste · link api.whatsapp.com + Cobrar no WhatsApp
+- **O que mudou**: (1) os links do WhatsApp passam de `wa.me` para `api.whatsapp.com/send` (com `wa.me` os emojis chegavam
+  como "�", print da gestão); (2) **Cobrar no WhatsApp** na Cobrança do mês, com os textos oficiais de cobrança
+  (mensalidade/antecipado e consultas do fim do mês, Pix CNPJ); envio gravado em `Mensagens WhatsApp` com Tipo,
+  `Competência` e `Valor (R$)` (colunas no fim, criadas pelo app); a linha mostra "cobrado dd/mm hh:mm".
+- **Peças**: 48 em `arquivos!A325:C372` com `novo:`; 38 iguais ao 12 copiadas por "colar valores", 10 gravadas (2 agentes,
+  nenhuma regravação). Lidas de volta (leitura salva direto em arquivo): **48/48 iguais a `dist/pedacos.json`**; index e
+  duplicatas + server remontados iguais. Ativação numa gravação só (A277:A372): 277–324 → `antigo34:`; ativas = só
+  325–372. E2 carimbado.
+- **Dados**: nenhum.
+- **Voltar**: `antigo34:` → nome (277–324) e 325–372 → `antigo35:`.
+- **Commit**: b3cb7b6 · **Aprovação**: só teste.
 
 ### 2026-10-15-12 · Teste · Confirmações: texto oficial da clínica + "Nome na mensagem"
 - **O que mudou**: mensagem de confirmação = texto oficial mandado pela gestão (uma sessão: igual ao texto; várias sessões

@@ -4,7 +4,7 @@ Arquivo de retomada da Fase 2 (começou em 15/10/2026, à noite). Quem abrir um 
 ("No ar agora"), este arquivo, `NOTAS-fase1.md` (modelo de cobrança e decisões da Fase 1) e `docs/ESTADO-ATUAL.md` (mapa).
 
 > **Estado em 15/10 (noite)**: item 1 (Confirmações + WhatsApp) feito, testado em simulação e **publicado no teste** = deploy
-> **2026-10-15-12** (ver DEPLOYS), com o texto oficial e a coluna `Nome na mensagem`. Real continua no 2026-10-15-10 até o OK da gestão.
+> **2026-10-15-13** (ver DEPLOYS): texto oficial, `Nome na mensagem`, link api.whatsapp.com e Cobrar no WhatsApp. Real continua no 2026-10-15-10 até o OK da gestão.
 
 ## Ordem combinada com a gestão (15/10)
 
@@ -95,7 +95,8 @@ junto com a promoção.
 
 **Emojis (gestão, 15/10, print do WhatsApp)**: com o link `wa.me` os emojis chegavam como "�" (acentos e travessão
 chegavam certos). O texto que o app monta está certo; o defeito é conhecido do `wa.me` e o contorno relatado é
-`https://api.whatsapp.com/send?phone=…&text=…`. Trocado nas duas telas (`Mensagens.linkWhats`). **Confirmar no teste.**
+`https://api.whatsapp.com/send?phone=…&text=…`. Trocado nas duas telas (`Mensagens.linkWhats`), no ar no teste 13. **Confirmar no teste.** Os asteriscos que aparecem na
+caixa de digitação somem ao enviar (formatação de negrito do WhatsApp): conferido pela gestão.
 
 ## 1b. Cobrar no WhatsApp (Cobrança do mês)
 
