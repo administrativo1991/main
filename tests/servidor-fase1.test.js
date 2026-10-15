@@ -151,4 +151,9 @@ const ft = ok(API.salvarAgendaFixa({ paciente: 'Davi Teste', profissional: 'Giov
 assert.strictEqual(AR.d[ft.linha - 1][AR.d[0].indexOf('Tipo')], 'Aplicação de teste');
 const it27 = API.listaDoDia({ data: '27/10/2026' }).itens.filter(i => i.paciente === 'Davi Teste' && i.profissional === 'Giovana Grossi')[0];
 assert.strictEqual(it27.tipo, 'Aplicação de teste'); assert.strictEqual(it27.cobrancaHoje.situacao, 'sem-cobranca-tipo');
+// linha com Ativo = Não não vale (antes: a segunda normalização transformava false em "false" e a linha voltava a valer)
+const CP = ss._m['Cobrança por profissional']; CP.d.push(['C99', 'Julia Teste', 'Dr. Victor Cunha', 'Não', 'Convênio', 'Cedplan', '', '', 'Não se aplica', '', '', 'x', '15/10/2026', '', 'x']);
+invalidar_(['cpp']); assert.strictEqual(linhaVigente_('Julia Teste', 'Dr. Victor Cunha', new Date(2026, 9, 20, 12)).linha, null, 'linha inativa não vale');
+assert.strictEqual(Cobranca.linhaVigente(cobrancasProf_(), 'Julia Teste', 'Dr. Victor Cunha', '20/10/2026').linha, null, 'nem relida pelo módulo (tela)');
+assert.ok(Cobranca.linhasDoPaciente(cobrancasProf_(), 'Julia Teste', '20/10/2026').every(l => l.profissional !== 'Dr. Victor Cunha'));
 console.log('servidor-fase1.test.js ok');

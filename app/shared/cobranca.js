@@ -52,7 +52,8 @@ var Cobranca = (function () {
     if (!r) return null;
     var cob = normCobranca(r.cobranca || r['Cobrança']);
     return { id: r.id || r['ID'] || '', paciente: r.paciente || r['Paciente'] || '', profissional: r.profissional || r['Profissional'] || '',
-      ativo: !/^n/i.test(String(r.ativo != null ? r.ativo : (r['Ativo'] != null ? r['Ativo'] : 'Sim')) || 'Sim'),
+      // já normalizada (booleano) ou vinda da aba ("Sim"/"Não"; vazio = Sim). String(false) não começa com "N": por isso o caso booleano à parte
+      ativo: typeof r.ativo === 'boolean' ? r.ativo : !/^n/i.test(String(r.ativo != null ? r.ativo : (r['Ativo'] != null ? r['Ativo'] : 'Sim')) || 'Sim'),
       cobranca: cob, convenio: r.convenio || r['Convênio'] || '',
       valorSessao: num(r.valorSessao != null ? r.valorSessao : r['Valor por sessão (R$)']), valorMensal: num(r.valorMensal != null ? r.valorMensal : r['Valor mensal (R$)']),
       pagamento: normPagamento(r.pagamento || r['Pagamento'], cob),
