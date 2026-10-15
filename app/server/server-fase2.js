@@ -124,3 +124,17 @@ API.cobrancaMes = function (d) {
   r.modelos = { mensalidade: String(par.msg_cobranca_mensalidade || '').trim(), consultas: String(par.msg_cobranca_consultas || '').trim() };
   return r;
 };
+
+/* ---------- Lançar o dia em lote (Fase 2, 15/10): Meu dia → "Lançar o dia" ----------
+   Cada linha passa pelo mesmo registrarAtendimento do Registrar (mesma validação, mesmo Pago?, mesma trava de repetido).
+   Uma chamada só pra tela; o resultado vem linha a linha (as que deram erro não impedem as outras). */
+API.registrarLote = function (d) {
+  d = d || {}; var itens = (d.itens || []).slice(0, 80);
+  if (!itens.length) return { ok: false, erros: ['Nenhum lançamento marcado.'] };
+  var resultados = itens.map(function (x) {
+    try { var r = API.registrarAtendimento(x) || {}; return { ok: r.ok !== false, erros: r.erros || [], repetido: !!r.repetido, aba: r.aba, linha: r.linha, pago: r.pago, valor: r.valor, pendenteDecisao: !!r.pendenteDecisao }; }
+    catch (e) { return { ok: false, erros: [String(e && e.message || e)] }; }
+  });
+  var n = resultados.filter(function (r) { return r.ok; }).length;
+  return { ok: true, gravados: n, falharam: resultados.length - n, resultados: resultados };
+};

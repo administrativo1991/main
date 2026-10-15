@@ -13,6 +13,12 @@
     <button type="button" class="btn" id="md-fechar">Fechar o dia</button>
   </div>
   <div id="md-carregando" class="carregando esqueleto"><div></div><div></div></div>
+  <section class="card compacto no-print" id="md-lancar-card" hidden>
+    <div class="passo" style="padding:0;flex-wrap:wrap;gap:8px 12px"><h2 style="font-size:15px">Lançar o dia</h2><span class="tag amarela" id="md-n-lancar">0</span><span class="muted">quem estava na agenda e ainda não foi registrado: marque o que aconteceu e grave tudo de uma vez</span><span class="esp"></span><button type="button" class="btn ter mini" id="md-todos-veio">Marcar todos como “Veio”</button></div>
+    <div class="ld-lista" id="md-lancar"></div>
+    <div id="md-lancar-erros"></div>
+    <div class="acoes"><button type="button" class="btn" id="md-lancar-ok" disabled>Gravar</button><span class="muted" id="md-lancar-cont">nada marcado</span></div>
+  </section>
   <div class="fd-resumo" id="md-resumo" hidden></div>
   <div class="md-grid" id="md-corpo" hidden>
     <div style="display:flex;flex-direction:column;gap:16px">

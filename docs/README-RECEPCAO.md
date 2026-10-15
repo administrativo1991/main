@@ -20,7 +20,10 @@ Menu: **Agenda · Confirmações · Registrar · Pacientes · Cobrança do mês 
 3. Não veio ou avisou que não vem: **⋯** → **Não vem hoje** → motivo e **Detalhe** (quem avisou, a que horas, como).
    O Detalhe é obrigatório em falta sem aviso e em cima da hora. A gestão decide a cobrança depois.
 4. Encaixe ou paciente sem horário fixo: clique num horário vago da Agenda, ou **+ Agendamento**.
-5. Fim do expediente: **Meu dia** → confira as 4 listas (A cobrar · Recebido · Guias a pegar · NF a emitir) →
+5. Fim do expediente: **Meu dia** → **Lançar o dia**: para cada paciente ainda sem registro, marque Veio · Faltou · Em cima
+   da hora · Desmarcou · Clínica cancelou (e Recebeu?, forma, guia ou Detalhe quando o app pedir) → **Gravar**. Dá para
+   lançar dias atrasados pelas setas. Pagou só uma parte ou NF com número: use o Registrar.
+6. Depois, ainda no **Meu dia** → confira as 4 listas (A cobrar · Recebido · Guias a pegar · NF a emitir) →
    **Copiar resumo** (cola no grupo) → **Fechar o dia**.
 
 Linhas cinzas "pagamento do mês" ou "taxa de falta" na lista do dia são lançamentos à parte (o recebimento de uma

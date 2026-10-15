@@ -632,6 +632,22 @@ table.cm .acoes{justify-content:flex-end;gap:4px;flex-wrap:wrap}
 .cf-fone input{width:220px}
 .cf-msg{white-space:pre-wrap;font-family:inherit;font-size:14px;background:var(--bg);border-radius:10px;padding:12px 14px;margin:0}
 
+/* Lançar o dia (Fase 2) */
+.ld-lista{display:flex;flex-direction:column;gap:8px}
+.ld-item{display:grid;grid-template-columns:minmax(180px,1fr) minmax(0,1.3fr) minmax(240px,1.3fr);gap:8px 14px;align-items:center;padding:10px 12px;border:1px solid var(--borda);border-radius:12px;background:var(--sup)}
+.ld-item.marcado{border-color:var(--roxo)}
+.ld-item.ok{background:var(--vd-bg);border-color:var(--vd-b)}
+.ld-item.erro{border-color:var(--vm-b);background:var(--vm-bg)}
+.ld-item .quem{font-weight:700}
+.ld-item .sub{font-size:12px;color:var(--tx2)}
+.ld-oque{gap:6px!important}
+.ld-item .ld-oque button{padding:6px 10px;min-height:34px;font-size:13px}
+.ld-extra{display:flex;flex-wrap:wrap;gap:6px 10px;align-items:center;font-size:13px}
+.ld-extra input,.ld-extra select{min-height:32px;padding:4px 8px;font-size:13px}
+.ld-extra .ld-det{flex:1 1 220px}
+@media (max-width:900px){.ld-item{grid-template-columns:1fr}}
+
+
 </style>
 </head>
 <body>
@@ -1205,6 +1221,12 @@ table.cm .acoes{justify-content:flex-end;gap:4px;flex-wrap:wrap}
     <button type="button" class="btn" id="md-fechar">Fechar o dia</button>
   </div>
   <div id="md-carregando" class="carregando esqueleto"><div></div><div></div></div>
+  <section class="card compacto no-print" id="md-lancar-card" hidden>
+    <div class="passo" style="padding:0;flex-wrap:wrap;gap:8px 12px"><h2 style="font-size:15px">Lançar o dia</h2><span class="tag amarela" id="md-n-lancar">0</span><span class="muted">quem estava na agenda e ainda não foi registrado: marque o que aconteceu e grave tudo de uma vez</span><span class="esp"></span><button type="button" class="btn ter mini" id="md-todos-veio">Marcar todos como “Veio”</button></div>
+    <div class="ld-lista" id="md-lancar"></div>
+    <div id="md-lancar-erros"></div>
+    <div class="acoes"><button type="button" class="btn" id="md-lancar-ok" disabled>Gravar</button><span class="muted" id="md-lancar-cont">nada marcado</span></div>
+  </section>
   <div class="fd-resumo" id="md-resumo" hidden></div>
   <div class="md-grid" id="md-corpo" hidden>
     <div style="display:flex;flex-direction:column;gap:16px">
@@ -1784,6 +1806,7 @@ function mock(nome, d) {
     if (nome === 'salvarAgendaFixa') { var id = d.id || ('F-' + (mockAgenda.length + 1)); var ex = mockAgenda.filter(function (a) { return a.ID === id; })[0]; var row = { ID: id, Paciente: d.paciente, Profissional: d.profissional, 'Dia da semana': d.diaSemana, Hora: d.hora, 'Frequência': d.frequencia || 'Semanal', 'Começa em': d.comecaEm || '', 'Termina em': d.terminaEm || '', Ativo: d.ativo === false ? 'Não' : 'Sim', 'Observação': d.observacao || '', Tipo: d.tipo || '' }; if (ex) Object.assign(ex, row); else mockAgenda.push(row); return res({ ok: true, id: id }); }
     if (nome === 'acrescentarAoDia') { var nid = 'D-' + (mockDia.length + 1); mockDia.push({ id: nid, data: d.data, hora: d.hora, paciente: d.paciente, profissional: d.profissional, origem: d.origem || 'Avulso' }); return res({ ok: true, id: nid }); }
     if (nome === 'remarcar') { mockDia.push({ id: 'D-x' + mockDia.length, data: d.de, hora: d.horaDe, paciente: d.paciente, profissional: d.profissional, origem: 'Não vem · remarcado para ' + d.para }); mockDia.push({ id: 'D-y' + mockDia.length, data: d.para, hora: d.horaPara || d.horaDe, paciente: d.paciente, profissional: d.profissional, origem: 'Remarcação de ' + d.de }); return res({ ok: true }); }
+    if (nome === 'registrarLote') { var resL = []; return (d.itens || []).reduce(function (pr, x) { return pr.then(function () { return mock('registrarAtendimento', x).then(function (r1) { resL.push(r1); }); }); }, Promise.resolve()).then(function () { var nL = resL.filter(function (r1) { return r1.ok; }).length; res({ ok: true, gravados: nL, falharam: resL.length - nL, resultados: resL }); }); }
     if (nome === 'confirmacoes') { // simulação: todo dia útil repete a agenda fixa de segunda
       var cde = dataObj(d.de), cate = dataObj(d.ate) || cde; if (!cde) return res({ ok: false, erros: ['Data inválida.'] });
       var grp = {}, ordC = [];
@@ -1800,7 +1823,7 @@ function mock(nome, d) {
       var gsC = ordC.map(function (k) { var g = grp[k]; g.pacientes = g.itens.map(function (x) { return x.paciente; }).filter(function (x, j, a) { return a.indexOf(x) === j; }); g.aConfirmar = g.itens.filter(function (x) { return !x.confirmado; }).length;
         g.mensagem = Mensagens.confirmacao('', g.pagador, g.itens); return g; });
       return res({ ok: true, de: d.de, ate: d.ate || d.de, grupos: gsC, modelo: '', total: gsC.reduce(function (n, g) { return n + g.itens.length; }, 0) }); }
-    if (nome === 'marcarMensagemEnviada') { (d.itens || []).forEach(function (x) { mockEnviadas[x.data + '|' + x.paciente + '|' + x.profissional] = { por: 'simulacao@local', quando: hojeStr() + ' ' + agoraHora() }; }); return res({ ok: true, n: (d.itens || []).length, por: 'simulacao@local', quando: hojeStr() + ' ' + agoraHora() }); }
+    if (nome === 'marcarMensagemEnviada') { (d.itens || []).forEach(function (x) { mockEnviadas[(d.competencia ? '' : x.data + '|') + x.paciente + '|' + x.profissional + (d.competencia ? '|' + d.competencia : '')] = { por: 'simulacao@local', quando: hojeStr() + ' ' + agoraHora() }; }); return res({ ok: true, n: (d.itens || []).length, por: 'simulacao@local', quando: hojeStr() + ' ' + agoraHora() }); }
     if (nome === 'salvarWhats') { var dg = String(d.whats || '').replace(/\D/g, ''); if (dg.length < 10 || dg.length > 11) return res({ ok: false, erros: ['WhatsApp inválido: DDD + número, ex.: (32) 9 9999-9999.'] }); (d.pacientes || []).forEach(function (p) { mockWhats[p] = mascaraFone(dg); }); return res({ ok: true, salvos: d.pacientes, fone: '55' + dg, foneFmt: mascaraFone(dg) }); }
     if (nome === 'confirmar') { mockDia.push({ id: 'D-c' + mockDia.length, data: d.data, hora: d.hora, paciente: d.paciente, profissional: d.profissional, origem: 'Confirmado' }); return res({ ok: true }); }
     if (nome === 'removerDoDia') { mockDia = mockDia.filter(function (x) { return x.id !== d.id; }); return res({ ok: true }); }
@@ -1808,7 +1831,7 @@ function mock(nome, d) {
     if (nome === 'cobrancasDoPaciente') return res({ ok: true, linhas: mockCPP.filter(function (l) { return l.paciente === d.nome; }).map(function (l) { var x = Cobranca.linhaDe(l); x.linha = l.linha; x.resumo = Cobranca.resumoLinha(l); return x; }), valores: mockValores });
     if (nome === 'salvarCobrancaProf') { if (window.__RECEPCAO) return res({ ok: false, erros: ['Só a gestão altera a cobrança por profissional.'] }); var ex2 = d.id ? mockCPP.filter(function (l) { return l.id === d.id; })[0] : null; var nv = { id: d.id || ('C-' + (mockCPP.length + 1)), paciente: d.paciente, profissional: d.profissional, ativo: d.ativo === false ? 'Não' : 'Sim', cobranca: d.cobranca, convenio: d.convenio || '', valorSessao: d.valorSessao === '' ? null : num(d.valorSessao), valorMensal: d.valorMensal === '' ? null : num(d.valorMensal), pagamento: d.pagamento, desde: d.desde || '', ate: d.ate || '', decididoPor: d.decididoPor, decididoEm: hojeStr(), obs: d.obs || '', linha: ex2 ? ex2.linha : mockCPP.length + 2 }; if (ex2) Object.assign(ex2, nv); else mockCPP.push(nv); if (AT) AT.cobrancas = mockCPP.slice(); return res({ ok: true, id: nv.id, alterados: ['linha'] }); }
     if (nome === 'cobrancaMes') { var ch = d.chave || Cobranca.chaveMes(hoje), itens2 = []; mockCPP.forEach(function (l0) { var l = Cobranca.linhaDe(l0); if (!(l.pagamento === 'Antecipado' || l.pagamento === 'Posterior' || l.cobranca === 'Mensalidade fixa')) return; var c = mockComp(l, ch), sit = Cobranca.situacaoCompetencia(l, c, hoje, mockParams), v = l.cobranca === 'Mensalidade fixa' ? l.valorMensal : l.valorSessao, nAb = c.abatimentos.length, sc = c.sessoes != null ? Math.max(0, c.sessoes - nAb) : null, p = mockPacientes.filter(function (x) { return x.nome === l.paciente; })[0] || {};
-        itens2.push({ paciente: l.paciente, profissional: l.profissional, id: l.id, cobranca: l.cobranca, pagamento: l.pagamento, valor: v, valorMes: l.cobranca === 'Mensalidade fixa' ? l.valorMensal : (c.valorCobrado != null ? c.valorCobrado : (l.pagamento === 'Posterior' ? null : (v != null && sc != null ? v * sc : null))), sessoes: c.sessoes, sessoesCobradas: sc, abatimentos: c.abatimentos, valorCobradoEditado: c.valorCobrado != null, pago: c.pago, data: c.data, forma: c.forma, nf: c.nf, recebido: c.recebido, atendidas: c.atendidas, aReceber: c.aReceber, situacao: sit.sit, cor: sit.cor, situacaoTxt: sit.txt, pagador: p.pagador || '', obs: l.obs, decidido: l.decididoPor, rotulo: Cobranca.resumoLinha(l) }); });
+        itens2.push({ paciente: l.paciente, profissional: l.profissional, id: l.id, cobranca: l.cobranca, pagamento: l.pagamento, valor: v, valorMes: l.cobranca === 'Mensalidade fixa' ? l.valorMensal : (c.valorCobrado != null ? c.valorCobrado : (l.pagamento === 'Posterior' ? null : (v != null && sc != null ? v * sc : null))), sessoes: c.sessoes, sessoesCobradas: sc, abatimentos: c.abatimentos, valorCobradoEditado: c.valorCobrado != null, pago: c.pago, data: c.data, forma: c.forma, nf: c.nf, recebido: c.recebido, atendidas: c.atendidas, aReceber: c.aReceber, situacao: sit.sit, cor: sit.cor, situacaoTxt: sit.txt, pagador: p.pagador || '', obs: l.obs, decidido: l.decididoPor, rotulo: Cobranca.resumoLinha(l), fone: Mensagens.fone(mockWhats[l.paciente]), foneFmt: mockWhats[l.paciente] || '', foneDe: mockWhats[l.paciente] ? 'pagador' : '', cobrado: mockEnviadas[l.paciente + '|' + l.profissional + '|' + ch] || null }); });
       itens2.sort(function (a, b) { return a.paciente.localeCompare(b.paciente); }); return res({ ok: true, chave: ch, itens: itens2, competencias: ['Outubro/2026', 'Novembro/2026'], colunasExistem: true, proximaChave: Cobranca.proximaCompetencia(ch), proximaExiste: false, hoje: hojeStr(), params: mockParams }); }
     if (nome === 'registrarPagamentoMes') { (d.competencias || []).forEach(function (ch) { mockPagos[d.paciente + '|' + d.profissional + '|' + ch] = { pago: d.parcial ? 'Parcial' : 'Sim', data: d.data, forma: d.forma, nf: d.nf || 'Não', recebido: d.parcial ? num(d.valor) : 0 }; mockReg.forEach(function (r) { if (r.paciente === d.paciente && r.profissional === d.profissional && r.pago === 'Não' && Cobranca.chaveMes(dataObj(r.data)) === ch) { r.pago = 'Sim'; r.forma = d.forma; } }); }); if (AT) AT.competencias = mockComps(); return res({ ok: true, feitos: (d.competencias || []).map(function (ch) { return { chave: ch, id: 'A-sim-pg', linha: 60, aba: MESES_PT[hoje.getMonth()], valor: num(d.valor) }; }) }); }
     if (nome === 'editarSessoesCompetencia') { mockMens[d.paciente + '|' + d.profissional + '|' + d.chave] = { sessoes: d.sessoes === '' ? null : num(d.sessoes), valorCobrado: d.valorCobrado === '' || d.valorCobrado == null ? null : num(d.valorCobrado) }; if (AT) AT.competencias = mockComps(); return res({ ok: true }); }
@@ -3971,7 +3994,7 @@ INICIAR.meudia = function (extra) {
   quandoAT(carregarMeuDia);
 };
 function carregarMeuDia() {
-  var gen = ++mdGen, dt = dataObj(mdData) || new Date();
+  var gen = ++mdGen, dt = dataObj(mdData) || new Date(); if (!LD_RES_MANTER) LD = {}; LD_RES_MANTER = false;
   $("#md-dia").textContent = (mdData === hojeStr() ? 'hoje · ' : '') + tituloDia(dt);
   $("#md-carregando").hidden = false; $("#md-corpo").hidden = true; $("#md-resumo").hidden = true; $("#md-status").textContent = '';
   var pDia = (typeof DIA !== 'undefined' && DIA && DIA.data === mdData) ? Promise.resolve(DIA) : call('listaDoDia', { data: mdData });
@@ -4004,6 +4027,7 @@ function renderMeuDia() {
   }
   $("#md-antigas-card").hidden = !ant.length;
   $("#md-antigas").innerHTML = ant.map(function (a) { return '<div class="fd-item"><span class="quem">' + esc(a.x.paciente) + '</span><span class="muted">' + esc(String(a.x.data || '').slice(0, 5) + (a.x.profissional ? ' · ' + profCurto(a.x.profissional) : '')) + '</span><span class="esp"></span><span class="tag ' + a.cor + '">' + esc(a.tipo) + '</span>' + (a.x.valor ? '<b>' + esc(rs(a.x.valor)) + '</b>' : '') + '</div>'; }).join('');
+  renderLancar();
   var f = store('rn-fimdia:' + MD.data) || {};
   $("#md-status").textContent = f.fechado ? 'Dia fechado às ' + f.fechado + ' por ' + (f.por || quemSou()) + ' (anotação deste computador).' : (pend ? pend + ' paciente(s) ainda sem registro: registre ou marque "não vem" antes de fechar.' : '');
 }
@@ -4033,6 +4057,99 @@ $("#md-fechar").addEventListener('click', function () {
 function mudarDiaMD(n) { var dt = dataObj(mdData) || new Date(); dt.setDate(dt.getDate() + n); mdData = ('0' + dt.getDate()).slice(-2) + '/' + ('0' + (dt.getMonth() + 1)).slice(-2) + '/' + dt.getFullYear(); carregarMeuDia(); }
 $("#md-ant").addEventListener('click', function () { mudarDiaMD(-1); });
 $("#md-prox").addEventListener('click', function () { mudarDiaMD(1); });
+
+/* ---------- Lançar o dia (Fase 2, 15/10) ----------
+   Quem estava na agenda e não tem registro (aguardando · chegou · a confirmar): a recepção marca o que aconteceu e grava tudo
+   numa chamada (registrarLote = o mesmo registrarAtendimento do Registrar, linha a linha). O procedimento é o padrão do
+   profissional (o tipo da agenda, quando há); "Recebeu?" só aparece quando o bloco de cobrança pede, com o padrão do bloco.
+   Pagou só uma parte, NF, outro pagador: pelo Registrar. Serve também pra lançar dias anteriores (setas do Meu dia). */
+var LD = {}, LD_RES_MANTER = false;
+var LD_OQUE = [[/^Atendido/, 'Veio'], [/^Faltou sem aviso/, 'Faltou'], [/em cima da hora/i, 'Em cima da hora'], [/^Desmarcou/, 'Desmarcou'], [/^Cancelado/, 'Clínica cancelou']];
+function oqueReal(re) { return (BOOT.listas.oque || []).filter(function (x) { return re.test(x); })[0] || ''; }
+function itensLancar() { return (MD && MD.itens || []).filter(function (i) { if (i.extra) return false; var s = statusItem(i, MD.data); return s === 'aguardando' || s === 'chegou' || s === 'aconfirmar'; }); }
+// o procedimento que o Registrar escolheria vindo da Agenda: o tipo da agenda (aplicação de teste, retorno…) ou Sessão/Consulta
+function procPadraoItem(it) {
+  var tipos = tiposDe(espsDoProf(it.profissional)), base = null, t = semAcento(String(it.tipo || '')).split(' ')[0];
+  if (t) base = tipos.filter(function (x) { return semAcento(x.nome).indexOf(t) === 0; })[0];
+  if (!base) base = tipos.filter(function (x) { return /^(Sessão|Consulta)/.test(x.nome); })[0] || tipos[0];
+  return base ? derivarProc(base.nome, pacInfo(it.paciente), it.profissional) : '';
+}
+function estadoLD(it) {
+  var k = chaveItem(it); if (!LD[k]) LD[k] = { oque: statusItem(it, MD.data) === 'chegou' ? oqueReal(/^Atendido/) : '', proc: procPadraoItem(it) };
+  var st = LD[k];
+  st.bl = st.oque && pacInfo(it.paciente) ? blocoDe(it.paciente, it.profissional, dataObj(MD.data) || new Date(), st.proc, st.oque) : null;
+  if (st.bl && st.bl.recebeu && !st.recebeu) st.recebeu = st.bl.padraoRecebeu || '';
+  if (st.bl && st.bl.recebeu && st.valor == null) st.valor = st.bl.valor != null ? brl(st.bl.valor) : '';
+  return st;
+}
+function renderLancar() {
+  var itens = itensLancar(), card = $("#md-lancar-card"), box = $("#md-lancar");
+  card.hidden = !itens.length; $("#md-n-lancar").textContent = itens.length; box.innerHTML = ''; $("#md-lancar-erros").innerHTML = '';
+  if (!itens.length) return;
+  itens.sort(function (a, b) { return String(a.hora || '99').localeCompare(String(b.hora || '99')) || a.paciente.localeCompare(b.paciente); });
+  itens.forEach(function (it) {
+    var st = estadoLD(it), bl = st.bl, ch = it.cobrancaHoje;
+    var row = el('<div class="ld-item' + (st.oque ? ' marcado' : '') + (st.res && !st.res.ok ? ' erro' : '') + '"><div><span class="quem">' + esc((it.hora ? it.hora + ' · ' : '') + it.paciente) + '</span><div class="sub">' + esc(profCurto(it.profissional) + ' · ' + tipoCurto(it) + (ch && ch.curto ? ' · ' + ch.curto : '')) + '</div></div>' +
+      '<div class="seg solto mini ld-oque" role="group" aria-label="O que aconteceu">' + LD_OQUE.map(function (o) { var v = oqueReal(o[0]); return v ? '<button type="button" data-oque="' + esc(v) + '" aria-pressed="' + (st.oque === v) + '">' + esc(o[1]) + '</button>' : ''; }).join('') + '</div><div class="ld-extra"></div></div>');
+    var ex = $('.ld-extra', row);
+    if (!st.oque) ex.innerHTML = '<span class="muted">não marcado: fica de fora</span>';
+    else if (!bl) ex.innerHTML = '<span class="muted">' + (pacInfo(it.paciente) ? '' : 'não está em Pacientes: lance pelo Registrar') + '</span>';
+    else {
+      var h = '';
+      if (bl.detalhe) h += '<input class="ld-det" data-f="detalhe" placeholder="Detalhe' + (bl.detalheObrigatorio ? ' (obrigatório)' : '') + ': quem avisou, a que horas, como" value="' + esc(st.detalhe || '') + '">';
+      if (bl.recebeu) {
+        h += '<span>Recebeu?</span><span class="seg mini" role="group"><button type="button" data-rec="Sim" aria-pressed="' + (st.recebeu === 'Sim') + '">Sim</button><button type="button" data-rec="Não" aria-pressed="' + (st.recebeu === 'Não') + '">Não</button></span>';
+        if (st.recebeu === 'Sim') h += '<span>R$ <input data-f="valor" inputmode="decimal" style="width:80px" value="' + esc(st.valor || '') + '"></span><select data-f="forma"><option value="">forma…</option>' + (BOOT.listas.formas || []).map(function (f) { return '<option' + (st.forma === f ? ' selected' : '') + '>' + esc(f) + '</option>'; }).join('') + '</select>';
+        else if (st.recebeu === 'Não') h += '<span class="muted">fica a receber R$ ' + esc(st.valor || '…') + '</span>';
+      } else if (/^Atendido/.test(st.oque)) h += '<span class="muted">' + esc(bl.curto || bl.frase || '') + '</span>';
+      if (bl.guia) h += '<label class="check"><input type="checkbox" data-f="guia"' + (st.guia ? ' checked' : '') + '> guia assinada</label>';
+      if (!/^Atendido/.test(st.oque) && !bl.detalhe) h += '<span class="muted">sem cobrança · a gestão decide</span>';
+      ex.innerHTML = h;
+    }
+    if (st.res && !st.res.ok) ex.appendChild(el('<div class="faixa erro" style="flex-basis:100%">' + esc((st.res.erros || ['Não gravou']).join(' ')) + '</div>'));
+    $$('[data-oque]', row).forEach(function (b) { b.addEventListener('click', function () { st.oque = st.oque === b.dataset.oque ? '' : b.dataset.oque; st.recebeu = ''; st.valor = null; st.res = null; renderLancar(); }); });
+    $$('[data-rec]', row).forEach(function (b) { b.addEventListener('click', function () { st.recebeu = b.dataset.rec; renderLancar(); }); });
+    $$('[data-f]', row).forEach(function (inp) { var ev = inp.type === 'checkbox' || inp.tagName === 'SELECT' ? 'change' : 'input'; inp.addEventListener(ev, function () { st[inp.dataset.f] = inp.type === 'checkbox' ? inp.checked : inp.value; }); });
+    box.appendChild(row);
+  });
+  contarLancar();
+}
+function contarLancar() {
+  var n = itensLancar().filter(function (it) { var st = LD[chaveItem(it)]; return st && st.oque; }).length;
+  $("#md-lancar-ok").disabled = !n; $("#md-lancar-ok").textContent = n ? 'Gravar ' + n + ' lançamento' + (n === 1 ? '' : 's') : 'Gravar';
+  $("#md-lancar-cont").textContent = n ? 'os não marcados ficam de fora' : 'nada marcado';
+}
+function errosLD(it, st) {
+  var e = [], bl = st.bl, nome = it.paciente.split(' ')[0] + ': ';
+  if (!bl) return [nome + 'lance pelo Registrar.'];
+  if (bl.detalheObrigatorio && !String(st.detalhe || '').trim()) e.push(nome + 'escreva o Detalhe (obrigatório em falta sem aviso e em cima da hora).');
+  if (bl.recebeu && !st.recebeu) e.push(nome + 'responda Recebeu?');
+  if (bl.recebeu && st.recebeu === 'Sim') { if (!(num(st.valor) > 0)) e.push(nome + 'Recebeu = Sim precisa de valor.'); if (!st.forma) e.push(nome + 'escolha a forma de pagamento.'); }
+  return e;
+}
+$("#md-todos-veio").addEventListener('click', function () { var v = oqueReal(/^Atendido/); itensLancar().forEach(function (it) { var st = estadoLD(it); if (!st.oque) { st.oque = v; st.recebeu = ''; st.valor = null; } }); renderLancar(); });
+$("#md-lancar-ok").addEventListener('click', function () {
+  var marcados = itensLancar().filter(function (it) { var st = LD[chaveItem(it)]; return st && st.oque; }), erros = [];
+  marcados.forEach(function (it) { erros = erros.concat(errosLD(it, estadoLD(it))); });
+  $("#md-lancar-erros").innerHTML = erroBox(erros); if (erros.length) return;
+  var itens = marcados.map(function (it) {
+    var st = LD[chaveItem(it)], bl = st.bl, p = pacInfo(it.paciente) || {}, pagou = !!(bl.recebeu && st.recebeu === 'Sim');
+    return { paciente: it.paciente, profissional: it.profissional, data: MD.data, hora: it.hora || '', procedimento: st.proc, oque: st.oque, recebeu: bl.recebeu ? st.recebeu : '', valor: bl.recebeu ? (st.valor || '') : '',
+      valorRecebido: '', forma: pagou ? st.forma : '', dataPagamento: MD.data, quemPagou: pagou ? (p.pagador || p.nome || '') : '', nf: pagou ? 'Não' : '', nfNumero: '', guia: bl.guia ? (st.guia ? 'Sim' : 'Não') : '',
+      observacao: '', detalhe: String(st.detalhe || '').trim(), tornarPagadorHabitual: false };
+  });
+  var b = this; b.disabled = true; b.textContent = 'Gravando ' + itens.length + '…';
+  call('registrarLote', { itens: itens }).then(function (r) {
+    if (!r.ok) { $("#md-lancar-erros").innerHTML = erroBox(r.erros || [], 'Não gravou'); contarLancar(); return; }
+    (r.resultados || []).forEach(function (res, i) { var st = LD[chaveItem(marcados[i])]; st.res = res; });
+    if (typeof invalidarResumo === 'function') invalidarResumo();
+    recarregarAT().catch(function () { });
+    toast(r.gravados + ' lançamento' + (r.gravados === 1 ? '' : 's') + ' gravado' + (r.gravados === 1 ? '' : 's') + (r.falharam ? ' · ' + r.falharam + ' com erro (em vermelho)' : ''));
+    if (typeof DIA !== 'undefined' && DIA && DIA.data === MD.data) DIA = null; // a Agenda relê o dia
+    LD_RES_MANTER = true; carregarMeuDia(); // os gravados saem da lista; os com erro ficam, com a mensagem
+  }).catch(function (e) { $("#md-lancar-erros").innerHTML = erroBox(['Não consegui gravar: ' + e.message + '. Nada se perde: tente de novo.']); contarLancar(); });
+});
+
 
 /* ===== 90-boot.js ===== */
 /* ================= arranque ================= */

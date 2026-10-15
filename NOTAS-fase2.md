@@ -6,17 +6,17 @@ Arquivo de retomada da Fase 2 (começou em 15/10/2026, à noite). Quem abrir um 
 > **Estado em 15/10 (noite)**: item 1 (Confirmações + WhatsApp) e 1b (Cobrar no WhatsApp) **no ar na real** = deploy
 > **2026-10-15-14** (teste = 13, mesmo código; ver DEPLOYS). Próximo: item 2, Alertas.
 
-## Ordem combinada com a gestão (15/10)
+## Ordem combinada com a gestão (15/10; revista à noite: "sua ordem está perfeita")
 
 | # | Item | Situação |
 |---|---|---|
 | 1 | **Confirmações + WhatsApp** (não só na véspera: a recepção escolhe amanhã, daqui a 2 dias, a semana) | **real** (14) |
 | 1b | **Cobrar no WhatsApp** (Cobrança do mês, textos oficiais) | **real** (14) |
-| 2 | Alertas | a fazer |
-| 3 | Ficha do paciente | a fazer |
-| 4 | Perdas | a fazer |
-| 5 | Parcelas | a fazer |
-| 6 | Conciliação | a fazer |
+| 2 | **Lançar o dia em lote** (Meu dia) | feito · teste |
+| 3 | Carga de telefones do ControleOdonto | a fazer (gestão manda a exportação) |
+| 4 | Ficha do paciente | a fazer |
+| 5 | Perdas → Parcelas → Conciliação | a fazer |
+| 6 | Alertas (avisos dentro da Ficha e da Agenda, não tela própria) | a fazer |
 
 Fora da lista por enquanto: check-in e alta (não escolhidos em 15/10).
 
@@ -117,4 +117,23 @@ caixa de digitação somem ao enviar (formatação de negrito do WhatsApp): conf
 - Testes: `tests/servidor-fase1.test.js` (bloco "cobrar no WhatsApp"); simulação: digitar número → link → "cobrado".
 - **Testado pela gestão na CÓPIA TESTE (15/10)**: confirmação e cobrança funcionando (número digitado na caixinha → link →
   mensagem). Atenção: na cópia ficou gravado em `Pacientes` o número que a gestão digitou para testar.
+
+## 2. Lançar o dia em lote (Meu dia)
+
+**Por quê**: a recepção quase não lança (Outubro sem nenhum lançamento de 14 e 15/10, com atendimento); lançar sessão por
+sessão no Registrar é o passo que fica para trás. Ordem revista com a gestão em 15/10 (noite).
+
+**Como funciona**: no topo do **Meu dia**, seção **Lançar o dia** com quem estava na agenda e não tem registro
+(aguardando · chegou · a confirmar). Para cada um: **Veio · Faltou · Em cima da hora · Desmarcou · Clínica cancelou**
+(quem está como "Chegou" já vem marcado "Veio"); "Marcar todos como Veio". Conforme o bloco de cobrança do paciente ×
+profissional: **Recebeu? Sim/Não** com o padrão do bloco (na hora = Sim; fim do mês = Não), valor pré-preenchido e forma;
+**guia assinada** no convênio; **Detalhe** nas faltas (obrigatório em "Faltou" e "Em cima da hora"). **Gravar N
+lançamentos** grava tudo numa chamada (`API.registrarLote`), e cada linha passa pelo mesmo `registrarAtendimento` do
+Registrar (mesma validação, mesmo Pago?, mesma trava de repetido). As que dão erro ficam em vermelho com a mensagem; as
+gravadas saem da lista. Procedimento = o que o Registrar escolheria vindo da Agenda (tipo da agenda ou Sessão/Consulta,
+com a variante de convênio). Fica para o Registrar: pagou só uma parte, NF com número, outro pagador. Serve também para
+**lançar dias atrasados** (setas do Meu dia).
+
+**Testado**: `tests/servidor-fase1.test.js` (lote com 1 erro e 2 gravados, falta com Detalhe vai para Faltas → Decidir,
+repetido barrado); simulação Playwright 1280 e 390 px sem erro (Detalhe obrigatório cobrado, 2 gravados, 9 ficam).
 

@@ -214,4 +214,14 @@ assert.strictEqual(cM('Tipo'), 'Cobrança mensalidade'); assert.strictEqual(cM('
 cd = ok(API.cobrancaMes({ chave: 'Dezembro/2026' }), 'cm dez cobrado').itens.filter(i => i.paciente === 'Carlos Ant')[0];
 assert.ok(cd.cobrado && cd.cobrado.por, 'linha mostra "cobrado em"');
 console.log('cobrar no WhatsApp ok');
+// Fase 2 · Lançar o dia em lote: cada linha passa pelo registrarAtendimento; erro numa não impede a outra
+const lote = ok(API.registrarLote({ itens: [
+  { paciente: 'Lays Teste', profissional: 'Giovana Grossi', data: '15/10/2026', hora: '11:00', procedimento: 'Sessão de psicologia', oque: 'Atendido', recebeu: 'Sim', valor: '25', forma: 'Pix', dataPagamento: '15/10/2026', quemPagou: 'Michelle', nf: 'Não' },
+  { paciente: 'Julia Teste', profissional: 'Juliana Ribeiro', data: '15/10/2026', hora: '11:30', procedimento: 'Sessão de psicologia', oque: 'Faltou sem aviso', detalhe: '' },
+  { paciente: 'Julia Teste', profissional: 'Juliana Ribeiro', data: '15/10/2026', hora: '12:00', procedimento: 'Sessão de psicologia', oque: 'Faltou sem aviso', detalhe: 'mãe avisou às 11h pelo WhatsApp' }] }), 'lote');
+assert.strictEqual(lote.gravados, 2); assert.strictEqual(lote.falharam, 1);
+assert.ok(lote.resultados[0].ok && lote.resultados[0].pago === 'Sim'); assert.ok(!lote.resultados[1].ok && /Detalhe/.test(lote.resultados[1].erros.join(' '))); assert.ok(lote.resultados[2].ok && lote.resultados[2].pendenteDecisao);
+assert.strictEqual(ok(API.registrarLote({ itens: [{ paciente: 'Lays Teste', profissional: 'Giovana Grossi', data: '15/10/2026', hora: '11:00', procedimento: 'Sessão de psicologia', oque: 'Atendido', recebeu: 'Sim', valor: '25', forma: 'Pix' }] }), 'lote repetido').resultados[0].repetido, true, 'a trava de repetido vale no lote');
+assert.strictEqual(API.registrarLote({ itens: [] }).ok, false);
+console.log('lançar o dia em lote ok');
 console.log('servidor-fase1.test.js ok');
