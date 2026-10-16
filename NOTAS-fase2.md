@@ -20,7 +20,7 @@ Arquivo de retomada da Fase 2 (começou em 15/10/2026, à noite). Quem abrir um 
 | 5 | **Conciliação** (gestão escolheu começar por ela) | **real** (16-05) |
 | 5b | **A receber e perdas** (todos os meses, por idade; dar como perdido em lote; perdas do ano) | **real** (16-08) |
 | 5c | **Parcelamentos** (serviço parcelado e dívida renegociada, na Ficha) | **real** (16-08) |
-| 6 | **Alertas** (avisos dentro da Ficha e da Agenda, não tela própria) | pronto, a publicar no teste |
+| 6 | **Alertas** (avisos dentro da Ficha e da Agenda, não tela própria) | **teste** (16-09) |
 
 Fora da lista por enquanto: check-in e alta (não escolhidos em 15/10).
 

@@ -24,7 +24,7 @@ coluna E não afeta o app. Atualizar `E2` faz parte de toda publicação (passo 
 | Canal | Deploy | Peças | Commit |
 |---|---|---|---|
 | Real (`arquivos_real`) | **2026-10-16-08** (A receber e perdas + Parcelamentos) | 58 (duplicatas 3 · server 19 · index 36); ativas = 884–941; `antigo35:` = as do 2026-10-16-05 (830–883) | branch `claude/sweet-wozniak-aviy8u`, commit 77686b9 |
-| Teste (`arquivos`) | **2026-10-16-07** (A receber e perdas + Parcelamentos) | 58 (duplicatas 3 · server 19 · index 36), linhas 632–689; `antigo40:` = as do 16-06 (576–631) | branch `claude/sweet-wozniak-aviy8u`, commit 77686b9 |
+| Teste (`arquivos`) | **2026-10-16-09** (Alertas) | 60 (duplicatas 3 · server 20 · index 37), linhas 690–749; `antigo41:` = as do 16-07 (632–689) | branch `claude/sweet-wozniak-aviy8u`, commit aae42ca |
 | Carregador real | 2026-10-06-02 (`dist/Code.real.gs`, implantado pela Roberta) | — | 4ad0272 |
 | Carregador teste | 2026-10-04-01 + nova versão pendente desde 05/10 (permissão do Drive, ver `COMO-INSTALAR.md`) | — | — |
 
@@ -48,6 +48,16 @@ Modelo:
 ```
 
 ## Lista
+
+### 2026-10-16-09 · Teste · Alertas
+- **O que mudou**: alertas na Agenda (etiqueta ao lado do nome, lista no painel, linha nas Pendências de hoje) e no topo da
+  Ficha (ver `NOTAS-fase2.md` 6): cobrado e não pagou, mês atrasado sem cobrança, parcela vencida, dívida antiga, faltas
+  repetidas, parou de vir, sem celular (só painel e Ficha), avaliação parada.
+- **Peças**: 60 em `arquivos!A690:C749` com `novo:`; 18 iguais ao 16-07 copiadas por "colar valores", 42 gravadas (4
+  agentes). Lidas de volta: **60/60 iguais** à cópia de `dist/pedacos.json` tirada antes; index e duplicatas + server
+  iguais. Ativação numa gravação só (A632:A749): 632–689 → `antigo41:`; ativas = só 690–749. E2 carimbado.
+- **Dados**: nenhum. **Voltar**: `antigo41:` → nome (632–689) e 690–749 → `antigo42:`.
+- **Commit**: aae42ca · **Aprovação**: só teste.
 
 ### 2026-10-16-08 · Real · A receber e perdas + Parcelamentos
 - **O que mudou**: o mesmo código do teste 2026-10-16-07 (menu A receber; card Parcelamentos na Ficha; Conciliação lendo
