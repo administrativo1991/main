@@ -110,6 +110,38 @@ function mockComp(l, chave) { // estado da competência na simulação: pago em 
 }
 function mockBloco(paciente, profissional, data, proc, oque) { var p = mockPacientes.filter(function (x) { return x.nome === paciente; })[0] || {}, v = Cobranca.linhaVigente(mockCPP, paciente, profissional, data), pr = mockProfs.filter(function (x) { return x.nome === profissional; })[0]; var esp = pr ? pr.esp : ''; var vl = mockValores.filter(function (x) { return x.especialidade === esp && /cheio/.test(x.nome); })[0]; return Cobranca.calcular({ linha: v.linha, profissional: profissional, especialidade: esp, valorCheio: vl ? vl.valor : null, procedimento: proc, oque: oque, competencia: v.linha ? mockComp(v.linha, Cobranca.chaveMes(data)) : null, hoje: data, params: mockParams, pagador: p.pagador || '', avisoLinha: v.aviso, convenioPaciente: p.convenio || '' }); }
 function mockComps() { var o = {}, h = new Date(), chs = [Cobranca.chaveMes(new Date(h.getFullYear(), h.getMonth() - 1, 1)), Cobranca.chaveMes(h), Cobranca.chaveMes(new Date(h.getFullYear(), h.getMonth() + 1, 1))]; mockCPP.forEach(function (l) { if (!(l.pagamento === 'Antecipado' || l.pagamento === 'Posterior' || l.cobranca === 'Mensalidade fixa')) return; var k = l.paciente + '|' + l.profissional; o[k] = o[k] || {}; chs.forEach(function (c) { o[k][c] = mockComp(l, c); }); }); return o; }
+// conciliação na simulação: extrato e vendas de mentira; confirmar muda a situação e some da lista
+var mockExt = null, mockVendas = null, mockConcOk = {};
+function mockConc(nome, d) {
+  var h = new Date(), mm = ('0' + (h.getMonth() + 1)).slice(-2) + '/' + h.getFullYear(), dd = function (n) { return ('0' + n).slice(-2) + '/' + mm; };
+  if (nome === 'importarExtrato' || nome === 'importarVendasCartao') {
+    var n = (String(d.texto).match(nome === 'importarExtrato' ? /<STMTTRN>/gi : /\n/g) || []).length; if (!n) return { ok: false, erros: ['Não achei entradas nesse arquivo.'] };
+    if (nome === 'importarExtrato') mockExt = mockExt || []; else mockVendas = mockVendas || []; return { ok: true, lidos: n, novos: n, jaTinha: 0 };
+  }
+  if (!mockExt) mockExt = [{ id: 'B1', data: dd(2), valor: 120, tipo: 'Pix', quem: 'Carla Barreto Lima', desc: 'Pix recebido - Carla Barreto Lima' }, { id: 'B2', data: dd(3), valor: 240, tipo: 'Pix', quem: 'Rita Almeida Rocha', desc: '' },
+    { id: 'B3', data: dd(3), valor: 6137.79, tipo: 'Pix', quem: 'Cedplan Saude', desc: '', sugestao: 'convênio (fatura)' }, { id: 'B4', data: dd(1), valor: 200, tipo: 'Pix', quem: 'Marileia Rodrigues De Oliveira', desc: '', sugestao: 'aluguel de sala' },
+    { id: 'B5', data: dd(6), valor: 90, tipo: 'Pix (QR Code)', quem: 'Pessoa Desconhecida', desc: '' }, { id: 'B6', data: dd(3), valor: 208.57, tipo: 'Cartão (vendas)', quem: '', desc: 'Vendas - Maquininha', situacao: 'conciliado', ligado: 'Venda no cartão V1' },
+    { id: 'B7', data: dd(5), valor: 0.42, tipo: 'Rendimento', quem: '', desc: 'Rendimento', situacao: 'não é paciente' }];
+  if (!mockVendas) mockVendas = [{ id: 'V1', data: dd(2), forma: 'Crédito', parcelas: 'à Vista', bandeira: 'Visa', bruto: 215, taxa: 6.43, liquido: 208.57, liberacao: dd(3), comprador: '', depositoSug: { id: 'B6', data: dd(3), valor: 208.57, situacao: 'pendente' } },
+    { id: 'V2', data: dd(4), forma: 'Crédito', parcelas: 'Parcelado 4x', bandeira: 'Mastercard', bruto: 1200, taxa: 23.4, liquido: 1176.6, liberacao: dd(4), comprador: '', depositoSug: null }];
+  if (nome === 'conciliar') { (d.itens || []).forEach(function (it) { mockConcOk[it.id] = it.recs && it.recs.length ? 'conciliado' : it.situacao; (it.recs || []).forEach(function (r) { mockConcOk['lanc:' + r.id] = 1; }); }); return { ok: true, feitos: (d.itens || []).length, erros: [] }; }
+  var L = function (id, dia, pac, prof, valor, forma) { return { aba: MESES_PT[h.getMonth()], linha: 2 + +id.slice(1), id: id, paciente: pac, profissional: prof, data: dd(dia), dataPag: dd(dia), valor: valor, forma: forma }; };
+  var sug = [{ tipo: 'pix', forca: 'forte', aviso: '', ext: mockExt[0], recs: [L('L1', 2, 'Theo Barreto Lima', 'Juliana Ribeiro', 120, 'Pix')] },
+    { tipo: 'varios', forca: 'confira', aviso: '2 lançamentos num Pix só', ext: mockExt[1], recs: [L('L2', 1, 'Beatriz Almeida Rocha', 'Juliana Ribeiro', 120, 'Pix'), L('L3', 3, 'Beatriz Almeida Rocha', 'Juliana Ribeiro', 120, 'Pix')] },
+    { tipo: 'cartao', forca: 'confira', aviso: 'R$ 15,00 a mais na maquininha (acréscimo?)', venda: mockVendas[0], recs: [L('L4', 2, 'Igor Modelo Silva', 'Dr. Victor Cunha', 200, 'Cartão de crédito')] }];
+  var feito = function (id) { return mockConcOk[id]; };
+  sug = sug.filter(function (g) { return !feito(g.ext ? g.ext.id : g.venda.id); });
+  var usados = {}; sug.forEach(function (g) { g.recs.forEach(function (r) { usados[r.id] = 1; }); });
+  var semBanco = [L('L5', 5, 'Theo Barreto Lima', 'Juliana Ribeiro', 70, 'Pix'), L('L6', 6, 'Beatriz Almeida Rocha', 'Giovana Grossi', 90, 'Pix')].filter(function (r) { return !mockConcOk['lanc:' + r.id]; });
+  var ext = mockExt.map(function (e) { return Object.assign({ situacao: 'pendente', ligado: '', obs: '' }, e, feito(e.id) ? { situacao: feito(e.id) } : {}); });
+  var pend = ext.filter(function (e) { return e.situacao === 'pendente'; }), semLanc = pend.filter(function (e) { return !sug.some(function (g) { return g.ext && g.ext.id === e.id; }) && e.tipo !== 'Cartão (vendas)'; });
+  var vendas = mockVendas.map(function (v) { return Object.assign({ situacao: feito(v.id) || 'pendente', ligado: '', deposito: '', obs: '' }, v); });
+  var vsl = vendas.filter(function (v) { return v.situacao === 'pendente' && !sug.some(function (g) { return g.venda && g.venda.id === v.id; }); });
+  var soma = function (l, f) { return Math.round(l.reduce(function (a, x) { return a + f(x); }, 0) * 100) / 100; };
+  return { ok: true, chave: d.chave, sugestoes: sug, semLancamento: semLanc, vendasSemLancamento: vsl, semBanco: semBanco, resolvidos: ext.filter(function (e) { return e.situacao !== 'pendente'; }), vendas: vendas,
+    situacoes: ['conciliado', 'convênio (fatura)', 'mensalidade anotada em Mensalistas', 'mês anterior ao app', 'aluguel de sala', 'não é paciente', 'sem lançamento no app', 'pendente'],
+    resumo: { entradas: ext.length, valorEntradas: soma(ext, function (e) { return e.valor; }), resolvidas: ext.length - pend.length, pendentes: pend.length, valorSemLanc: soma(semLanc, function (e) { return e.valor; }) + soma(vsl, function (v) { return v.bruto; }), valorSemBanco: soma(semBanco, function (r) { return r.valor; }), taxasCartao: soma(vendas, function (v) { return v.taxa; }), temExtrato: true, temVendas: true } };
+}
 function mock(nome, d) {
   return new Promise(function (res) { setTimeout(function () {
     var hoje = new Date();
@@ -204,6 +236,7 @@ function mock(nome, d) {
     if (nome === 'atualizarLinhasDoCadastro') return res({ ok: true, aba: 'Outubro', atualizadas: d.ids });
     if (nome === 'lancamentos') { var ml = mockReg.map(function (r) { return Object.assign({ aba: MESES_PT[(dataObj(r.data) || hoje).getMonth()], linha: 12, dataPag: '', quem: '', saldo: r.pago === 'Não' ? r.valor : 0 }, r); }); var qn = (d.paciente || '').toLowerCase(); return res({ ok: true, linhas: ml.filter(function (x) { return !qn || x.paciente.toLowerCase().indexOf(qn) >= 0; }), total: ml.length }); }
     if (nome === 'corrigirLancamento') { var mr = mockReg.filter(function (x) { return x.id === d.id; })[0], cc = d.campos || {}, alt = []; ['pago', 'forma', 'nf', 'guia', 'nfNumero'].forEach(function (k) { if (cc[k] != null && (!mr || cc[k] !== mr[k === 'nfNumero' ? 'nfN' : k])) { if (mr) mr[k === 'nfNumero' ? 'nfN' : k] = cc[k]; alt.push(k); } }); if (cc.recebidoAgora && mr) { mr.pago = 'Sim'; mr.forma = cc.forma || ''; alt.push('Pago?'); } if (cc.observacao) alt.push('Observação'); if (!alt.length) return res({ ok: false, erros: ['Nada mudou: os campos já estavam assim.'] }); if (/^A-sim-p/.test(d.id)) mockPendOk.push(d.id); return res({ ok: true, id: d.id, aba: d.aba, linha: 41, alterados: alt, novos: cc, plano: null }); }
+    if (nome === 'conciliacao' || nome === 'conciliar' || nome === 'importarExtrato' || nome === 'importarVendasCartao') return res(mockConc(nome, d));
     if (nome === 'repasseMes') { var RG = window.__mockRegras = window.__mockRegras || [{ linha: 2, ativa: true, profissional: 'Juliana Ribeiro', convenio: 'Particular', procedimento: '', pct: 80, valorRef: 0, obs: '' }, { linha: 3, ativa: true, profissional: 'Giovana Grossi', convenio: 'Qualquer', procedimento: '', pct: 0, valorRef: 0, obs: 'estagiária' }];
       var LR = [{ data: '02/10/2026', paciente: 'Beatriz Almeida Rocha', profissional: 'Juliana Ribeiro', procedimento: 'Sessão de psicologia', convenio: 'Particular', pago: 'Sim', valor: 120, situacao: 'pago', pct: 80, basePago: 120, basePrev: 120, repassePago: 96, repassePrev: 96, oque: 'Atendido' }];
       var POR = {}; LR.forEach(function (x) { var q = POR[x.profissional] = POR[x.profissional] || { profissional: x.profissional, sessoes: 0, basePago: 0, repassePago: 0, basePrev: 0, repassePrev: 0, semRegra: 0, perdido: 0, desconto: 0, descontoObs: '', porConvenio: [] }; q.sessoes++; q.basePago += x.basePago; q.repassePago += x.repassePago; q.basePrev += x.basePrev; q.repassePrev += x.repassePrev; q.porConvenio.push({ convenio: x.convenio, pct: x.pct, sessoes: 1 }); q.liquidoPago = q.repassePago; q.liquidoPrev = q.repassePrev; });
@@ -443,9 +476,9 @@ function corrigirValidar(c, reg) {
   return e;
 }
 
-var TELAS = { hoje: 's-hoje', confirmar: 's-confirmar', ficha: 's-ficha', registrar: 's-registrar', pacientes: 's-pacientes', cobranca: 's-cobranca', meudia: 's-meudia', gestao: 's-gestao', repasse: 's-repasse' };
-var TITULOS = { hoje: 'Agenda', confirmar: 'Confirmações', ficha: 'Ficha do paciente', registrar: 'Registrar atendimento', pacientes: 'Pacientes', cobranca: 'Cobrança do mês', meudia: 'Meu dia', gestao: 'Pendências', repasse: 'Repasse' };
-var SO_GESTAO = { gestao: true, repasse: true };
+var TELAS = { hoje: 's-hoje', confirmar: 's-confirmar', ficha: 's-ficha', registrar: 's-registrar', pacientes: 's-pacientes', cobranca: 's-cobranca', meudia: 's-meudia', gestao: 's-gestao', repasse: 's-repasse', conciliacao: 's-conciliacao' };
+var TITULOS = { hoje: 'Agenda', confirmar: 'Confirmações', ficha: 'Ficha do paciente', registrar: 'Registrar atendimento', pacientes: 'Pacientes', cobranca: 'Cobrança do mês', meudia: 'Meu dia', gestao: 'Pendências', repasse: 'Repasse', conciliacao: 'Conciliação' };
+var SO_GESTAO = { gestao: true, repasse: true, conciliacao: true };
 var telaAtual = 'hoje', navGen = 0;
 var INICIAR = {};
 function go(id, extra) {
@@ -493,8 +526,8 @@ function carregar() {
     $("#chip-mail").textContent = (ehGestao() ? 'gestão' : 'recepção') + (MOCK ? ' · simulação' : '');
     $("#chip-user").title = (email || '') + ' · perfil ' + (ehGestao() ? 'gestão' : 'recepção');
     if (ehGestao()) $("#chip-user").classList.add('gestao');
-    // menu por perfil (gestão 14/10): recepção vê Agenda · Registrar · Pacientes · Cobrança do mês · Meu dia; gestão também Pendências · Repasse
-    $$('[data-go=repasse], [data-go=gestao]').forEach(function (x) { x.hidden = !ehGestao(); });
+    // menu por perfil (gestão 14/10): recepção vê Agenda · Registrar · Pacientes · Cobrança do mês · Meu dia; gestão também Pendências · Repasse · Conciliação
+    $$('[data-go=repasse], [data-go=gestao], [data-go=conciliacao]').forEach(function (x) { x.hidden = !ehGestao(); });
     $$('.so-gestao').forEach(function (x) { x.hidden = !ehGestao(); });
     $$('.so-recepcao').forEach(function (x) { x.hidden = ehGestao(); });
     var dl = $("#dl-pagadores"); dl.innerHTML = ''; var vistos = {};

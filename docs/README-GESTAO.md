@@ -17,6 +17,9 @@ Perfil decidido pelo e-mail logado: `administrativo@clinicanascente.com.br` mais
 | `Agenda recorrente` | horários fixos; edição "a partir de hoje" encerra a linha antiga e cria outra |
 | `Lista do dia` | acréscimos do dia, confirmações, não vem, remarcações e **removidos** (Origem "Removido · motivo") |
 | `Alterações de cadastro` | uma linha por campo alterado no cadastro (de, para, quem informou, quem gravou) |
+| `Extrato bancário` (criada pelo app) | uma linha por entrada do extrato do PagBank importado (Conciliação); a situação e a ligação com o lançamento são escritas quando você confirma |
+| `Vendas no cartão` (criada pelo app) | uma linha por venda do CSV do PagBank (bruto, taxa, líquido, liberação) e o depósito em que caiu |
+| aba do mês, coluna `Conciliado` (no fim) | quando você confirma na Conciliação: "PagBank dd/mm · R$ valor · código · quem · quando" (ou "Cartão …") |
 
 Nenhuma linha é apagada pelo app. Correções em registros já gravados são feitas por você na planilha; o ID da linha (coluna T) aparece na tela verde da recepção.
 
@@ -40,12 +43,36 @@ Botões:
 - **Criar colunas de <mês seguinte> em Mensalistas**: acrescenta o par "MÊS — pago?" e "Data" no fim. Dois cliques.
 - **Exportar <mês> (.xlsx)**: grava uma planilha só com os valores da aba do mês na pasta do Drive **Clínica Nascente / Controle Financeiro / <ano> / <MM Mês_AA> / 2_Atendimentos** (ex.: `2026/10 Out_26/2_Atendimentos`), com o nome **`OUT 26 - Recepção atendimentos (app)`** (padrão `MMM AA - Descrição`). Exportar de novo o mesmo mês **sobrescreve** esse arquivo, então há sempre uma cópia por mês, a mais recente. A tela mostra o link pra baixar o .xlsx, o link do arquivo no Drive e a pasta onde ficou. Se a pasta do mês ainda não existir, o app cria no mesmo padrão e avisa. A exportação é uma cópia: a fonte continua sendo a aba do mês.
 
+## Conciliação (Fase 2)
+
+Menu **Conciliação** (só a gestão). Confere o que entrou na conta do PagBank contra o que a recepção lançou como **Pix** ou
+**cartão** (dinheiro fica só no fechar o dia).
+
+1. **Importar extrato (OFX)**: no PagBank, Extrato → Exportar → OFX. Pode pegar um período longo: o que já foi importado
+   não repete. Só as entradas contam; rendimento já entra como "não é paciente".
+2. **Importar vendas no cartão (CSV)**: no PagBank, Vendas → Exportar → CSV **detalhado**. Mostra bruto, taxa, líquido e o
+   dia em que caiu na conta.
+3. Escolha o mês. A tela tem:
+   - **Bateu**: Pix com mesmo valor, até 3 dias de diferença e nome que confere (do paciente, de quem pagou, do pagador
+     habitual ou do "Nome do pagador como aparece no extrato") já vem marcado. Com aviso, confira antes: nome diferente,
+     um Pix pagando vários lançamentos do mesmo pagador, ou venda no cartão maior que o lançamento (acréscimo da
+     maquininha). **Confirmar marcados** grava.
+   - **No banco, sem lançamento**: escolha o que é (convênio, mensalidade anotada em Mensalistas, mês anterior ao app,
+     aluguel de sala, não é paciente, sem lançamento no app) ou ligue a um lançamento da lista de baixo. Pix de convênio
+     (nome da lista Convênio) e de profissional (aba Profissionais) já vêm com a sugestão.
+   - **Lançado, sem entrar no banco**: lançado como Pix/cartão e pago, mas não está no extrato: confira se foi pago, se a
+     forma está certa ou se foi lançado duas vezes, e corrija na Agenda/Registrar.
+   - **Vendas no cartão** do mês, com as taxas, e **Já resolvidas**.
+
+Para desfazer uma confirmação: na aba `Extrato bancário` (ou `Vendas no cartão`) volte a Situação para "pendente" e apague
+"Ligado a"; na aba do mês, apague a célula da coluna `Conciliado` daquele lançamento.
+
 ## Rotina mensal
 
 1. Últimos dias do mês: Gestão → criar aba do mês seguinte e as colunas em Mensalistas.
 2. Dia 1: conferir se o Atendimento mostra a aba nova no topo.
 3. Durante o mês: Gestão → pendências de pagamento e NF; Mensalistas → quem está pendente/atrasado (a recepção já vê o aviso ao atender).
-4. Fechamento: Gestão → exportar o mês pro Financeiro / contabilidade.
+4. Fechamento: Conciliação do mês (extrato e vendas no cartão do PagBank); depois Gestão → exportar o mês pro Financeiro / contabilidade.
 
 ## Virada de 01/11 (modelo antecipado)
 

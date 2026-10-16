@@ -639,6 +639,26 @@ table.cm .acoes{justify-content:flex-end;gap:4px;flex-wrap:wrap}
 .fi-tab tr.apagada td{color:var(--tx2)}
 .fi-tab .sub{font-size:12px;color:var(--tx3)}
 @media (max-width:900px){.md-grid{grid-template-columns:1fr}}
+/* conciliação (Fase 2, 16/10) */
+.fd-resumo .atencao b{color:var(--lar-tx)}
+.cc-sug{cursor:pointer;align-items:center}
+.cc-lados{display:flex;flex-wrap:wrap;align-items:center;gap:6px 12px;flex:1;min-width:0}
+.cc-lado{display:flex;flex-wrap:wrap;align-items:center;gap:4px 10px;min-width:0}
+.cc-lado .quem{min-width:0;white-space:nowrap}
+.cc-recs{flex-direction:column;align-items:flex-start;gap:2px}
+.cc-seta{color:var(--tx3);font-weight:700}
+.cc-form{display:flex;flex-wrap:wrap;gap:6px;align-items:center;flex:1 1 420px;justify-content:flex-end}
+.cc-form select,.cc-form input{width:auto;min-height:36px;padding:6px 10px;font-size:13px;flex:1 1 160px;max-width:260px}
+.cc-tab{min-width:620px}
+#cc-res-card summary{cursor:pointer}
+@media (max-width:700px){
+#cc-resumo{grid-template-columns:repeat(2,minmax(0,1fr))}
+.cc-sug{flex-wrap:wrap}
+.cc-sug .cc-lados{flex:1 1 calc(100% - 40px)}
+.cc-sug>.tag{margin-left:28px;white-space:normal}
+.cc-form{flex-basis:100%}
+.cc-form select,.cc-form input{max-width:none}
+}
 </style>
 </head>
 <body>
@@ -683,6 +703,7 @@ table.cm .acoes{justify-content:flex-end;gap:4px;flex-wrap:wrap}
 <button type="button" data-go="meudia"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>Meu dia</button>
 <button type="button" data-go="gestao" id="menu-gestao"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 19V10M10 19V5M16 19v-8M22 19H2"/></svg>Pendências</button>
 <button type="button" data-go="repasse" hidden><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M15 9.5c-.5-1-1.6-1.5-3-1.5-1.7 0-3 .8-3 2s1.3 1.7 3 2 3 .9 3 2.1-1.3 1.9-3 1.9c-1.5 0-2.6-.6-3-1.6M12 6.5v11"/></svg>Repasse</button>
+<button type="button" data-go="conciliacao" hidden><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 10h18M5 10v8M9.5 10v8M14.5 10v8M19 10v8M3 21h18M12 3l9 5H3z"/></svg>Conciliação</button>
 <span class="esp"></span>
 <div class="chip-user" id="chip-user" title="">
 <span class="av" id="chip-av">R</span>
@@ -1190,6 +1211,48 @@ table.cm .acoes{justify-content:flex-end;gap:4px;flex-wrap:wrap}
 <div id="r2-resumo"></div>
 <div id="r2-linhas"></div>
 </section>
+<section class="tela coluna" id="s-conciliacao" hidden>
+<div class="titulo">
+<h1>Conciliação</h1>
+<div class="acoes" style="gap:4px">
+<button type="button" class="btn icone p" id="cc-ant" aria-label="Mês anterior"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg></button>
+<strong id="cc-mes" style="min-width:130px;text-align:center"></strong>
+<button type="button" class="btn icone p" id="cc-prox" aria-label="Próximo mês"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button>
+</div>
+<span class="muted">só a gestão vê · extrato do PagBank × lançamentos em Pix e cartão</span>
+<span class="esp"></span>
+<label class="btn ter" for="cc-arq-ofx" tabindex="0">Importar extrato (OFX)</label>
+<input type="file" id="cc-arq-ofx" accept=".ofx,.OFX,text/plain" hidden>
+<label class="btn ter" for="cc-arq-csv" tabindex="0">Importar vendas no cartão (CSV)</label>
+<input type="file" id="cc-arq-csv" accept=".csv,text/csv" hidden>
+</div>
+<div id="cc-carregando" class="carregando">Carregando…</div>
+<div id="cc-aviso"></div>
+<div class="fd-resumo" id="cc-resumo"></div>
+<section class="card compacto" id="cc-sug-card">
+<div class="passo" style="padding:0"><h2 style="font-size:15px">Bateu: banco × lançamento</h2><span class="tag verde" id="cc-n-sug">0</span><span class="esp"></span><button type="button" class="btn mini" id="cc-confirmar">Confirmar marcados</button></div>
+<div class="muted" style="font-size:13px">As que batem valor, data e nome já vêm marcadas. As com aviso, confira antes de marcar.</div>
+<div class="fd-lista" id="cc-sug"></div>
+</section>
+<section class="card compacto">
+<div class="passo" style="padding:0"><h2 style="font-size:15px">No banco, sem lançamento</h2><span class="tag laranja" id="cc-n-semlanc">0</span></div>
+<div class="muted" style="font-size:13px">Entrou na conta e o app não achou de quem é. Diga o que é, ou ligue a um lançamento da lista de baixo.</div>
+<div class="fd-lista" id="cc-semlanc"></div>
+</section>
+<section class="card compacto">
+<div class="passo" style="padding:0"><h2 style="font-size:15px">Lançado, sem entrar no banco</h2><span class="tag amarela" id="cc-n-sembanco">0</span></div>
+<div class="muted" style="font-size:13px">Lançado como Pix ou cartão e pago, mas não achei no extrato. Confira se foi pago mesmo, se a forma está certa (pode ter sido dinheiro) ou se foi lançado duas vezes.</div>
+<div class="fd-lista" id="cc-sembanco"></div>
+</section>
+<section class="card compacto" id="cc-vendas-card">
+<div class="passo" style="padding:0"><h2 style="font-size:15px">Vendas no cartão do mês</h2><span class="muted" id="cc-taxas"></span></div>
+<div class="tabela-wrap"><table class="cc-tab"><thead><tr><th>Data</th><th>Forma</th><th class="num">Bruto</th><th class="num">Taxa</th><th class="num">Líquido</th><th>Caiu na conta</th><th>Situação</th></tr></thead><tbody id="cc-vendas"></tbody></table></div>
+</section>
+<details class="card compacto" id="cc-res-card">
+<summary><b>Já resolvidas</b> <span class="muted" id="cc-n-res"></span></summary>
+<div class="fd-lista" id="cc-res" style="margin-top:10px"></div>
+</details>
+</section>
 <section class="tela coluna" id="s-meudia" hidden>
 <div class="titulo">
 <h1>Meu dia</h1>
@@ -1512,9 +1575,9 @@ if (amplo && !c.quemInformou) e.push('Mudou dados da sessão ou valores: preench
 if (!Object.keys(c).filter(function (k) { return k !== 'quemInformou'; }).length) e.push('Nada pra corrigir: mude algum campo ou escreva na observação.');
 return e;
 }
-var TELAS = { hoje: 's-hoje', confirmar: 's-confirmar', ficha: 's-ficha', registrar: 's-registrar', pacientes: 's-pacientes', cobranca: 's-cobranca', meudia: 's-meudia', gestao: 's-gestao', repasse: 's-repasse' };
-var TITULOS = { hoje: 'Agenda', confirmar: 'Confirmações', ficha: 'Ficha do paciente', registrar: 'Registrar atendimento', pacientes: 'Pacientes', cobranca: 'Cobrança do mês', meudia: 'Meu dia', gestao: 'Pendências', repasse: 'Repasse' };
-var SO_GESTAO = { gestao: true, repasse: true };
+var TELAS = { hoje: 's-hoje', confirmar: 's-confirmar', ficha: 's-ficha', registrar: 's-registrar', pacientes: 's-pacientes', cobranca: 's-cobranca', meudia: 's-meudia', gestao: 's-gestao', repasse: 's-repasse', conciliacao: 's-conciliacao' };
+var TITULOS = { hoje: 'Agenda', confirmar: 'Confirmações', ficha: 'Ficha do paciente', registrar: 'Registrar atendimento', pacientes: 'Pacientes', cobranca: 'Cobrança do mês', meudia: 'Meu dia', gestao: 'Pendências', repasse: 'Repasse', conciliacao: 'Conciliação' };
+var SO_GESTAO = { gestao: true, repasse: true, conciliacao: true };
 var telaAtual = 'hoje', navGen = 0;
 var INICIAR = {};
 function go(id, extra) {
@@ -1560,8 +1623,8 @@ $("#chip-nome").textContent = quemSou(); $("#chip-av").textContent = quemSou().c
 $("#chip-mail").textContent = (ehGestao() ? 'gestão' : 'recepção') + (MOCK ? ' · simulação' : '');
 $("#chip-user").title = (email || '') + ' · perfil ' + (ehGestao() ? 'gestão' : 'recepção');
 if (ehGestao()) $("#chip-user").classList.add('gestao');
-// menu por perfil (gestão 14/10): recepção vê Agenda · Registrar · Pacientes · Cobrança do mês · Meu dia; gestão também Pendências · Repasse
-$$('[data-go=repasse], [data-go=gestao]').forEach(function (x) { x.hidden = !ehGestao(); });
+// menu por perfil (gestão 14/10): recepção vê Agenda · Registrar · Pacientes · Cobrança do mês · Meu dia; gestão também Pendências · Repasse · Conciliação
+$$('[data-go=repasse], [data-go=gestao], [data-go=conciliacao]').forEach(function (x) { x.hidden = !ehGestao(); });
 $$('.so-gestao').forEach(function (x) { x.hidden = !ehGestao(); });
 $$('.so-recepcao').forEach(function (x) { x.hidden = ehGestao(); });
 var dl = $("#dl-pagadores"); dl.innerHTML = ''; var vistos = {};
@@ -3447,6 +3510,122 @@ toast(r.alteradas ? r.alteradas + (r.alteradas === 1 ? ' regra gravada' : ' regr
 });
 box.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
+/* ===== 62-conciliacao.js ===== */
+/* ================= CONCILIAÇÃO (só gestão, Fase 2, 16/10) =================
+A gestão importa o extrato do PagBank (OFX) e as vendas no cartão (CSV "detalhado"); o servidor (API.conciliacao) cruza com
+os lançamentos pagos em Pix e cartão das abas de mês e devolve: o que bateu (sugestões a confirmar), o que entrou no banco sem
+lançamento, o que foi lançado e não entrou, e as vendas no cartão. Confirmar grava nas abas "Extrato bancário" / "Vendas no
+cartão" e na coluna "Conciliado" da aba do mês (API.conciliar). Dinheiro não entra aqui: fica no fechar o dia. */
+var CC = null, ccData = null, ccGen = 0;
+INICIAR.conciliacao = function () {
+if (!ehGestao()) { go('hoje'); return toast('Só a gestão vê a conciliação'); }
+if (!ccData) { var h = new Date(); ccData = new Date(h.getFullYear(), h.getMonth(), 1); }
+carregarConc();
+};
+function ccChave() { return MESES_PT[ccData.getMonth()] + '/' + ccData.getFullYear(); }
+function carregarConc() {
+var gen = ++ccGen; $("#cc-mes").textContent = ccChave(); $("#cc-carregando").hidden = false; $("#cc-carregando").textContent = 'Carregando…';
+call('conciliacao', { chave: ccChave() }).then(function (r) {
+if (gen !== ccGen || !aindaNa('conciliacao', navGen)) return;
+$("#cc-carregando").hidden = true;
+if (!r.ok) { $("#cc-aviso").innerHTML = erroBox(r.erros || [], 'Não consegui conciliar'); return; }
+CC = r; renderConc();
+}).catch(function (e) { if (gen === ccGen) $("#cc-carregando").textContent = 'Não consegui carregar: ' + e.message; });
+}
+$("#cc-ant").addEventListener('click', function () { ccData = new Date(ccData.getFullYear(), ccData.getMonth() - 1, 1); carregarConc(); });
+$("#cc-prox").addEventListener('click', function () { ccData = new Date(ccData.getFullYear(), ccData.getMonth() + 1, 1); carregarConc(); });
+// arquivos: lidos no navegador e mandados como texto; se o acento vier quebrado, relê como Latin-1
+function lerArquivoTexto(f) {
+var ler = function (enc) { return new Promise(function (ok, erro) { var fr = new FileReader(); fr.onload = function () { ok(String(fr.result || '')); }; fr.onerror = function () { erro(new Error('não consegui ler o arquivo')); }; fr.readAsText(f, enc); }); };
+return ler('UTF-8').then(function (t) { return t.indexOf('�') >= 0 ? ler('ISO-8859-1') : t; });
+}
+[['#cc-arq-ofx', 'importarExtrato', 'entradas novas do extrato'], ['#cc-arq-csv', 'importarVendasCartao', 'vendas novas no cartão']].forEach(function (x) {
+var inp = $(x[0]);
+inp.addEventListener('change', function () {
+var f = inp.files && inp.files[0]; inp.value = ''; if (!f) return;
+if (f.size > 5e6) return toast('Arquivo grande demais (máx. 5 MB)');
+toast('Importando ' + f.name + '…');
+lerArquivoTexto(f).then(function (t) { return call(x[1], { texto: t }); }).then(function (r) {
+if (!r.ok) { $("#cc-aviso").innerHTML = erroBox(r.erros || [], 'Não importei'); return; }
+toast(r.novos + ' ' + x[2] + (r.jaTinha ? ' · ' + r.jaTinha + ' já estavam' : '')); carregarConc();
+}).catch(function (e) { toast('Não consegui importar: ' + e.message); });
+});
+var lab = $('label[for="' + x[0].slice(1) + '"]'); lab.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); inp.click(); } });
+});
+function ccR(n) { return 'R$ ' + brl(n || 0); }
+function ccDia(s) { return String(s || '').slice(0, 5); }
+function ccLancHtml(r) { return '<span><a href="#" class="link-discreto cc-ficha" data-nome="' + esc(r.paciente) + '">' + esc(r.paciente) + '</a> <span class="muted">· ' + esc(ccDia(r.dataPag) + (r.dataPag !== r.data ? ' (sessão ' + ccDia(r.data) + ')' : '') + ' · ' + profCurto(r.profissional) + ' · ' + r.forma) + '</span> <b>' + esc(ccR(r.valor)) + '</b></span>'; }
+function ccBancoHtml(e) { return '<span class="quem">' + esc(ccDia(e.data)) + ' · ' + esc(ccR(e.valor)) + '</span><span><span class="tag p">' + esc(e.tipo) + '</span> ' + esc(e.quem || e.desc || '') + '</span>'; }
+function ccVendaHtml(v) { return '<span class="quem">' + esc(ccDia(v.data)) + ' · ' + esc(ccR(v.bruto)) + '</span><span><span class="tag p">Cartão</span> ' + esc([v.forma, v.parcelas, v.bandeira].filter(Boolean).join(' · ')) + (v.comprador ? ' · ' + esc(v.comprador) : '') + ' <span class="muted">· líquido ' + esc(ccR(v.liquido)) + (v.depositoSug ? ', caiu ' + esc(ccDia(v.depositoSug.data)) : ', sem depósito achado') + '</span></span>'; }
+function ccItemVenda(v, recs, extra) { var it = { tipo: 'venda', id: v.id, recs: recs }; if (v.depositoSug && v.depositoSug.situacao === 'pendente') it.deposito = v.depositoSug.id; return Object.assign(it, extra || {}); }
+function ccRecs(l) { return l.map(function (r) { return { aba: r.aba, linha: r.linha, id: r.id }; }); }
+function ccSalvar(itens, btn) {
+if (btn) btn.disabled = true;
+return call('conciliar', { itens: itens }).then(function (r) {
+if (btn) btn.disabled = false;
+if (!r.ok) { toast((r.erros || ['Não salvei'])[0]); return; }
+toast(r.feitos + (r.feitos === 1 ? ' confirmada' : ' confirmadas') + (r.erros.length ? ' · ' + r.erros.length + ' com problema' : ''));
+if (r.erros.length) $("#cc-aviso").innerHTML = erroBox(r.erros, 'Algumas não foram'); else $("#cc-aviso").innerHTML = '';
+carregarConc();
+}).catch(function (e) { if (btn) btn.disabled = false; toast('Não salvei: ' + e.message); });
+}
+function renderConc() {
+var r = CC, s = r.resumo;
+if (!s.temExtrato) $("#cc-aviso").innerHTML = aviso('cinza', 'Importe o extrato do PagBank', 'No app ou site do PagBank: <b>Extrato → Exportar → OFX</b>, do começo do mês até hoje (pode pegar mais de um mês; o que já foi importado não repete). Para o cartão, em <b>Vendas → Exportar → CSV detalhado</b>.');
+else if (!s.entradas) $("#cc-aviso").innerHTML = aviso('cinza', 'Nenhuma entrada no extrato em ' + esc(r.chave), 'Importe um extrato que cubra esse mês.');
+else if ($("#cc-aviso").querySelector('.faixa.cinza')) $("#cc-aviso").innerHTML = '';
+$("#cc-resumo").innerHTML = '<div><b>' + s.entradas + '</b><span>entradas no banco · ' + esc(ccR(s.valorEntradas)) + '</span></div><div><b>' + s.resolvidas + '</b><span>resolvidas · faltam ' + s.pendentes + '</span></div><div class="' + (s.valorSemLanc ? 'atencao' : '') + '"><b>' + esc(brlCurto(s.valorSemLanc)) + '</b><span>no banco, sem lançamento</span></div><div class="' + (s.valorSemBanco ? 'atencao' : '') + '"><b>' + esc(brlCurto(s.valorSemBanco)) + '</b><span>lançado, sem entrar no banco</span></div><div><b>' + esc(brlCurto(s.taxasCartao)) + '</b><span>taxas do cartão no mês</span></div>';
+// 1) sugestões
+$("#cc-n-sug").textContent = r.sugestoes.length; $("#cc-sug-card").hidden = !r.sugestoes.length;
+var ls = $("#cc-sug"); ls.innerHTML = '';
+r.sugestoes.forEach(function (g, i) {
+var lado = g.venda ? ccVendaHtml(g.venda) : ccBancoHtml(g.ext);
+var it = el('<label class="fd-item cc-sug check"><input type="checkbox" data-i="' + i + '"' + (g.forca === 'forte' ? ' checked' : '') + '><span class="cc-lados"><span class="cc-lado">' + lado + '</span><span class="cc-seta" aria-hidden="true">→</span><span class="cc-lado cc-recs">' + g.recs.map(ccLancHtml).join('') + '</span></span>' + (g.aviso ? '<span class="tag laranja">' + esc(g.aviso) + '</span>' : g.forca === 'forte' ? '<span class="tag verde">bate</span>' : '') + '</label>');
+ls.appendChild(it);
+});
+// 2) no banco, sem lançamento (entradas do extrato e vendas no cartão)
+var sits = r.situacoes.filter(function (x) { return x !== 'conciliado' && x !== 'pendente'; });
+var semBancoOrd = function (valor, data) { return r.semBanco.slice().sort(function (a, b) { return Math.abs(a.valor - valor) - Math.abs(b.valor - valor) || Math.abs(diasCC(a.dataPag, data)) - Math.abs(diasCC(b.dataPag, data)); }); };
+var lsl = $("#cc-semlanc"); lsl.innerHTML = '';
+var pend = r.semLancamento.map(function (e) { return { e: e }; }).concat(r.vendasSemLancamento.map(function (v) { return { v: v }; }));
+$("#cc-n-semlanc").textContent = pend.length;
+pend.forEach(function (p) {
+var x = p.e || p.v, valor = p.e ? x.valor : x.bruto, sug = p.e ? x.sugestao : '';
+var opts = '<option value="">o que é?</option>' + sits.map(function (o) { return '<option' + (o === sug ? ' selected' : '') + '>' + esc(o) + '</option>'; }).join('');
+var lancs = '<option value="">ligar a um lançamento…</option>' + semBancoOrd(valor, x.data).map(function (l, j) { return '<option value="' + j + '">' + esc(l.paciente + ' · ' + ccDia(l.dataPag) + ' · ' + ccR(l.valor) + ' · ' + l.forma) + '</option>'; }).join('');
+var it = el('<div class="fd-item cc-pend"><span class="cc-lado">' + (p.e ? ccBancoHtml(x) : ccVendaHtml(x)) + '</span>' + (sug ? '<span class="tag lilas">sugestão: ' + esc(sug) + '</span>' : '') + '<span class="esp"></span><span class="cc-form"><select class="cc-sit" aria-label="O que é">' + opts + '</select>' + (r.semBanco.length ? '<select class="cc-lanc" aria-label="Ligar a um lançamento">' + lancs + '</select>' : '') + '<input class="cc-obs" placeholder="Observação (opcional)" aria-label="Observação"><button type="button" class="btn mini">Salvar</button></span></div>');
+var ord = semBancoOrd(valor, x.data), selL = $('.cc-lanc', it), selS = $('.cc-sit', it);
+if (selL) selL.addEventListener('change', function () { selS.disabled = !!selL.value; });
+$('button', it).addEventListener('click', function () {
+var l = selL && selL.value !== '' ? ord[+selL.value] : null, sit = selS.value, obs = $('.cc-obs', it).value.trim();
+if (!l && !sit) return toast('Escolha o que é, ou ligue a um lançamento');
+var recs = l ? ccRecs([l]) : [], extra = { situacao: l ? 'conciliado' : sit, obs: obs };
+ccSalvar([p.e ? Object.assign({ tipo: 'ext', id: x.id, recs: recs }, extra) : ccItemVenda(x, recs, extra)], this);
+});
+lsl.appendChild(it);
+});
+if (!pend.length) lsl.innerHTML = '<div class="muted">' + (s.temExtrato ? 'Nada solto no banco neste mês.' : '—') + '</div>';
+// 3) lançado sem banco
+$("#cc-n-sembanco").textContent = r.semBanco.length;
+$("#cc-sembanco").innerHTML = r.semBanco.length ? r.semBanco.map(function (l) { return '<div class="fd-item">' + ccLancHtml(l) + '</div>'; }).join('') : '<div class="muted">' + (s.temExtrato ? 'Tudo que foi lançado em Pix e cartão entrou no banco.' : '—') + '</div>';
+// 4) vendas no cartão
+$("#cc-vendas-card").hidden = !r.vendas.length;
+$("#cc-taxas").textContent = r.vendas.length ? r.vendas.length + ' vendas · taxas ' + ccR(s.taxasCartao) : '';
+$("#cc-vendas").innerHTML = r.vendas.map(function (v) { return '<tr><td>' + esc(ccDia(v.data)) + '</td><td>' + esc([v.forma, v.parcelas].filter(Boolean).join(' · ')) + '<div class="sub">' + esc(v.bandeira || '') + '</div></td><td class="num">' + esc(brl(v.bruto)) + '</td><td class="num">' + esc(brl(v.taxa)) + '</td><td class="num"><b>' + esc(brl(v.liquido)) + '</b></td><td>' + (v.depositoSug ? esc(ccDia(v.depositoSug.data)) : '<span class="muted">não achei</span>') + '</td><td><span class="tag ' + (v.situacao === 'pendente' ? 'amarela' : 'verde') + '">' + esc(v.situacao) + '</span>' + (v.ligado ? '<div class="sub">' + esc(v.ligado) + '</div>' : '') + '</td></tr>'; }).join('');
+// 5) resolvidas
+$("#cc-n-res").textContent = r.resolvidos.length ? '(' + r.resolvidos.length + ')' : '';
+$("#cc-res-card").hidden = !r.resolvidos.length;
+$("#cc-res").innerHTML = r.resolvidos.map(function (e) { return '<div class="fd-item">' + ccBancoHtml(e) + '<span class="esp"></span><span class="tag ' + (e.situacao === 'conciliado' ? 'verde' : 'lilas') + '">' + esc(e.situacao) + '</span>' + (e.ligado || e.obs ? '<span class="muted" style="flex-basis:100%;font-size:12px">' + esc([e.ligado, e.obs].filter(Boolean).join(' · ')) + '</span>' : '') + '</div>'; }).join('');
+$$('.cc-ficha', $("#s-conciliacao")).forEach(function (a) { a.addEventListener('click', function (ev) { ev.preventDefault(); ev.stopPropagation(); go('ficha', { nome: a.getAttribute('data-nome') }); }); });
+ccContarMarcados();
+}
+function diasCC(a, b) { var x = dataObj(a), y = dataObj(b); return x && y ? Math.round((x - y) / 864e5) : 99; }
+function ccContarMarcados() { var n = $$('#cc-sug input:checked').length; $("#cc-confirmar").textContent = 'Confirmar marcados (' + n + ')'; $("#cc-confirmar").disabled = !n; }
+$("#cc-sug").addEventListener('change', ccContarMarcados);
+$("#cc-confirmar").addEventListener('click', function () {
+var itens = $$('#cc-sug input:checked').map(function (c) { var g = CC.sugestoes[+c.getAttribute('data-i')]; return g.venda ? ccItemVenda(g.venda, ccRecs(g.recs)) : { tipo: 'ext', id: g.ext.id, recs: ccRecs(g.recs) }; });
+if (itens.length) ccSalvar(itens, this);
+});
 /* ===== 70-meudia.js ===== */
 /* ================= MEU DIA — Fechar o dia (Fase 1, 15/10) =================
 As 4 listas do dia (a cobrar · recebido · guias a pegar · NF a emitir) com a mesma conta da Agenda (fechamentoDia),

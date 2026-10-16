@@ -16,7 +16,7 @@ Arquivo de retomada da Fase 2 (começou em 15/10/2026, à noite). Quem abrir um 
 | 2 | **Lançar o dia em lote** (Meu dia) | **real** (16) |
 | 3 | Carga de telefones do ControleOdonto | 19 gravados na real (16/10, a 1ª página); faltam as outras páginas |
 | 4 | **Ficha do paciente** | **real** (16-03) |
-| 5 | Perdas → Parcelas → Conciliação | a fazer |
+| 5 | **Conciliação** (gestão escolheu começar por ela); depois Perdas e Parcelas | Conciliação no teste (ver deploy em DEPLOYS) |
 | 6 | Alertas (avisos dentro da Ficha e da Agenda, não tela própria) | a fazer |
 
 Fora da lista por enquanto: check-in e alta (não escolhidos em 15/10).
@@ -169,3 +169,40 @@ cobranças mandadas) e **Alterações de cadastro**. Botões: Registrar atendime
 
 **Testado**: `tests/servidor-fase1.test.js` (bloco "ficha do paciente"); simulação 1280/390 px pelos 3 caminhos, sem erro.
 
+
+## 5. Conciliação (PagBank × lançamentos)
+
+**Decisões da gestão (16/10)**: formato OFX para o extrato (escolha minha; ela disse "csv ou ofx"); vendas no cartão pelo CSV
+"detalhado" do PagBank; **dinheiro fica só no fechar o dia**; Marileia é **aluguel de sala** (agora ela vai transferir pra
+conta pessoal); os R$ 1.200 de 13/10 (cartão, 4x) são a avaliação neuropsicológica da família Alcici (mãe, filho e pai:
+Michelle Soares Silva Alcici, Daniel Alcici Barbosa e Gabriel/João Victor Barbosa), pagos além da permuta, sem lançamento
+no app; os R$ 15 a mais da Samantha em 02/10 provavelmente são a taxa da maquininha que a recepção acrescentou.
+
+**Servidor** (`app/server/server-fase2.js`): `importarExtrato` (OFX, só entradas, sem repetir pelo FITID) e
+`importarVendasCartao` (CSV ";", só aprovadas, sem repetir pelo código da transação) gravam nas abas novas `Extrato bancário`
+e `Vendas no cartão`. `conciliacao({chave})` cruza com os lançamentos Pago Sim/Parcial em Pix ou cartão de todas as abas de
+mês que ainda não têm a coluna `Conciliado` preenchida:
+1. Pix de convênio (todas as palavras de um nome da lista Convênio) → sugere "convênio (fatura)"; de profissional (as
+   palavras do nome na aba Profissionais, sem Dr./Dra.) → "aluguel de sala". Esses só casam com lançamento se o nome conferir
+   (o Vitor Barcelos é profissional e também tem lançamento de R$ 400).
+2. Pix × um lançamento: mesmo valor, ±3 dias; nome confere (≥ metade das palavras) = "forte", senão "confira".
+3. Pix × 2 a 4 lançamentos do mesmo pagador (de 7 dias antes a 3 depois) somando o valor.
+4. Venda no cartão × lançamento em cartão do mesmo dia, venda até 10% maior (diferença = aviso de acréscimo); venda ×
+   depósito "Vendas" pelo líquido e a liberação ±2 dias.
+`conciliar({itens})` grava situação, "Ligado a", observação e carimbo; na aba do mês escreve em `Conciliado` (coluna nova no
+fim) e confere o ID da linha antes (se mudou de lugar, recusa). Só a gestão (as 4 funções).
+
+**Tela** (`app/client/js/62-conciliacao.js`, menu Conciliação, só gestão): importar OFX/CSV, resumo, Bateu (fortes já
+marcadas), No banco sem lançamento (situação + ligar a lançamento), Lançado sem banco (link pra Ficha), Vendas no cartão,
+Já resolvidas. Não tem "desfazer" na tela (o README-GESTAO diz como desfazer na planilha).
+
+**Com os dados reais** (OFX 01/09–15/10 e CSV, numa planilha falsa, nada gravado): setembro 58 entradas, 32 sugestões (27
+fortes), 21 sem lançamento (quase tudo pagamento de agosto no começo de setembro → "mês anterior ao app"), Marileia →
+aluguel de sala; outubro 43 entradas, 27 sugestões, Cedplan R$ 6.137,79 → convênio, sem banco R$ 300 (Davi 80+80 parece
+lançado duas vezes, Victor 70, Paulo Henrique 70). Cartão: 5 vendas = 5 depósitos, taxas R$ 40,58.
+
+**Testado**: `tests/servidor-conciliacao.test.js`; simulação 1280/390 px (confirmar, salvar situação, ligar a lançamento,
+importar) sem erro; recepção não vê o menu nem a tela.
+
+**Na real, depois do OK**: importar o OFX e o CSV que a gestão mandou (estão só no chat; ela pode importar pela tela) e
+conferir setembro e outubro com ela.

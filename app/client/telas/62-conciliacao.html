@@ -1,0 +1,42 @@
+<section class="tela coluna" id="s-conciliacao" hidden>
+  <div class="titulo">
+    <h1>Conciliação</h1>
+    <div class="acoes" style="gap:4px">
+      <button type="button" class="btn icone p" id="cc-ant" aria-label="Mês anterior"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg></button>
+      <strong id="cc-mes" style="min-width:130px;text-align:center"></strong>
+      <button type="button" class="btn icone p" id="cc-prox" aria-label="Próximo mês"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button>
+    </div>
+    <span class="muted">só a gestão vê · extrato do PagBank × lançamentos em Pix e cartão</span>
+    <span class="esp"></span>
+    <label class="btn ter" for="cc-arq-ofx" tabindex="0">Importar extrato (OFX)</label>
+    <input type="file" id="cc-arq-ofx" accept=".ofx,.OFX,text/plain" hidden>
+    <label class="btn ter" for="cc-arq-csv" tabindex="0">Importar vendas no cartão (CSV)</label>
+    <input type="file" id="cc-arq-csv" accept=".csv,text/csv" hidden>
+  </div>
+  <div id="cc-carregando" class="carregando">Carregando…</div>
+  <div id="cc-aviso"></div>
+  <div class="fd-resumo" id="cc-resumo"></div>
+  <section class="card compacto" id="cc-sug-card">
+    <div class="passo" style="padding:0"><h2 style="font-size:15px">Bateu: banco × lançamento</h2><span class="tag verde" id="cc-n-sug">0</span><span class="esp"></span><button type="button" class="btn mini" id="cc-confirmar">Confirmar marcados</button></div>
+    <div class="muted" style="font-size:13px">As que batem valor, data e nome já vêm marcadas. As com aviso, confira antes de marcar.</div>
+    <div class="fd-lista" id="cc-sug"></div>
+  </section>
+  <section class="card compacto">
+    <div class="passo" style="padding:0"><h2 style="font-size:15px">No banco, sem lançamento</h2><span class="tag laranja" id="cc-n-semlanc">0</span></div>
+    <div class="muted" style="font-size:13px">Entrou na conta e o app não achou de quem é. Diga o que é, ou ligue a um lançamento da lista de baixo.</div>
+    <div class="fd-lista" id="cc-semlanc"></div>
+  </section>
+  <section class="card compacto">
+    <div class="passo" style="padding:0"><h2 style="font-size:15px">Lançado, sem entrar no banco</h2><span class="tag amarela" id="cc-n-sembanco">0</span></div>
+    <div class="muted" style="font-size:13px">Lançado como Pix ou cartão e pago, mas não achei no extrato. Confira se foi pago mesmo, se a forma está certa (pode ter sido dinheiro) ou se foi lançado duas vezes.</div>
+    <div class="fd-lista" id="cc-sembanco"></div>
+  </section>
+  <section class="card compacto" id="cc-vendas-card">
+    <div class="passo" style="padding:0"><h2 style="font-size:15px">Vendas no cartão do mês</h2><span class="muted" id="cc-taxas"></span></div>
+    <div class="tabela-wrap"><table class="cc-tab"><thead><tr><th>Data</th><th>Forma</th><th class="num">Bruto</th><th class="num">Taxa</th><th class="num">Líquido</th><th>Caiu na conta</th><th>Situação</th></tr></thead><tbody id="cc-vendas"></tbody></table></div>
+  </section>
+  <details class="card compacto" id="cc-res-card">
+    <summary><b>Já resolvidas</b> <span class="muted" id="cc-n-res"></span></summary>
+    <div class="fd-lista" id="cc-res" style="margin-top:10px"></div>
+  </details>
+</section>
