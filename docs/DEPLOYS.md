@@ -24,7 +24,7 @@ coluna E não afeta o app. Atualizar `E2` faz parte de toda publicação (passo 
 | Canal | Deploy | Peças | Commit |
 |---|---|---|---|
 | Real (`arquivos_real`) | **2026-10-16-05** (Conciliação PagBank) | 54 (duplicatas 3 · server 17 · index 34); ativas = 830–883; `antigo34:` = as do 2026-10-16-03 (780–829) | branch `claude/sweet-wozniak-aviy8u`, commit 64a8e16 |
-| Teste (`arquivos`) | **2026-10-16-04** (Conciliação PagBank) | 54 (duplicatas 3 · server 17 · index 34), linhas 522–575; `antigo38:` = as do 16-02 (472–521) | branch `claude/sweet-wozniak-aviy8u`, commit 64a8e16 |
+| Teste (`arquivos`) | **2026-10-16-06** (A receber e perdas) | 56 (duplicatas 3 · server 18 · index 35), linhas 576–631; `antigo39:` = as do 16-04 (522–575) | branch `claude/sweet-wozniak-aviy8u`, commit 0b256c0 |
 | Carregador real | 2026-10-06-02 (`dist/Code.real.gs`, implantado pela Roberta) | — | 4ad0272 |
 | Carregador teste | 2026-10-04-01 + nova versão pendente desde 05/10 (permissão do Drive, ver `COMO-INSTALAR.md`) | — | — |
 
@@ -48,6 +48,15 @@ Modelo:
 ```
 
 ## Lista
+
+### 2026-10-16-06 · Teste · A receber e perdas
+- **O que mudou**: menu **A receber** (só gestão; ver `NOTAS-fase2.md` 5b): a receber de todos os meses por idade, dar como
+  perdido em lote (com motivo), perdas do ano. A regra do a receber de Pendências passou para `emAberto_` (mesmo resultado).
+- **Peças**: 56 em `arquivos!A576:C631` com `novo:`; 13 iguais ao 16-04 copiadas por "colar valores", 43 gravadas (4
+  agentes). Lidas de volta: **56/56 iguais** à cópia de `dist/pedacos.json` tirada antes de gravar; index e duplicatas +
+  server iguais. Ativação numa gravação só (A522:A631): 522–575 → `antigo39:`; ativas = só 576–631. E2 carimbado.
+- **Dados**: nenhum. **Voltar**: `antigo39:` → nome (522–575) e 576–631 → `antigo40:`.
+- **Commit**: 0b256c0 · **Aprovação**: só teste.
 
 ### 2026-10-16-05 · Real · Conciliação (PagBank)
 - **O que mudou**: o mesmo código do teste 2026-10-16-04 (menu Conciliação, só gestão).

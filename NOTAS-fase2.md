@@ -18,8 +18,8 @@ Arquivo de retomada da Fase 2 (começou em 15/10/2026, à noite). Quem abrir um 
 | 3 | Carga de telefones do ControleOdonto | 19 gravados na real (16/10, a 1ª página); faltam as outras páginas |
 | 4 | **Ficha do paciente** | **real** (16-03) |
 | 5 | **Conciliação** (gestão escolheu começar por ela) | **real** (16-05) |
-| 5b | **A receber e perdas** (todos os meses, por idade; dar como perdido em lote; perdas do ano) | no teste |
-| 5c | Parcelas (avaliação parcelada e dívida renegociada) | a fazer |
+| 5b | **A receber e perdas** (todos os meses, por idade; dar como perdido em lote; perdas do ano) | **teste** (16-06) |
+| 5c | **Parcelamentos** (serviço parcelado e dívida renegociada, na Ficha) | pronto, a publicar no teste |
 | 6 | Alertas (avisos dentro da Ficha e da Agenda, não tela própria) | a fazer |
 
 Fora da lista por enquanto: check-in e alta (não escolhidos em 15/10).
@@ -233,3 +233,33 @@ tudo até 30 dias; muitas são "Pagamento de setembro (valor do mês)"); 7 perdi
 
 **Testado**: `tests/servidor-perdas.test.js`; simulação 1280/390 (filtros, busca, motivo obrigatório, dois cliques,
 perdas do ano, Ficha); recepção não vê.
+
+## 5c. Parcelamentos
+
+**Decisões da gestão (16/10)**: parcelas são "avaliação parcelada" e "dívida renegociada" (cartão parcelado não: o
+PagBank antecipa). Avaliação: **um lançamento por parcela paga**, no mês do pagamento (como o Vitor, 01/09 e 07/10).
+Dívida: **as linhas antigas recebem** (abatimento da mais antiga, Parcial até quitar); em dia saem do a receber, atrasado
+volta. **Gestão e recepção criam e recebem.**
+
+**Servidor** (`server-fase2.js`): abas novas `Parcelamentos` (ID P-…, paciente, pagador, tipo, descrição, procedimento,
+profissional, total, nº de parcelas, vencimentos em texto "dd/mm/aaaa R$ x; …", lançamentos ligados "Aba!ID; …",
+situação ativo/quitado/cancelado, observação, carimbo) e `Pagamentos de parcelas` (um pagamento por linha); coluna
+`Parcelamento (ID)` no fim da aba do mês. Vencimentos mensais no mesmo dia (último dia quando não existe), parcelas
+iguais e a última com os centavos. O estado (pago, saldo, parcela paga/parcial/aberta/atrasada, próxima) é calculado dos
+pagamentos, que cobrem as parcelas em ordem. `pagarParcela`: serviço → `registrarAtendimento` (Atendido, Pago Sim, NF
+Sim se tiver número) + coluna do acordo; dívida → `corrigirLancamento` com `recebidoAgora` linha a linha. Quitou →
+Situação "quitado". `cancelarParcelamento` exige motivo. `parcEmDia_()` tira as sessões de dívida em dia de
+`aReceber`, de `gestaoResumo.pagamentoPendente` e do "a receber" da Ficha (lá aparecem como "no parcelamento");
+`aReceber` também devolve `parcelasVencidas` dos serviços parcelados.
+
+**Conciliação ajustada**: `recebimentosApp_` separa cada "Recebido R$ X em dd/mm/aaaa (forma)" da Observação em um
+recebimento (antes uma linha Parcial virava um só, com a soma e a última data, e não casava com nenhum Pix); a coluna
+`Conciliado` acumula ("… | …") e conta quantos já foram conciliados. Com os dados reais, nenhuma sugestão mudou.
+
+**Tela** (`33-parcelas.js`, card na Ficha): lista os acordos com as parcelas (verde paga, amarela parcial, vermelha
+atrasada), Registrar pagamento (valor da próxima já preenchido), Cancelar (motivo, dois cliques) e Novo parcelamento
+(serviço ou sessões em aberto, com a prévia dos vencimentos). Ficha no celular: o resumo passou a 2 colunas (estourava
+15 px desde a 16-01).
+
+**Testado**: `tests/servidor-parcelas.test.js` (serviço, dívida, atraso, cancelamento, conciliação do Pix da parcela);
+simulação 1280 gestão e 390 recepção sem erro.

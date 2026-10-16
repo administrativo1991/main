@@ -89,6 +89,14 @@ Aplicação de teste de paciente de convênio pede a **guia assinada**, como qua
 - **Ficha**: tudo do paciente numa tela (contatos, o que deve, guias, sessões, próximos horários, cobrança, mensagens).
   Abre em Pacientes → Ficha, no painel da Agenda (**Ver ficha**), no Registrar e clicando no nome na Cobrança do mês.
 - Depois de cadastrar aqui, cadastre também no ControleOdonto.
+- **Parcelamentos** (na Ficha): quando o paciente combina pagar em várias vezes.
+  - **Serviço parcelado** (ex.: avaliação neuropsicológica): procedimento, profissional, valor total, nº de parcelas e o 1º
+    vencimento (as outras vencem no mesmo dia dos meses seguintes). Cada pagamento registrado vira um lançamento no mês em
+    que o dinheiro entrou ("parcela 2/3" na Observação). Não registre a parcela também pelo Registrar.
+  - **Sessões em aberto**: marque as sessões que o paciente vai pagar parceladas. Cada pagamento é abatido nelas, da mais
+    antiga para a mais nova. Enquanto o acordo estiver em dia, elas saem do "a receber"; se atrasar, voltam.
+  - **Registrar pagamento**: o valor já vem com o da próxima parcela; escolha a forma. **Cancelar** pede o motivo e não
+    apaga os pagamentos já feitos.
 
 ## 5. Cobrança do mês
 

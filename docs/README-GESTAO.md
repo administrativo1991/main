@@ -20,6 +20,7 @@ Perfil decidido pelo e-mail logado: `administrativo@clinicanascente.com.br` mais
 | `Extrato bancário` (criada pelo app) | uma linha por entrada do extrato do PagBank importado (Conciliação); a situação e a ligação com o lançamento são escritas quando você confirma |
 | `Vendas no cartão` (criada pelo app) | uma linha por venda do CSV do PagBank (bruto, taxa, líquido, liberação) e o depósito em que caiu |
 | aba do mês, coluna `Conciliado` (no fim) | quando você confirma na Conciliação: "PagBank dd/mm · R$ valor · código · quem · quando" (ou "Cartão …") |
+| `Parcelamentos` e `Pagamentos de parcelas` (criadas pelo app) | um acordo por linha (total, vencimentos, sessões ligadas, situação ativo/quitado/cancelado) e um pagamento por linha; na aba do mês, coluna `Parcelamento (ID)` no fim, nas sessões de dívida parcelada e nos lançamentos de parcela paga |
 
 Nenhuma linha é apagada pelo app. Correções em registros já gravados são feitas por você na planilha; o ID da linha (coluna T) aparece na tela verde da recepção.
 
@@ -79,6 +80,21 @@ Menu **A receber** (só a gestão).
   e "PERDIDO / glosa: motivo" na Observação, como na correção de Pendências.
 - **Perdas do ano**: quanto se perdeu por mês (e o % do atendido), por motivo, por convênio e por profissional, e a lista.
   Linhas marcadas direto na planilha sem motivo aparecem como "sem motivo escrito".
+
+## Parcelamentos (Fase 2)
+
+Ficam na **Ficha do paciente** (card "Parcelamentos"); gestão e recepção criam e recebem.
+
+- **Serviço parcelado** (avaliação etc.): o acordo guarda o total e os vencimentos; cada pagamento vira um lançamento
+  "Atendido" com Pago? = Sim no mês do pagamento (como foi feito à mão com o Vitor em 01/09 e 07/10), com "parcela n/N do
+  parcelamento P-…" na Observação. As aplicações de teste continuam como estão (Não se aplica).
+- **Sessões em aberto** (dívida renegociada): as sessões escolhidas ficam ligadas ao acordo; cada pagamento é abatido
+  nelas da mais antiga para a mais nova (Parcial até quitar). Em dia, saem do a receber (Pendências e A receber); com
+  parcela vencida, voltam.
+- Parcela de serviço parcelado vencida aparece em **A receber → Em aberto**, em "Parcelas vencidas".
+- A Conciliação lê cada pagamento anotado numa linha ("Recebido R$ … em … (Pix)") como um recebimento separado, então o
+  Pix de uma parcela casa mesmo quando foi abatido em duas sessões.
+- Cancelar só muda a Situação para "cancelado" (com o motivo na Observação); nada é apagado.
 
 ## Rotina mensal
 

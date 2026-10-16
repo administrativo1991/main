@@ -683,3 +683,15 @@ table.cm .acoes{justify-content:flex-end;gap:4px;flex-wrap:wrap}
 .ar-barra #ar-sel{font-weight:700}
 table.ar-mini{min-width:0}
 @media (max-width:700px){ .ar-faixas,#ar-p-resumo{grid-template-columns:repeat(2,minmax(0,1fr))} .ar-barra{bottom:64px} }
+/* parcelamentos na Ficha (Fase 2, 16/10) */
+.fi-parc{flex-direction:column;align-items:stretch;gap:6px}
+.fi-parc-cab{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px}
+.fi-parc .sub{font-size:12px;color:var(--tx3)}
+.fi-parc-chips{display:flex;flex-wrap:wrap;gap:4px}
+.fi-parc .acoes{display:flex;flex-wrap:wrap;gap:6px}
+.fi-parc-form{display:flex;flex-wrap:wrap;gap:8px 10px;align-items:flex-end}
+.fi-parc-form .campo{flex:1 1 140px}
+.fi-parc-form input,.fi-parc-form select{min-height:38px;padding:7px 10px;font-size:14px}
+.fi-parc-novo{display:flex;flex-direction:column;gap:10px;padding:12px;border:1px dashed var(--borda-in);border-radius:12px;margin:8px 0}
+.fi-parc-novo .check{margin:4px 0}
+@media (max-width:700px){ #fi-resumo{grid-template-columns:repeat(2,minmax(0,1fr))} }

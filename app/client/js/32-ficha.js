@@ -37,7 +37,7 @@ function renderFicha() {
   var atend = r.sessoes.filter(function (x) { return /^Atendido/.test(x.oque); }).length, faltas = r.sessoes.filter(function (x) { return /^(Faltou|Desmarcou)/.test(x.oque); }).length;
   $("#fi-resumo").innerHTML = '<div class="' + (totR ? 'atencao' : '') + '"><b>' + esc(rs(totR)) + '</b><span>a receber</span></div><div><b>' + r.aberto.filter(function (x) { return x.tipo === 'guia'; }).length + '</b><span>guias a assinar</span></div><div><b>' + (r.ultimaVez ? esc(r.ultimaVez.data.slice(0, 5)) : '—') + '</b><span>última vez' + (r.ultimaVez ? ' · ' + esc(profCurto(r.ultimaVez.profissional)) : '') + '</span></div><div><b>' + atend + '</b><span>atendimentos (abas de mês)</span></div><div><b>' + faltas + '</b><span>faltas e desmarcações</span></div>';
   // em aberto
-  var rot = { receber: ['a receber', 'amarela'], guia: ['guia a assinar', 'lilas'], nf: ['NF a emitir', 'laranja'] };
+  var rot = { receber: ['a receber', 'amarela'], guia: ['guia a assinar', 'lilas'], nf: ['NF a emitir', 'laranja'], acordo: ['no parcelamento (em dia)', 'lilas'] };
   $("#fi-n-aberto").textContent = r.aberto.length;
   fiLista('fi-aberto', r.aberto, function (x) { return fiItem('<span class="quem">' + esc(x.r.data.slice(0, 5)) + '</span><span class="muted">' + esc(profCurto(x.r.profissional) + ' · ' + (x.r.procedimento || '')) + '</span>', x.tipo !== 'guia' && x.r.saldo ? '<b>' + esc(rs(x.tipo === 'nf' ? x.r.valor : x.r.saldo)) + '</b>' : '', '<span class="tag ' + rot[x.tipo][1] + '">' + rot[x.tipo][0] + '</span>'); }, 'Nada em aberto.');
   // sessões
@@ -54,5 +54,6 @@ function renderFicha() {
   // mensagens e alterações
   fiLista('fi-msgs', r.mensagens, function (x) { return fiItem('<span class="quem">' + esc(String(x.quando).slice(0, 16)) + '</span><span class="muted">' + esc(x.tipo + (x.sessao ? ' · sessão ' + String(x.sessao).slice(0, 5) : '') + (x.competencia ? ' · ' + x.competencia : '') + (x.valor ? ' · ' + rs(x.valor) : '')) + '</span>', '<span class="muted">' + esc(x.por) + '</span>'); }, 'Nenhuma mensagem pelo app ainda.');
   fiLista('fi-alts', r.alteracoes, function (x) { return '<div class="fd-item"><span class="quem">' + esc(String(x.quando).slice(0, 10)) + '</span><span>' + esc(x.campo) + ': <span class="muted">' + esc(x.de || '(vazio)') + '</span> → <b>' + esc(x.para) + '</b><div class="sub">' + esc(x.quem) + '</div></span></div>'; }, 'Nenhuma alteração registrada.');
+  if (typeof renderParcFicha === 'function') renderParcFicha();
   $("#fi-corpo").hidden = false;
 }

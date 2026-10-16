@@ -994,7 +994,7 @@ function linhasMes_(nome) {
     var pac = String(g(r, 'PACIENTE') || '').trim(); if (!pac) return;
     out.push({ linha: i + 2, data: fmtData_(g(r, 'DATA')), hora: horaTxt_(g(r, 'HORA')), paciente: pac, profissional: String(g(r, 'PROFISSIONAL') || ''), procedimento: String(g(r, 'PROCEDIMENTO') || ''),
       convenio: String(g(r, 'CONV') || ''), modalidade: String(g(r, 'MOD') || ''), oque: String(g(r, 'OQUE') || ''), valor: numBR_(g(r, 'VALOR')), recebido: numBR_(g(r, 'RECEBIDO')), pago: String(g(r, 'PAGO') || '').trim(), dataPag: fmtData_(g(r, 'DATA_PAG')),
-      forma: String(g(r, 'FORMA') || ''), quem: String(g(r, 'QUEM') || ''), nf: String(g(r, 'NF') || '').trim(), nfN: String(g(r, 'NF_N') || ''), guia: String(g(r, 'GUIA') || '').trim(), obs: String(g(r, 'OBS') || ''), id: String(g(r, 'ID') || ''), log: String(g(r, 'LOG') || ''), detalhe: String(g(r, 'DETALHE') || ''), decisao: String(g(r, 'DECISAO') || '').trim() });
+      forma: String(g(r, 'FORMA') || ''), quem: String(g(r, 'QUEM') || ''), nf: String(g(r, 'NF') || '').trim(), nfN: String(g(r, 'NF_N') || ''), guia: String(g(r, 'GUIA') || '').trim(), obs: String(g(r, 'OBS') || ''), id: String(g(r, 'ID') || ''), log: String(g(r, 'LOG') || ''), detalhe: String(g(r, 'DETALHE') || ''), decisao: String(g(r, 'DECISAO') || '').trim(), parc: String(g(r, 'Parcelamento (ID)') || '').trim() });
   });
   return { existe: true, linhas: out };
 }
@@ -1026,7 +1026,7 @@ API.gestaoResumo = function (d) {
     ok: true, mes: mes, abaExiste: m.existe, total: L.length, atendidos: atend.length,
     recebido: atend.reduce(function (a, r) { return a + (r.pago === 'Sim' ? r.valor : r.pago === 'Parcial' ? r.recebido : 0); }, 0),
     // regra em emAberto_ (a mesma da tela "A receber")
-    pagamentoPendente: atend.filter(emAberto_),
+    pagamentoPendente: atend.filter(function (r) { return emAberto_(r) && !(typeof parcEmDia_ === 'function' && parcEmDia_()[r.parc]); }), // dívida num parcelamento em dia sai daqui (Fase 2)
     nfPendente: atend.filter(function (r) { return (r.pago === 'Sim' || r.pago === 'Parcial') && r.nf !== 'Sim' && r.nf !== 'Não se aplica'; }),
     semGuia: L.filter(function (r) { return (!particular(r) || /^Convênio/i.test(r.pago)) && r.guia !== 'Sim' && /^Atendido/.test(r.oque) && !ehPerdido_(r.pago); }),
     // Faltas → Decidir (gestão, 15/10): TODA falta e desmarcação entra, com o Detalhe da recepção e a decisão da gestão

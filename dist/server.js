@@ -1386,7 +1386,7 @@ function linhasMes_(nome) {
     var pac = String(g(r, 'PACIENTE') || '').trim(); if (!pac) return;
     out.push({ linha: i + 2, data: fmtData_(g(r, 'DATA')), hora: horaTxt_(g(r, 'HORA')), paciente: pac, profissional: String(g(r, 'PROFISSIONAL') || ''), procedimento: String(g(r, 'PROCEDIMENTO') || ''),
       convenio: String(g(r, 'CONV') || ''), modalidade: String(g(r, 'MOD') || ''), oque: String(g(r, 'OQUE') || ''), valor: numBR_(g(r, 'VALOR')), recebido: numBR_(g(r, 'RECEBIDO')), pago: String(g(r, 'PAGO') || '').trim(), dataPag: fmtData_(g(r, 'DATA_PAG')),
-      forma: String(g(r, 'FORMA') || ''), quem: String(g(r, 'QUEM') || ''), nf: String(g(r, 'NF') || '').trim(), nfN: String(g(r, 'NF_N') || ''), guia: String(g(r, 'GUIA') || '').trim(), obs: String(g(r, 'OBS') || ''), id: String(g(r, 'ID') || ''), log: String(g(r, 'LOG') || ''), detalhe: String(g(r, 'DETALHE') || ''), decisao: String(g(r, 'DECISAO') || '').trim() });
+      forma: String(g(r, 'FORMA') || ''), quem: String(g(r, 'QUEM') || ''), nf: String(g(r, 'NF') || '').trim(), nfN: String(g(r, 'NF_N') || ''), guia: String(g(r, 'GUIA') || '').trim(), obs: String(g(r, 'OBS') || ''), id: String(g(r, 'ID') || ''), log: String(g(r, 'LOG') || ''), detalhe: String(g(r, 'DETALHE') || ''), decisao: String(g(r, 'DECISAO') || '').trim(), parc: String(g(r, 'Parcelamento (ID)') || '').trim() });
   });
   return { existe: true, linhas: out };
 }
@@ -1418,7 +1418,7 @@ API.gestaoResumo = function (d) {
     ok: true, mes: mes, abaExiste: m.existe, total: L.length, atendidos: atend.length,
     recebido: atend.reduce(function (a, r) { return a + (r.pago === 'Sim' ? r.valor : r.pago === 'Parcial' ? r.recebido : 0); }, 0),
     // regra em emAberto_ (a mesma da tela "A receber")
-    pagamentoPendente: atend.filter(emAberto_),
+    pagamentoPendente: atend.filter(function (r) { return emAberto_(r) && !(typeof parcEmDia_ === 'function' && parcEmDia_()[r.parc]); }), // dívida num parcelamento em dia sai daqui (Fase 2)
     nfPendente: atend.filter(function (r) { return (r.pago === 'Sim' || r.pago === 'Parcial') && r.nf !== 'Sim' && r.nf !== 'Não se aplica'; }),
     semGuia: L.filter(function (r) { return (!particular(r) || /^Convênio/i.test(r.pago)) && r.guia !== 'Sim' && /^Atendido/.test(r.oque) && !ehPerdido_(r.pago); }),
     // Faltas → Decidir (gestão, 15/10): TODA falta e desmarcação entra, com o Detalhe da recepção e a decisão da gestão
@@ -2347,11 +2347,12 @@ API.fichaPaciente = function (d) {
   var dn = function (r) { var x = parseData_(r.data); return x ? ymdNum_(x) : 0; };
   sessoes.sort(function (a, b) { return dn(b) - dn(a) || String(b.hora).localeCompare(String(a.hora)); });
   // em aberto: mesma regra das pendências da Agenda (particular atendido sem pagar; convênio sem guia) + NF a emitir
-  var aberto = [];
+  var aberto = [], emDiaP = parcEmDia_();
   sessoes.forEach(function (r) {
     if (!/^Atendido/.test(r.oque) || ehPerdido_(r.pago)) return;
     var particular = !r.convenio || /^Particular$/i.test(r.convenio);
-    if (particular && (r.pago === '' || r.pago === 'Não' || r.pago === 'Parcial') && (!/^Mensalidade|pacote|plano|mensal|convênio|AAPI/i.test(r.procedimento) || /\(compra\)/i.test(r.procedimento)) && r.saldo > 0) aberto.push({ tipo: 'receber', r: r });
+    if (particular && emDiaP[r.parc] && r.saldo > 0 && (r.pago === '' || r.pago === 'Não' || r.pago === 'Parcial')) aberto.push({ tipo: 'acordo', r: r }); // dívida num parcelamento em dia
+    else if (particular && (r.pago === '' || r.pago === 'Não' || r.pago === 'Parcial') && (!/^Mensalidade|pacote|plano|mensal|convênio|AAPI/i.test(r.procedimento) || /\(compra\)/i.test(r.procedimento)) && r.saldo > 0) aberto.push({ tipo: 'receber', r: r });
     else if ((!particular || /^Convênio/i.test(r.pago)) && r.guia !== 'Sim') aberto.push({ tipo: 'guia', r: r });
     if ((r.pago === 'Sim' || r.pago === 'Parcial') && r.nf !== 'Sim' && r.valor > 0) aberto.push({ tipo: 'nf', r: r });
   });
@@ -2366,7 +2367,7 @@ API.fichaPaciente = function (d) {
     .map(function (r) { return { quando: String(r['Data/hora'] || ''), campo: r['Campo'], de: String(r['De'] || ''), para: String(r['Para'] || ''), quem: r['Quem informou'] || '' }; });
   var ult = sessoes.filter(function (r) { return /^Atendido/.test(r.oque) && dn(r) <= hojeN; })[0];
   return { ok: true, paciente: { nome: nome, nasc: p.nasc, ativo: p.ativo, convenio: p.convenio, pagador: p.pagador, obsCobranca: p.obsCobranca, resp: p.resp, respPar: p.respPar, whats: p.whats, respTel: p.respTel, telPac: p.telPac, fone: f.fone, foneFmt: f.foneFmt, foneDe: f.de, fixoFmt: f.fixoFmt, cpfFinal: Duplicatas.digitos(p.cpf).slice(-4) },
-    cobrancas: cobrancas, fixos: fixos, proximos: proximos, aberto: aberto, mensal: mensal, sessoes: sessoes.slice(0, 80), totalSessoes: sessoes.length, ultimaVez: ult ? { data: ult.data, profissional: ult.profissional } : null, mensagens: msgs, alteracoes: alts };
+    cobrancas: cobrancas, fixos: fixos, proximos: proximos, aberto: aberto, mensal: mensal, sessoes: sessoes.slice(0, 80), totalSessoes: sessoes.length, ultimaVez: ult ? { data: ult.data, profissional: ult.profissional } : null, mensagens: msgs, alteracoes: alts, parcelamentos: API.parcelamentos({ paciente: nome }).acordos };
 };
 
 /* ---------- Conciliação (Fase 2, 16/10; só gestão) ----------
@@ -2456,11 +2457,21 @@ function recebimentosApp_() {
     var concs = cc && s.getLastRow() >= 2 ? s.getRange(2, cc, s.getLastRow() - 1, 1).getValues() : [];
     linhasMes_(m).linhas.forEach(function (r) {
       if (!(r.pago === 'Sim' || r.pago === 'Parcial')) return;
-      var forma = String(r.forma || ''); if (!/pix|cart/i.test(forma)) return;
-      var valor = r.pago === 'Parcial' ? r.recebido : r.valor; if (!(valor > 0)) return;
+      var total = r.pago === 'Parcial' ? r.recebido : r.valor; if (!(total > 0)) return;
+      // cada recebimento anotado na Observação ("Recebido R$ 50,00 em 20/10/2026 (Pix)", correção e parcelas) é uma entrada
+      // separada; o que sobra é o primeiro pagamento, na data da sessão
+      var pays = [], m2, re = /Recebido R\$ ([\d.,]+) em (\d{2}\/\d{2}\/\d{4}) \(([^)]*)\)/g;
+      while ((m2 = re.exec(r.obs || ''))) pays.push({ valor: numBR_(m2[1]), dataPag: m2[2], forma: m2[3] });
+      var soma = pays.reduce(function (a, x) { return a + x.valor; }, 0), itens = [];
+      if (!pays.length) itens.push({ valor: total, dataPag: r.dataPag || r.data, forma: String(r.forma || '') });
+      else { if (total - soma > 0.01) itens.push({ valor: Math.round((total - soma) * 100) / 100, dataPag: r.data, forma: String(r.forma || '') }); itens = itens.concat(pays); }
+      var cel = cc ? String((concs[r.linha - 2] || [''])[0] || '') : '', jaConc = (cel.match(/(^|\| )(PagBank|Cartão) /g) || []).length; // quantos recebimentos da linha já foram conciliados
       var p = idx[r.paciente] || {};
-      out.push({ aba: m, linha: r.linha, id: r.id, paciente: r.paciente, profissional: r.profissional, data: r.data, dataPag: r.dataPag || r.data, valor: Math.round(valor * 100) / 100, forma: forma,
-        cartao: /cart/i.test(forma), nomes: [r.paciente, r.quem, p.pagador, p.pagadorExtrato].filter(function (x) { return x; }), conciliado: cc ? String((concs[r.linha - 2] || [''])[0] || '') : '' });
+      itens.forEach(function (it, k) {
+        if (!/pix|cart/i.test(it.forma)) return;
+        out.push({ aba: m, linha: r.linha, chave: m + '!' + r.linha + '#' + k, id: r.id, paciente: r.paciente, profissional: r.profissional, data: r.data, dataPag: it.dataPag, valor: Math.round(it.valor * 100) / 100, forma: it.forma,
+          cartao: /cart/i.test(it.forma), nomes: [r.paciente, r.quem, p.pagador, p.pagadorExtrato].filter(function (x) { return x; }), conciliado: k < jaConc ? cel : '' });
+      });
     });
   });
   return out;
@@ -2473,7 +2484,7 @@ API.conciliacao = function (d) {
   var ext = linhasComo_(planilha_().getSheetByName(ABA_EXT)).filter(function (r) { return r['ID do banco']; }).map(function (r) { return { id: String(r['ID do banco']), data: r['Data'], valor: numBR_(r['Valor (R$)']), tipo: r['Tipo'], quem: r['Quem pagou'], desc: r['Descrição'], situacao: String(r['Situação'] || 'pendente'), ligado: r['Ligado a'] || '', obs: r['Observação'] || '' }; });
   var vendas = linhasComo_(planilha_().getSheetByName(ABA_CART)).filter(function (r) { return r['Código da transação']; }).map(function (r) { return { id: String(r['Código da transação']), data: r['Data'], forma: r['Forma'], parcelas: r['Parcelas'], bandeira: r['Bandeira'], bruto: numBR_(r['Valor bruto (R$)']), taxa: numBR_(r['Taxa (R$)']), liquido: numBR_(r['Valor líquido (R$)']), liberacao: r['Liberação'], comprador: r['Comprador'] || '', situacao: String(r['Situação'] || 'pendente'), ligado: r['Ligado a'] || '', deposito: r['Depósito (ID do banco)'] || '', obs: r['Observação'] || '' }; });
   var recs = recebimentosApp_(), usados = {}, usadosExt = {}, sug = [];
-  var livre = function (r) { return !r.conciliado && !usados[r.aba + '!' + r.linha]; }, usa = function (r) { usados[r.aba + '!' + r.linha] = 1; };
+  var livre = function (r) { return !r.conciliado && !usados[r.chave]; }, usa = function (r) { usados[r.chave] = 1; };
   var extMes = ext.filter(function (e) { return noMes(e.data); }), pend = extMes.filter(function (e) { return e.situacao === 'pendente'; });
   // quem pagou é convênio (aba Listas) ou profissional da clínica: sugere a situação; só casa com lançamento se o nome conferir
   var convs = []; try { convs = colunaLista_(CONFIG.LISTAS.CONVENIO).filter(function (c) { return c && !/^Particular$/i.test(c); }); } catch (e0) { }
@@ -2538,7 +2549,8 @@ API.conciliar = function (d) {
         if (!abas[r.aba]) abas[r.aba] = { s: sm, h: garantirColunas_(sm, [COL_CONC]).h };
         var hm = abas[r.aba].h, idCol = hm[CONFIG.HM.ID] || hm['ID'];
         if (idCol && r.id && String(sm.getRange(r.linha, idCol).getValue()) !== String(r.id)) { erros.push(r.aba + ' linha ' + r.linha + ': o lançamento mudou de lugar; recarregue.'); ok = false; return; }
-        sm.getRange(r.linha, hm[COL_CONC]).setValue((venda ? 'Cartão ' : 'PagBank ') + dataBanco + ' · R$ ' + Mensagens.valorBR(valorBanco) + ' · ' + String(it.id).slice(0, 8) + ' · ' + carimbo);
+        var cel = sm.getRange(r.linha, hm[COL_CONC]), antes = String(cel.getValue() || '').trim(); // linha com mais de um recebimento (parcial, parcelas): acumula
+        cel.setValue((antes ? antes + ' | ' : '') + (venda ? 'Cartão ' : 'PagBank ') + dataBanco + ' · R$ ' + Mensagens.valorBR(valorBanco) + ' · ' + String(it.id).slice(0, 8) + ' · ' + carimbo);
         lig.push(r.aba + '!' + r.linha + (r.id ? ' (' + r.id + ')' : ''));
       });
       if (!ok) return;
@@ -2562,19 +2574,21 @@ function abasDeMes_() { return CONFIG.MESES.filter(function (m) { return !!plani
 function motivoPerda_(obs) { var m = String(obs || '').match(/PERDIDO \/ glosa:\s*([^|]+)/i); return m ? m[1].trim() : ''; }
 API.aReceber = function () {
   var neg = soGestao_(); if (neg) return neg;
-  var hoje = ymdDate_(new Date()), idx = {}, linhas = [];
+  var hoje = ymdDate_(new Date()), idx = {}, linhas = [], emDia = parcEmDia_();
   indicePacientes_().forEach(function (p) { idx[p.nome] = p; });
   abasDeMes_().forEach(function (aba) {
     linhasMes_(aba).linhas.forEach(function (r) {
-      if (!emAberto_(r)) return; var saldo = saldo_(r); if (!(saldo > 0)) return;
+      if (!emAberto_(r) || emDia[r.parc]) return; var saldo = saldo_(r); if (!(saldo > 0)) return;
       var d = ymdDate_(r.data), dias = d ? Math.round((hoje - d) / 864e5) : 0, p = idx[r.paciente] || {};
       linhas.push({ aba: aba, linha: r.linha, id: r.id, data: r.data, paciente: r.paciente, pagador: p.pagador || '', profissional: r.profissional, procedimento: r.procedimento,
-        valor: r.valor, saldo: saldo, pago: r.pago || '(vazio)', dias: dias, faixa: dias <= 30 ? 'ate30' : dias <= 60 ? 'ate60' : 'mais60', obs: r.obs });
+        valor: r.valor, saldo: saldo, pago: r.pago || '(vazio)', dias: dias, faixa: dias <= 30 ? 'ate30' : dias <= 60 ? 'ate60' : 'mais60', obs: r.obs, parc: r.parc });
     });
   });
   linhas.sort(function (a, b) { return b.dias - a.dias || (a.paciente < b.paciente ? -1 : 1); });
   var soma = function (f) { return Math.round(linhas.filter(f).reduce(function (a, x) { return a + x.saldo; }, 0) * 100) / 100; };
-  return { ok: true, linhas: linhas, motivos: MOTIVOS_PERDA, total: soma(function () { return true; }),
+  // parcelas vencidas de serviço parcelado (não têm linha na aba do mês até serem pagas)
+  var vencidas = []; acordos_().forEach(function (a) { if (a.situacao !== 'ativo' || a.tipo !== 'avaliacao') return; a.parcelas.forEach(function (q) { if (q.atrasada) vencidas.push({ id: a.id, paciente: a.paciente, pagador: a.pagador, descricao: a.descricao, n: q.n, de: a.n, venc: q.venc, valor: Math.round((q.valor - q.pago) * 100) / 100, dias: Math.round((hoje - ymdDate_(q.venc)) / 864e5) }); }); });
+  return { ok: true, linhas: linhas, parcelasVencidas: vencidas, motivos: MOTIVOS_PERDA, total: soma(function () { return true; }),
     faixas: { ate30: soma(function (x) { return x.faixa === 'ate30'; }), ate60: soma(function (x) { return x.faixa === 'ate60'; }), mais60: soma(function (x) { return x.faixa === 'mais60'; }) } };
 };
 // várias linhas como "Perdido / glosa" de uma vez: [{ aba, id }] + motivo
@@ -2609,6 +2623,150 @@ API.perdasAno = function () {
   var tot = meses.reduce(function (a, m) { a.atendido += m.atendido; a.perdido += m.perdido; a.n += m.n; return a; }, { atendido: 0, perdido: 0, n: 0 });
   return { ok: true, meses: meses, porMotivo: lista(porMotivo), porConvenio: lista(porConv), porProfissional: lista(porProf), linhas: linhas,
     total: { atendido: Math.round(tot.atendido * 100) / 100, perdido: Math.round(tot.perdido * 100) / 100, n: tot.n } };
+};
+
+/* ================= PARCELAMENTOS (Fase 2, 16/10; gestão e recepção) =================
+   Decisões da gestão (16/10): (1) serviço parcelado (ex.: avaliação neuropsicológica): o acordo guarda o total e os vencimentos;
+   cada pagamento vira um lançamento no mês em que o dinheiro entrou ("… · parcela 2/3"), como a gestão já fazia à mão;
+   (2) dívida renegociada: as linhas em aberto ficam ligadas ao acordo (coluna "Parcelamento (ID)" no fim da aba do mês) e cada
+   pagamento é abatido nelas, da mais antiga para a mais nova (Parcial até quitar), sem linha nova; enquanto o acordo está em
+   dia elas saem do a receber, e voltam se atrasar; (3) gestão e recepção criam e recebem. Nada é apagado: cancelar só muda a
+   Situação. Abas criadas pelo app: "Parcelamentos" (um acordo por linha) e "Pagamentos de parcelas" (um pagamento por linha). */
+var ABA_PARC = 'Parcelamentos', ABA_PPAG = 'Pagamentos de parcelas', COL_PARC = 'Parcelamento (ID)';
+var HPARC = ['ID', 'Data do acordo', 'Paciente', 'Pagador', 'Tipo', 'Descrição', 'Procedimento', 'Profissional', 'Valor total (R$)', 'Nº de parcelas', 'Vencimentos', 'Lançamentos ligados', 'Situação', 'Observação', 'Registrado por (app)'];
+var HPPAG = ['ID do parcelamento', 'Data do pagamento', 'Valor (R$)', 'Forma', 'Nº da NF', 'Parcelas', 'Lançamento', 'Registrado por (app)'];
+var TIPOS_PARC = { avaliacao: 'Serviço parcelado', divida: 'Dívida renegociada' };
+function tipoParc_(t) { return /^D[íi]vida/i.test(String(t || '')) || t === 'divida' ? 'divida' : 'avaliacao'; }
+function vencTxt_(l) { return l.map(function (q) { return q.venc + ' ' + brl_(q.valor); }).join('; '); }
+function lerVenc_(t) { var out = []; String(t || '').replace(/(\d{2}\/\d{2}\/\d{4})\s*R?\$?\s*([\d.,]+)/g, function (m, d, v) { out.push({ venc: d, valor: numBR_(v) }); }); return out; }
+// vencimentos mensais no mesmo dia (último dia do mês quando não existe); parcelas iguais, a última leva os centavos
+function montarVenc_(total, n, primeiro) {
+  var cents = Math.round(total * 100), base = Math.floor(cents / n), out = [], d0 = parseData_(primeiro);
+  for (var i = 0; i < n; i++) {
+    var y = d0.getFullYear(), m = d0.getMonth() + i, ult = new Date(y, m + 1, 0).getDate(), d = new Date(y, m, Math.min(d0.getDate(), ult), 12);
+    out.push({ venc: fmtData_(d), valor: (i === n - 1 ? cents - base * (n - 1) : base) / 100 });
+  }
+  return out;
+}
+// estado de um acordo a partir dos pagamentos: cada pagamento cobre as parcelas em ordem
+function estadoAcordo_(a, pagos) {
+  var hoje = ymdDate_(new Date()), resto = pagos.reduce(function (s, p) { return s + p.valor; }, 0), pago = Math.round(resto * 100) / 100;
+  a.pagamentos = pagos; a.pago = pago; a.saldo = Math.max(0, Math.round((a.total - pago) * 100) / 100);
+  a.parcelas = a.venc.map(function (q, i) {
+    var cobre = Math.min(q.valor, Math.max(0, resto)); resto = Math.round((resto - cobre) * 100) / 100;
+    var sit = cobre >= q.valor - 0.005 ? 'paga' : cobre > 0 ? 'parcial' : 'aberta';
+    return { n: i + 1, venc: q.venc, valor: q.valor, pago: Math.round(cobre * 100) / 100, situacao: sit, atrasada: sit !== 'paga' && ymdDate_(q.venc) < hoje };
+  });
+  a.atrasado = a.situacao === 'ativo' && a.parcelas.some(function (q) { return q.atrasada; });
+  a.proxima = a.situacao === 'ativo' ? a.parcelas.filter(function (q) { return q.situacao !== 'paga'; })[0] || null : null;
+  return a;
+}
+function acordos_() {
+  var pagos = {}; linhasComo_(planilha_().getSheetByName(ABA_PPAG)).forEach(function (r) { var id = String(r['ID do parcelamento'] || ''); if (!id) return; (pagos[id] = pagos[id] || []).push({ data: fmtData_(r['Data do pagamento']), valor: numBR_(r['Valor (R$)']), forma: r['Forma'] || '', nf: String(r['Nº da NF'] || ''), parcelas: r['Parcelas'] || '', lancamento: r['Lançamento'] || '' }); });
+  return linhasComo_(planilha_().getSheetByName(ABA_PARC)).filter(function (r) { return r['ID']; }).map(function (r) {
+    var a = { id: String(r['ID']), data: fmtData_(r['Data do acordo']), paciente: r['Paciente'], pagador: r['Pagador'] || '', tipo: tipoParc_(r['Tipo']), tipoTxt: r['Tipo'], descricao: r['Descrição'] || '', procedimento: r['Procedimento'] || '', profissional: r['Profissional'] || '',
+      total: numBR_(r['Valor total (R$)']), n: parseInt(r['Nº de parcelas'], 10) || 0, venc: lerVenc_(r['Vencimentos']), linhas: String(r['Lançamentos ligados'] || '').split(/;\s*/).filter(Boolean).map(function (x) { var m = x.split('!'); return { aba: m[0], id: m[1] }; }),
+      situacao: String(r['Situação'] || 'ativo').trim(), obs: r['Observação'] || '' };
+    return estadoAcordo_(a, pagos[a.id] || []);
+  });
+}
+// IDs de acordo ativo e em dia: as linhas ligadas a eles saem do a receber
+function parcEmDia_() { var o = {}; try { acordos_().forEach(function (a) { if (a.situacao === 'ativo' && !a.atrasado) o[a.id] = 1; }); } catch (e) { } return o; }
+API.parcelamentos = function (d) {
+  d = d || {}; var q = Duplicatas.normalizar(String(d.paciente || ''));
+  var l = acordos_().filter(function (a) { return q ? Duplicatas.normalizar(a.paciente) === q : (d.todos || a.situacao === 'ativo'); });
+  return { ok: true, acordos: l, tipos: TIPOS_PARC };
+};
+API.criarParcelamento = function (d) {
+  d = d || {}; var erros = [], tipo = d.tipo === 'divida' ? 'divida' : 'avaliacao';
+  var pac = indicePacientes_().filter(function (p) { return p.nome === String(d.paciente || '').trim(); })[0]; if (!pac) erros.push('Escolha o paciente.');
+  var n = parseInt(d.parcelas, 10); if (!(n >= 1 && n <= 24)) erros.push('Número de parcelas: de 1 a 24.');
+  var primeiro = parseData_(d.primeiroVencimento); if (!primeiro) erros.push('Primeiro vencimento inválido.');
+  var total = 0, ligadas = [], descricao = String(d.descricao || '').trim(), procedimento = String(d.procedimento || '').trim(), profissional = String(d.profissional || '').trim();
+  if (tipo === 'avaliacao') {
+    total = numBR_(d.total); if (!(total > 0)) erros.push('Valor total maior que zero.');
+    if (!procedimento) erros.push('Escolha o procedimento (sai em cada parcela paga).'); if (!profissional) erros.push('Escolha o profissional.');
+    if (!descricao) descricao = procedimento;
+  } else if (pac) {
+    var emDia = parcEmDia_(), ativos = {}; acordos_().forEach(function (a) { if (a.situacao === 'ativo') ativos[a.id] = 1; });
+    (d.linhas || []).forEach(function (x) {
+      var r = linhasMes_(x.aba).linhas.filter(function (y) { return y.id && y.id === String(x.id); })[0];
+      if (!r) { erros.push('Não achei o lançamento ' + x.id + ' em ' + x.aba + '.'); return; }
+      if (r.paciente !== pac.nome) { erros.push(r.data + ': é de outro paciente.'); return; }
+      if (!emAberto_(r) || !(saldo_(r) > 0)) { erros.push(r.data + ': não está em aberto.'); return; }
+      if (r.parc && ativos[r.parc]) { erros.push(r.data + ': já está no parcelamento ' + r.parc + '.'); return; }
+      ligadas.push({ aba: x.aba, id: r.id, linha: r.linha, data: r.data, saldo: saldo_(r) });
+    });
+    if (!ligadas.length && !erros.length) erros.push('Marque as sessões em aberto que entram no acordo.');
+    total = Math.round(ligadas.reduce(function (s, x) { return s + x.saldo; }, 0) * 100) / 100;
+    if (!descricao) descricao = 'Acordo de ' + ligadas.length + (ligadas.length === 1 ? ' sessão' : ' sessões') + ' em aberto (' + ligadas.map(function (x) { return x.data.slice(0, 5); }).join(', ') + ')';
+  }
+  if (erros.length) return { ok: false, erros: erros };
+  var venc = montarVenc_(total, n, fmtData_(primeiro));
+  var lock = LockService.getScriptLock(); lock.waitLock(20000);
+  try {
+    var s = abaComCabecalho_(ABA_PARC, HPARC), h = garantirColunas_(s, HPARC).h, u = usuario_(), id = novoId_('P');
+    gravarCelulas_(s, proximaLinha_(s, h['ID']), h, { 'ID': id, 'Data do acordo': hoje_(), 'Paciente': pac.nome, 'Pagador': pac.pagador || '', 'Tipo': TIPOS_PARC[tipo], 'Descrição': descricao, 'Procedimento': procedimento, 'Profissional': profissional,
+      'Valor total (R$)': total, 'Nº de parcelas': n, 'Vencimentos': vencTxt_(venc), 'Lançamentos ligados': ligadas.map(function (x) { return x.aba + '!' + x.id; }).join('; '), 'Situação': 'ativo', 'Observação': String(d.obs || '').trim(), 'Registrado por (app)': (u.email || 'app') + ' · ' + agora_() });
+    var porAba = {}; ligadas.forEach(function (x) { (porAba[x.aba] = porAba[x.aba] || []).push(x); });
+    Object.keys(porAba).forEach(function (aba) { var sm = planilha_().getSheetByName(aba), hm = garantirColunas_(sm, [COL_PARC]).h; porAba[aba].forEach(function (x) { sm.getRange(x.linha, hm[COL_PARC]).setValue(id); }); });
+    invalidar_(['comp']); SpreadsheetApp.flush();
+    return { ok: true, id: id, total: total, vencimentos: venc };
+  } finally { lock.releaseLock(); }
+};
+// pagamento de parcela: serviço parcelado → lançamento novo no mês do pagamento; dívida → abate nas linhas ligadas, da mais antiga
+API.pagarParcela = function (d) {
+  d = d || {}; var a = acordos_().filter(function (x) { return x.id === String(d.id || ''); })[0];
+  if (!a) return { ok: false, erros: ['Parcelamento não encontrado.'] };
+  if (a.situacao !== 'ativo') return { ok: false, erros: ['Este parcelamento está ' + a.situacao + '.'] };
+  var valor = numBR_(d.valor), data = parseData_(d.data) || new Date(), forma = String(d.forma || '').trim();
+  if (!(valor > 0)) return { ok: false, erros: ['Informe o valor recebido.'] };
+  if (valor > a.saldo + 0.005) return { ok: false, erros: ['O valor passa do saldo do acordo (' + brl_(a.saldo) + ').'] };
+  if (!forma) return { ok: false, erros: ['Escolha a forma de pagamento.'] };
+  // quais parcelas este pagamento cobre (pra escrever "parcela 2/3" ou "parcelas 2–3/3")
+  var antes = a.pago, cobre = a.parcelas.filter(function (q) { var ini = a.venc.slice(0, q.n - 1).reduce(function (s, x) { return s + x.valor; }, 0); return ini < antes + valor - 0.005 && ini + q.valor > antes + 0.005; }).map(function (q) { return q.n; });
+  var rot = (cobre.length > 1 ? 'parcelas ' + cobre[0] + '–' + cobre[cobre.length - 1] : 'parcela ' + (cobre[0] || a.n)) + '/' + a.n, lanc = [], erros = [];
+  if (a.tipo === 'avaliacao') {
+    var r = API.registrarAtendimento({ paciente: a.paciente, profissional: a.profissional, procedimento: a.procedimento, data: fmtData_(data), hora: '', oque: 'Atendido', pago: 'Sim', valor: valor, forma: forma, dataPagamento: fmtData_(data),
+      nf: String(d.nfNumero || '').trim() ? 'Sim' : 'Não', nfNumero: String(d.nfNumero || '').trim(), quemPagou: String(d.quemPagou || '').trim(), confirmouRepetido: true,
+      observacao: a.descricao + ' · ' + rot + ' do parcelamento ' + a.id + ' (total ' + brl_(a.total) + ')' });
+    if (!r.ok) return r;
+    var sm = planilha_().getSheetByName(r.aba), hm = garantirColunas_(sm, [COL_PARC]).h; sm.getRange(r.linha, hm[COL_PARC]).setValue(a.id);
+    lanc.push(r.aba + '!' + r.id);
+  } else {
+    var resto = valor;
+    a.linhas.map(function (x) { var l = linhasMes_(x.aba).linhas.filter(function (y) { return y.id === x.id; })[0]; return l ? { aba: x.aba, id: x.id, l: l } : null; }).filter(Boolean)
+      .sort(function (x, y) { return ymdDate_(x.l.data) - ymdDate_(y.l.data); })
+      .forEach(function (x) {
+        if (resto < 0.005 || !(saldo_(x.l) > 0) || !/^(Não|Parcial|)$/.test(x.l.pago)) return;
+        var v = Math.min(resto, saldo_(x.l)), rc = API.corrigirLancamento({ aba: x.aba, id: x.id, campos: { recebidoAgora: v, dataPagamento: fmtData_(data), forma: forma, nfNumero: String(d.nfNumero || '').trim(), observacao: rot + ' do parcelamento ' + a.id } });
+        if (rc.ok) { resto = Math.round((resto - v) * 100) / 100; lanc.push(x.aba + '!' + x.id); } else erros.push(x.l.data + ': ' + rc.erros.join(' '));
+      });
+    if (resto > 0.005) { valor = Math.round((valor - resto) * 100) / 100; if (!(valor > 0)) return { ok: false, erros: ['Não consegui abater nas sessões do acordo.'].concat(erros) }; erros.push('Só ' + brl_(valor) + ' cabiam nas sessões do acordo; o resto não foi registrado.'); }
+  }
+  var lock = LockService.getScriptLock(); lock.waitLock(20000);
+  try {
+    var s = abaComCabecalho_(ABA_PPAG, HPPAG), h = garantirColunas_(s, HPPAG).h, u = usuario_(), li = proximaLinha_(s, h['ID do parcelamento']);
+    gravarCelulas_(s, li, h, { 'ID do parcelamento': a.id, 'Data do pagamento': data, 'Valor (R$)': valor, 'Forma': forma, 'Nº da NF': String(d.nfNumero || '').trim(), 'Parcelas': rot, 'Lançamento': lanc.join('; '), 'Registrado por (app)': (u.email || 'app') + ' · ' + agora_() });
+    s.getRange(li, h['Data do pagamento']).setNumberFormat('dd/MM/yyyy');
+    var quitou = a.saldo - valor < 0.005;
+    if (quitou) { var sp = planilha_().getSheetByName(ABA_PARC), hp = cabecalhos_(sp), lp = linhasComo_(sp).filter(function (x) { return String(x['ID']) === a.id; })[0]; if (lp) gravarCelulas_(sp, lp._linha, hp, { 'Situação': 'quitado' }); }
+    invalidar_(['comp']); SpreadsheetApp.flush();
+    return { ok: true, id: a.id, parcelas: rot, lancamentos: lanc, quitado: quitou, erros: erros };
+  } finally { lock.releaseLock(); }
+};
+API.cancelarParcelamento = function (d) {
+  d = d || {}; var motivo = String(d.motivo || '').trim(); if (!motivo) return { ok: false, erros: ['Escreva o motivo do cancelamento.'] };
+  var lock = LockService.getScriptLock(); lock.waitLock(20000);
+  try {
+    var s = planilha_().getSheetByName(ABA_PARC); if (!s) return { ok: false, erros: ['Parcelamento não encontrado.'] };
+    var h = cabecalhos_(s), r = linhasComo_(s).filter(function (x) { return String(x['ID']) === String(d.id || ''); })[0], u = usuario_();
+    if (!r) return { ok: false, erros: ['Parcelamento não encontrado.'] };
+    if (String(r['Situação'] || 'ativo') !== 'ativo') return { ok: false, erros: ['Este parcelamento já está ' + r['Situação'] + '.'] };
+    gravarCelulas_(s, r._linha, h, { 'Situação': 'cancelado', 'Observação': (r['Observação'] ? r['Observação'] + ' | ' : '') + 'Cancelado: ' + motivo + ' (' + (u.email || 'app') + ' · ' + agora_() + ')' });
+    invalidar_(['comp']); SpreadsheetApp.flush();
+    return { ok: true };
+  } finally { lock.releaseLock(); }
 };
 
 API;
