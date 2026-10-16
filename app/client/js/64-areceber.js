@@ -29,6 +29,9 @@ function renderAR() {
   var r = AR, cont = function (f) { return r.linhas.filter(function (l) { return !f || l.faixa === f; }).length; };
   $("#ar-faixas").innerHTML = AR_FAIXAS.map(function (f) { var v = f[0] ? r.faixas[f[0]] : r.total; return '<button type="button" class="ar-fx' + (f[0] === 'mais60' && v ? ' atencao' : '') + '" data-f="' + f[0] + '" aria-pressed="' + (arFaixa === f[0]) + '"><b>' + esc(brlCurto(v)) + '</b><span>' + esc(f[1]) + ' · ' + cont(f[0]) + (cont(f[0]) === 1 ? ' linha' : ' linhas') + '</span></button>'; }).join('');
   $$('#ar-faixas button').forEach(function (b) { b.addEventListener('click', function () { arFaixa = b.dataset.f; renderAR(); }); });
+  var venc = r.parcelasVencidas || []; $("#ar-venc-card").hidden = !venc.length; $("#ar-venc-n").textContent = venc.length;
+  $("#ar-venc").innerHTML = venc.map(function (q) { return '<div class="fd-item"><span class="quem"><a href="#" class="link-discreto ar-ficha" data-nome="' + esc(q.paciente) + '">' + esc(q.paciente) + '</a></span><span class="muted">' + esc(q.descricao + ' · parcela ' + q.n + '/' + q.de + ' · venceu ' + q.venc) + '</span><span class="esp"></span><span class="tag p vermelha">' + q.dias + ' dias</span><b>' + esc(brlCurto(q.valor)) + '</b></div>'; }).join('');
+  $$('#ar-venc .ar-ficha').forEach(function (a) { a.addEventListener('click', function (e) { e.preventDefault(); go('ficha', { nome: a.dataset.nome }); }); });
   $("#ar-motivos").innerHTML = r.motivos.map(function (m) { return '<option value="' + esc(m) + '">'; }).join('');
   renderLinhasAR();
 }
