@@ -23,7 +23,7 @@ coluna E não afeta o app. Atualizar `E2` faz parte de toda publicação (passo 
 
 | Canal | Deploy | Peças | Commit |
 |---|---|---|---|
-| Real (`arquivos_real`) | **2026-10-16-16** (IA parte 2: conciliação assistida, Sonnet 5.5, preço por modelo, teto US$ 10) | 65 (duplicatas 3 · server 24 · index 38); ativas = 1002–1006, 1009–1010, 1014–1016, 1019, 1022–1023, 1026–1027, 1029–1032, 1034–1035, 1040, 1044, 1049–1051, 1056, 1062, 1064–1069, 1070–1100; `antigo46:` = as 9 trocadas (1020, 1021, 1024, 1025, 1028, 1033, 1039, 1061, 1063) | branch `claude/lucid-wright-6vx5yt`, commit 03a0aea |
+| Real (`arquivos_real`) | **2026-10-16-17** (conciliação: IA olha pagadores conhecidos + histórico; "o que é?" com nomes claros; busca de paciente por pagador/responsável) | 65 (duplicatas 3 · server 24 · index 38); ativas = as do 16-16 menos 1077, 1079, 1084, 1086, 1093, 1094, 1096, 1100 (→ `antigo47:`) mais 1101–1108 | branch `claude/lucid-wright-6vx5yt`, commit 8c4a8b3 |
 | Teste (`arquivos`) | **2026-10-16-10** (Alertas, ⚠ abre a Ficha) | 60 (duplicatas 3 · server 20 · index 37), linhas 750–809; `antigo42:` = as do 16-09 (690–749) | branch `claude/sweet-wozniak-aviy8u`, commit cede9d7 |
 | Carregador real | 2026-10-16 (`dist/Code.real.gs` com `gatilhoDiarioIA` + permissões; versão 2 do projeto real, implantada pela gestão em 16/10 17:27) | — | 618b511 |
 | Carregador teste | 2026-10-04-01 + nova versão pendente desde 05/10 (permissão do Drive, ver `COMO-INSTALAR.md`) | — | — |
@@ -48,6 +48,29 @@ Modelo:
 ```
 
 ## Lista
+
+### 2026-10-16-17 · Real · conciliação: pagadores conhecidos, nomes claros no "o que é?", busca por pagador/responsável
+- **O que mudou** (pedidos da gestão depois da 1ª rodada real em Setembro, 16/10): (1) a IA recebe a lista **PAGADORES
+  CONHECIDOS** (por quem cada pagador paga, pelo cadastro: pagador habitual, nome no extrato, responsável, e as decisões
+  anteriores da gestão pro mesmo pagador) e a instrução manda olhar essa lista **antes** de sugerir; (2) regra nova sem IA:
+  pagador cujas entradas resolvidas tiveram sempre a mesma situação (aluguel de sala, não é paciente, convênio) já chega com
+  a mesma sugestão, "(como antes)"; (3) "o que é?" virou **uma lista só** com nomes claros (Sessão/consulta lançada →
+  escolhe o lançamento · Sessão/consulta de antes do app · ainda não lançada · Mensalidade · Pagamento do convênio · Aluguel
+  de sala · **Movimentação financeira**); a planilha continua gravando os valores de sempre; (4) busca de paciente (Pacientes,
+  Ficha e combos) acha também pelo **pagador habitual, nome no extrato e responsável**, mostrando por qual campo achou;
+  Pacientes e Ficha listam inativos.
+- **Aba IA da real**: `instrucao_conciliacao` (estava com o padrão do 16-16, sem edição da gestão) ganhou o parágrafo
+  "PRIMEIRO … PAGADORES CONHECIDOS" por localizar/substituir; conferido LEN/UNICODE = texto do código (2409/339480). Linha
+  `config` no IA log (linha 51).
+- **Peças**: 8 células (server 16, 19, 23 · index 8, 12, 23, 25, 34). Mesmo método do 16-16: células atuais remontadas a partir
+  da aba (24 linhas lidas, idênticas ao build de 03a0aea), `copyPaste` para 1101–1108 com `novo:`, 20 `findReplace`
+  restritos à célula, cada um com 1 ocorrência.
+- **Conferência**: LEN/UNICODE das 8 iguais ao esperado (13746/1143882 · 15438/1463256 · 27262/2312175 · 12049/1315806 ·
+  12307/1088337 · 11843/1043898 · 11899/1029707 · 18165/1644161). Ativação numa gravação só (A1077:A1108). Lido de volta:
+  server 24 partes únicas, index 38, duplicatas 3; somas 309.525 / 458.643 / 32.115 = build de 8c4a8b3. Fórmulas temporárias
+  apagadas, E2 carimbado. Testes locais 14/14; simulação 1280/390 sem erro.
+  **Voltar**: `antigo47:` → nome nas 8 linhas antigas e 1101–1108 → `antigo48:`.
+- **Commit**: 8c4a8b3 · **Aprovação**: gestão, 16/10 ("pode publicar na real").
 
 ### 2026-10-16-16 · Real · IA parte 2: conciliação assistida, Sonnet 5.5, preço por modelo, teto US$ 10
 - **O que mudou**: Conciliação ganhou **regras fixas** (resgate de CDB e Pix da própria clínica = não é paciente; antes do 1º

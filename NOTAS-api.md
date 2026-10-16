@@ -9,7 +9,7 @@ Arquivo de retomada deste item. Quem abrir um chat novo lê, nesta ordem: `docs/
 > total** (seção 2). O que a leitura real mostrou e o que mudou por causa dela está na seção 2 ("Setembro na real").
 > Próximo passo da recepção/gestão: confirmar as guias no card "Guias lidas ontem" (Meu dia). Seção 6 diz como.
 
-> **Parte 2 (16/10, noite)**: conciliação assistida **publicada na real** (deploy `2026-10-16-16`, seção 8). Junto: modelo
+> **Parte 2 (16/10, noite)**: conciliação assistida **publicada na real** (deploy `2026-10-16-16`, ajustes no `2026-10-16-17`, seção 8). Junto: modelo
 > **Sonnet 5.5** pra todos os itens (já gravado na aba IA da real), preço por modelo no código e teto do mês **US$ 10**.
 > Próximo passo da gestão: Conciliação → Setembro/Outubro → **Sugerir com IA**, conferir algumas, e anotar o custo real aqui.
 
@@ -197,8 +197,17 @@ teto de US$ 10/mês, com a possibilidade de aumentar pela tela.
   instrução vazia preenchida. Simulação 1280/390 sem erro e sem rolagem lateral.
 
 **Custo esperado (Sonnet 5.5)**: ≈ 4–8 mil tokens de entrada e 1–2 mil de saída por lote de 15 → **≈ US$ 0,03 por lote**;
-um mês com ~30 entradas soltas ≈ US$ 0,06. Guias com Sonnet: ≈ US$ 0,009 por guia (150/mês ≈ US$ 1,40). Medir na real e
-anotar aqui.
+um mês com ~30 entradas soltas ≈ US$ 0,06. Guias com Sonnet: ≈ US$ 0,009 por guia (150/mês ≈ US$ 1,40). **Medido na real
+(Setembro, 16/10 20:37)**: 2 lotes (15 + 5 entradas, 77 candidatos), 10,0 + 9,5 mil tokens de entrada e 1,6 + 0,5 mil de
+saída = **US$ 0,060** no mês, 11 s + 5 s.
+
+**Depois da 1ª rodada (deploy 2026-10-16-17)**: a gestão viu sugestões que ignoravam pagadores já decididos. Agora o texto
+leva **PAGADORES CONHECIDOS** (`concIAPagadores_`: cada pagador do lote → pacientes do cadastro em que ele é pagador
+habitual, nome no extrato, responsável ou o próprio paciente, e as decisões anteriores da gestão pro mesmo pagador, via
+`historicoPagadores_`), e a instrução manda olhar essa lista antes de sugerir. Regra fixa nova: pagador com todas as
+entradas resolvidas na mesma situação (aluguel de sala / não é paciente / convênio) e sem paciente ligado já chega com essa
+sugestão ("como antes"). Na tela, "o que é?" tem nomes claros (`CC_ROTULO`; os valores gravados não mudam). Próximo passo:
+**Pedir de novo à IA** em Setembro e comparar.
 
 **Como testar na real (depois da publicação)**: Conciliação → Setembro e Outubro → **Sugerir com IA** → conferir 5–10
 sugestões contra o extrato → Aceitar as certas. Março a agosto: **Confirmar sugestões fixas**. IA log: custo por lote.
