@@ -23,7 +23,7 @@ coluna E não afeta o app. Atualizar `E2` faz parte de toda publicação (passo 
 
 | Canal | Deploy | Peças | Commit |
 |---|---|---|---|
-| Real (`arquivos_real`) | **2026-10-16-15** (recepção nas telas do dia a dia + "O que a recepção fez") | 65 (duplicatas 3 · server 24 · index 38); ativas = 1002–1006, 1009–1010, 1014–1016, 1019–1035, 1039–1040, 1044, 1049–1051, 1056, 1061–1069, 1070–1091; `antigo45:` = as 22 trocadas | branch `claude/brave-galileo-y2mi72`, commit 7c3f828 |
+| Real (`arquivos_real`) | **2026-10-16-16** (IA parte 2: conciliação assistida, Sonnet 5.5, preço por modelo, teto US$ 10) | 65 (duplicatas 3 · server 24 · index 38); ativas = 1002–1006, 1009–1010, 1014–1016, 1019, 1022–1023, 1026–1027, 1029–1032, 1034–1035, 1040, 1044, 1049–1051, 1056, 1062, 1064–1069, 1070–1100; `antigo46:` = as 9 trocadas (1020, 1021, 1024, 1025, 1028, 1033, 1039, 1061, 1063) | branch `claude/lucid-wright-6vx5yt`, commit 03a0aea |
 | Teste (`arquivos`) | **2026-10-16-10** (Alertas, ⚠ abre a Ficha) | 60 (duplicatas 3 · server 20 · index 37), linhas 750–809; `antigo42:` = as do 16-09 (690–749) | branch `claude/sweet-wozniak-aviy8u`, commit cede9d7 |
 | Carregador real | 2026-10-16 (`dist/Code.real.gs` com `gatilhoDiarioIA` + permissões; versão 2 do projeto real, implantada pela gestão em 16/10 17:27) | — | 618b511 |
 | Carregador teste | 2026-10-04-01 + nova versão pendente desde 05/10 (permissão do Drive, ver `COMO-INSTALAR.md`) | — | — |
@@ -48,6 +48,29 @@ Modelo:
 ```
 
 ## Lista
+
+### 2026-10-16-16 · Real · IA parte 2: conciliação assistida, Sonnet 5.5, preço por modelo, teto US$ 10
+- **O que mudou**: Conciliação ganhou **regras fixas** (resgate de CDB e Pix da própria clínica = não é paciente; antes do 1º
+  mês do app = mês anterior ao app; botão "Confirmar sugestões fixas") e a **conciliação assistida**: "Sugerir com IA" manda o
+  que sobrou das regras pro modelo; a sugestão aparece por entrada (faixa lilás, Aceitar = Salvar) e fica na coluna nova
+  `Sugestão IA` de `Extrato bancário` / `Vendas no cartão` (criada pelo app no primeiro uso). IA: modelo padrão Sonnet 5.5,
+  custo pelo preço do modelo que respondeu (tabela no código), fallback de recusa no Sonnet/Opus, teto do mês editável no
+  card "Uso da IA" ("Mudar teto"). Detalhe em `NOTAS-api.md` §8. Pedidos/decisões da gestão em 16/10.
+- **Aba IA da real** (gravada junto, linha `config` no IA log, 16/10 20:15): `modelo` haiku → **claude-sonnet-5-5**,
+  `teto_mes_usd` 20 → **10**, `preco_*` 0,1/0,5 → 2/10 (só valem pra modelo fora da tabela), descrições das três linhas
+  atualizadas. `instrucao_conciliacao` vazia: o app escreve o padrão na primeira leitura da aba (código novo).
+- **Peças**: só as 9 células que mudaram (server 15, 16, 19, 20, 23 · index 4, 10, 32, 34). Mesmo método do 16-15: layout
+  das ativas lido (LEN por fórmula temporária em F; a concatenação na ordem das partes bate com o build de 7c3f828: server
+  284.284, index 449.906), `copyPaste` (valores, A:C) das 9 para 1092–1100 com `novo:`, 31 `findReplace` literais com o
+  intervalo restrito à célula (âncoras únicas na célula, calculadas localmente; vários com quebra de linha — funcionam), cada
+  um com 1 ocorrência. `duplicatas.js` igual, não mexido.
+- **Conferência**: LEN e soma de UNICODE das 9 iguais ao esperado (12593/1111912 · 13088/1077814 · 14943/1392765 ·
+  12727/1114031 · 24416/2049886 · 11683/839125 · 12349/1108588 · 12961/1117887 · 16836/1527379). Ativação numa gravação só
+  (A1020:A1100). Lido de volta: server 0–23 e index 0–37 ativas uma vez cada, somas 305.526 e 456.424 = build de 03a0aea.
+  Fórmulas temporárias (F1002:G1100) apagadas. E2 carimbado. Testes locais 14/14; simulação 1280/390 sem erro.
+  **Voltar**: `antigo46:` → nome nas 9 linhas antigas e 1092–1100 → `antigo47:`; na aba IA, `modelo` = claude-haiku-5-5,
+  `teto_mes_usd` = 20, `preco_*` = 0,1 e 0,5.
+- **Commit**: 03a0aea · **Aprovação**: gestão, 16/10 ("pode publicar na real").
 
 ### 2026-10-16-15 · Real · recepção nas telas do dia a dia + "O que a recepção fez"
 - **O que mudou**: recepção passa a ver **Pendências** e faz o que a gestão faz em Agenda, Confirmações, Registrar,

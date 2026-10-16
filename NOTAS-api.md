@@ -9,9 +9,9 @@ Arquivo de retomada deste item. Quem abrir um chat novo lê, nesta ordem: `docs/
 > total** (seção 2). O que a leitura real mostrou e o que mudou por causa dela está na seção 2 ("Setembro na real").
 > Próximo passo da recepção/gestão: confirmar as guias no card "Guias lidas ontem" (Meu dia). Seção 6 diz como.
 
-> **Parte 2 (17/10)**: conciliação assistida **no branch, ainda não publicada** (seção 8). Junto: modelo **Sonnet 5.5** pra
-> todos os itens, preço por modelo no código e teto do mês **US$ 10** (decisões da gestão em 16/10). Na publicação, gravar
-> `modelo` e `teto_mes_usd` na aba IA da real (a carga inicial só vale pra planilha nova).
+> **Parte 2 (16/10, noite)**: conciliação assistida **publicada na real** (deploy `2026-10-16-16`, seção 8). Junto: modelo
+> **Sonnet 5.5** pra todos os itens (já gravado na aba IA da real), preço por modelo no código e teto do mês **US$ 10**.
+> Próximo passo da gestão: Conciliação → Setembro/Outubro → **Sugerir com IA**, conferir algumas, e anotar o custo real aqui.
 
 ## 1. O que foi feito
 
@@ -157,7 +157,7 @@ Arquivo de retomada deste item. Quem abrir um chat novo lê, nesta ordem: `docs/
 - Testes: `tests/fakes-google.js` tem `UrlFetchApp` (resposta programável por requisição), `PropertiesService`, `MailApp`,
   `ScriptApp` e um Drive em memória.
 
-## 8. Parte 2 — conciliação assistida (17/10)
+## 8. Parte 2 — conciliação assistida (16/10, deploy 2026-10-16-16)
 
 **Pedido da gestão (16/10)**: depois das guias, a conciliação; um item por vez, plano aprovado antes do código. Decisões: regra
 fixa (sem IA) pros meses antes do app; Sonnet 5.5 pra todos os itens ("o gasto está bem baixo"); preço por modelo no código;
