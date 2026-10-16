@@ -23,9 +23,9 @@ coluna E não afeta o app. Atualizar `E2` faz parte de toda publicação (passo 
 
 | Canal | Deploy | Peças | Commit |
 |---|---|---|---|
-| Real (`arquivos_real`) | **2026-10-16-12** (IA parte 1: guias lidas do Drive) | 65 (duplicatas 3 · server 24 · index 38); ativas = 1002–1066; `antigo37:` = as do 2026-10-16-11 (942–1001) | branch `claude/youthful-fermat-9l35tu`, commit 618b511 |
+| Real (`arquivos_real`) | **2026-10-16-13** (IA parte 1 + casamento pela data do arquivo e sugestões refeitas) | 65 (duplicatas 3 · server 24 · index 38); ativas = 1002–1066 (9 peças regravadas no lugar); `antigo37:` = as do 2026-10-16-11 (942–1001) | branch `claude/youthful-fermat-9l35tu`, commit 90de19d |
 | Teste (`arquivos`) | **2026-10-16-10** (Alertas, ⚠ abre a Ficha) | 60 (duplicatas 3 · server 20 · index 37), linhas 750–809; `antigo42:` = as do 16-09 (690–749) | branch `claude/sweet-wozniak-aviy8u`, commit cede9d7 |
-| Carregador real | 2026-10-06-02 (`dist/Code.real.gs`, implantado pela Roberta) · **nova versão pendente desde 16/10** (`gatilhoDiarioIA` + permissões de conexão externa, propriedades, gatilhos e e-mail; sem ela a leitura de guias fica indisponível) | — | 4ad0272 |
+| Carregador real | 2026-10-16 (`dist/Code.real.gs` com `gatilhoDiarioIA` + permissões; versão 2 do projeto real, implantada pela gestão em 16/10 17:27) | — | 618b511 |
 | Carregador teste | 2026-10-04-01 + nova versão pendente desde 05/10 (permissão do Drive, ver `COMO-INSTALAR.md`) | — | — |
 
 ## Como registrar um deploy novo
@@ -48,6 +48,18 @@ Modelo:
 ```
 
 ## Lista
+
+### 2026-10-16-13 · Real · guias: casamento pela data do nome do arquivo e sugestões pendentes refeitas sem custo
+- **O que mudou**: na leitura real de setembro, 16 de 45 guias ficaram "sem atendimento" porque o modelo lê a data de
+  emissão impressa na guia e a sessão é a do nome do arquivo (`dd-mm`). Agora `casarGuia_` procura também pela data do
+  arquivo (linhas marcadas com a origem; motivo explicado; vai pra conferência). Toda execução refaz, sem chamar o modelo,
+  a sugestão das guias ainda pendentes (`recasarGuia_`): os 16 de setembro são refeitos na próxima execução. Card: texto
+  "pela data do nome do arquivo" e contagem de sugestões refeitas.
+- **Peças**: 65 no total; 9 regravadas no lugar, com `novo:`: server 21–23 (1026–1028), index 32–37 (1061–1066).
+- **Conferência**: LEN e soma de CODE lidas de volta iguais ao `dist/pedacos.json` nas 9; as outras 56 não foram tocadas.
+  Ativação: `novo:` tirado da coluna A das 9 linhas. E2 carimbado. **Voltar**: regravar as 9 linhas com as peças do
+  commit 618b511 (`git show 618b511:dist/pedacos.json`).
+- **Commit**: 90de19d · **Aprovação**: gestão ("vamos fazer direto na planilha oficial", 16/10).
 
 ### 2026-10-16-12 · Real · IA parte 1: guias de convênio lidas da pasta do Drive
 - **O que mudou**: infra genérica de IA (aba `IA`, aba `IA log`, `chamarIA`, pausa geral e por item, teto do mês e do dia,
