@@ -1046,7 +1046,7 @@ table.ar-mini{min-width:0}
 </aside>
 </section>
 <footer class="rodape" id="a-rodape" hidden>
-<span class="nota so-gestao">Nada é apagado: “excluir” depois vira “cancelado”.</span>
+<span class="nota">Nada é apagado: “excluir” depois vira “cancelado”.</span>
 <button type="button" class="btn ter grande" id="a-salvar-outro">Salvar e registrar outro</button>
 <button type="button" class="btn grande" id="a-salvar"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l5 5L20 7"/></svg>Salvar atendimento</button>
 </footer>
@@ -1106,7 +1106,7 @@ table.ar-mini{min-width:0}
 <label class="campo" id="l-cart" hidden>Nº da carteirinha<input id="n-cart" autocomplete="off"></label>
 </div>
 <div class="dica" id="n-cob-dica">Paciente novo pediu desconto ou social? Não negocia: <strong>“Aguarde a avaliação da psicóloga.”</strong> Cobra pela tabela e anota na observação; a gestão cadastra a cobrança por profissional depois.</div>
-<div class="grid" id="p-gestao-campos" hidden>
+<div class="grid" id="p-gestao-campos">
 <label class="campo c3">Observação de cobrança <span class="leg">o que a recepção precisa saber na hora de cobrar</span><textarea id="c-obs" rows="2"></textarea></label>
 </div>
 <div class="grid" id="p-quem-informou" hidden>
@@ -1253,7 +1253,7 @@ table.ar-mini{min-width:0}
 <details id="g-lemb-hist" hidden><summary class="muted" style="cursor:pointer;font-size:13px">Lembretes anteriores</summary><ul id="g-lemb-lista" style="margin:6px 0 0;padding-left:18px;font-size:13px;color:var(--tx2)"></ul></details>
 </div>
 <div class="card compacto" id="g-so-gestao">
-<h2 style="font-size:15px">Só a gestão edita</h2>
+<h2 style="font-size:15px">Regras e tabelas</h2>
 <button type="button" class="atalho" id="g-atalho-regras">Cobrança por profissional <span class="cont" id="g-regras-n"></span></button>
 <div class="atalho" style="cursor:default">Tabela de procedimentos e valores <small>abas Procedimentos e Valores por sessão</small></div>
 <div class="atalho" style="cursor:default">Vencimento, tolerância, taxa de falta, Pix <small>aba Parâmetros</small></div>
@@ -1543,7 +1543,7 @@ return '<div class="bloco-agora ' + cor + (pequeno ? ' p' : '') + '">' + icn + '
 function tagsDe(p) {
 var t = []; if (!p) return t;
 if (ehConvenio(p)) t.push({ cor: 'lilas', txt: 'Convênio ' + p.convenio });
-if (cadastroIncompleto(p)) t.push({ cor: 'laranja', ic: 'alerta', txt: 'sem cobrança cadastrada · avise a gestão' });
+if (cadastroIncompleto(p)) t.push({ cor: 'laranja', ic: 'alerta', txt: 'sem cobrança cadastrada · cadastre em Pacientes' });
 if (faltasDoc(p).length) t.push({ cor: 'laranja', ic: 'alerta', txt: 'sem ' + faltasDocTxt(p) + ' · completar cadastro' });
 return t;
 }
@@ -1622,20 +1622,17 @@ html += '<label class="campo">Data<input data-c="data" inputmode="numeric" maxle
 '<label class="campo">O que aconteceu' + sel('oque', oqOpts, reg.oque) + '</label>' +
 '<label class="campo c2">Procedimento' + sel('procedimento', prOpts, reg.procedimento) + '</label>' +
 '<label class="campo">Valor da sessão<div class="campo-wrap"><span class="prefixo">R$</span><input data-c="valor" class="dinheiro" inputmode="decimal" value="' + (reg.valor !== '' && reg.valor != null ? brl(reg.valor) : '') + '"></div></label>';
-// convênio e modalidade ficam gravados na linha (copiados do cadastro ao salvar): só a gestão troca; a recepção vê
+// convênio e modalidade ficam gravados na linha (copiados do cadastro ao salvar); trocar aqui fica registrado
 var opc = function (lista, atual) { var l = (lista || []).slice(); if (atual && l.indexOf(atual) < 0) l.unshift(atual); return [''].concat(l); };
-var trava = ehGestao() ? '' : ' disabled title="Só a gestão troca o convênio ou a modalidade da linha"';
-var selC = function (k, opts, atual) { return '<select data-c="' + k + '"' + trava + '>' + opts.map(function (o) { return '<option value="' + esc(o) + '"' + (o === (atual || '') ? ' selected' : '') + '>' + esc(o || '(em branco)') + '</option>'; }).join('') + '</select>'; };
+var selC = function (k, opts, atual) { return '<select data-c="' + k + '">' + opts.map(function (o) { return '<option value="' + esc(o) + '"' + (o === (atual || '') ? ' selected' : '') + '>' + esc(o || '(em branco)') + '</option>'; }).join('') + '</select>'; };
 html += '<label class="campo">Convênio da linha' + selC('convenio', opc(BOOT.listas.convenios, reg.convenio), reg.convenio) + '</label>' +
 '<label class="campo">Modalidade da linha' + selC('modalidade', opc(BOOT.listas.modalidades, reg.modalidade), reg.modalidade) + '</label>' +
-'<div class="c2 muted" style="font-size:13px">Convênio e modalidade foram copiados do cadastro quando a sessão foi salva; mudar o cadastro não muda esta linha.' + (ehGestao() ? ' Trocar aqui fica registrado na coluna "Registrado por (app)" e em "Alterações de lançamento".' : ' Só a gestão corrige.') + '</div>';
+'<div class="c2 muted" style="font-size:13px">Convênio e modalidade foram copiados do cadastro quando a sessão foi salva; mudar o cadastro não muda esta linha.' + ' Trocar aqui fica registrado na coluna "Registrado por (app)" e em "Alterações de lançamento".' + '</div>';
 }
 var mostraPago = foco === 'amplo' || (atendido && (foco === 'nf' || foco === 'todos')), mostraGuia = foco === 'guia' || ((foco === 'todos' || foco === 'amplo') && conv);
 var pagoOpts = (BOOT.listas.pago || []).slice(); if (pagoOpts.indexOf('Parcial') < 0) pagoOpts.push('Parcial'); if (reg.pago && pagoOpts.indexOf(reg.pago) < 0) pagoOpts.unshift(reg.pago); if (!reg.pago) pagoOpts.unshift('');
-if (!ehGestao()) pagoOpts = pagoOpts.filter(function (o) { return !ehPerdido(o) || o === reg.pago; }); // a recepção vê o status, mas não escolhe
-var travaPerdido = !ehGestao() && ehPerdido(reg.pago);
 var pagoIni = foco === 'nf' && (!reg.pago || reg.pago === 'Não') ? 'Sim' : (reg.pago || '');
-if (mostraPago) html += '<label class="campo">Pago?<select data-c="pago"' + (travaPerdido ? ' disabled title="Só a gestão muda uma linha perdida"' : '') + '>' + pagoOpts.map(function (o) { return '<option value="' + esc(o) + '"' + (o === pagoIni ? ' selected' : '') + '>' + esc(o || '(em branco)') + '</option>'; }).join('') + '</select></label>' +
+if (mostraPago) html += '<label class="campo">Pago?<select data-c="pago">' + pagoOpts.map(function (o) { return '<option value="' + esc(o) + '"' + (o === pagoIni ? ' selected' : '') + '>' + esc(o || '(em branco)') + '</option>'; }).join('') + '</select></label>' +
 '<label class="campo" data-parcial>Valor já recebido<div class="campo-wrap"><span class="prefixo">R$</span><input data-c="valorRecebido" class="dinheiro" inputmode="decimal" value="' + (reg.recebido ? brl(reg.recebido) : '') + '"></div></label>' +
 '<label class="campo c2" data-perdido>Motivo da perda <span class="leg">(obrigatório; o Valor fica como referência do que se perdeu)</span><input data-c="motivoPerdido" autocomplete="off" placeholder="ex.: guia 1504122 não autorizada (trocou de convênio)"></label>' +
 '<label class="campo" data-sim>Data do pagamento<input data-c="dataPagamento" inputmode="numeric" maxlength="10" value="' + esc(reg.dataPag || hojeStr()) + '"></label>' + forma + quem + nf;
@@ -1699,7 +1696,7 @@ return e;
 }
 var TELAS = { hoje: 's-hoje', confirmar: 's-confirmar', ficha: 's-ficha', registrar: 's-registrar', pacientes: 's-pacientes', cobranca: 's-cobranca', meudia: 's-meudia', gestao: 's-gestao', repasse: 's-repasse', conciliacao: 's-conciliacao', areceber: 's-areceber' };
 var TITULOS = { hoje: 'Agenda', confirmar: 'Confirmações', ficha: 'Ficha do paciente', registrar: 'Registrar atendimento', pacientes: 'Pacientes', cobranca: 'Cobrança do mês', meudia: 'Meu dia', gestao: 'Pendências', repasse: 'Repasse', conciliacao: 'Conciliação', areceber: 'A receber e perdas' };
-var SO_GESTAO = { gestao: true, repasse: true, conciliacao: true, areceber: true };
+var SO_GESTAO = { repasse: true, conciliacao: true, areceber: true };
 var telaAtual = 'hoje', navGen = 0;
 var INICIAR = {};
 function go(id, extra) {
@@ -1745,8 +1742,8 @@ $("#chip-nome").textContent = quemSou(); $("#chip-av").textContent = quemSou().c
 $("#chip-mail").textContent = (ehGestao() ? 'gestão' : 'recepção') + (MOCK ? ' · simulação' : '');
 $("#chip-user").title = (email || '') + ' · perfil ' + (ehGestao() ? 'gestão' : 'recepção');
 if (ehGestao()) $("#chip-user").classList.add('gestao');
-// menu por perfil (gestão 14/10): recepção vê Agenda · Registrar · Pacientes · Cobrança do mês · Meu dia; gestão também Pendências · Repasse · Conciliação · A receber
-$$('[data-go=repasse], [data-go=gestao], [data-go=conciliacao], [data-go=areceber]').forEach(function (x) { x.hidden = !ehGestao(); });
+// menu por perfil (gestão 16/10): Agenda · Confirmações · Registrar · Pacientes · Cobrança do mês · Meu dia · Pendências iguais pras duas (a recepção faz tudo o que a gestão faz ali, menos a IA); Repasse · Conciliação · A receber só a gestão
+$$('[data-go=repasse], [data-go=conciliacao], [data-go=areceber]').forEach(function (x) { x.hidden = !ehGestao(); });
 $$('.so-gestao').forEach(function (x) { x.hidden = !ehGestao(); });
 $$('.so-recepcao').forEach(function (x) { x.hidden = ehGestao(); });
 var dl = $("#dl-pagadores"); dl.innerHTML = ''; var vistos = {};
@@ -1833,10 +1830,10 @@ return Promise.all([call('listaDoDia', { data: data }), emSemana() ? carregarSem
 var r = rr[0];
 if (r.data !== diaEscolhido()) return; // mudou de dia enquanto carregava
 DIA = r; $("#d-carregando").hidden = true;
-$("#d-aviso-aba").hidden = r.abaMesExiste; if (!r.abaMesExiste) $("#d-aviso-aba").textContent = 'A aba "' + r.abaMes + '" ainda não existe na planilha. Peça à gestão para criar em Gestão → Virada do mês.';
+$("#d-aviso-aba").hidden = r.abaMesExiste; if (!r.abaMesExiste) $("#d-aviso-aba").textContent = 'A aba "' + r.abaMes + '" ainda não existe na planilha. Crie em Pendências → Virada do mês.';
 preencherProfs();
 renderDia(); lerFimDia();
-if (ehGestao()) resumoGestaoDia();
+resumoGestaoDia();
 }).catch(function (e) { $("#d-carregando").textContent = 'Não consegui carregar a lista: ' + e.message; });
 }
 function preencherProfs() {
@@ -1985,7 +1982,7 @@ var b = it.cobrancaHoje, valorTxt = b ? (b.valor != null ? 'R$ ' + brl(b.valor) 
 $("#pp-dl").innerHTML = '<div><dt>Hoje</dt><dd>' + esc((it.hora || '—') + ' · ' + tipoCurto(it)) + '</dd></div><div><dt>Profissional</dt><dd>' + esc(it.profissional) + '</dd></div><div><dt>Cobrança</dt><dd>' + esc(p ? cobrancaCurta(it, p) : '—') + '</dd></div><div><dt>Valor</dt><dd>' + esc(valorTxt) + '</dd></div><div><dt>Convênio</dt><dd>' + esc(p ? (p.convenio || 'Particular') : '—') + '</dd></div>' + (p && p.telPac ? '<div><dt>Telefone do paciente</dt><dd>' + esc(p.telPac) + '</dd></div>' : '') + (p && p.resp ? '<div><dt>Responsável</dt><dd>' + esc(p.resp + (p.respPar ? ' (' + p.respPar.toLowerCase() + ')' : '') + (p.respTel ? ' · ' + p.respTel : '')) + '</dd></div>' : '');
 // o bloco "O que fazer agora" (pequeno) + cadastro incompleto
 var avisoHtml = b && !reg ? blocoHtml(b, true) : '';
-if (p && (cadastroIncompleto(p) || faltasDoc(p).length)) avisoHtml += aviso('laranja', 'Cadastro incompleto', esc([cadastroIncompleto(p) ? 'Sem cobrança cadastrada: avise a gestão (Pacientes → Cobrança por profissional).' : '', faltasDoc(p).length ? 'Falta ' + faltasDocTxt(p) + ': peça o documento e complete.' : ''].filter(Boolean).join(' ')));
+if (p && (cadastroIncompleto(p) || faltasDoc(p).length)) avisoHtml += aviso('laranja', 'Cadastro incompleto', esc([cadastroIncompleto(p) ? 'Sem cobrança cadastrada: cadastre em Pacientes → Cobrança por profissional.' : '', faltasDoc(p).length ? 'Falta ' + faltasDocTxt(p) + ': peça o documento e complete.' : ''].filter(Boolean).join(' ')));
 $("#pp-aviso").innerHTML = alertasHtml(alertasDe(it.paciente), it.paciente) + avisoHtml; ligarAlertas($("#pp-aviso"));
 // sessões anteriores em aberto: a recepção vê na chegada e resolve ali mesmo (grava na linha antiga, como a Gestão)
 var pendHtml = pendDe(it.paciente).map(function (x, i) {
@@ -2132,7 +2129,7 @@ var nf = regs.filter(function (i) { var r = i.registro; return (r.pago === 'Sim'
 if (nf.length) out.push(['laranja', nf.length, 'NF a emitir hoje · ' + nf.map(function (i) { return primeiroNome(i.paciente) + (i.registro.valor ? ' R$ ' + brl(i.registro.valor).replace(',00', '') : ''); }).join(', '), dest]);
 var pp = regs.filter(function (i) { var r = i.registro; return particular(r) && pendentePagamento(r); });
 if (pp.length) out.push(['amarela', pp.length, 'particular sem “Pago?” hoje · ' + pp.map(function (i) { return primeiroNome(i.paciente); }).join(', '), dest]);
-if (ehGestao() && g) {
+if (g) {
 var ontem = dataObj(dia); ontem.setDate(ontem.getDate() - 1); var dOntem = ('0' + ontem.getDate()).slice(-2) + '/' + ('0' + (ontem.getMonth() + 1)).slice(-2) + '/' + ontem.getFullYear();
 var nfO = (g.nfPendente || []).filter(function (x) { return x.data === dOntem; }); if (nfO.length) out.push(['laranja', nfO.length, 'NF de ontem a emitir · ' + nfO.map(function (x) { return primeiroNome(x.paciente) + (x.valor ? ' R$ ' + brl(x.valor).replace(',00', '') : ''); }).join(', '), 'gestao']);
 }
@@ -2827,7 +2824,6 @@ preencherSelect($("#n-conv"), BOOT.listas.convenios || []);
 preencherSelect($("#n-prof"), BOOT.profissionais, '—');
 comboPacientes($("#c-pac"), function () { carregarCad(); });
 $("#p-carregando").hidden = true; $("#p-form").hidden = false; $("#p-rodape").hidden = telaAtual !== 'pacientes';
-$("#p-gestao-campos").hidden = !ehGestao();
 if (lerRascunhoN()) toast('Rascunho do cadastro recuperado');
 mostrarResp();
 $("#l-cart").hidden = $("#n-conv").value === 'Particular' || !$("#n-conv").value;
@@ -3001,10 +2997,10 @@ var novoAT = { linha: r.linha, nome: d.nome, cpf: d.cpf, nasc: d.nasc, obsCobran
 if (AT) { AT.pacientes.push(novoAT); var o = document.createElement('option'); o.value = d.nome; $("#dl-pacientes").appendChild(o); }
 limparRascunhoN();
 // gestão: a observação de cobrança não entra na criação; vai pela atualização do cadastro (mesma função da tela Editar)
-var extras = ehGestao() ? { obsCobranca: $("#c-obs").value.trim() } : null;
+var extras = { obsCobranca: $("#c-obs").value.trim() };
 var p2 = (extras && extras.obsCobranca) ? call('atualizarCadastro', { nome: d.nome, quemInformou: quemSou() + ' (no cadastro)', campos: extras }).then(function (r2) { if (r2.ok) { novoAT.obsCobranca = extras.obsCobranca; } }) : Promise.resolve();
 return p2.then(function () {
-$("#n-sucesso").innerHTML = (faltasDoc(novoAT).length ? aviso('laranja', 'Falta ' + esc(faltasDocTxt(novoAT)), 'Peça o documento e complete em Pacientes → Editar cadastro.') : '') + aviso('verde', esc(r.nome) + ' cadastrado(a) na linha ' + r.linha + ' de Pacientes', 'Agora cadastre no ControleOdonto. ' + (ehGestao() ? 'Cadastre a cobrança por profissional em Buscar / editar cadastro. ' : 'A gestão cadastra a cobrança por profissional; até lá o app cobra pela tabela. ') + (r.colunasCriadas && r.colunasCriadas.length ? 'Colunas novas criadas na planilha: ' + esc(r.colunasCriadas.join(', ')) + '. ' : ''));
+$("#n-sucesso").innerHTML = (faltasDoc(novoAT).length ? aviso('laranja', 'Falta ' + esc(faltasDocTxt(novoAT)), 'Peça o documento e complete em Pacientes → Editar cadastro.') : '') + aviso('verde', esc(r.nome) + ' cadastrado(a) na linha ' + r.linha + ' de Pacientes', 'Agora cadastre no ControleOdonto. ' + 'Cadastre a cobrança por profissional em Buscar / editar cadastro; até lá o app cobra pela tabela. ' + (r.colunasCriadas && r.colunasCriadas.length ? 'Colunas novas criadas na planilha: ' + esc(r.colunasCriadas.join(', ')) + '. ' : ''));
 limparFormN(false); toast('Cadastrado em Pacientes');
 if (registrarDepois || pVoltar === 'registrar') { var v = pVoltar; pVoltar = null; go('registrar', { paciente: d.nome }); if (v !== 'registrar') toast('Agora registre o atendimento de ' + primeiroNome(d.nome)); }
 });
@@ -3059,7 +3055,7 @@ erros = erros.concat(errosCpfsExtras());
 $("#n-erros").innerHTML = erroBox(erros); if (erros.length) return;
 var c0 = cadDados.campos || {};
 var campos = { cpf: cpfC || null, nasc: nascC || null, convenio: $("#n-conv").value, carteirinha: $("#n-cart").value.trim(), pagador: $("#n-pagador").value.trim(), whats: $("#n-whats").value.trim(), telPac: $("#n-tel-pac").value.trim(), profRef: $("#n-prof").value,
-obsCobranca: ehGestao() ? $("#c-obs").value.trim() : (c0.obsCobranca || ''),
+obsCobranca: $("#c-obs").value.trim(),
 pagadorCpf: $("#n-pag-cpf").value.trim(), respNome: $("#n-resp").value.trim(), respPar: $("#n-resp-par").value.trim(), respTel: $("#n-resp-tel").value.trim(), respCpf: $("#n-resp-cpf").value.trim() };
 salvandoP = true; $("#p-salvar").disabled = true;
 call('atualizarCadastro', { nome: nome, quemInformou: quem, campos: campos }).then(function (r) {
@@ -3070,7 +3066,7 @@ toast(mudou ? 'Cadastro atualizado' : 'Nada mudou');
 $("#n-sucesso").innerHTML = aviso('verde', esc(nome) + ' · ' + (mudou ? 'cadastro atualizado' : 'nada mudou'), mudou ? 'Alterado: ' + esc(r.alterados.map(function (c) { return c.split(' (')[0]; }).join(', ')) + '. Registrado em “Alterações de cadastro”.' : 'Nenhum campo mudou.');
 var voltar = function () { if (pVoltar) { var v = pVoltar; pVoltar = null; go(v, { paciente: nome }); } };
 // mudou convênio (gestão): o passado não muda; pergunta só pelas linhas do mês aberto de hoje em diante
-if (ehGestao() && mudou && r.alterados.some(function (c) { return c === 'Convênio'; })) perguntarLinhasAbertas(nome, voltar); else voltar();
+if (mudou && r.alterados.some(function (c) { return c === 'Convênio'; })) perguntarLinhasAbertas(nome, voltar); else voltar();
 }).catch(function (e) { toast('Erro: ' + e.message); }).finally(function () { salvandoP = false; $("#p-salvar").disabled = false; });
 }
 function perguntarLinhasAbertas(nome, depois) {
@@ -3168,7 +3164,7 @@ $("#fi-sessoes").innerHTML = r.sessoes.length ? r.sessoes.map(function (x) { var
 fiLista('fi-proximos', r.proximos, function (x) { var st = x.registrado ? '<span class="tag verde">' + esc(x.registrado.split(' (')[0]) + '</span>' : x.naoVem ? '<span class="tag vermelha">não vem</span>' : x.confirmado ? '<span class="tag verde">confirmado</span>' : '<span class="tag cinza">a confirmar</span>'; return fiItem('<span class="quem">' + esc(x.diaSemana.slice(0, 3).toLowerCase() + ' ' + x.data.slice(0, 5) + (x.hora ? ' · ' + x.hora : '')) + '</span><span class="muted">' + esc(profCurto(x.profissional) + (x.tipo ? ' · ' + x.tipo.toLowerCase() : '')) + '</span>', '', st); }, 'Nada agendado nos próximos 14 dias.');
 $("#fi-fixos").textContent = r.fixos.length ? 'Horário fixo: ' + r.fixos.map(function (x) { return x.dia.toLowerCase() + ' ' + x.hora + ' com ' + profCurto(x.profissional) + (/quinzen/i.test(x.frequencia) ? ' (quinzenal)' : '') + (x.tipo ? ' · ' + x.tipo.toLowerCase() : ''); }).join(' · ') : 'Sem horário fixo.';
 // cobrança por profissional
-fiLista('fi-cobrancas', r.cobrancas.slice().sort(function (a, b) { return (b.vigente ? 1 : 0) - (a.vigente ? 1 : 0); }), function (x) { return '<div class="fd-item' + (x.vigente ? '' : ' fi-off') + '"><span>' + esc(x.resumo) + (x.obs ? '<div class="sub">' + esc(x.obs) + '</div>' : '') + '</span><span class="esp"></span>' + (x.vigente ? '<span class="tag verde">vale hoje</span>' : '<span class="tag cinza">' + esc(!/^s/i.test(x.ativo || 'Sim') ? 'inativa' : x.desde ? 'a partir de ' + x.desde : x.ate ? 'até ' + x.ate : 'não vale hoje') + '</span>') + '</div>'; }, 'Sem cobrança cadastrada: cobra pela tabela. Avise a gestão.');
+fiLista('fi-cobrancas', r.cobrancas.slice().sort(function (a, b) { return (b.vigente ? 1 : 0) - (a.vigente ? 1 : 0); }), function (x) { return '<div class="fd-item' + (x.vigente ? '' : ' fi-off') + '"><span>' + esc(x.resumo) + (x.obs ? '<div class="sub">' + esc(x.obs) + '</div>' : '') + '</span><span class="esp"></span>' + (x.vigente ? '<span class="tag verde">vale hoje</span>' : '<span class="tag cinza">' + esc(!/^s/i.test(x.ativo || 'Sim') ? 'inativa' : x.desde ? 'a partir de ' + x.desde : x.ate ? 'até ' + x.ate : 'não vale hoje') + '</span>') + '</div>'; }, 'Sem cobrança cadastrada: cobra pela tabela. Cadastre em Pacientes → Cobrança por profissional.');
 // mensalidade / antecipado
 $("#fi-mensal-card").hidden = !r.mensal.length;
 fiLista('fi-mensal', r.mensal, function (x) { return fiItem('<span class="quem">' + esc(x.chave) + '</span><span class="muted">' + esc(profCurto(x.profissional)) + '</span>', x.pago ? '<span class="muted">' + esc((x.data || '') + (x.forma ? ' · ' + x.forma : '')) + '</span>' : '', '<span class="tag ' + (COR_FAIXA[x.cor] || 'cinza') + '">' + esc(x.situacao) + '</span>'); }, '');
@@ -3325,7 +3321,7 @@ b.addEventListener('click', function () { cmFiltro = cmFiltro === x[0] ? 'todos'
 });
 // aviso: colunas da competência ainda não existem na aba Mensalistas (a gestão cria; o app cria sozinho no 1º pagamento)
 var av = '';
-if (!r.colunasExistem) av += '<div class="faixa amarela"><div class="corpo"><div class="t">Colunas de ' + esc(r.chave) + ' ainda não existem na aba Mensalistas</div><div>O app cria sozinho no primeiro pagamento registrado' + (ehGestao() ? ', ou crie agora.' : '. A gestão também pode criar em Pendências → Virada do mês.') + '</div></div>' + (ehGestao() ? '<div class="acoes"><button type="button" class="btn ter" id="cm-criar" data-chave="' + esc(r.chave) + '">Criar colunas de ' + esc(r.chave) + '</button></div>' : '') + '</div>';
+if (!r.colunasExistem) av += '<div class="faixa amarela"><div class="corpo"><div class="t">Colunas de ' + esc(r.chave) + ' ainda não existem na aba Mensalistas</div><div>O app cria sozinho no primeiro pagamento registrado' + ', ou crie agora.' + '</div></div>' + '<div class="acoes"><button type="button" class="btn ter" id="cm-criar" data-chave="' + esc(r.chave) + '">Criar colunas de ' + esc(r.chave) + '</button></div>' + '</div>';
 $("#cm-aviso").innerHTML = av;
 var bc = $("#cm-criar"); if (bc) bc.addEventListener('click', function () { var b = this; b.disabled = true; call('criarColunasMes', { chave: b.dataset.chave }).then(function (r2) { if (!r2.ok) { b.disabled = false; return toast((r2.erros || ['Não criou']).join(' ')); } toast('Colunas de ' + r2.chave + ' criadas'); carregarCobrancaMes(); }).catch(function (e) { b.disabled = false; toast('Erro: ' + e.message); }); });
 var lista = itens.filter(function (it) { return (cmFiltro === 'todos' || cmFiltro === grupoCM(it)) && (!q || semAcento(it.paciente).indexOf(q) >= 0 || semAcento(it.pagador || '').indexOf(q) >= 0 || semAcento(it.profissional).indexOf(q) >= 0); });
@@ -3342,7 +3338,7 @@ var sess = it.cobranca === 'Mensalidade fixa' ? '<span class="muted">não conta 
 var valor = it.valorMes != null ? '<b>' + esc(brlCurto(it.valorMes)) + '</b>' + (it.valorCobradoEditado ? '<div class="sub">valor ajustado pela gestão</div>' : it.cobranca === 'Por sessão' && it.pagamento !== 'Posterior' && it.valor != null ? '<div class="sub">' + esc(brlCurto(it.valor)) + ' × ' + it.sessoesCobradas + '</div>' : '') : (it.pagamento === 'Posterior' ? '<span class="muted">soma das sessões</span>' : '<span class="muted">a definir</span>');
 var pg = it.pago === 'Sim' ? 'pago' + (it.data ? ' em ' + esc(it.data) : '') + (it.forma ? ' · ' + esc(it.forma) : '') + (it.nf ? '<div class="sub">NF: ' + esc(it.nf) + '</div>' : '<div class="sub">NF a emitir</div>') : it.pago === 'Parcial' ? 'pago em parte' + (it.recebido ? ' (' + esc(brlCurto(it.recebido)) + ')' : '') + (it.data ? ' em ' + esc(it.data) : '') : '<span class="muted">—</span>';
 var acao = it.pagamento === 'Posterior' ? (it.aReceber > 0 ? '<button type="button" class="btn mini" data-pg>Receber o mês</button>' : '') : '<button type="button" class="btn' + (it.pago === 'Sim' ? ' ter' : '') + ' mini" data-pg>' + (it.pago === 'Sim' ? 'Outro pagamento' : 'Registrar pagamento') + '</button>';
-if (ehGestao() && it.cobranca !== 'Mensalidade fixa' && it.pagamento !== 'Posterior') acao += '<button type="button" class="btn link mini" data-ed>Editar sessões</button>';
+if (it.cobranca !== 'Mensalidade fixa' && it.pagamento !== 'Posterior') acao += '<button type="button" class="btn link mini" data-ed>Editar sessões</button>';
 acao += botaoCobrarCM(it);
 var tr = el('<tr><td class="td-pac"><a href="#" data-ficha>' + esc(it.paciente) + '</a><div class="sub">' + esc(it.pagador && it.pagador !== it.paciente ? 'pagador: ' + it.pagador : '') + '</div></td><td>' + esc(profCurto(it.profissional)) + '<div class="sub">' + esc(it.rotulo.replace(/^[^:]+: /, '')) + (it.obs ? ' · ' + esc(it.obs) : '') + '</div></td><td>' + sess + '</td><td>' + valor + '</td><td><span class="tag ' + cor + '">' + esc(it.situacaoTxt) + '</span>' + (it.pago ? '<div class="sub">' + pg + '</div>' : '') + '</td><td class="no-print" style="text-align:right"><div class="acoes">' + acao + '</div></td></tr>');
 var bp = $('[data-pg]', tr); if (bp) bp.addEventListener('click', function () { abrirPagamentoMes($("#cm-pagbox"), { paciente: it.paciente, profissional: it.profissional, cobranca: it.cobranca, pagamento: it.pagamento, valor: it.valor, valorMes: it.pagamento === 'Posterior' ? it.aReceber : it.valorMes, chave: CM.chave, pagador: it.pagador, proximas: [CM.proximaChave] }, function () { carregarCobrancaMes(); recarregarAT().catch(function () { }); }); });
@@ -3475,8 +3471,8 @@ box.scrollIntoView({ behavior: 'smooth', block: 'center' });
 var GES = null, gesAberto = null, gesHora = null, gesCorr = null, LANC = null;
 INICIAR.gestao = function () {
 if (!BOOT) { setTimeout(INICIAR.gestao, 300); return; }
-// recepção vê pendências e lançamentos; exportar, virada do mês, lembrete e regras de cobrança continuam só da gestão
-['g-virada-card', 'g-lemb', 'g-so-gestao', 'g-ia-card'].forEach(function (id) { $("#" + id).hidden = !ehGestao(); });
+// 16/10: a recepção faz tudo o que a gestão faz aqui (exportar, virada, lembrete, faltas, perdidos); só a IA fica com a gestão
+$("#g-ia-card").hidden = !ehGestao();
 if (ehGestao()) carregarIA();
 if (!$("#g-mes").options.length) { MESES_PT.forEach(function (m) { var o = document.createElement('option'); o.value = m; o.textContent = m; $("#g-mes").appendChild(o); }); $("#g-mes").value = MESES_PT[new Date().getMonth()]; }
 $("#g-nav").hidden = false; $("#g-atualizar").hidden = false; $("#g-print").hidden = false; $("#g-planilha").textContent = BOOT.planilha || 'Controle da Recepção 2026';
@@ -3529,7 +3525,7 @@ var r = GES, soma = function (l) { return (l || []).reduce(function (a, x) { ret
 var faltas = (r.faltas || []).length, faltasSemDecisao = (r.faltas || []).filter(function (x) { return !x.decisao; }), aReceber = (r.pagamentoPendente || []).reduce(function (a, x) { return a + saldoReg(x); }, 0);
 $("#g-atualizado").textContent = 'atualizado às ' + ('0' + gesHora.getHours()).slice(-2) + ':' + ('0' + gesHora.getMinutes()).slice(-2);
 $("#g-kpis").hidden = false; $("#g-kpis").innerHTML = '<div class="kpi"><b>' + r.total + '</b><span>atendimentos no mês</span></div><div class="kpi"><b>' + r.atendidos + '</b><span>atendidos' + (faltas ? ' · ' + faltas + ' falta' + (faltas === 1 ? '' : 's') : '') + '</span></div><div class="kpi roxo"><b>' + esc(brlCurto(r.recebido)) + '</b><span>recebido</span></div><div class="kpi amarela cheio"><b>' + esc(brlCurto(aReceber)) + '</b><span>a receber (particular)</span></div><div class="kpi"><b>' + (r.semGuia || []).length + '</b><span>convênio sem guia</span></div>';
-$("#g-export").hidden = !ehGestao(); $("#g-export-txt").textContent = 'Exportar ' + r.mes + ' (.xlsx)'; $("#g-export").disabled = !r.abaExiste;
+$("#g-export").hidden = false; $("#g-export-txt").textContent = 'Exportar ' + r.mes + ' (.xlsx)'; $("#g-export").disabled = !r.abaExiste;
 $("#g-corpo").hidden = false;
 var V = function (l) { return l.valor ? 'R$ ' + brl(l.valor) : ''; }, D = function (l) { return l.data + (l.hora ? ' ' + l.hora : ''); };
 var nomes = function (l, n) { var x = (l || []).slice(0, n || 3).map(function (i) { return primeiroNome(i.paciente) + ' ' + String(i.data || '').slice(0, 5); }); return x.join(' · ') + ((l || []).length > (n || 3) ? ' · +' + ((l || []).length - (n || 3)) : ''); };
@@ -3537,15 +3533,15 @@ var PEND = [
 { k: 'pag', cor: 'amarela', n: (r.pagamentoPendente || []).length, t: 'Particulares atendidos sem “Pago?”', s: (r.pagamentoPendente || []).length ? nomes(r.pagamentoPendente) + ' — a recepção cobra; linha amarela na planilha' : 'Todos os particulares atendidos têm Pago? preenchido.', acao: 'Ver lista', tabela: function () { return tabelaG('Particulares atendidos sem pagamento registrado', [['Data', D], ['Paciente', 'paciente'], ['Profissional', 'profissional'], ['Procedimento', 'procedimento'], ['Valor', V], ['Pago?', 'pago'], ['Em aberto', function (l) { return 'R$ ' + brl(saldoReg(l)); }], ['Obs.', 'obs']], r.pagamentoPendente, 'Nada pendente.', 'pag'); } },
 { k: 'nf', cor: 'laranja', n: (r.nfPendente || []).length, t: 'Pagos sem nota fiscal', s: (r.nfPendente || []).length ? brlCurto(soma(r.nfPendente)) + ' · emitir no Portal Nacional com o nome de “quem pagou”' : 'Nenhum pagamento sem NF.', acao: 'Ver lista', tabela: function () { return tabelaG('Pagos sem NF emitida', [['Data', D], ['Paciente', 'paciente'], ['Valor', V], ['Forma', 'forma'], ['Quem pagou', function (l) { return l.quem || '(pagador habitual)'; }], ['NF?', function (l) { return l.nf || '(em branco)'; }]], r.nfPendente, 'Nada pendente.', 'nf'); } },
 { k: 'guia', cor: 'lilas', n: (r.semGuia || []).length, t: 'Convênio sem guia assinada', s: (r.semGuia || []).length ? contarPor(r.semGuia, 'convenio') + ' — glosa certa se faturar assim' : 'Todas as guias de convênio assinadas.', acao: 'Ver lista', tabela: function () { return tabelaG('Convênio sem guia assinada', [['Data', D], ['Paciente', 'paciente'], ['Convênio', 'convenio'], ['Profissional', 'profissional'], ['Guia', function (l) { return l.guia || '(em branco)'; }], ['PDF na pasta?', function (l) { return l.pdfNaPasta === 'sim' ? 'sim' + (l.pdfArquivo ? ' (' + l.pdfArquivo + ')' : '') : l.pdfNaPasta === 'não' ? 'não' : '—'; }]], r.semGuia, 'Nada pendente.', 'guia'); } },
-{ k: 'faltas', cor: 'vermelha', n: faltasSemDecisao.length, t: 'Faltas → Decidir', s: faltasSemDecisao.length ? faltasSemDecisao.length + ' sem decisão de ' + faltas + ' no mês — não abate · abate no mês seguinte · cobrar taxa · relevar' : (faltas ? 'Todas as ' + faltas + ' faltas do mês já têm decisão.' : 'Nenhuma falta ou desmarcação no mês.'), acao: ehGestao() ? 'Decidir' : 'Ver lista', tabela: tabelaFaltas },
+{ k: 'faltas', cor: 'vermelha', n: faltasSemDecisao.length, t: 'Faltas → Decidir', s: faltasSemDecisao.length ? faltasSemDecisao.length + ' sem decisão de ' + faltas + ' no mês — não abate · abate no mês seguinte · cobrar taxa · relevar' : (faltas ? 'Todas as ' + faltas + ' faltas do mês já têm decisão.' : 'Nenhuma falta ou desmarcação no mês.'), acao: 'Decidir', tabela: tabelaFaltas },
 { k: 'cadincompleto', cor: 'laranja', n: (r.cadastroIncompleto || []).length, t: 'Atendidos sem cobrança cadastrada', s: (r.cadastroIncompleto || []).length ? (r.cadastroIncompleto || []).slice(0, 3).map(function (x) { return primeiroNome(x.paciente) + ' × ' + profCurto(x.profissional); }).join(' · ') + ((r.cadastroIncompleto || []).length > 3 ? ' · +' + ((r.cadastroIncompleto || []).length - 3) : '') + ' — o app cobrou pela tabela; cadastre em Pacientes → Cobrança por profissional' : 'Todo paciente atendido tem a cobrança cadastrada pro profissional.', acao: 'Ver lista', tabela: tabelaCadIncompleto },
 { k: 'pagador', cor: 'lilas', n: (r.pagadorDiferente || []).length, t: 'Pagou outra pessoa — conferir o nome na NF', s: (r.pagadorDiferente || []).length ? nomes(r.pagadorDiferente) + ' — se for sempre essa pessoa, promover a pagador habitual em Pacientes' : 'Ninguém pagou por outra pessoa.', acao: 'Revisar', tabela: function () { return tabelaG('Pagou outra pessoa (conferir nome na NF)', [['Data', D], ['Paciente', 'paciente'], ['Quem pagou', 'quem'], ['Valor', V], ['NF?', 'nf']], r.pagadorDiferente, 'Nenhum.', 'obs'); } }
 ];
 // Avaliações em andamento (gestão, 15/10): aplicações de teste sem número fixo; quantas cada paciente já fez
 var av = r.avaliacoes || []; PEND.push({ k: 'avaliacoes', cor: 'lilas', n: av.length, t: 'Avaliações em andamento', s: av.length ? av.slice(0, 3).map(function (x) { return primeiroNome(x.paciente) + ' ' + x.n; }).join(' · ') + (av.length > 3 ? ' · +' + (av.length - 3) : '') + ' aplicações — sem número fixo; parou de vir? confira com a profissional' : 'Nenhuma aplicação de teste nos últimos 60 dias.', acao: 'Ver lista',
 tabela: function () { return tabelaG('Avaliações em andamento (aplicações de teste nos últimos 60 dias)', [['Paciente', 'paciente'], ['Profissional', 'profissional'], ['Aplicações feitas', 'n'], ['Primeira', 'primeira'], ['Última', 'ultima'], ['Dias sem aplicação', 'diasSemVir']], av, 'Nenhuma avaliação em andamento.'); } });
-// Perdidos e glosas (só gestão): quanto se perdeu no mês; o Valor é a referência
-if (ehGestao()) { var perd = r.perdidos || []; PEND.push({ k: 'perdidos', cor: 'lilas', n: perd.length, t: 'Perdidos e glosas', s: perd.length ? brlCurto(soma(perd)) + ' perdidos no mês · ' + contarPor(perd, 'convenio') : 'Nenhum valor dado como perdido no mês.', acao: 'Ver lista',
+// Perdidos e glosas: quanto se perdeu no mês; o Valor é a referência
+{ var perd = r.perdidos || []; PEND.push({ k: 'perdidos', cor: 'lilas', n: perd.length, t: 'Perdidos e glosas', s: perd.length ? brlCurto(soma(perd)) + ' perdidos no mês · ' + contarPor(perd, 'convenio') : 'Nenhum valor dado como perdido no mês.', acao: 'Ver lista',
 tabela: function () { return tabelaG('Perdidos e glosas · ' + brlCurto(soma(perd)), [['Data', D], ['Paciente', 'paciente'], ['Profissional', 'profissional'], ['Convênio', function (l) { return l.convenio || '—'; }], ['Valor de referência', V], ['Observação', 'obs']], perd, 'Nenhum valor dado como perdido no mês.'); } }); }
 // Guias a conferir (gestão, 16/10): guias lidas pela IA sem atendimento registrado, com baixa confiança ou que não pareceram guia
 if (ehGestao()) { var gc = r.guiasAConferir || []; PEND.push({ k: 'guiasconferir', cor: 'laranja', n: gc.length, t: 'Guias a conferir (lidas pela IA)', s: gc.length ? gc.slice(0, 3).map(function (g) { return (g.sugestao && g.sugestao.paciente ? primeiroNome(g.sugestao.paciente) : g.nome) + ' · ' + guiaStatusTxt(g.status); }).join(' · ') + (gc.length > 3 ? ' · +' + (gc.length - 3) : '') + ' — sem sessão registrada ou leitura em dúvida: confirme, escolha a linha ou ignore' : (r.guiasErro ? 'não consegui ler a aba Guias lidas: ' + r.guiasErro : 'Nenhuma guia lida em dúvida.'), acao: 'Conferir',
@@ -3554,7 +3550,7 @@ if (!gc.length) box.innerHTML = '<p class="muted" style="margin:0">Nada a confer
 gc.forEach(function (it) { box.appendChild(guiaItemEl(it, function () { r.guiasAConferir = r.guiasAConferir.filter(function (x) { return x.id !== it.id; }); carregarGestao(); })); });
 return card; } }); }
 // linhas de convênio sem o nome do convênio gravado (gestão, 10/10): o Repasse joga em "Convênio (sem nome)", sem regra
-if (ehGestao()) { var sc = r.semConvenio || []; PEND.push({ k: 'semconv', cor: 'laranja', n: sc.length, t: 'Linhas de convênio sem convênio', s: sc.length ? nomes(sc) + ' — Pago? de convênio (ou perdido) sem o convênio na linha: escolha o convênio' : 'Toda linha de convênio tem o convênio gravado.', acao: 'Corrigir',
+{ var sc = r.semConvenio || []; PEND.push({ k: 'semconv', cor: 'laranja', n: sc.length, t: 'Linhas de convênio sem convênio', s: sc.length ? nomes(sc) + ' — Pago? de convênio (ou perdido) sem o convênio na linha: escolha o convênio' : 'Toda linha de convênio tem o convênio gravado.', acao: 'Corrigir',
 tabela: function () { return tabelaG('Linhas de convênio sem convênio', [['Data', D], ['Paciente', 'paciente'], ['Profissional', 'profissional'], ['Procedimento', 'procedimento'], ['Pago?', 'pago'], ['Valor', V], ['Modalidade', function (l) { return l.modalidade || '—'; }]], sc, 'Nenhuma.', 'amplo'); } }); }
 var root = $("#g-pend"); root.innerHTML = '';
 PEND.forEach(function (p) {
@@ -3595,11 +3591,11 @@ var DECISOES = [['não abate', 'Não abate', 'ter'], ['abate no mês seguinte', 
 function tabelaFaltas() {
 var r = GES, l = (r.faltas || []).slice().sort(function (a, b) { return (a.decisao ? 1 : 0) - (b.decisao ? 1 : 0) || String(a.data).localeCompare(String(b.data)); });
 var pct = (BOOT.params && BOOT.params.taxa_falta_pct) || 50;
-var card = el('<div class="tabela-card"><div class="passo" style="padding:14px 18px 4px"><h2 style="font-size:15px">Faltas e desmarcações · ' + esc(r.mes) + '</h2><span class="tag ' + (l.some(function (x) { return !x.decisao; }) ? 'vermelha' : 'verde') + '">' + l.filter(function (x) { return !x.decisao; }).length + ' sem decisão</span><span class="muted" style="font-weight:500">' + (ehGestao() ? 'taxa de falta = ' + pct + '% do valor da sessão (parâmetro) · fica na aba do mês como linha a cobrar' : 'a gestão decide; a decisão aparece aqui e na linha da planilha') + '</span></div>' + (l.length ? '<div class="tabela-wrap"><table><thead><tr><th>Data</th><th>Paciente</th><th>Profissional</th><th>O que aconteceu</th><th>Detalhe (recepção)</th><th>Decisão</th>' + (ehGestao() ? '<th class="no-print"></th>' : '') + '</tr></thead><tbody></tbody></table></div>' : '<p class="muted" style="padding:0 18px 14px;margin:0">Nenhuma falta ou desmarcação no mês.</p>') + '</div>');
+var card = el('<div class="tabela-card"><div class="passo" style="padding:14px 18px 4px"><h2 style="font-size:15px">Faltas e desmarcações · ' + esc(r.mes) + '</h2><span class="tag ' + (l.some(function (x) { return !x.decisao; }) ? 'vermelha' : 'verde') + '">' + l.filter(function (x) { return !x.decisao; }).length + ' sem decisão</span><span class="muted" style="font-weight:500">' + 'taxa de falta = ' + pct + '% do valor da sessão (parâmetro) · fica na aba do mês como linha a cobrar' + '</span></div>' + (l.length ? '<div class="tabela-wrap"><table><thead><tr><th>Data</th><th>Paciente</th><th>Profissional</th><th>O que aconteceu</th><th>Detalhe (recepção)</th><th>Decisão</th>' + '<th class="no-print"></th>' + '</tr></thead><tbody></tbody></table></div>' : '<p class="muted" style="padding:0 18px 14px;margin:0">Nenhuma falta ou desmarcação no mês.</p>') + '</div>');
 var tb = $('tbody', card);
 l.forEach(function (x) {
 var det = x.detalhe || String(x.obs || '').replace(/^Falta\/desmarcação — /, '').split(' | ')[0];
-var tr = el('<tr' + (x.decisao ? ' class="apagada"' : '') + '><td>' + esc(x.data + (x.hora ? ' ' + x.hora : '')) + '</td><td><b>' + esc(x.paciente) + '</b></td><td>' + esc(profCurto(x.profissional)) + '</td><td>' + esc(x.oque) + '</td><td style="max-width:320px;white-space:normal">' + esc(det || '—') + '</td><td>' + (x.decisao ? '<span class="tag verde">' + esc(x.decisao) + '</span>' : '<span class="tag amarela">a decidir</span>') + '</td>' + (ehGestao() ? '<td class="no-print td-dec" style="text-align:right">' + (x.id ? '<div class="acoes" data-dec></div>' : '<span class="muted">sem ID: decida na planilha</span>') + '</td>' : '') + '</tr>');
+var tr = el('<tr' + (x.decisao ? ' class="apagada"' : '') + '><td>' + esc(x.data + (x.hora ? ' ' + x.hora : '')) + '</td><td><b>' + esc(x.paciente) + '</b></td><td>' + esc(profCurto(x.profissional)) + '</td><td>' + esc(x.oque) + '</td><td style="max-width:320px;white-space:normal">' + esc(det || '—') + '</td><td>' + (x.decisao ? '<span class="tag verde">' + esc(x.decisao) + '</span>' : '<span class="tag amarela">a decidir</span>') + '</td>' + '<td class="no-print td-dec" style="text-align:right">' + (x.id ? '<div class="acoes" data-dec></div>' : '<span class="muted">sem ID: decida na planilha</span>') + '</td>' + '</tr>');
 var box = $('[data-dec]', tr);
 if (box) DECISOES.forEach(function (dc) {
 var b = el('<button type="button" class="btn ' + dc[2] + ' mini"' + (x.decisao === dc[0] ? ' disabled' : '') + '>' + dc[1] + '</button>');
@@ -3624,7 +3620,7 @@ return card;
 function tabelaCadIncompleto() {
 var r = GES, l = r.cadastroIncompleto || [];
 var card = tabelaG('Atendidos no mês sem cobrança cadastrada pro profissional', [['1ª sessão', 'data'], ['Paciente', 'paciente'], ['Profissional', 'profissional'], ['Convênio', function (x) { return x.convenio || 'Particular'; }], ['Pago?', function (x) { return x.pago || '(vazio)'; }], ['Valor', function (x) { return x.valor ? 'R$ ' + brl(x.valor) : ''; }]], l, 'Nenhum.');
-if (l.length) { var tb = $('tbody', card); $$('tr', tb).forEach(function (tr, i) { var x = l[i]; if (!x) return; var td = el('<td class="no-print" style="text-align:right"><button type="button" class="btn link mini">' + (ehGestao() ? 'Cadastrar cobrança' : 'Ver cadastro') + '</button></td>'); td.querySelector('button').addEventListener('click', function () { go('pacientes', { editar: x.paciente, voltar: 'gestao' }); }); tr.appendChild(td); }); $('thead tr', card).appendChild(el('<th class="no-print"></th>')); }
+if (l.length) { var tb = $('tbody', card); $$('tr', tb).forEach(function (tr, i) { var x = l[i]; if (!x) return; var td = el('<td class="no-print" style="text-align:right"><button type="button" class="btn link mini">' + 'Cadastrar cobrança' + '</button></td>'); td.querySelector('button').addEventListener('click', function () { go('pacientes', { editar: x.paciente, voltar: 'gestao' }); }); tr.appendChild(td); }); $('thead tr', card).appendChild(el('<th class="no-print"></th>')); }
 return card;
 }
 /* ---------- Lançamentos: achar qualquer linha (mês mostrado ou todos) e corrigir tudo ---------- */

@@ -64,10 +64,10 @@ function carregarDia(forcarSemana) {
     var r = rr[0];
     if (r.data !== diaEscolhido()) return; // mudou de dia enquanto carregava
     DIA = r; $("#d-carregando").hidden = true;
-    $("#d-aviso-aba").hidden = r.abaMesExiste; if (!r.abaMesExiste) $("#d-aviso-aba").textContent = 'A aba "' + r.abaMes + '" ainda não existe na planilha. Peça à gestão para criar em Gestão → Virada do mês.';
+    $("#d-aviso-aba").hidden = r.abaMesExiste; if (!r.abaMesExiste) $("#d-aviso-aba").textContent = 'A aba "' + r.abaMes + '" ainda não existe na planilha. Crie em Pendências → Virada do mês.';
     preencherProfs();
     renderDia(); lerFimDia();
-    if (ehGestao()) resumoGestaoDia();
+    resumoGestaoDia();
   }).catch(function (e) { $("#d-carregando").textContent = 'Não consegui carregar a lista: ' + e.message; });
 }
 function preencherProfs() {
@@ -216,7 +216,7 @@ function renderPainel() {
   $("#pp-dl").innerHTML = '<div><dt>Hoje</dt><dd>' + esc((it.hora || '—') + ' · ' + tipoCurto(it)) + '</dd></div><div><dt>Profissional</dt><dd>' + esc(it.profissional) + '</dd></div><div><dt>Cobrança</dt><dd>' + esc(p ? cobrancaCurta(it, p) : '—') + '</dd></div><div><dt>Valor</dt><dd>' + esc(valorTxt) + '</dd></div><div><dt>Convênio</dt><dd>' + esc(p ? (p.convenio || 'Particular') : '—') + '</dd></div>' + (p && p.telPac ? '<div><dt>Telefone do paciente</dt><dd>' + esc(p.telPac) + '</dd></div>' : '') + (p && p.resp ? '<div><dt>Responsável</dt><dd>' + esc(p.resp + (p.respPar ? ' (' + p.respPar.toLowerCase() + ')' : '') + (p.respTel ? ' · ' + p.respTel : '')) + '</dd></div>' : '');
   // o bloco "O que fazer agora" (pequeno) + cadastro incompleto
   var avisoHtml = b && !reg ? blocoHtml(b, true) : '';
-  if (p && (cadastroIncompleto(p) || faltasDoc(p).length)) avisoHtml += aviso('laranja', 'Cadastro incompleto', esc([cadastroIncompleto(p) ? 'Sem cobrança cadastrada: avise a gestão (Pacientes → Cobrança por profissional).' : '', faltasDoc(p).length ? 'Falta ' + faltasDocTxt(p) + ': peça o documento e complete.' : ''].filter(Boolean).join(' ')));
+  if (p && (cadastroIncompleto(p) || faltasDoc(p).length)) avisoHtml += aviso('laranja', 'Cadastro incompleto', esc([cadastroIncompleto(p) ? 'Sem cobrança cadastrada: cadastre em Pacientes → Cobrança por profissional.' : '', faltasDoc(p).length ? 'Falta ' + faltasDocTxt(p) + ': peça o documento e complete.' : ''].filter(Boolean).join(' ')));
   $("#pp-aviso").innerHTML = alertasHtml(alertasDe(it.paciente), it.paciente) + avisoHtml; ligarAlertas($("#pp-aviso"));
   // sessões anteriores em aberto: a recepção vê na chegada e resolve ali mesmo (grava na linha antiga, como a Gestão)
   var pendHtml = pendDe(it.paciente).map(function (x, i) {
@@ -363,7 +363,7 @@ function renderPend(itens) {
   if (nf.length) out.push(['laranja', nf.length, 'NF a emitir hoje · ' + nf.map(function (i) { return primeiroNome(i.paciente) + (i.registro.valor ? ' R$ ' + brl(i.registro.valor).replace(',00', '') : ''); }).join(', '), dest]);
   var pp = regs.filter(function (i) { var r = i.registro; return particular(r) && pendentePagamento(r); });
   if (pp.length) out.push(['amarela', pp.length, 'particular sem “Pago?” hoje · ' + pp.map(function (i) { return primeiroNome(i.paciente); }).join(', '), dest]);
-  if (ehGestao() && g) {
+  if (g) {
     var ontem = dataObj(dia); ontem.setDate(ontem.getDate() - 1); var dOntem = ('0' + ontem.getDate()).slice(-2) + '/' + ('0' + (ontem.getMonth() + 1)).slice(-2) + '/' + ontem.getFullYear();
     var nfO = (g.nfPendente || []).filter(function (x) { return x.data === dOntem; }); if (nfO.length) out.push(['laranja', nfO.length, 'NF de ontem a emitir · ' + nfO.map(function (x) { return primeiroNome(x.paciente) + (x.valor ? ' R$ ' + brl(x.valor).replace(',00', '') : ''); }).join(', '), 'gestao']);
   }

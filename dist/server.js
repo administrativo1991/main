@@ -802,7 +802,7 @@ function estadoVirada_(mes) {
 // para sem gravar. Depois confere com getFormula que a linha 2 ficou sem fórmula e registra em "Alterações de lançamento".
 API.virarAbaMes = function (d) {
   d = d || {};
-  var u = usuario_(); if (u.perfil !== 'gestao') return { ok: false, erros: ['Só a gestão vira a aba para o app.'] };
+  var u = usuario_();
   var mes = String(d.mes || '').trim(); if (CONFIG.MESES.indexOf(mes) < 0) return { ok: false, erros: ['Mês inválido.'] };
   var s = planilha_().getSheetByName(mes); if (!s) return { ok: false, erros: ['A aba "' + mes + '" não existe.'] };
   var lock = LockService.getScriptLock(); lock.waitLock(20000);
@@ -870,7 +870,6 @@ API.corrigirLancamento = function (d) {
     var u = usuario_(), erros = [], novos = {}, rotulos = [], amplos = [];
     var quer = function (k) { return Object.prototype.hasOwnProperty.call(c, k); };
     // perdido / glosa: só a gestão marca, desmarca ou recebe numa linha perdida
-    if (u.perfil !== 'gestao' && (ehPerdido_(c.pago) || (ehPerdido_(pagoAtual) && (quer('pago') || quer('recebidoAgora'))))) return { ok: false, erros: ['Só a gestão marca ou desmarca "' + PAGO_PERDIDO + '".'] };
     var motivoPerdido = String(c.motivoPerdido || '').trim();
     if (ehPerdido_(c.pago) && !ehPerdido_(pagoAtual) && !motivoPerdido) return { ok: false, erros: ['"' + PAGO_PERDIDO + '": informe o motivo (ex.: guia não autorizada pelo convênio).'] };
     var atualDe = function (k) { return k === 'DATA_PAG' || k === 'DATA' ? fmtData_(g(k)) : k === 'HORA' ? horaTxt_(g(k)) : (k === 'VALOR' || k === 'RECEBIDO') ? (g(k) === '' ? '' : String(numBR_(g(k)))) : txt(k); };
@@ -883,7 +882,6 @@ API.corrigirLancamento = function (d) {
     if (quer('paciente')) { var np = String(c.paciente || '').trim(); pacNovo = indicePacientes_().filter(function (p) { return p.nome === np; })[0]; if (!pacNovo) erros.push('Paciente novo não está em Pacientes.'); else if (!amplo('PACIENTE', np, 'Paciente')) pacNovo = null; }
     // convênio e modalidade gravados na linha (gestão, 10/10): só a gestão troca; a recepção vê, mas não edita
     var cadLinha = [], muda = function (k, v, rotulo) { var m = mudar(k, v, rotulo); if (m) cadLinha.push({ campo: rotulo, de: m.de, para: m.para }); return m; };
-    if ((quer('convenio') || quer('modalidade')) && u.perfil !== 'gestao') return { ok: false, erros: ['Só a gestão troca o convênio ou a modalidade de uma linha.'] };
     if (quer('convenio')) { var cv = String(c.convenio || '').trim(), lcv = colunaLista_(CONFIG.LISTAS.CONVENIO); if (cv && lcv.length && lcv.indexOf(cv) < 0) erros.push('Convênio fora da lista (aba Listas).'); else muda('CONV', cv, 'Convênio'); }
     if (quer('modalidade')) { var md = String(c.modalidade || '').trim(), lmd = colunaLista_(CONFIG.LISTAS.MODALIDADE); if (md && lmd.length && lmd.indexOf(md) < 0) erros.push('Modalidade fora da lista (aba Listas, Cobrança).'); else muda('MOD', md, 'Modalidade'); }
     // paciente trocado (lançado no paciente errado): a linha passa a levar o cadastro do paciente certo, salvo o que a gestão escolheu acima
@@ -1011,7 +1009,6 @@ function lembreteAtivo_() {
 // Gestão escreve (ou encerra) o lembrete: sempre uma linha nova; encerrar = linha com texto em branco
 API.salvarLembrete = function (d) {
   var u = usuario_();
-  if (u.perfil !== 'gestao') return { ok: false, erros: ['Só a gestão escreve o lembrete.'] };
   var texto = String(d.texto || '').trim(), ate = String(d.validoAte || '').trim(), encerrar = !!d.encerrar;
   if (!texto && !encerrar) return { ok: false, erros: ['Escreva o lembrete.'] };
   if (ate && !parseData_(ate)) return { ok: false, erros: ['"Válido até" inválido: use dd/mm/aaaa.'] };
@@ -1298,7 +1295,6 @@ API.atualizarCadastro = function (d) {
     if (cpfNovo && h[H.CPF]) {
       var cpfAtual = Duplicatas.digitos(atual[h[H.CPF] - 1]);
       if (cpfAtual !== cpfNovo) {
-        if (cpfAtual && u.perfil !== 'gestao') return { ok: false, erros: ['O CPF já está preenchido: só a gestão corrige.'] };
         var outro = indicePacientes_().filter(function (x) { return x.linha !== p.linha && Duplicatas.digitos(x.cpf) === cpfNovo; })[0];
         if (outro) return { ok: false, erros: ['CPF já cadastrado: ' + outro.nome + '.'] };
         s.getRange(p.linha, h[H.CPF]).setValue(cpfFmt_(cpfNovo));
@@ -1308,7 +1304,6 @@ API.atualizarCadastro = function (d) {
     if (nascNovo && h[H.NASC]) {
       var nascAtual = fmtData_(atual[h[H.NASC] - 1]);
       if (nascAtual !== fmtData_(nascNovo)) {
-        if (nascAtual && u.perfil !== 'gestao') return { ok: false, erros: ['A data de nascimento já está preenchida: só a gestão corrige.'] };
         s.getRange(p.linha, h[H.NASC]).setValue(nascNovo).setNumberFormat('dd/MM/yyyy');
         mudancas.push({ campo: H.NASC, de: nascAtual, para: fmtData_(nascNovo) });
       }
@@ -1345,14 +1340,14 @@ function linhasAbertas_(nome) {
   return { aba: aba, s: s, linhas: linhas };
 }
 API.linhasAbertasPaciente = function (d) {
-  d = d || {}; if (usuario_().perfil !== 'gestao') return { ok: false, erros: ['Só a gestão.'] };
+  d = d || {};
   var p = linhaPaciente_(d.nome); if (!p) return { ok: false, erros: ['Paciente não encontrado em Pacientes.'] };
   var a = autoDoCadastro_(p), HM = CONFIG.HM, la = linhasAbertas_(p.nome);
   var dif = la.linhas.filter(function (r) { return r.convenio !== a[HM.CONV] || r.modalidade !== a[HM.MOD]; });
   return { ok: true, aba: la.aba, paciente: p.nome, convenio: a[HM.CONV], modalidade: a[HM.MOD], linhas: dif.map(function (r) { return { id: r.id, data: r.data, hora: r.hora, profissional: r.profissional, convenio: r.convenio, modalidade: r.modalidade }; }) };
 };
 API.atualizarLinhasDoCadastro = function (d) {
-  d = d || {}; var u = usuario_(); if (u.perfil !== 'gestao') return { ok: false, erros: ['Só a gestão.'] };
+  d = d || {}; var u = usuario_();
   var p = linhaPaciente_(d.nome); if (!p) return { ok: false, erros: ['Paciente não encontrado em Pacientes.'] };
   var quer = {}; (d.ids || []).forEach(function (x) { quer[String(x)] = 1; });
   var lock = LockService.getScriptLock(); lock.waitLock(20000);
@@ -1427,12 +1422,12 @@ API.gestaoResumo = function (d) {
     // aplicações de teste (gestão, 15/10): sem número fixo; quem fez aplicação nos últimos 60 dias, com quantas já fez
     avaliacoes: avaliacoesEmAndamento_(),
     // relatório "Perdidos e glosas" (só gestão): o Valor é a referência do que se perdeu
-    perdidos: usuario_().perfil === 'gestao' ? L.filter(function (r) { return ehPerdido_(r.pago); }) : [],
+    perdidos: L.filter(function (r) { return ehPerdido_(r.pago); }),
     descontos: L.filter(function (r) { return /^Desconto:/i.test(r.obs); }),
     extras: L.filter(function (r) { return /^Sessão extra liberada/i.test(r.obs); }),
     pagadorDiferente: atend.filter(function (r) { return r.quem; }),
     // linhas de convênio sem convênio gravado (gestão, 10/10): sem o nome, o Repasse joga em "Convênio (sem nome)" sem regra
-    semConvenio: usuario_().perfil === 'gestao' ? L.filter(function (r) { return (/^Convênio/i.test(r.pago) || ehPerdido_(r.pago)) && !String(r.convenio || '').trim(); }) : [],
+    semConvenio: L.filter(function (r) { return (/^Convênio/i.test(r.pago) || ehPerdido_(r.pago)) && !String(r.convenio || '').trim(); }),
     virada: m.existe ? estadoVirada_(mes) : null,
     alteracoes: []
   };
@@ -1570,7 +1565,6 @@ function subpasta_(pai, nome, criadas) { var it = pai.getFoldersByName(nome); if
 // se já existir, sobrescreve (é uma cópia, a fonte continua sendo a aba). Devolve o link direto pro .xlsx.
 API.exportarMes = function (d) {
   d = d || {};
-  if (usuario_().perfil !== 'gestao') return { ok: false, erros: ['Só a gestão exporta.'] };
   var mes = String(d.mes || nomeAbaMes_(new Date())).trim(), sm = planilha_().getSheetByName(mes), mesIdx = CONFIG.MESES.indexOf(mes);
   if (!sm || mesIdx < 0) return { ok: false, erros: ['A aba "' + mes + '" não existe.'] };
   var hoje = new Date(), ano = hoje.getFullYear() - (mesIdx > hoje.getMonth() ? 1 : 0);
@@ -1599,7 +1593,6 @@ API.exportarMes = function (d) {
 // Nasce SEM fórmula em F/G/H/N (10/10): o app grava o cadastro em cada linha na hora de salvar.
 API.criarAbaMes = function (d) {
   d = d || {};
-  if (usuario_().perfil !== 'gestao') return { ok: false, erros: ['Só a gestão cria a aba do mês.'] };
   var nome = String(d.nome || '').trim(); if (CONFIG.MESES.indexOf(nome) < 0) return { ok: false, erros: ['Nome do mês inválido.'] };
   var ss = planilha_(); if (ss.getSheetByName(nome)) return { ok: false, erros: ['A aba "' + nome + '" já existe.'] };
   var modelo = null; CONFIG.MESES.slice().reverse().forEach(function (m) { if (!modelo && ss.getSheetByName(m)) modelo = ss.getSheetByName(m); });
@@ -2047,7 +2040,7 @@ API.registrarPagamentoMes = function (d) {
 };
 // gestão edita o nº de sessões agendadas / valor cobrado da competência (é assim que entra no meio do mês, quinzenal sem agenda…)
 API.editarSessoesCompetencia = function (d) {
-  d = d || {}; var u = usuario_(); if (u.perfil !== 'gestao') return { ok: false, erros: ['Só a gestão muda as sessões da competência.'] };
+  d = d || {}; var u = usuario_();
   var paciente = String(d.paciente || '').trim(), profissional = String(d.profissional || '').trim(), chave = String(d.chave || '').trim();
   if (!paciente || !profissional || !mesDaChave_(chave)) return { ok: false, erros: ['Paciente, profissional e competência são obrigatórios.'] };
   var sess = d.sessoes === '' || d.sessoes == null ? null : numBR_(d.sessoes), vc = d.valorCobrado === '' || d.valorCobrado == null ? null : numBR_(d.valorCobrado);
@@ -2069,7 +2062,7 @@ API.editarSessoesCompetencia = function (d) {
 };
 // Mensalistas: cria a coluna Profissional e as 6 colunas da competência (gestão)
 API.criarColunasMes = function (d) {
-  d = d || {}; if (usuario_().perfil !== 'gestao') return { ok: false, erros: ['Só a gestão cria colunas de mês.'] };
+  d = d || {};
   var chave = String(d.chave || '').trim(); if (!chave && d.mes) { var i = CONFIG.MESES.indexOf(String(d.mes)); if (i >= 0) { var hj = new Date(); chave = CONFIG.MESES[i] + '/' + (hj.getFullYear() + (i < hj.getMonth() ? 1 : 0)); } }
   if (!mesDaChave_(chave)) return { ok: false, erros: ['Competência inválida.'] };
   var lock = LockService.getScriptLock(); lock.waitLock(20000);
@@ -2085,7 +2078,7 @@ API.criarColunasMes = function (d) {
 /* ---------- Faltas → Decidir (gestão): a recepção registra, a gestão decide ---------- */
 var DECISOES_FALTA = ['não abate', 'abate no mês seguinte', 'cobrar taxa de falta', 'relevar'];
 API.decidirFalta = function (d) {
-  d = d || {}; var u = usuario_(); if (u.perfil !== 'gestao') return { ok: false, erros: ['Só a gestão decide sobre faltas.'] };
+  d = d || {}; var u = usuario_();
   var aba = String(d.aba || '').trim(), id = String(d.id || '').trim(), decisao = String(d.decisao || '').trim().toLowerCase();
   if (CONFIG.MESES.indexOf(aba) < 0 || !id) return { ok: false, erros: ['Aba e ID do lançamento são obrigatórios.'] };
   if (DECISOES_FALTA.indexOf(decisao) < 0) return { ok: false, erros: ['Decisão inválida. Use: ' + DECISOES_FALTA.join(' · ')] };

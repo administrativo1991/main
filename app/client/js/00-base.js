@@ -298,7 +298,7 @@ function mock(nome, d) {
     if (nome === 'registrarPagamentoMes') { (d.competencias || []).forEach(function (ch) { mockPagos[d.paciente + '|' + d.profissional + '|' + ch] = { pago: d.parcial ? 'Parcial' : 'Sim', data: d.data, forma: d.forma, nf: d.nf || 'Não', recebido: d.parcial ? num(d.valor) : 0 }; mockReg.forEach(function (r) { if (r.paciente === d.paciente && r.profissional === d.profissional && r.pago === 'Não' && Cobranca.chaveMes(dataObj(r.data)) === ch) { r.pago = 'Sim'; r.forma = d.forma; } }); }); if (AT) AT.competencias = mockComps(); return res({ ok: true, feitos: (d.competencias || []).map(function (ch) { return { chave: ch, id: 'A-sim-pg', linha: 60, aba: MESES_PT[hoje.getMonth()], valor: num(d.valor) }; }) }); }
     if (nome === 'editarSessoesCompetencia') { mockMens[d.paciente + '|' + d.profissional + '|' + d.chave] = { sessoes: d.sessoes === '' ? null : num(d.sessoes), valorCobrado: d.valorCobrado === '' || d.valorCobrado == null ? null : num(d.valorCobrado) }; if (AT) AT.competencias = mockComps(); return res({ ok: true }); }
     if (nome === 'criarColunasMes') return res({ ok: true, chave: d.chave, colunas: [] });
-    if (nome === 'decidirFalta') { if (window.__RECEPCAO) return res({ ok: false, erros: ['Só a gestão decide sobre faltas.'] }); var rg = mockReg.filter(function (x) { return x.id === d.id; })[0]; if (rg) { rg.decisao = d.decisao; rg.obs = (rg.obs ? rg.obs + ' | ' : '') + 'Decisão da gestão: ' + d.decisao; } mockDecisoes[d.id] = d.decisao; var tx = null; if (d.decisao === 'cobrar taxa de falta') { tx = { id: 'A-sim-tx' + mockReg.length, valor: 35 }; mockReg.push({ paciente: rg ? rg.paciente : '?', profissional: rg ? rg.profissional : '', oque: 'Atendido', data: rg ? rg.data : hojeStr(), procedimento: 'Taxa de falta – psicologia', id: tx.id, valor: 35, pago: 'Não', forma: '', nf: 'Não', guia: '', convenio: 'Particular', obs: 'Taxa de falta' }); } return res({ ok: true, id: d.id, decisao: d.decisao, taxa: tx }); }
+    if (nome === 'decidirFalta') { var rg = mockReg.filter(function (x) { return x.id === d.id; })[0]; if (rg) { rg.decisao = d.decisao; rg.obs = (rg.obs ? rg.obs + ' | ' : '') + 'Decisão da gestão: ' + d.decisao; } mockDecisoes[d.id] = d.decisao; var tx = null; if (d.decisao === 'cobrar taxa de falta') { tx = { id: 'A-sim-tx' + mockReg.length, valor: 35 }; mockReg.push({ paciente: rg ? rg.paciente : '?', profissional: rg ? rg.profissional : '', oque: 'Atendido', data: rg ? rg.data : hojeStr(), procedimento: 'Taxa de falta – psicologia', id: tx.id, valor: 35, pago: 'Não', forma: '', nf: 'Não', guia: '', convenio: 'Particular', obs: 'Taxa de falta' }); } return res({ ok: true, id: d.id, decisao: d.decisao, taxa: tx }); }
     if (nome === 'aplicarAlteracoesLote') return res({ ok: true, feitos: (d.itens || []).map(function (i) { return i.nome; }), erros: [] });
     if (nome === 'atualizarCadastro') return res({ ok: true, alterados: Object.keys(d.campos || {}).slice(0, 2) });
     if (nome === 'criarAbaMes') return res({ ok: true, aba: d.nome, modelo: 'Outubro' });
@@ -397,7 +397,7 @@ function blocoHtml(b, pequeno) {
 function tagsDe(p) {
   var t = []; if (!p) return t;
   if (ehConvenio(p)) t.push({ cor: 'lilas', txt: 'Convênio ' + p.convenio });
-  if (cadastroIncompleto(p)) t.push({ cor: 'laranja', ic: 'alerta', txt: 'sem cobrança cadastrada · avise a gestão' });
+  if (cadastroIncompleto(p)) t.push({ cor: 'laranja', ic: 'alerta', txt: 'sem cobrança cadastrada · cadastre em Pacientes' });
   if (faltasDoc(p).length) t.push({ cor: 'laranja', ic: 'alerta', txt: 'sem ' + faltasDocTxt(p) + ' · completar cadastro' });
   return t;
 }
@@ -477,20 +477,17 @@ function corrigirForm(reg, foco, p) {
         '<label class="campo">O que aconteceu' + sel('oque', oqOpts, reg.oque) + '</label>' +
         '<label class="campo c2">Procedimento' + sel('procedimento', prOpts, reg.procedimento) + '</label>' +
         '<label class="campo">Valor da sessão<div class="campo-wrap"><span class="prefixo">R$</span><input data-c="valor" class="dinheiro" inputmode="decimal" value="' + (reg.valor !== '' && reg.valor != null ? brl(reg.valor) : '') + '"></div></label>';
-      // convênio e modalidade ficam gravados na linha (copiados do cadastro ao salvar): só a gestão troca; a recepção vê
+      // convênio e modalidade ficam gravados na linha (copiados do cadastro ao salvar); trocar aqui fica registrado
       var opc = function (lista, atual) { var l = (lista || []).slice(); if (atual && l.indexOf(atual) < 0) l.unshift(atual); return [''].concat(l); };
-      var trava = ehGestao() ? '' : ' disabled title="Só a gestão troca o convênio ou a modalidade da linha"';
-      var selC = function (k, opts, atual) { return '<select data-c="' + k + '"' + trava + '>' + opts.map(function (o) { return '<option value="' + esc(o) + '"' + (o === (atual || '') ? ' selected' : '') + '>' + esc(o || '(em branco)') + '</option>'; }).join('') + '</select>'; };
+      var selC = function (k, opts, atual) { return '<select data-c="' + k + '">' + opts.map(function (o) { return '<option value="' + esc(o) + '"' + (o === (atual || '') ? ' selected' : '') + '>' + esc(o || '(em branco)') + '</option>'; }).join('') + '</select>'; };
       html += '<label class="campo">Convênio da linha' + selC('convenio', opc(BOOT.listas.convenios, reg.convenio), reg.convenio) + '</label>' +
         '<label class="campo">Modalidade da linha' + selC('modalidade', opc(BOOT.listas.modalidades, reg.modalidade), reg.modalidade) + '</label>' +
-        '<div class="c2 muted" style="font-size:13px">Convênio e modalidade foram copiados do cadastro quando a sessão foi salva; mudar o cadastro não muda esta linha.' + (ehGestao() ? ' Trocar aqui fica registrado na coluna "Registrado por (app)" e em "Alterações de lançamento".' : ' Só a gestão corrige.') + '</div>';
+        '<div class="c2 muted" style="font-size:13px">Convênio e modalidade foram copiados do cadastro quando a sessão foi salva; mudar o cadastro não muda esta linha.' + ' Trocar aqui fica registrado na coluna "Registrado por (app)" e em "Alterações de lançamento".' + '</div>';
     }
     var mostraPago = foco === 'amplo' || (atendido && (foco === 'nf' || foco === 'todos')), mostraGuia = foco === 'guia' || ((foco === 'todos' || foco === 'amplo') && conv);
     var pagoOpts = (BOOT.listas.pago || []).slice(); if (pagoOpts.indexOf('Parcial') < 0) pagoOpts.push('Parcial'); if (reg.pago && pagoOpts.indexOf(reg.pago) < 0) pagoOpts.unshift(reg.pago); if (!reg.pago) pagoOpts.unshift('');
-    if (!ehGestao()) pagoOpts = pagoOpts.filter(function (o) { return !ehPerdido(o) || o === reg.pago; }); // a recepção vê o status, mas não escolhe
-    var travaPerdido = !ehGestao() && ehPerdido(reg.pago);
     var pagoIni = foco === 'nf' && (!reg.pago || reg.pago === 'Não') ? 'Sim' : (reg.pago || '');
-    if (mostraPago) html += '<label class="campo">Pago?<select data-c="pago"' + (travaPerdido ? ' disabled title="Só a gestão muda uma linha perdida"' : '') + '>' + pagoOpts.map(function (o) { return '<option value="' + esc(o) + '"' + (o === pagoIni ? ' selected' : '') + '>' + esc(o || '(em branco)') + '</option>'; }).join('') + '</select></label>' +
+    if (mostraPago) html += '<label class="campo">Pago?<select data-c="pago">' + pagoOpts.map(function (o) { return '<option value="' + esc(o) + '"' + (o === pagoIni ? ' selected' : '') + '>' + esc(o || '(em branco)') + '</option>'; }).join('') + '</select></label>' +
       '<label class="campo" data-parcial>Valor já recebido<div class="campo-wrap"><span class="prefixo">R$</span><input data-c="valorRecebido" class="dinheiro" inputmode="decimal" value="' + (reg.recebido ? brl(reg.recebido) : '') + '"></div></label>' +
       '<label class="campo c2" data-perdido>Motivo da perda <span class="leg">(obrigatório; o Valor fica como referência do que se perdeu)</span><input data-c="motivoPerdido" autocomplete="off" placeholder="ex.: guia 1504122 não autorizada (trocou de convênio)"></label>' +
       '<label class="campo" data-sim>Data do pagamento<input data-c="dataPagamento" inputmode="numeric" maxlength="10" value="' + esc(reg.dataPag || hojeStr()) + '"></label>' + forma + quem + nf;
@@ -555,7 +552,7 @@ function corrigirValidar(c, reg) {
 
 var TELAS = { hoje: 's-hoje', confirmar: 's-confirmar', ficha: 's-ficha', registrar: 's-registrar', pacientes: 's-pacientes', cobranca: 's-cobranca', meudia: 's-meudia', gestao: 's-gestao', repasse: 's-repasse', conciliacao: 's-conciliacao', areceber: 's-areceber' };
 var TITULOS = { hoje: 'Agenda', confirmar: 'Confirmações', ficha: 'Ficha do paciente', registrar: 'Registrar atendimento', pacientes: 'Pacientes', cobranca: 'Cobrança do mês', meudia: 'Meu dia', gestao: 'Pendências', repasse: 'Repasse', conciliacao: 'Conciliação', areceber: 'A receber e perdas' };
-var SO_GESTAO = { gestao: true, repasse: true, conciliacao: true, areceber: true };
+var SO_GESTAO = { repasse: true, conciliacao: true, areceber: true };
 var telaAtual = 'hoje', navGen = 0;
 var INICIAR = {};
 function go(id, extra) {
@@ -603,8 +600,8 @@ function carregar() {
     $("#chip-mail").textContent = (ehGestao() ? 'gestão' : 'recepção') + (MOCK ? ' · simulação' : '');
     $("#chip-user").title = (email || '') + ' · perfil ' + (ehGestao() ? 'gestão' : 'recepção');
     if (ehGestao()) $("#chip-user").classList.add('gestao');
-    // menu por perfil (gestão 14/10): recepção vê Agenda · Registrar · Pacientes · Cobrança do mês · Meu dia; gestão também Pendências · Repasse · Conciliação · A receber
-    $$('[data-go=repasse], [data-go=gestao], [data-go=conciliacao], [data-go=areceber]').forEach(function (x) { x.hidden = !ehGestao(); });
+    // menu por perfil (gestão 16/10): Agenda · Confirmações · Registrar · Pacientes · Cobrança do mês · Meu dia · Pendências iguais pras duas (a recepção faz tudo o que a gestão faz ali, menos a IA); Repasse · Conciliação · A receber só a gestão
+    $$('[data-go=repasse], [data-go=conciliacao], [data-go=areceber]').forEach(function (x) { x.hidden = !ehGestao(); });
     $$('.so-gestao').forEach(function (x) { x.hidden = !ehGestao(); });
     $$('.so-recepcao').forEach(function (x) { x.hidden = ehGestao(); });
     var dl = $("#dl-pagadores"); dl.innerHTML = ''; var vistos = {};

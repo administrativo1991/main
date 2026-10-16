@@ -21,7 +21,6 @@ function iniciarPac() {
   preencherSelect($("#n-prof"), BOOT.profissionais, '—');
   comboPacientes($("#c-pac"), function () { carregarCad(); });
   $("#p-carregando").hidden = true; $("#p-form").hidden = false; $("#p-rodape").hidden = telaAtual !== 'pacientes';
-  $("#p-gestao-campos").hidden = !ehGestao();
   if (lerRascunhoN()) toast('Rascunho do cadastro recuperado');
   mostrarResp();
   $("#l-cart").hidden = $("#n-conv").value === 'Particular' || !$("#n-conv").value;
@@ -197,10 +196,10 @@ function salvarNovo(confirmou, registrarDepois) {
     if (AT) { AT.pacientes.push(novoAT); var o = document.createElement('option'); o.value = d.nome; $("#dl-pacientes").appendChild(o); }
     limparRascunhoN();
     // gestão: a observação de cobrança não entra na criação; vai pela atualização do cadastro (mesma função da tela Editar)
-    var extras = ehGestao() ? { obsCobranca: $("#c-obs").value.trim() } : null;
+    var extras = { obsCobranca: $("#c-obs").value.trim() };
     var p2 = (extras && extras.obsCobranca) ? call('atualizarCadastro', { nome: d.nome, quemInformou: quemSou() + ' (no cadastro)', campos: extras }).then(function (r2) { if (r2.ok) { novoAT.obsCobranca = extras.obsCobranca; } }) : Promise.resolve();
     return p2.then(function () {
-      $("#n-sucesso").innerHTML = (faltasDoc(novoAT).length ? aviso('laranja', 'Falta ' + esc(faltasDocTxt(novoAT)), 'Peça o documento e complete em Pacientes → Editar cadastro.') : '') + aviso('verde', esc(r.nome) + ' cadastrado(a) na linha ' + r.linha + ' de Pacientes', 'Agora cadastre no ControleOdonto. ' + (ehGestao() ? 'Cadastre a cobrança por profissional em Buscar / editar cadastro. ' : 'A gestão cadastra a cobrança por profissional; até lá o app cobra pela tabela. ') + (r.colunasCriadas && r.colunasCriadas.length ? 'Colunas novas criadas na planilha: ' + esc(r.colunasCriadas.join(', ')) + '. ' : ''));
+      $("#n-sucesso").innerHTML = (faltasDoc(novoAT).length ? aviso('laranja', 'Falta ' + esc(faltasDocTxt(novoAT)), 'Peça o documento e complete em Pacientes → Editar cadastro.') : '') + aviso('verde', esc(r.nome) + ' cadastrado(a) na linha ' + r.linha + ' de Pacientes', 'Agora cadastre no ControleOdonto. ' + 'Cadastre a cobrança por profissional em Buscar / editar cadastro; até lá o app cobra pela tabela. ' + (r.colunasCriadas && r.colunasCriadas.length ? 'Colunas novas criadas na planilha: ' + esc(r.colunasCriadas.join(', ')) + '. ' : ''));
       limparFormN(false); toast('Cadastrado em Pacientes');
       if (registrarDepois || pVoltar === 'registrar') { var v = pVoltar; pVoltar = null; go('registrar', { paciente: d.nome }); if (v !== 'registrar') toast('Agora registre o atendimento de ' + primeiroNome(d.nome)); }
     });
@@ -256,7 +255,7 @@ function salvarEdicao() {
   $("#n-erros").innerHTML = erroBox(erros); if (erros.length) return;
   var c0 = cadDados.campos || {};
   var campos = { cpf: cpfC || null, nasc: nascC || null, convenio: $("#n-conv").value, carteirinha: $("#n-cart").value.trim(), pagador: $("#n-pagador").value.trim(), whats: $("#n-whats").value.trim(), telPac: $("#n-tel-pac").value.trim(), profRef: $("#n-prof").value,
-    obsCobranca: ehGestao() ? $("#c-obs").value.trim() : (c0.obsCobranca || ''),
+    obsCobranca: $("#c-obs").value.trim(),
     pagadorCpf: $("#n-pag-cpf").value.trim(), respNome: $("#n-resp").value.trim(), respPar: $("#n-resp-par").value.trim(), respTel: $("#n-resp-tel").value.trim(), respCpf: $("#n-resp-cpf").value.trim() };
   salvandoP = true; $("#p-salvar").disabled = true;
   call('atualizarCadastro', { nome: nome, quemInformou: quem, campos: campos }).then(function (r) {
@@ -267,7 +266,7 @@ function salvarEdicao() {
     $("#n-sucesso").innerHTML = aviso('verde', esc(nome) + ' · ' + (mudou ? 'cadastro atualizado' : 'nada mudou'), mudou ? 'Alterado: ' + esc(r.alterados.map(function (c) { return c.split(' (')[0]; }).join(', ')) + '. Registrado em “Alterações de cadastro”.' : 'Nenhum campo mudou.');
     var voltar = function () { if (pVoltar) { var v = pVoltar; pVoltar = null; go(v, { paciente: nome }); } };
     // mudou convênio (gestão): o passado não muda; pergunta só pelas linhas do mês aberto de hoje em diante
-    if (ehGestao() && mudou && r.alterados.some(function (c) { return c === 'Convênio'; })) perguntarLinhasAbertas(nome, voltar); else voltar();
+    if (mudou && r.alterados.some(function (c) { return c === 'Convênio'; })) perguntarLinhasAbertas(nome, voltar); else voltar();
   }).catch(function (e) { toast('Erro: ' + e.message); }).finally(function () { salvandoP = false; $("#p-salvar").disabled = false; });
 }
 function perguntarLinhasAbertas(nome, depois) {

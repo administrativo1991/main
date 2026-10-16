@@ -428,7 +428,7 @@ API.registrarPagamentoMes = function (d) {
 };
 // gestão edita o nº de sessões agendadas / valor cobrado da competência (é assim que entra no meio do mês, quinzenal sem agenda…)
 API.editarSessoesCompetencia = function (d) {
-  d = d || {}; var u = usuario_(); if (u.perfil !== 'gestao') return { ok: false, erros: ['Só a gestão muda as sessões da competência.'] };
+  d = d || {}; var u = usuario_();
   var paciente = String(d.paciente || '').trim(), profissional = String(d.profissional || '').trim(), chave = String(d.chave || '').trim();
   if (!paciente || !profissional || !mesDaChave_(chave)) return { ok: false, erros: ['Paciente, profissional e competência são obrigatórios.'] };
   var sess = d.sessoes === '' || d.sessoes == null ? null : numBR_(d.sessoes), vc = d.valorCobrado === '' || d.valorCobrado == null ? null : numBR_(d.valorCobrado);
@@ -450,7 +450,7 @@ API.editarSessoesCompetencia = function (d) {
 };
 // Mensalistas: cria a coluna Profissional e as 6 colunas da competência (gestão)
 API.criarColunasMes = function (d) {
-  d = d || {}; if (usuario_().perfil !== 'gestao') return { ok: false, erros: ['Só a gestão cria colunas de mês.'] };
+  d = d || {};
   var chave = String(d.chave || '').trim(); if (!chave && d.mes) { var i = CONFIG.MESES.indexOf(String(d.mes)); if (i >= 0) { var hj = new Date(); chave = CONFIG.MESES[i] + '/' + (hj.getFullYear() + (i < hj.getMonth() ? 1 : 0)); } }
   if (!mesDaChave_(chave)) return { ok: false, erros: ['Competência inválida.'] };
   var lock = LockService.getScriptLock(); lock.waitLock(20000);
@@ -466,7 +466,7 @@ API.criarColunasMes = function (d) {
 /* ---------- Faltas → Decidir (gestão): a recepção registra, a gestão decide ---------- */
 var DECISOES_FALTA = ['não abate', 'abate no mês seguinte', 'cobrar taxa de falta', 'relevar'];
 API.decidirFalta = function (d) {
-  d = d || {}; var u = usuario_(); if (u.perfil !== 'gestao') return { ok: false, erros: ['Só a gestão decide sobre faltas.'] };
+  d = d || {}; var u = usuario_();
   var aba = String(d.aba || '').trim(), id = String(d.id || '').trim(), decisao = String(d.decisao || '').trim().toLowerCase();
   if (CONFIG.MESES.indexOf(aba) < 0 || !id) return { ok: false, erros: ['Aba e ID do lançamento são obrigatórios.'] };
   if (DECISOES_FALTA.indexOf(decisao) < 0) return { ok: false, erros: ['Decisão inválida. Use: ' + DECISOES_FALTA.join(' · ')] };
