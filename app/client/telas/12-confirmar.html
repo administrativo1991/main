@@ -1,17 +1,15 @@
 <section class="tela coluna" id="s-confirmar" hidden>
   <div class="titulo">
     <h1>Confirmações</h1>
-    <span class="muted so-pc">mensagem pronta no WhatsApp: uma por família, com todas as sessões do período</span>
+    <span class="muted so-pc">escolha o dia das sessões; mensagem pronta no WhatsApp, uma por família</span>
   </div>
   <div class="filtros no-print">
-    <div class="seg mini" id="cf-periodo" role="group" aria-label="Período">
-      <button type="button" data-v="amanha" aria-pressed="true">Amanhã</button>
-      <button type="button" data-v="dois" aria-pressed="false">Daqui a 2 dias</button>
-      <button type="button" data-v="semana" aria-pressed="false">Resto da semana</button>
-      <button type="button" data-v="proxima" aria-pressed="false">Próxima semana</button>
-      <button type="button" data-v="outro" aria-pressed="false">Outro período</button>
+    <div class="databox">
+      <button type="button" class="btn icone p" id="cf-ant" aria-label="Dia anterior"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg></button>
+      <button type="button" class="datatxt" id="cf-cal" title="Escolher a data das sessões"><span id="cf-titulo">Sessões de…</span></button>
+      <button type="button" class="btn icone p" id="cf-prox" aria-label="Próximo dia"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button>
     </div>
-    <span id="cf-outro" hidden><label>de <input id="cf-de" placeholder="dd/mm/aaaa" maxlength="10" inputmode="numeric" style="width:110px"></label> <label>até <input id="cf-ate" placeholder="dd/mm/aaaa" maxlength="10" inputmode="numeric" style="width:110px"></label> <button type="button" class="btn ter mini" id="cf-ver">Ver</button></span>
+    <input type="date" id="cf-data" class="sr" aria-label="Data das sessões" tabindex="-1">
     <select id="cf-prof" aria-label="Profissional" class="auto"><option value="">Todos os profissionais</option></select>
     <div class="seg mini" id="cf-mostrar" role="group" aria-label="Mostrar"><button type="button" data-v="falta" aria-pressed="true">A confirmar</button><button type="button" data-v="todos" aria-pressed="false">Todos</button></div>
   </div>

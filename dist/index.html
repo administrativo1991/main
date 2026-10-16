@@ -964,17 +964,15 @@ table.ar-mini{min-width:0}
 <section class="tela coluna" id="s-confirmar" hidden>
   <div class="titulo">
     <h1>Confirmações</h1>
-    <span class="muted so-pc">mensagem pronta no WhatsApp: uma por família, com todas as sessões do período</span>
+    <span class="muted so-pc">escolha o dia das sessões; mensagem pronta no WhatsApp, uma por família</span>
   </div>
   <div class="filtros no-print">
-    <div class="seg mini" id="cf-periodo" role="group" aria-label="Período">
-      <button type="button" data-v="amanha" aria-pressed="true">Amanhã</button>
-      <button type="button" data-v="dois" aria-pressed="false">Daqui a 2 dias</button>
-      <button type="button" data-v="semana" aria-pressed="false">Resto da semana</button>
-      <button type="button" data-v="proxima" aria-pressed="false">Próxima semana</button>
-      <button type="button" data-v="outro" aria-pressed="false">Outro período</button>
+    <div class="databox">
+      <button type="button" class="btn icone p" id="cf-ant" aria-label="Dia anterior"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg></button>
+      <button type="button" class="datatxt" id="cf-cal" title="Escolher a data das sessões"><span id="cf-titulo">Sessões de…</span></button>
+      <button type="button" class="btn icone p" id="cf-prox" aria-label="Próximo dia"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button>
     </div>
-    <span id="cf-outro" hidden><label>de <input id="cf-de" placeholder="dd/mm/aaaa" maxlength="10" inputmode="numeric" style="width:110px"></label> <label>até <input id="cf-ate" placeholder="dd/mm/aaaa" maxlength="10" inputmode="numeric" style="width:110px"></label> <button type="button" class="btn ter mini" id="cf-ver">Ver</button></span>
+    <input type="date" id="cf-data" class="sr" aria-label="Data das sessões" tabindex="-1">
     <select id="cf-prof" aria-label="Profissional" class="auto"><option value="">Todos os profissionais</option></select>
     <div class="seg mini" id="cf-mostrar" role="group" aria-label="Mostrar"><button type="button" data-v="falta" aria-pressed="true">A confirmar</button><button type="button" data-v="todos" aria-pressed="false">Todos</button></div>
   </div>
@@ -2966,25 +2964,26 @@ $("#pp-ficha").addEventListener('click', function () { var it = itemSelecionado(
 
 /* ===== 12-confirmar.js ===== */
 /* ================= CONFIRMAÇÕES — WhatsApp (Fase 2, 15/10) =================
-   A recepção escolhe o período (amanhã, daqui a 2 dias, a semana), vê as sessões agrupadas por pagador e abre o WhatsApp
+   A recepção escolhe o dia das sessões (‹ data ›, como na Agenda; gestão, 16/10: no lugar dos botões de período), vê as
+   sessões agrupadas por pagador e abre o WhatsApp
    com a mensagem pronta (texto oficial em app/shared/mensagens.js; a gestão troca em Parâmetros!msg_confirmacao). Abrir o WhatsApp grava "mensagem enviada" (aba Mensagens
    WhatsApp); a resposta da família vira "Confirmou" (Lista do dia) ou "Não vem / remarcar" na Agenda do dia.
    Sem número no cadastro: a recepção digita o WhatsApp uma vez e ele vai para Pacientes (com log). */
-var CF = null, cfPeriodo = 'amanha', cfMostrar = 'falta', cfProf = '', cfGen = 0;
-INICIAR.confirmar = function () { quandoAT(carregarConfirmacoes); };
+var CF = null, cfMostrar = 'falta', cfProf = '', cfGen = 0;
+INICIAR.confirmar = function () {
+  var dt = dataObj(isoParaBR($("#cf-data").value)), h = dataObj(hojeStr()) || new Date();
+  if (!dt || dt < h) $("#cf-data").value = dataParaISO(diaSugeridoCF(h));
+  quandoAT(carregarConfirmacoes);
+};
 function ddmm(dt) { return ('0' + dt.getDate()).slice(-2) + '/' + ('0' + (dt.getMonth() + 1)).slice(-2) + '/' + dt.getFullYear(); }
 function maisDias(dt, n) { return new Date(dt.getFullYear(), dt.getMonth(), dt.getDate() + n); }
-function periodoCF() {
-  var h = dataObj(hojeStr()) || new Date(), am = maisDias(h, 1);
-  if (cfPeriodo === 'dois') return { de: ddmm(maisDias(h, 2)), ate: ddmm(maisDias(h, 2)) };
-  if (cfPeriodo === 'semana') { var sab = maisDias(am, (6 - am.getDay() + 7) % 7); return { de: ddmm(am), ate: ddmm(sab) }; }
-  if (cfPeriodo === 'proxima') { var seg2 = maisDias(h, ((8 - h.getDay()) % 7) || 7); return { de: ddmm(seg2), ate: ddmm(maisDias(seg2, 5)) }; }
-  if (cfPeriodo === 'outro') return { de: $("#cf-de").value, ate: $("#cf-ate").value || $("#cf-de").value };
-  return { de: ddmm(am), ate: ddmm(am) };
-}
+// a tela abre daqui a 2 dias; caindo no sábado ou domingo, na segunda (a clínica não atende no fim de semana; na sexta
+// a recepção manda a segunda e, com ›, a terça)
+function diaSugeridoCF(h) { var d = maisDias(h, 2), w = d.getDay(); return w === 6 ? maisDias(d, 2) : w === 0 ? maisDias(d, 1) : d; }
 function carregarConfirmacoes() {
-  var p = periodoCF(), gen = ++cfGen;
-  if (cfPeriodo === 'outro' && !dataObj(p.de)) { $("#cf-carregando").hidden = true; $("#cf-status").textContent = 'Escolha as datas (dd/mm/aaaa) e clique em Ver.'; return; }
+  var dt = dataObj(isoParaBR($("#cf-data").value)) || diaSugeridoCF(dataObj(hojeStr()) || new Date()), gen = ++cfGen;
+  $("#cf-data").value = dataParaISO(dt); $("#cf-titulo").textContent = tituloDia(dt);
+  var p = { de: ddmm(dt), ate: ddmm(dt) };
   $("#cf-carregando").hidden = false; $("#cf-lista").innerHTML = ''; $("#cf-resumo").hidden = true; $("#cf-status").textContent = '';
   call('confirmacoes', p).then(function (r) {
     if (!aindaNa('confirmar', navGen) || gen !== cfGen) return;
@@ -3012,7 +3011,7 @@ function renderConfirmacoes() {
   $("#cf-resumo").innerHTML = '<div><b>' + todos.length + '</b><span>sessões · ' + esc(CF.de === CF.ate ? CF.de.slice(0, 5) : CF.de.slice(0, 5) + ' a ' + CF.ate.slice(0, 5)) + '</span></div><div><b>' + conf + '</b><span>confirmadas</span></div><div><b>' + env + '</b><span>mensagem enviada, sem resposta</span></div><div><b>' + (todos.length - conf - env) + '</b><span>a confirmar</span></div><div class="' + (semFone ? 'atencao' : '') + '"><b>' + semFone + '</b><span>famílias sem WhatsApp</span></div>';
   var vis = gs.filter(function (o) { return cfMostrar === 'todos' || o.itens.some(function (x) { return !x.confirmado; }); });
   var box = $("#cf-lista"); box.innerHTML = '';
-  if (!vis.length) { box.innerHTML = '<div class="card compacto"><div class="muted">' + (todos.length ? 'Todas as sessões do período estão confirmadas.' : 'Nenhuma sessão na agenda neste período.') + '</div></div>'; return; }
+  if (!vis.length) { box.innerHTML = '<div class="card compacto"><div class="muted">' + (todos.length ? 'Todas as sessões deste dia estão confirmadas.' : 'Nenhuma sessão na agenda neste dia.') + '</div></div>'; return; }
   vis.forEach(function (o) { box.appendChild(cardGrupoCF(o.g, o.itens)); });
 }
 function cardGrupoCF(g, itens) {
@@ -3075,10 +3074,12 @@ function acaoItemCF(ac, x, b) {
     }).catch(function (e) { b.disabled = false; toast('Erro: ' + e.message); });
   } else if (ac === 'naovem') go('hoje', { data: x.data, paciente: x.paciente, profissional: x.profissional, form: 'naovem' });
 }
-$$('button', $("#cf-periodo")).forEach(function (b) { b.addEventListener('click', function () { cfPeriodo = b.dataset.v; seg($("#cf-periodo"), cfPeriodo); $("#cf-outro").hidden = cfPeriodo !== 'outro'; if (cfPeriodo === 'outro') { if (!$("#cf-de").value) $("#cf-de").focus(); else carregarConfirmacoes(); } else carregarConfirmacoes(); }); });
+function mudarDiaCF(n) { var dt = dataObj(isoParaBR($("#cf-data").value)) || new Date(); $("#cf-data").value = dataParaISO(maisDias(dt, n)); carregarConfirmacoes(); }
+$("#cf-ant").addEventListener('click', function () { mudarDiaCF(-1); });
+$("#cf-prox").addEventListener('click', function () { mudarDiaCF(1); });
+$("#cf-cal").addEventListener('click', function () { var i = $("#cf-data"); if (i.showPicker) { try { i.showPicker(); return; } catch (e) { } } i.classList.remove('sr'); i.focus(); });
+$("#cf-data").addEventListener('change', function () { this.classList.add('sr'); if (dataObj(isoParaBR(this.value))) carregarConfirmacoes(); });
 $$('button', $("#cf-mostrar")).forEach(function (b) { b.addEventListener('click', function () { cfMostrar = b.dataset.v; seg($("#cf-mostrar"), cfMostrar); if (CF) renderConfirmacoes(); }); });
-["#cf-de", "#cf-ate"].forEach(function (s) { $(s).addEventListener('input', function () { this.value = mascaraData(this.value); }); $(s).addEventListener('keydown', function (e) { if (e.key === 'Enter') carregarConfirmacoes(); }); });
-$("#cf-ver").addEventListener('click', carregarConfirmacoes);
 $("#cf-prof").addEventListener('change', function () { cfProf = this.value; if (CF) renderConfirmacoes(); });
 
 /* ===== 15-agenda.js ===== */
