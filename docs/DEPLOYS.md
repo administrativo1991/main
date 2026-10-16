@@ -23,7 +23,7 @@ coluna E não afeta o app. Atualizar `E2` faz parte de toda publicação (passo 
 
 | Canal | Deploy | Peças | Commit |
 |---|---|---|---|
-| Real (`arquivos_real`) | **2026-10-16-05** (Conciliação PagBank) | 54 (duplicatas 3 · server 17 · index 34); ativas = 830–883; `antigo34:` = as do 2026-10-16-03 (780–829) | branch `claude/sweet-wozniak-aviy8u`, commit 64a8e16 |
+| Real (`arquivos_real`) | **2026-10-16-08** (A receber e perdas + Parcelamentos) | 58 (duplicatas 3 · server 19 · index 36); ativas = 884–941; `antigo35:` = as do 2026-10-16-05 (830–883) | branch `claude/sweet-wozniak-aviy8u`, commit 77686b9 |
 | Teste (`arquivos`) | **2026-10-16-07** (A receber e perdas + Parcelamentos) | 58 (duplicatas 3 · server 19 · index 36), linhas 632–689; `antigo40:` = as do 16-06 (576–631) | branch `claude/sweet-wozniak-aviy8u`, commit 77686b9 |
 | Carregador real | 2026-10-06-02 (`dist/Code.real.gs`, implantado pela Roberta) | — | 4ad0272 |
 | Carregador teste | 2026-10-04-01 + nova versão pendente desde 05/10 (permissão do Drive, ver `COMO-INSTALAR.md`) | — | — |
@@ -48,6 +48,16 @@ Modelo:
 ```
 
 ## Lista
+
+### 2026-10-16-08 · Real · A receber e perdas + Parcelamentos
+- **O que mudou**: o mesmo código do teste 2026-10-16-07 (menu A receber; card Parcelamentos na Ficha; Conciliação lendo
+  cada recebimento de uma linha; Ficha com resumo em 2 colunas no celular).
+- **Peças**: 58 em `arquivos_real!A884:C941` com `novo:`; a coluna C copiada por "colar valores" de `arquivos!C632:C689`
+  (já conferidas). Lidas de volta: **58/58 iguais a `dist/pedacos.json`**; index e duplicatas + server iguais. Ativação
+  numa gravação só (A830:A941): 830–883 → `antigo35:`; ativas = só 884–941 (coluna A inteira conferida). E2 carimbado.
+- **Dados**: nenhum ainda (abas `Parcelamentos` e `Pagamentos de parcelas` e a coluna `Parcelamento (ID)` nascem no
+  primeiro acordo). **Voltar**: `antigo35:` → nome (830–883) e 884–941 → `antigo36:`.
+- **Commit**: 77686b9 · **Aprovação**: gestão, 16/10 ("testei, pode publicar no real").
 
 ### 2026-10-16-07 · Teste · Parcelamentos (+ A receber e perdas)
 - **O que mudou**: card **Parcelamentos** na Ficha (ver `NOTAS-fase2.md` 5c): serviço parcelado (cada pagamento vira um
