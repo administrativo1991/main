@@ -3,9 +3,9 @@
 Arquivo de retomada da Fase 2 (começou em 15/10/2026, à noite). Quem abrir um chat novo lê, nesta ordem: `docs/DEPLOYS.md`
 ("No ar agora"), este arquivo, `NOTAS-fase1.md` (modelo de cobrança e decisões da Fase 1) e `docs/ESTADO-ATUAL.md` (mapa).
 
-> **Estado em 15/10 (noite)**: item 1 (Confirmações + WhatsApp) e 1b (Cobrar no WhatsApp) **no ar na real** = deploy
-> **2026-10-15-14**; item 2 (Lançar o dia) no ar na real = **2026-10-15-16** (teste = 15, mesmo código). Próximo: item 3,
-> carga de telefones do ControleOdonto (depende da exportação da gestão) e item 4, Ficha do paciente.
+> **Estado em 16/10**: na real = deploy **2026-10-16-03** (Confirmações, Cobrar no WhatsApp, Lançar o dia, Ficha do
+> paciente, WhatsApp só em celular); teste = 2026-10-16-02 (mesmo código). Telefones: 1ª página do ControleOdonto gravada.
+> Próximo: item 5 (Perdas → Parcelas → Conciliação), e as outras páginas de telefones quando a gestão exportar.
 
 ## Ordem combinada com a gestão (15/10; revista à noite: "sua ordem está perfeita")
 
@@ -14,8 +14,8 @@ Arquivo de retomada da Fase 2 (começou em 15/10/2026, à noite). Quem abrir um 
 | 1 | **Confirmações + WhatsApp** (não só na véspera: a recepção escolhe amanhã, daqui a 2 dias, a semana) | **real** (14) |
 | 1b | **Cobrar no WhatsApp** (Cobrança do mês, textos oficiais) | **real** (14) |
 | 2 | **Lançar o dia em lote** (Meu dia) | **real** (16) |
-| 3 | Carga de telefones do ControleOdonto | em andamento: 16 gravados na real (16/10); faltam as outras páginas e os 3 fixos |
-| 4 | **Ficha do paciente** | teste (16-02) |
+| 3 | Carga de telefones do ControleOdonto | 19 gravados na real (16/10, a 1ª página); faltam as outras páginas |
+| 4 | **Ficha do paciente** | **real** (16-03) |
 | 5 | Perdas → Parcelas → Conciliação | a fazer |
 | 6 | Alertas (avisos dentro da Ficha e da Agenda, não tela própria) | a fazer |
 
@@ -148,10 +148,11 @@ pagador), só onde estava vazio, formato "(32) 9 9999-9999"; log em `Alteraçõe
 Amaral, Amanda Calichio); 2 com DDD "00" no ControleOdonto (Aleff, Alexsandra); Alice Oliveira já tinha WhatsApp.
 Próximo: a gestão exporta as outras páginas (mesmo de 20 em 20); o cruzamento e a gravação se repetem igual.
 O app relê o cadastro em até 5 min (cache).
-**Fixos (gestão, 16/10: "deve ser anotado, caso precisemos entrar em contato")**: vão para `Pacientes` → "Telefone do
-paciente" (vazio nos três), **depois** que a regra "WhatsApp só em celular" (deploy 16-02) estiver na real; antes disso o
-app usaria o fixo como WhatsApp. DDD "00" (Aleff, Alexsandra): gestão confirmou DDD 32 (16/10); gravados em `Pacientes!U8` e `U11`, log
-`Alterações de cadastro!A396:G397`. Total do ControleOdonto até agora: **16 WhatsApps**.
+**"Fixos"**: os 3 números vistos como fixo eram **celulares no formato antigo** (8 dígitos começando com 9: (32) 9982-5597,
+9984-3718, 9907-6767). Gestão (16/10): gravar com o 9 a mais → (32) 9 9982-5597 etc. em `Pacientes!U5`, `U13`, `U18`, log
+`Alterações de cadastro!A398:G400`. DDD "00" (Aleff, Alexsandra): gestão confirmou DDD 32, `U8` e `U11`, log A396:G397.
+**Resultado: os 20 pacientes do arquivo estão com WhatsApp** (19 gravados + Alice, que já tinha). Regra nova no app (deploy
+16-02/16-03): telefone fixo de verdade (começa com 2–5) não vira WhatsApp; a Ficha mostra como "fixo (ligar)".
 
 ## 4. Ficha do paciente
 

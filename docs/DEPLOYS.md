@@ -23,7 +23,7 @@ coluna E não afeta o app. Atualizar `E2` faz parte de toda publicação (passo 
 
 | Canal | Deploy | Peças | Commit |
 |---|---|---|---|
-| Real (`arquivos_real`) | **2026-10-15-16** (Lançar o dia em lote) | 49 (duplicatas 3 · server 15 · index 31); ativas = 731–779; `antigo32:` = as do 2026-10-15-14 (683–730) | branch `claude/sweet-wozniak-aviy8u`, commit 9fe7855 |
+| Real (`arquivos_real`) | **2026-10-16-03** (Ficha do paciente + WhatsApp só em celular) | 50 (duplicatas 3 · server 15 · index 32); ativas = 780–829; `antigo33:` = as do 2026-10-15-16 (731–779) | branch `claude/sweet-wozniak-aviy8u`, commit f3ba88c |
 | Teste (`arquivos`) | **2026-10-16-02** (Ficha + WhatsApp só em celular) | 50 (duplicatas 3 · server 15 · index 32), linhas 472–521; `antigo37:` = as do 16-01 (422–471) | branch `claude/sweet-wozniak-aviy8u`, commit f3ba88c |
 | Carregador real | 2026-10-06-02 (`dist/Code.real.gs`, implantado pela Roberta) | — | 4ad0272 |
 | Carregador teste | 2026-10-04-01 + nova versão pendente desde 05/10 (permissão do Drive, ver `COMO-INSTALAR.md`) | — | — |
@@ -49,6 +49,17 @@ Modelo:
 
 ## Lista
 
+### 2026-10-16-03 · Real · Ficha do paciente + WhatsApp só em celular (+ dados)
+- **O que mudou**: o mesmo código do teste 2026-10-16-02 (Ficha do paciente; botão de WhatsApp só com celular).
+- **Peças**: 50 em `arquivos_real!A780:C829`: nomes com `novo:` e conteúdo copiado por "colar valores" das ativas do teste
+  (`arquivos!C472:C521`). Lidas de volta: **50/50 iguais a `dist/pedacos.json`**; index e duplicatas + server remontados
+  iguais. Ativação numa gravação só (A731:A829): 731–779 → `antigo33:`; ativas = só 780–829. E2 carimbado.
+- **Dados (real, 16/10)**: `Pacientes!U` (WhatsApp do pagador) de 19 pacientes da exportação do ControleOdonto (14 + Aleff e
+  Alexsandra com DDD 32 + 3 celulares no formato antigo gravados com o 9 a mais, a pedido da gestão); log em
+  `Alterações de cadastro!A382:G400`. Ver `NOTAS-fase2.md`, item 3.
+- **Voltar**: `antigo33:` → nome (731–779) e 780–829 → `antigo34:`.
+- **Commit**: f3ba88c · **Aprovação**: gestão, 16/10 ("pode levar a Ficha").
+
 ### 2026-10-16-02 · Teste · WhatsApp só em celular (+ Ficha)
 - **O que mudou**: o botão de WhatsApp (Confirmações, Cobrança do mês, Ficha) só usa **celular** (DDD + 9 + 8 dígitos); um
   telefone fixo no cadastro não vira link de WhatsApp e aparece na Ficha como "fixo (ligar)" (gestão, 16/10: os fixos do
@@ -57,7 +68,7 @@ Modelo:
   Lidas de volta: **50/50 iguais a `dist/pedacos.json`** (emojis da peça de mensagens conferidos); index e duplicatas +
   server remontados iguais. Ativação numa gravação só (A422:A521): 422–471 → `antigo37:`; ativas = só 472–521. E2 carimbado.
 - **Dados**: nenhum. **Voltar**: `antigo37:` → nome (422–471) e 472–521 → `antigo38:`.
-- **Commit**: f3ba88c · **Aprovação**: só teste.
+- **Commit**: f3ba88c · **Aprovação**: só teste (promovido no 2026-10-16-03).
 
 ### 2026-10-16-01 · Teste · Ficha do paciente
 - **O que mudou**: tela **Ficha do paciente** (ver `NOTAS-fase2.md`, item 4), aberta por Pacientes → Ficha, Agenda → Ver
