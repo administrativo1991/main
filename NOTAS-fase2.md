@@ -57,7 +57,7 @@ Agradecemos a compreensão e a colaboração!
 Pergunta da gestão (15/10): a mensagem é só a de confirmação de consulta. **Mensagem de cobrança** (valor, mês, Pix) fica
 para o item 2 (Alertas), com o texto que a clínica usa.
 
-**Como funciona** (menu **Confirmações**, recepção e gestão):
+**Como funciona** (menu **Confirmações**, recepção e gestão). **Desde 16/10 (deploy 2026-10-16-14)** a recepção escolhe **um dia** (‹ data ›, como na Agenda) no lugar dos botões de período; a tela abre daqui a 2 dias, pulando o fim de semana para a segunda:
 - Período: Amanhã · Daqui a 2 dias · Resto da semana · Próxima semana · Outro período (até 14 dias). Filtro por
   profissional; "A confirmar" esconde as famílias já confirmadas.
 - Um cartão por **pagador** (irmãos recebem uma mensagem só, com o número de quem tiver). Sem pagador: por número; sem os

@@ -31,8 +31,9 @@ mensalidade, a taxa decidida pela gestão). Não são atendimentos e não contam
 
 ## 1a. Confirmações (WhatsApp)
 
-1. Menu **Confirmações** → escolha o período: **Amanhã**, **Daqui a 2 dias**, **Resto da semana**, **Próxima semana** ou
-   **Outro período**. Dá pra filtrar por profissional.
+1. Menu **Confirmações** → escolha o **dia das sessões** com as setas ‹ › ou clicando na data (abre o calendário). A tela
+   já abre daqui a 2 dias (na quinta e na sexta, na segunda). Na sexta: mande a segunda, aperte › e mande a terça.
+   Paciente marcado em cima da hora: volte para amanhã. Dá pra filtrar por profissional.
 2. Cada cartão é uma família (irmãos com o mesmo pagador ficam juntos, numa mensagem só).
 3. **Abrir WhatsApp**: abre a conversa com a mensagem pronta. Confira e aperte enviar no WhatsApp. O app anota "mensagem
    enviada" com a hora.

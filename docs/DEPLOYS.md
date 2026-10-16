@@ -23,7 +23,7 @@ coluna E não afeta o app. Atualizar `E2` faz parte de toda publicação (passo 
 
 | Canal | Deploy | Peças | Commit |
 |---|---|---|---|
-| Real (`arquivos_real`) | **2026-10-16-13** (IA parte 1 + casamento pela data do arquivo e sugestões refeitas) | 65 (duplicatas 3 · server 24 · index 38); ativas = 1002–1066 (9 peças regravadas no lugar); `antigo37:` = as do 2026-10-16-11 (942–1001) | branch `claude/youthful-fermat-9l35tu`, commit 90de19d |
+| Real (`arquivos_real`) | **2026-10-16-14** (Confirmações: escolher o dia) | 65 (duplicatas 3 · server 24 · index 38); ativas = 1002–1035, 1037–1046, 1049–1069 (index 7, 18, 19 novas em 1067–1069); `antigo44:` = as 3 do 16-13 (1036, 1047, 1048) | branch `claude/keen-lovelace-d1q07l`, commit e0e560f |
 | Teste (`arquivos`) | **2026-10-16-10** (Alertas, ⚠ abre a Ficha) | 60 (duplicatas 3 · server 20 · index 37), linhas 750–809; `antigo42:` = as do 16-09 (690–749) | branch `claude/sweet-wozniak-aviy8u`, commit cede9d7 |
 | Carregador real | 2026-10-16 (`dist/Code.real.gs` com `gatilhoDiarioIA` + permissões; versão 2 do projeto real, implantada pela gestão em 16/10 17:27) | — | 618b511 |
 | Carregador teste | 2026-10-04-01 + nova versão pendente desde 05/10 (permissão do Drive, ver `COMO-INSTALAR.md`) | — | — |
@@ -48,6 +48,20 @@ Modelo:
 ```
 
 ## Lista
+
+### 2026-10-16-14 · Real · Confirmações: escolher o dia das sessões
+- **O que mudou**: na tela Confirmações, os botões de período (Amanhã · Daqui a 2 dias · Resto da semana · Próxima semana ·
+  Outro período) saíram; no lugar, o seletor de dia da Agenda (‹ data ›, calendário ao clicar). A tela abre daqui a 2 dias;
+  caindo no sábado ou domingo, na segunda (a clínica não atende no fim de semana; na sexta a recepção manda a segunda e,
+  com ›, a terça). Uma data por vez. Servidor sem mudança (`API.confirmacoes` com `de = ate`). Pedido da gestão (16/10):
+  "não é melhor só deixar ela escolher de qual data que ela quer enviar as mensagens?".
+- **Peças**: 65 no total; 3 novas, gravadas com `novo:` em 1067–1069 (index 7, 18, 19), lidas de volta.
+- **Conferência**: LEN e soma de UNICODE das 3 iguais ao `dist/pedacos.json` (11962/1110214 · 11865/1035746 ·
+  11874/1041035); fórmulas temporárias em F:G apagadas. Ativação numa gravação só (A1036:A1069): 1036, 1047, 1048 →
+  `antigo44:`; 1067–1069 → `index.html`. Lido de volta: index 0–37 ativas uma vez cada. E2 carimbado. Testes locais 13/13;
+  simulação Playwright 1280 e 390 px sem erro (abre seg 19/10 numa sexta, › terça, ‹‹ domingo vazio, calendário).
+  **Voltar**: `antigo44:index.html` → `index.html` em 1036, 1047, 1048 e 1067–1069 → `antigo45:index.html`.
+- **Commit**: e0e560f · **Aprovação**: gestão, 16/10 ("direto na real").
 
 ### 2026-10-16-13 · Real · guias: casamento pela data do nome do arquivo e sugestões pendentes refeitas sem custo
 - **O que mudou**: na leitura real de setembro, 16 de 45 guias ficaram "sem atendimento" porque o modelo lê a data de
