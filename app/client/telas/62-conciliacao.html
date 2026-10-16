@@ -22,8 +22,10 @@
     <div class="fd-lista" id="cc-sug"></div>
   </section>
   <section class="card compacto">
-    <div class="passo" style="padding:0"><h2 style="font-size:15px">No banco, sem lançamento</h2><span class="tag laranja" id="cc-n-semlanc">0</span></div>
-    <div class="muted" style="font-size:13px">Entrou na conta e o app não achou de quem é. Diga o que é, ou ligue a um lançamento da lista de baixo.</div>
+    <div class="passo" style="padding:0;flex-wrap:wrap"><h2 style="font-size:15px">No banco, sem lançamento</h2><span class="tag laranja" id="cc-n-semlanc">0</span><span class="esp"></span>
+      <button type="button" class="btn ter mini" id="cc-fixas" hidden></button><button type="button" class="btn ter mini" id="cc-ia-altas" hidden></button><button type="button" class="btn mini" id="cc-ia-btn" hidden>Sugerir com IA</button></div>
+    <div class="muted" style="font-size:13px">Entrou na conta e o app não achou de quem é. Diga o que é, ou ligue a um lançamento da lista de baixo. A IA só sugere: nada é gravado sem o seu clique.</div>
+    <div class="muted" id="cc-ia-hint" style="font-size:12px"></div>
     <div class="fd-lista" id="cc-semlanc"></div>
   </section>
   <section class="card compacto">

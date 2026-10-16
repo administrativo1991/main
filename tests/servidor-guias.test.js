@@ -74,7 +74,7 @@ F.chamadas.length = 0;
 email = 'recepcao@clinicanascente.com.br'; r = API.lerGuias({ mes: 'Setembro' }); assert.strictEqual(r.ok, false, 'só a gestão dispara'); email = 'gestao@clinicanascente.com.br';
 r = ok(API.lerGuias({ mes: 'Setembro' }), 'ler setembro');
 assert.strictEqual(r.novos, 10, '8 lidos + zip + duplicata'); assert.strictEqual(r.lidas, 7); assert.strictEqual(r.conferir, 5, 'Carla, Dani, Eva, Hugo, comprovante'); assert.strictEqual(r.confirmar, 3, 'Ana, Bia, Fabio'); assert.strictEqual(r.ignoradas, 1); assert.strictEqual(r.duplicadas, 1); assert.strictEqual(r.comErro, 0); assert.strictEqual(r.restantes, 0);
-assert.strictEqual(F.chamadas.length, 8, 'zip e duplicata não vão pro modelo'); assert.ok(r.custoPorGuia > 0 && r.custoPorGuia < 0.001, 'custo por guia ' + r.custoPorGuia);
+assert.strictEqual(F.chamadas.length, 8, 'zip e duplicata não vão pro modelo'); assert.ok(r.custoPorGuia > 0 && r.custoPorGuia < 0.01, 'custo por guia (Sonnet 5.5) ' + r.custoPorGuia);
 const req = F.chamadas.filter(c => /Arquivo: 28-09 Ana Conv\.pdf/.test(c.body.messages[0].content[1].text))[0];
 assert.ok(req, 'requisição da Ana'); assert.ok(/Pacientes de convênio cadastrados/.test(req.body.messages[0].content[1].text)); assert.ok(/Ana Conv · 12345 · Cedplan/.test(req.body.messages[0].content[1].text)); assert.ok(!/Gui Particular/.test(req.body.messages[0].content[1].text), 'só pacientes de convênio'); assert.ok(!/CPF|telefone|\(32\)/i.test(req.body.messages[0].content[1].text));
 assert.strictEqual(req.body.messages[0].content[0].type, 'document'); assert.strictEqual(req.body.output_config.format.schema.properties.guias.items.required.length, 11);

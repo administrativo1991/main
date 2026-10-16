@@ -2400,8 +2400,9 @@ API.fichaPaciente = function (d) {
    como recebido nas abas de mês (Pix e cartão; dinheiro fica no Fechar o dia) e sugere as ligações; a gestão confirma.
    Confirmar grava: na aba do extrato/vendas a Situação e o "Ligado a"; na aba do mês, a coluna nova "Conciliado" (no fim). */
 var ABA_EXT = 'Extrato bancário', ABA_CART = 'Vendas no cartão', COL_CONC = 'Conciliado';
-var HEXT = ['ID do banco', 'Data', 'Valor (R$)', 'Tipo', 'Quem pagou', 'Descrição', 'Situação', 'Ligado a', 'Observação', 'Importado em', 'Registrado por (app)'];
-var HCART = ['Código da transação', 'Data', 'Forma', 'Parcelas', 'Bandeira', 'Valor bruto (R$)', 'Taxa (R$)', 'Valor líquido (R$)', 'Liberação', 'Comprador', 'Situação', 'Ligado a', 'Depósito (ID do banco)', 'Observação', 'Importado em', 'Registrado por (app)'];
+// "Sugestão IA" (17/10): o que a conciliação assistida sugeriu (JSON); só sugestão, quem grava Situação/Ligado a é o Confirmar
+var HEXT = ['ID do banco', 'Data', 'Valor (R$)', 'Tipo', 'Quem pagou', 'Descrição', 'Situação', 'Ligado a', 'Observação', 'Importado em', 'Registrado por (app)', 'Sugestão IA'];
+var HCART = ['Código da transação', 'Data', 'Forma', 'Parcelas', 'Bandeira', 'Valor bruto (R$)', 'Taxa (R$)', 'Valor líquido (R$)', 'Liberação', 'Comprador', 'Situação', 'Ligado a', 'Depósito (ID do banco)', 'Observação', 'Importado em', 'Registrado por (app)', 'Sugestão IA'];
 // situações que a gestão escolhe para uma entrada do banco que não é de lançamento do app
 var SIT_EXT = ['conciliado', 'convênio (fatura)', 'mensalidade anotada em Mensalistas', 'mês anterior ao app', 'aluguel de sala', 'não é paciente', 'sem lançamento no app', 'pendente'];
 function soGestao_() { return usuario_().perfil === 'gestao' ? null : { ok: false, erros: ['Só a gestão.'] }; }
@@ -2473,13 +2474,13 @@ function notaNome_(a, nomes) {
 }
 function diasEntre_(a, b) { return Math.round((ymdDate_(a) - ymdDate_(b)) / 864e5); }
 function ymdDate_(s) { var d = s instanceof Date ? s : parseData_(s); return d ? new Date(d.getFullYear(), d.getMonth(), d.getDate()) : null; }
-// recebimentos lançados (Pix e cartão) de todas as abas de mês, com a data do pagamento
-function recebimentosApp_() {
+// recebimentos lançados (Pix e cartão) de todas as abas de mês, com a data do pagamento; `todas` (opcional) = linhasMes_ já lidas, por aba
+function recebimentosApp_(todas) {
   var idx = {}; indicePacientes_().forEach(function (p) { idx[p.nome] = p; }); var out = [];
   CONFIG.MESES.forEach(function (m) {
     var s = planilha_().getSheetByName(m); if (!s) return; var h = cabecalhos_(s), cc = h[COL_CONC];
     var concs = cc && s.getLastRow() >= 2 ? s.getRange(2, cc, s.getLastRow() - 1, 1).getValues() : [];
-    linhasMes_(m).linhas.forEach(function (r) {
+    ((todas && todas[m]) || linhasMes_(m)).linhas.forEach(function (r) {
       if (!(r.pago === 'Sim' || r.pago === 'Parcial')) return;
       var total = r.pago === 'Parcial' ? r.recebido : r.valor; if (!(total > 0)) return;
       // cada recebimento anotado na Observação ("Recebido R$ 50,00 em 20/10/2026 (Pix)", correção e parcelas) é uma entrada
@@ -2501,13 +2502,25 @@ function recebimentosApp_() {
   return out;
 }
 function recResumo_(r) { return { aba: r.aba, linha: r.linha, id: r.id, paciente: r.paciente, profissional: r.profissional, data: r.data, dataPag: r.dataPag, valor: r.valor, forma: r.forma }; }
+// primeiro dia do primeiro mês com lançamento no app (as abas de mês não têm ano no nome: vale a menor data lançada)
+function inicioApp_(todas) {
+  var min = null; Object.keys(todas).forEach(function (m) { todas[m].linhas.forEach(function (r) { var x = ymdDate_(r.data); if (x && (!min || x < min)) min = x; }); });
+  return min ? new Date(min.getFullYear(), min.getMonth(), 1) : null;
+}
 API.conciliacao = function (d) {
   var neg = soGestao_(); if (neg) return neg; d = d || {};
-  var chave = String(d.chave || chaveMes_(new Date())), ini = mesDaChave_(chave); if (!ini) return { ok: false, erros: ['Mês inválido.'] };
+  var c = conciliacaoCalc_(String(d.chave || chaveMes_(new Date()))); if (!c.ok) return c;
+  iaConciliacaoAnexar_(c); // sugestões da IA guardadas, conferidas de novo (server-conciliacao-ia.js)
+  return c.resp;
+};
+// o cálculo da conciliação do mês, separado pra conciliação assistida reaproveitar os candidatos (recs livres, linhas lidas)
+function conciliacaoCalc_(chave) {
+  var ini = mesDaChave_(chave); if (!ini) return { ok: false, erros: ['Mês inválido.'] };
   var fim = new Date(ini.getFullYear(), ini.getMonth() + 1, 0, 12), noMes = function (s) { var x = ymdDate_(s); return x && x >= ymdDate_(ini) && x <= ymdDate_(fim); };
-  var ext = linhasComo_(planilha_().getSheetByName(ABA_EXT)).filter(function (r) { return r['ID do banco']; }).map(function (r) { return { id: String(r['ID do banco']), data: r['Data'], valor: numBR_(r['Valor (R$)']), tipo: r['Tipo'], quem: r['Quem pagou'], desc: r['Descrição'], situacao: String(r['Situação'] || 'pendente'), ligado: r['Ligado a'] || '', obs: r['Observação'] || '' }; });
-  var vendas = linhasComo_(planilha_().getSheetByName(ABA_CART)).filter(function (r) { return r['Código da transação']; }).map(function (r) { return { id: String(r['Código da transação']), data: r['Data'], forma: r['Forma'], parcelas: r['Parcelas'], bandeira: r['Bandeira'], bruto: numBR_(r['Valor bruto (R$)']), taxa: numBR_(r['Taxa (R$)']), liquido: numBR_(r['Valor líquido (R$)']), liberacao: r['Liberação'], comprador: r['Comprador'] || '', situacao: String(r['Situação'] || 'pendente'), ligado: r['Ligado a'] || '', deposito: r['Depósito (ID do banco)'] || '', obs: r['Observação'] || '' }; });
-  var recs = recebimentosApp_(), usados = {}, usadosExt = {}, sug = [];
+  var ext = linhasComo_(planilha_().getSheetByName(ABA_EXT)).filter(function (r) { return r['ID do banco']; }).map(function (r) { return { id: String(r['ID do banco']), data: r['Data'], valor: numBR_(r['Valor (R$)']), tipo: r['Tipo'], quem: r['Quem pagou'], desc: r['Descrição'], situacao: String(r['Situação'] || 'pendente'), ligado: r['Ligado a'] || '', obs: r['Observação'] || '', sugIA: r['Sugestão IA'] || '' }; });
+  var vendas = linhasComo_(planilha_().getSheetByName(ABA_CART)).filter(function (r) { return r['Código da transação']; }).map(function (r) { return { id: String(r['Código da transação']), data: r['Data'], forma: r['Forma'], parcelas: r['Parcelas'], bandeira: r['Bandeira'], bruto: numBR_(r['Valor bruto (R$)']), taxa: numBR_(r['Taxa (R$)']), liquido: numBR_(r['Valor líquido (R$)']), liberacao: r['Liberação'], comprador: r['Comprador'] || '', situacao: String(r['Situação'] || 'pendente'), ligado: r['Ligado a'] || '', deposito: r['Depósito (ID do banco)'] || '', obs: r['Observação'] || '', sugIA: r['Sugestão IA'] || '' }; });
+  var todas = {}; CONFIG.MESES.forEach(function (m) { if (planilha_().getSheetByName(m)) todas[m] = linhasMes_(m); });
+  var recs = recebimentosApp_(todas), usados = {}, usadosExt = {}, sug = [], inicio = inicioApp_(todas);
   var livre = function (r) { return !r.conciliado && !usados[r.chave]; }, usa = function (r) { usados[r.chave] = 1; };
   var extMes = ext.filter(function (e) { return noMes(e.data); }), pend = extMes.filter(function (e) { return e.situacao === 'pendente'; });
   // quem pagou é convênio (aba Listas) ou profissional da clínica: sugere a situação; só casa com lançamento se o nome conferir
@@ -2517,6 +2530,12 @@ API.conciliacao = function (d) {
     if (!/^Pix/.test(e.tipo)) return; var tq = tokensNome_(e.quem), tem = function (n) { var t = tokensNome_(n).filter(function (x) { return x.length >= 3; }); return t.length && t.every(function (x) { return tq.indexOf(x) >= 0; }); };
     if (convs.some(tem)) e.sugestao = 'convênio (fatura)';
     else if (profs.some(function (p) { return tokensNome_(p).length >= 2 && tem(p); })) e.sugestao = 'aluguel de sala';
+  });
+  // regras fixas (17/10): resgate de aplicação e transferência da própria clínica não são paciente; antes do 1º mês do app, "mês anterior ao app"
+  pend.forEach(function (e) {
+    if (e.sugestao) return;
+    if (/^(Renda Fixa|Resgate)|resgate (total )?de cdb/i.test(String(e.desc || '')) || /cl[ií]nica nascente/i.test(Duplicatas.normalizar(e.quem || '') + ' ' + String(e.quem || ''))) { e.sugestao = 'não é paciente'; e.fixa = true; }
+    else if (inicio && ymdDate_(e.data) && ymdDate_(e.data) < inicio) { e.sugestao = 'mês anterior ao app'; e.fixa = true; }
   });
   // 1) Pix: um lançamento, mesmo valor, data de -3 a +3 dias; nome confere = "forte"
   pend.filter(function (e) { return /^Pix/.test(e.tipo); }).forEach(function (e) {
@@ -2549,9 +2568,12 @@ API.conciliacao = function (d) {
   var semBanco = recs.filter(function (r) { return livre(r) && noMes(r.dataPag); }).map(recResumo_);
   var soma = function (l, f) { return Math.round(l.reduce(function (a, x) { return a + (f(x) || 0); }, 0) * 100) / 100; };
   var vm = vendas.filter(function (v) { return noMes(v.data); });
-  return { ok: true, chave: chave, sugestoes: sug, semLancamento: semLanc, vendasSemLancamento: vendasSemLanc, semBanco: semBanco, resolvidos: extMes.filter(function (e) { return e.situacao !== 'pendente'; }), vendas: vm, situacoes: SIT_EXT,
+  var resp = { ok: true, chave: chave, sugestoes: sug, semLancamento: semLanc, vendasSemLancamento: vendasSemLanc, semBanco: semBanco, resolvidos: extMes.filter(function (e) { return e.situacao !== 'pendente'; }), vendas: vm, situacoes: SIT_EXT, inicioApp: inicio ? fmtData_(inicio) : '',
     resumo: { entradas: extMes.length, valorEntradas: soma(extMes, function (e) { return e.valor; }), resolvidas: extMes.length - pend.length, pendentes: pend.length, valorSemLanc: soma(semLanc, function (e) { return e.valor; }), valorSemBanco: soma(semBanco, function (r) { return r.valor; }), taxasCartao: soma(vm, function (v) { return v.taxa; }), temExtrato: ext.length > 0, temVendas: vendas.length > 0 } };
-};
+  // a resposta leva a sugestão da IA já conferida (x.ia, em iaConciliacaoAnexar_), não o JSON cru da coluna
+  var sugIA = {}; ext.forEach(function (e) { if (e.sugIA) sugIA['ext:' + e.id] = e.sugIA; delete e.sugIA; }); vendas.forEach(function (v) { if (v.sugIA) sugIA['venda:' + v.id] = v.sugIA; delete v.sugIA; });
+  return { ok: true, resp: resp, ini: ini, fim: fim, recs: recs, livre: livre, todas: todas, inicio: inicio, sugIA: sugIA };
+}
 // confirma ligações e classificações: [{ tipo: 'ext'|'venda', id, situacao, recs: [{aba, linha, id}], obs, deposito }]
 API.conciliar = function (d) {
   var neg = soGestao_(); if (neg) return neg; d = d || {};
@@ -2879,38 +2901,45 @@ var HIA = ['Parâmetro', 'Valor', 'Descrição'];
 var HIA_LOG = ['Data/hora', 'Item', 'Arquivos', 'Linhas', 'Modelo', 'Tokens entrada', 'Tokens saída', 'Custo (US$)', 'Quem', 'Resultado', 'Observação', 'Duração (s)'];
 var IA_ITENS = { guias: 'Guias', conciliacao: 'Conciliação', perguntar: 'Perguntar' };
 var IA_URL = 'https://api.anthropic.com/v1/messages', IA_VERSAO = '2023-06-01';
-var IA_CHAVE_PROP = 'ANTHROPIC_API_KEY';
+var IA_CHAVE_PROP = 'ANTHROPIC_API_KEY', IA_BETA_FALLBACK = 'server-side-fallback-2026-07-01';
 // carga inicial da aba IA (criada pelo app se não existir; chaves que faltarem são acrescentadas no fim, sem mexer nas existentes)
 var IA_PADRAO = [
   ['ia_ativa', 'Sim', 'Geral. "Não" pausa toda chamada à IA (guias, conciliação, perguntar). O card "Uso da IA" em Pendências grava aqui (Pausar tudo / Reativar). Pausar não perde nada: as guias ficam na pasta e são lidas quando reativar.'],
   ['ia_guias', 'Sim', 'Leitura das guias de convênio da pasta do Drive (gatilho diário). "Não" pausa só este item.'],
   ['ia_conciliacao', 'Sim', 'Conciliação assistida (próximo item). "Não" pausa só este item.'],
   ['ia_perguntar', 'Sim', '"Perguntar à planilha" (próximo item). "Não" pausa só este item.'],
-  ['modelo', 'claude-haiku-5-5', 'Modelo da API Claude. Haiku 5.5 = o mais barato da família com leitura de PDF/imagem (US$ 0,10 por milhão de tokens de entrada, 0,50 de saída). Mais preciso, ~10x o custo: claude-sonnet-5-5. Mudar aqui muda a próxima chamada.'],
+  ['modelo', 'claude-sonnet-5-5', 'Modelo da API Claude. Sonnet 5.5 (gestão, 16/10) = US$ 2 por milhão de tokens de entrada, 10 de saída; o mais barato, ~20x menos: claude-haiku-5-5. Mudar aqui muda a próxima chamada; o custo no IA log segue o preço do modelo que respondeu.'],
   ['esforco', 'low', 'Quanto o modelo pensa antes de responder: low · medium · high. low basta pra ler uma guia e segura o custo.'],
-  ['teto_mes_usd', 20, 'Teto de gasto no mês, em US$ (soma do IA log). Atingiu: a IA para sozinha e a tela avisa "teto do mês atingido".'],
+  ['teto_mes_usd', 10, 'Teto de gasto no mês, em US$ (soma do IA log). Atingiu: a IA para sozinha e a tela avisa "teto do mês atingido".'],
   ['teto_dia_usd', 3, 'Teto de gasto no dia, em US$.'],
   ['aviso_pct', 80, 'Ao passar desta % do teto do mês: aviso amarelo no card e um e-mail (uma vez por mês) pro endereço abaixo.'],
-  ['preco_entrada_usd_mtok', 0.1, 'Preço do modelo por milhão de tokens de ENTRADA, em US$ (tabela da Anthropic). Usado pra estimar o custo no IA log.'],
-  ['preco_saida_usd_mtok', 0.5, 'Preço por milhão de tokens de SAÍDA, em US$.'],
+  ['preco_entrada_usd_mtok', 2, 'Preço por milhão de tokens de ENTRADA, em US$, só para modelo fora da tabela do app (Haiku 5.5, Sonnet 5.5, Sonnet 5, Opus 5.5 já têm preço no código).'],
+  ['preco_saida_usd_mtok', 10, 'Preço por milhão de tokens de SAÍDA, em US$ (mesma regra da linha de cima).'],
   ['email_aviso', 'administrativo@clinicanascente.com.br', 'Quem recebe o e-mail de 80 % do teto.'],
   ['hora_gatilho', 19, 'Hora (0–23) em que o gatilho diário lê as guias novas da pasta. Mudar aqui e clicar "Instalar gatilho" no card.'],
   ['pasta_guias_id', '15tjkAjub3f5jTc1Jy8ciklaZPG0_ULsP', 'Id da pasta raiz GUIAS DE CONVÊNIOS no Drive (Drives compartilhados / Recepção). Dentro: uma pasta por convênio (CEDPLAN, SABIN SINAI) e, em cada uma, uma por mês (10 OUT 26), com subpastas por paciente.'],
   ['guias_mes_anterior_ate_dia', 5, 'Até este dia do mês o gatilho também lê a pasta do mês anterior (guias salvas atrasadas).'],
   ['guias_max_por_execucao', 25, 'Máximo de arquivos lidos por execução do gatilho (o resto fica pro dia seguinte). Cada execução tem no máximo ~5 minutos.'],
   ['instrucao_guias', 'Você lê guias de atendimento de convênio (Cedplan, Sabin Sinai) digitalizadas ou fotografadas por uma clínica de psicologia e pediatria. Extraia os dados e devolva somente o JSON pedido.\nRegras: cada página costuma ser uma guia; se uma página for continuação da anterior (mesmo número de guia, só mais datas ou assinaturas), marque continuacao_da_anterior = true. numero_guia: o número da guia ou da autorização (dígitos e hífens, sem espaços). carteirinha: o número do beneficiário na carteirinha (só dígitos). beneficiario: o nome do paciente como está na guia; se corresponder a um nome da lista de pacientes cadastrados (mesmo com abreviação, acento ou ordem diferente), devolva o nome exatamente como está na lista. datas: todas as datas de atendimento ou de sessão preenchidas na guia, no formato dd/mm/aaaa (guia com várias linhas de sessão = uma data por linha preenchida; linha em branco não conta). procedimento: a descrição do procedimento (ex.: Sessão de psicoterapia, Consulta); quantidade: o número de sessões ou procedimentos preenchidos. assinatura_visivel: true só se houver assinatura manuscrita (do paciente, do responsável ou do profissional) na guia. legibilidade: boa, parcial (algum campo em dúvida) ou ilegivel. Se o arquivo não for uma guia (comprovante, exame, foto solta, página em branco), e_guia = false e guias = []. Não invente: campo que não deu pra ler fica vazio ("" ou []). Em observacao, uma frase curta em português sobre o que viu (ex.: "guia Cedplan com 4 sessões assinadas").', 'Instrução que o modelo recebe pra ler uma guia (texto livre; a gestão pode ajustar). O JSON de resposta é fixo no código.'],
-  ['instrucao_conciliacao', '', 'Instrução do item Conciliação assistida (próximo).'],
+  ['instrucao_conciliacao', 'Você ajuda a gestão de uma clínica de psicologia e pediatria (Clínica Nascente, Juiz de Fora) a conciliar o extrato do PagBank com os lançamentos do app. Você recebe as entradas do banco que as regras do app não conseguiram casar (E…: Pix; V…: vendas no cartão) e listas de candidatos: L… = recebimentos lançados no app (Pix ou cartão, ainda não conciliados), M… = mensalidades marcadas como pagas na aba Mensalistas, A… = sessões lançadas e ainda em aberto (não pagas), além dos convênios e dos profissionais da clínica. Para cada entrada devolva uma sugestão no JSON pedido.\nRegras: acao = "ligar" quando um ou mais L… explicam a entrada (o mesmo pagador, muitas vezes mãe, pai ou responsável com sobrenome em comum, pagando sessões de um ou mais filhos; valores que somam o valor da entrada; datas próximas, o Pix pode vir alguns dias antes ou até 40 dias depois da sessão). Nunca use o mesmo L… em duas entradas. Só ligue cartão (V…) a lançamento em cartão e Pix a lançamento em Pix. acao = "situacao" quando a entrada não é de lançamento do app: "mensalidade anotada em Mensalistas" (um M… explica: mesmo pagador e valor), "convênio (fatura)" (quem pagou é um convênio), "aluguel de sala" (quem pagou é profissional da clínica), "não é paciente" (resgate de aplicação, transferência da própria clínica, devolução, pessoa sem relação com pacientes), "mês anterior ao app" (paga sessão de antes do primeiro mês do app), "sem lançamento no app" (parece pagamento de paciente, mas não há lançamento correspondente). acao = "em_aberto" quando a entrada parece pagar sessões que estão em aberto (A…): liste esses A… em lancamentos. acao = "nenhuma" quando não dá pra dizer. Não invente: na dúvida, confianca = "baixa". confianca "alta" só quando nome e valor batem sem ambiguidade. motivo: uma frase curta em português que a gestão entenda (ex.: "Pix da mãe, Débora Travnik, pelas sessões do Gustavo de 02 e 09/10").', 'Instrução que o modelo recebe na conciliação assistida (texto livre; a gestão pode ajustar). O JSON de resposta é fixo no código.'],
   ['instrucao_perguntar', '', 'Instrução do item Perguntar à planilha (próximo).']
 ];
 var IA_NUMERICOS = { teto_mes_usd: 1, teto_dia_usd: 1, aviso_pct: 1, preco_entrada_usd_mtok: 1, preco_saida_usd_mtok: 1, hora_gatilho: 1, guias_mes_anterior_ate_dia: 1, guias_max_por_execucao: 1 };
-var IA_EDITAVEIS_TELA = { ia_ativa: 1, ia_guias: 1, ia_conciliacao: 1, ia_perguntar: 1, hora_gatilho: 1 };
+var IA_EDITAVEIS_TELA = { ia_ativa: 1, ia_guias: 1, ia_conciliacao: 1, ia_perguntar: 1, hora_gatilho: 1, teto_mes_usd: 1 };
+// preço por milhão de tokens (US$, entrada/saída, prompt até 100 mil tokens) dos modelos que o app usa; modelo fora da tabela usa as células preco_* da aba IA
+var IA_PRECOS = { 'claude-haiku-5-5': [0.1, 0.5], 'claude-sonnet-5-5': [2, 10], 'claude-sonnet-5': [2, 10], 'claude-opus-5-5': [4, 20] };
+function precoIA_(modelo, cfg) { var m = String(modelo || '').replace(/-\d{8}$/, ''); return IA_PRECOS[m] || [Number(cfg.preco_entrada_usd_mtok) || 0, Number(cfg.preco_saida_usd_mtok) || 0]; }
 
 // aba IA: cria com a carga inicial se não existir; acrescenta no fim as chaves novas que faltarem (versões futuras)
 function abaIA_() {
   var ss = planilha_(), s = ss.getSheetByName(ABA_IA), criadas = [];
   if (!s) { s = ss.insertSheet(ABA_IA); s.getRange(1, 1, 1, HIA.length).setValues([HIA]).setFontWeight('bold'); s.setFrozenRows(1); }
-  var n = s.getLastRow(), tem = {};
-  if (n >= 2) s.getRange(2, 1, n - 1, 1).getValues().forEach(function (r) { var k = String(r[0] || '').trim(); if (k) tem[k] = 1; });
+  var n = s.getLastRow(), tem = {}, padrao = {}; IA_PADRAO.forEach(function (p) { padrao[p[0]] = p[1]; });
+  if (n >= 2) s.getRange(2, 1, n - 1, 2).getValues().forEach(function (r, i) {
+    var k = String(r[0] || '').trim(); if (!k) return; tem[k] = 1;
+    // instrução nova de uma versão futura numa chave que já existia vazia (instrucao_conciliacao veio vazia em 16/10): escreve o padrão uma vez
+    if (/^instrucao_/.test(k) && padrao[k] && !String(r[1] == null ? '' : r[1]).trim()) { s.getRange(i + 2, 2).setValue(padrao[k]); criadas.push(k); }
+  });
   var faltam = IA_PADRAO.filter(function (p) { return !tem[p[0]]; });
   if (faltam.length) { s.getRange(Math.max(n, 1) + 1, 1, faltam.length, 3).setValues(faltam.map(function (p) { return [p[0], p[1], p[2]]; })); faltam.forEach(function (p) { criadas.push(p[0]); }); }
   return { s: s, criadas: criadas };
@@ -2949,10 +2978,10 @@ function gastoIA_() {
   MEMO_.iagasto = { mes: Math.round(mes * 10000) / 10000, dia: Math.round(dia * 10000) / 10000, chamadasMes: chamadasMes, chamadasDia: chamadasDia };
   return MEMO_.iagasto;
 }
-function custoIA_(usage, cfg) {
-  var e = Number(usage && usage.input_tokens) || 0, s = Number(usage && usage.output_tokens) || 0;
+function custoIA_(usage, cfg, modelo) {
+  var e = Number(usage && usage.input_tokens) || 0, s = Number(usage && usage.output_tokens) || 0, p = precoIA_(modelo || cfg.modelo, cfg);
   var cr = Number(usage && usage.cache_read_input_tokens) || 0, cw = Number(usage && usage.cache_creation_input_tokens) || 0; // só pra contar; a leitura de cache custa 10 % da entrada
-  return Math.round(((e + cw) * (Number(cfg.preco_entrada_usd_mtok) || 0) + cr * (Number(cfg.preco_entrada_usd_mtok) || 0) * 0.1 + s * (Number(cfg.preco_saida_usd_mtok) || 0)) / 1e6 * 1e6) / 1e6;
+  return Math.round(((e + cw) * p[0] + cr * p[0] * 0.1 + s * p[1]) / 1e6 * 1e6) / 1e6;
 }
 function logIA_(l) {
   try {
@@ -3006,10 +3035,17 @@ function chamarIA(item, payload) {
   if (Object.keys(oc).length) body.output_config = oc;
   var base = { item: item, arquivos: payload.arquivos || (payload.documentos || []).length, linhas: payload.linhas || 0, modelo: body.model, quem: quem, obs: payload.observacao || '' };
   var dur = function () { return Math.round((new Date().getTime() - t0) / 100) / 10; };
+  // recusa do classificador de segurança: Sonnet/Opus 5.x refazem no modelo que a Anthropic indica (fallbacks "default"); Haiku não tem
+  var comFallback = /^claude-(sonnet|opus)-5/.test(body.model); if (comFallback) body.fallbacks = 'default';
+  var enviar = function () {
+    var hd = { 'x-api-key': chave, 'anthropic-version': IA_VERSAO }; if (body.fallbacks) hd['anthropic-beta'] = IA_BETA_FALLBACK;
+    var resp = UrlFetchApp.fetch(IA_URL, { method: 'post', contentType: 'application/json', headers: hd, payload: JSON.stringify(body), muteHttpExceptions: true });
+    return [resp.getResponseCode(), resp.getContentText()];
+  };
   var code, txt;
   try {
-    var resp = UrlFetchApp.fetch(IA_URL, { method: 'post', contentType: 'application/json', headers: { 'x-api-key': chave, 'anthropic-version': IA_VERSAO }, payload: JSON.stringify(body), muteHttpExceptions: true });
-    code = resp.getResponseCode(); txt = resp.getContentText();
+    var rr = enviar(); code = rr[0]; txt = rr[1];
+    if (comFallback && code === 400 && /fallback/i.test(txt)) { delete body.fallbacks; rr = enviar(); code = rr[0]; txt = rr[1]; } // conta sem acesso ao beta: segue sem
   } catch (e) {
     logIA_(Object.assign({}, base, { resultado: 'erro', obs: 'sem resposta: ' + (e && e.message || e), duracao: dur() }));
     return { ok: false, motivo: 'erro_api', mensagem: 'Não consegui falar com a API (' + (e && e.message || e) + ').' };
@@ -3020,7 +3056,7 @@ function chamarIA(item, payload) {
     logIA_(Object.assign({}, base, { resultado: 'erro ' + code, obs: em, duracao: dur() }));
     return { ok: false, motivo: 'erro_api', mensagem: 'A API respondeu ' + code + ': ' + em, codigo: code };
   }
-  var usage = j.usage || {}, custo = custoIA_(usage, cfg), saida = { entrada: Number(usage.input_tokens) || 0, saida: Number(usage.output_tokens) || 0 };
+  var usage = j.usage || {}, custo = custoIA_(usage, cfg, j.model || body.model), saida = { entrada: Number(usage.input_tokens) || 0, saida: Number(usage.output_tokens) || 0 };
   var comum = Object.assign({}, base, { modelo: j.model || body.model, entrada: saida.entrada, saida: saida.saida, custo: custo, duracao: dur() });
   if (j.stop_reason === 'refusal') { logIA_(Object.assign({}, comum, { resultado: 'recusa' })); avisoTetoIA_(cfg); return { ok: false, motivo: 'recusa', mensagem: 'O modelo recusou ler este arquivo.', usage: saida, custo: custo }; }
   var texto = (j.content || []).filter(function (b) { return b.type === 'text'; }).map(function (b) { return b.text; }).join('');
@@ -3049,7 +3085,9 @@ API.iaEstado = function () {
 API.iaDefinir = function (d) {
   d = d || {}; var u = usuario_(); if (u.perfil !== 'gestao') return { ok: false, erros: ['Só a gestão.'] };
   var k = String(d.chave || '').trim(), v = d.valor; if (!IA_EDITAVEIS_TELA[k]) return { ok: false, erros: ['Parâmetro não editável pela tela: ' + k] };
-  if (k === 'hora_gatilho') { v = parseInt(v, 10); if (!(v >= 0 && v <= 23)) return { ok: false, erros: ['Hora inválida (0–23).'] }; } else v = simNao_(v) ? 'Sim' : 'Não';
+  if (k === 'hora_gatilho') { v = parseInt(v, 10); if (!(v >= 0 && v <= 23)) return { ok: false, erros: ['Hora inválida (0–23).'] }; }
+  else if (k === 'teto_mes_usd') { v = numBR_(v); if (!(v > 0 && v <= 500)) return { ok: false, erros: ['Teto inválido: um valor em US$ entre 1 e 500.'] }; }
+  else v = simNao_(v) ? 'Sim' : 'Não';
   var lock = LockService.getScriptLock(); lock.waitLock(20000);
   try {
     var s = abaIA_().s, n = s.getLastRow(), linha = 0;
@@ -3431,6 +3469,158 @@ API.gestaoResumo = function (d) {
     r.guiasAConferir = conferir;
   } catch (e) { r.guiasAConferir = []; r.guiasErro = String(e && e.message || e); }
   return r;
+};
+
+/* ================= CONCILIAÇÃO ASSISTIDA PELA IA (IA parte 2, 17/10/2026; só gestão) =================
+   Mesmo escopo de server.js / server-fase2.js / server-ia.js (montado pelo build). Depois das regras de API.conciliacao, o que
+   sobrou no banco (Pix e vendas no cartão sem lançamento, sem sugestão fixa) vai pro modelo junto com os candidatos: recebimentos
+   lançados e ainda livres (L…), mensalidades pagas em Mensalistas (M…) e sessões em aberto (A…). Sem CPF, telefone nem pedaço
+   de documento (o PagBank põe dígitos no "quem pagou"; saem antes de ir).
+   A resposta é só sugestão: fica na coluna "Sugestão IA" da aba do banco e a tela mostra. Quem grava Situação / Ligado a /
+   Conciliado é API.conciliar, com o clique da gestão. Ao carregar, cada sugestão guardada é conferida de novo (lançamento ainda
+   livre e no mesmo lugar, sessão ainda em aberto, soma e datas); a que não vale mais some. */
+var COL_SUG_IA = 'Sugestão IA', CONC_IA_LOTE = 15, CONC_IA_MAX = 60, CONC_IA_TEMPO_MS = 240000;
+var SIT_IA = SIT_EXT.filter(function (x) { return x !== 'conciliado' && x !== 'pendente'; });
+var CONC_SCHEMA = { type: 'object', additionalProperties: false, required: ['sugestoes'], properties: { sugestoes: { type: 'array', items: { type: 'object', additionalProperties: false,
+  required: ['entrada', 'acao', 'lancamentos', 'situacao', 'confianca', 'motivo'],
+  properties: { entrada: { type: 'string' }, acao: { type: 'string', enum: ['ligar', 'situacao', 'em_aberto', 'nenhuma'] }, lancamentos: { type: 'array', items: { type: 'string' } },
+    situacao: { type: 'string', enum: [''].concat(SIT_IA) }, confianca: { type: 'string', enum: ['alta', 'media', 'baixa'] }, motivo: { type: 'string' } } } } } };
+
+function brl_(n) { return 'R$ ' + Mensagens.valorBR(Math.round((Number(n) || 0) * 100) / 100); }
+// "62.985.207 Luisa Maria" → "Luisa Maria": o PagBank põe pedaço de CPF/CNPJ no nome de quem pagou
+function semDigitos_(t) { return String(t || '').replace(/\d[\d.\-\/]*/g, ' ').replace(/\s+/g, ' ').trim(); }
+function saldoAberto_(r) { return Math.round(((r.pago === 'Parcial' ? r.valor - (r.recebido || 0) : r.valor) || 0) * 100) / 100; }
+
+// candidatos que o modelo pode usar: recebimentos livres de 45 dias antes do mês a 10 depois, mensalidades pagas do mês e do anterior,
+// sessões em aberto de 60 dias antes até o fim do mês
+function concIACandidatos_(c, ocupados) {
+  var de = new Date(c.ini.getTime() - 45 * 864e5), ate = new Date(c.fim.getTime() + 10 * 864e5), noJanela = function (s, a, b) { var x = ymdDate_(s); return x && x >= ymdDate_(a) && x <= ymdDate_(b); };
+  var L = c.recs.filter(function (r) { return c.livre(r) && !ocupados[r.chave] && noJanela(r.dataPag, de, ate); });
+  var chaves = [c.resp.chave, chaveMes_(new Date(c.ini.getFullYear(), c.ini.getMonth() - 1, 1, 12))], M = [];
+  mensalistasIdx_().linhas.forEach(function (l) {
+    chaves.forEach(function (ch) { var mc = l.comp[ch]; if (!mc || !(mc.pago === 'Sim' || mc.pago === 'Parcial')) return; M.push({ paciente: l.paciente, pagador: l.pagador, chave: ch, valor: numBR_(mc.valorCobrado) || l.valor, data: mc.data, forma: mc.forma }); });
+  });
+  var pacs = {}, A = [], deA = new Date(c.ini.getTime() - 60 * 864e5); indicePacientes_().forEach(function (p) { pacs[p.nome] = p; });
+  Object.keys(c.todas).forEach(function (m) { c.todas[m].linhas.forEach(function (r) { if (emAberto_(r) && saldoAberto_(r) > 0 && noJanela(r.data, deA, c.fim)) A.push({ aba: m, linha: r.linha, id: r.id, paciente: r.paciente, profissional: r.profissional, data: r.data, valor: saldoAberto_(r), pagador: (pacs[r.paciente] || {}).pagador || '' }); }); });
+  return { L: L.slice(0, 250), M: M.slice(0, 120), A: A.slice(0, 150) };
+}
+function concIATexto_(c, lote, cand, cod) {
+  var convs = []; try { convs = colunaLista_(CONFIG.LISTAS.CONVENIO).filter(function (x) { return x && !/^Particular$/i.test(x); }); } catch (e) { }
+  var t = ['Mês da conciliação: ' + c.resp.chave + '. Primeiro mês com lançamentos no app: ' + (c.inicio ? CONFIG.MESES[c.inicio.getMonth()] + '/' + c.inicio.getFullYear() : '—') + '.',
+    'Convênios: ' + (convs.join('; ') || '—') + '.', 'Profissionais da clínica: ' + profissionais_().map(function (p) { return String(p.nome).replace(/^Dra?\.\s+/, ''); }).join('; ') + '.', '', 'ENTRADAS DO BANCO A SUGERIR:'];
+  lote.forEach(function (x) {
+    if (x.tipo === 'venda') t.push(x.cod + ' · ' + fmtData_(x.v.data) + ' · venda no cartão ' + brl_(x.v.bruto) + ' (' + [x.v.forma, x.v.parcelas, x.v.bandeira].filter(Boolean).join(', ') + ')' + (x.v.comprador ? ' · comprador: ' + semDigitos_(x.v.comprador) : ''));
+    else t.push(x.cod + ' · ' + fmtData_(x.e.data) + ' · ' + brl_(x.e.valor) + ' · ' + x.e.tipo + ' · quem pagou: ' + (semDigitos_(x.e.quem) || semDigitos_(x.e.desc) || '—'));
+  });
+  t.push('', 'RECEBIMENTOS LANÇADOS NO APP, AINDA NÃO CONCILIADOS (L):');
+  cand.L.forEach(function (r) { var nomes = r.nomes.filter(function (n) { return n !== r.paciente; }); t.push(cod.L(r) + ' · paciente ' + r.paciente + (nomes.length ? ' (pagador: ' + nomes.join(' / ') + ')' : '') + ' · sessão ' + r.data + ' · pago ' + r.dataPag + ' · ' + brl_(r.valor) + ' · ' + r.forma + ' · ' + r.profissional); });
+  if (!cand.L.length) t.push('(nenhum)');
+  t.push('', 'MENSALIDADES MARCADAS COMO PAGAS NA ABA MENSALISTAS (M):');
+  cand.M.forEach(function (m) { t.push(cod.M(m) + ' · paciente ' + m.paciente + (m.pagador ? ' (pagador: ' + m.pagador + ')' : '') + ' · ' + m.chave + ' · ' + brl_(m.valor) + (m.data ? ' · pago ' + m.data : '') + (m.forma ? ' · ' + m.forma : '')); });
+  if (!cand.M.length) t.push('(nenhuma)');
+  t.push('', 'SESSÕES LANÇADAS E EM ABERTO, NÃO PAGAS (A):');
+  cand.A.forEach(function (a) { t.push(cod.A(a) + ' · paciente ' + a.paciente + (a.pagador ? ' (pagador: ' + a.pagador + ')' : '') + ' · ' + a.data + ' · ' + brl_(a.valor) + ' · ' + a.profissional); });
+  if (!cand.A.length) t.push('(nenhuma)');
+  t.push('', 'Devolva uma sugestão por entrada (' + lote.map(function (x) { return x.cod; }).join(', ') + ').');
+  return t.join('\n');
+}
+// confere uma sugestão (do modelo ou guardada) contra o estado de agora; devolve { ia } pronta pra tela ou null
+function concIAConferir_(x, s, c, ocupados) {
+  var valor = x.tipo === 'venda' ? x.v.bruto : x.e.valor, data = x.tipo === 'venda' ? x.v.data : x.e.data, out = { acao: s.acao, conf: s.conf, motivo: s.motivo, em: s.em || '', modelo: s.modelo || '', avisos: [] };
+  if (s.acao === 'ligar') {
+    var porChave = {}; c.recs.forEach(function (r) { porChave[r.chave] = r; });
+    var recs = (s.recs || []).map(function (k) { var r = porChave[k.chave]; return r && String(r.id) === String(k.id) && c.livre(r) && !ocupados[r.chave] ? r : null; });
+    if (!recs.length || recs.some(function (r) { return !r; })) return null;
+    if (recs.some(function (r) { return r.cartao !== (x.tipo === 'venda'); })) return null;
+    var soma = Math.round(recs.reduce(function (a, r) { return a + r.valor; }, 0) * 100) / 100;
+    if (x.tipo === 'venda') { if (valor < soma - 0.01 || valor > soma * 1.1 + 0.01) out.avisos.push('soma ' + brl_(soma) + ', venda ' + brl_(valor)); else if (valor - soma > 0.01) out.avisos.push(brl_(valor - soma) + ' a mais na maquininha (acréscimo?)'); }
+    else if (Math.abs(soma - valor) > 0.01) out.avisos.push('soma ' + brl_(soma) + ', entrada ' + brl_(valor));
+    if (recs.some(function (r) { return Math.abs(diasEntre_(r.dataPag, data)) > 45; })) out.avisos.push('data longe da entrada');
+    out.recs = recs.map(recResumo_); out._chaves = recs.map(function (r) { return r.chave; });
+  } else if (s.acao === 'situacao') {
+    if (SIT_IA.indexOf(s.sit) < 0) return null; out.sit = s.sit;
+  } else if (s.acao === 'em_aberto') {
+    var abertos = (s.abertos || []).map(function (k) { var t = c.todas[k.aba], r = t && t.linhas.filter(function (l) { return l.linha === k.linha && String(l.id) === String(k.id); })[0]; return r && emAberto_(r) ? { aba: k.aba, linha: r.linha, id: r.id, paciente: r.paciente, profissional: r.profissional, data: r.data, valor: saldoAberto_(r) } : null; });
+    if (!abertos.length || abertos.some(function (a) { return !a; })) return null; out.abertos = abertos;
+  } else if (s.acao !== 'nenhuma') return null;
+  if (out.avisos.length && out.conf === 'alta') out.conf = 'media';
+  out.aviso = out.avisos.join(' · '); delete out.avisos;
+  return out;
+}
+// lê a coluna "Sugestão IA" das entradas soltas do mês e põe em cada uma a sugestão conferida (x.ia); c.resp.ia = estado do botão
+function iaConciliacaoAnexar_(c) {
+  var ocupados = {}, conta = { comIA: 0, aSugerir: 0 };
+  var anexar = function (x) {
+    var cru = c.sugIA[(x.tipo === 'venda' ? 'venda:' : 'ext:') + x.obj.id], s = null; try { s = cru ? JSON.parse(cru) : null; } catch (e) { s = null; }
+    var ia = s ? concIAConferir_(x.tipo === 'venda' ? { tipo: 'venda', v: x.obj } : { tipo: 'ext', e: x.obj }, s, c, ocupados) : null;
+    if (ia) { (ia._chaves || []).forEach(function (k) { ocupados[k] = 1; }); delete ia._chaves; x.obj.ia = ia; conta.comIA++; }
+    else if (!x.obj.sugestao) conta.aSugerir++;
+  };
+  c.resp.semLancamento.forEach(function (e) { anexar({ tipo: 'ext', obj: e }); });
+  c.resp.vendasSemLancamento.forEach(function (v) { anexar({ tipo: 'venda', obj: v }); });
+  var cfg = iaConfig_(), bloq = iaBloqueio_('conciliacao', cfg), g = gastoIA_();
+  c.resp.ia = { bloqueio: bloq ? bloq.mensagem : (!iaChave_() ? 'Chave da API não configurada.' : ''), modelo: cfg.modelo, gastoMes: g.mes, tetoMes: Number(cfg.teto_mes_usd) || 0, comIA: conta.comIA, aSugerir: conta.aSugerir };
+  c.ocupados = ocupados;
+  return c;
+}
+function gravarSugIA_(itens) {
+  if (!itens.length) return;
+  var lock = LockService.getScriptLock(); lock.waitLock(20000);
+  try {
+    [[ABA_EXT, HEXT, 'ID do banco', 'ext'], [ABA_CART, HCART, 'Código da transação', 'venda']].forEach(function (a) {
+      var meus = itens.filter(function (i) { return i.tipo === a[3]; }); if (!meus.length) return;
+      var s = abaComCabecalho_(a[0], a[1]), h = garantirColunas_(s, a[1]).h; if (s.getLastRow() < 2) return;
+      var ids = s.getRange(2, h[a[2]], s.getLastRow() - 1, 1).getValues().map(function (r) { return String(r[0]); });
+      meus.forEach(function (i) { var k = ids.indexOf(String(i.id)); if (k >= 0) s.getRange(k + 2, h[COL_SUG_IA]).setValue(JSON.stringify(i.sug)); });
+    });
+    SpreadsheetApp.flush();
+  } finally { lock.releaseLock(); }
+}
+// botão "Sugerir com IA": { chave, refazer } → { ok, sugeridas, semSugestao, restantes, custo, mensagem }
+API.conciliacaoIA = function (d) {
+  var neg = soGestao_(); if (neg) return neg; d = d || {};
+  var t0 = new Date().getTime(), cfg = iaConfig_(), bloq = iaBloqueio_('conciliacao', cfg); if (bloq) return { ok: false, motivo: bloq.motivo, erros: [bloq.mensagem] };
+  var c = conciliacaoCalc_(String(d.chave || chaveMes_(new Date()))); if (!c.ok) return c;
+  iaConciliacaoAnexar_(c);
+  var refazer = !!d.refazer, ocupados = {};
+  // ao refazer, as sugestões atuais saem da conta (os lançamentos delas voltam a ser candidatos); senão ficam como estão
+  if (!refazer) Object.keys(c.ocupados).forEach(function (k) { ocupados[k] = 1; });
+  var fila = [];
+  c.resp.semLancamento.forEach(function (e) { if (!e.sugestao && (refazer || !e.ia)) fila.push({ tipo: 'ext', id: e.id, e: e }); });
+  c.resp.vendasSemLancamento.forEach(function (v) { if (refazer || !v.ia) fila.push({ tipo: 'venda', id: v.id, v: v }); });
+  if (!fila.length) return { ok: true, sugeridas: 0, semSugestao: 0, restantes: 0, custo: 0, mensagem: 'Nada a sugerir neste mês: o que sobrou já tem sugestão.' };
+  var restantes = Math.max(0, fila.length - CONC_IA_MAX); fila = fila.slice(0, CONC_IA_MAX);
+  var nE = 0, nV = 0; fila.forEach(function (x) { x.cod = x.tipo === 'venda' ? 'V' + (++nV) : 'E' + (++nE); });
+  var out = { ok: true, sugeridas: 0, semSugestao: 0, restantes: restantes, custo: 0, lotes: 0, mensagem: '', erros: [] }, quem = usuario_().email || '';
+  for (var i = 0; i < fila.length; i += CONC_IA_LOTE) {
+    if (new Date().getTime() - t0 > CONC_IA_TEMPO_MS) { out.restantes += fila.length - i; out.mensagem = 'Parei pelo tempo: clique de novo pra continuar.'; break; }
+    var lote = fila.slice(i, i + CONC_IA_LOTE), cand = concIACandidatos_(c, ocupados), mapa = {}, codRev = {};
+    var cod = { L: function (r) { var k = 'L' + (cand.L.indexOf(r) + 1); mapa[k] = { tipo: 'L', r: r }; return k; }, M: function (m) { var k = 'M' + (cand.M.indexOf(m) + 1); mapa[k] = { tipo: 'M', m: m }; return k; }, A: function (a) { var k = 'A' + (cand.A.indexOf(a) + 1); mapa[k] = { tipo: 'A', a: a }; return k; } };
+    lote.forEach(function (x) { codRev[x.cod] = x; });
+    var texto = concIATexto_(c, lote, cand, cod);
+    var r = chamarIA('conciliacao', { texto: texto, schema: CONC_SCHEMA, maxTokens: 16000, linhas: lote.length, quem: quem, observacao: c.resp.chave + ' · lote ' + (out.lotes + 1) + ' · ' + lote.length + ' entradas · ' + (cand.L.length + cand.M.length + cand.A.length) + ' candidatos' });
+    if (!r.ok) { out.ok = out.sugeridas > 0; out.motivo = r.motivo; out.erros.push(r.mensagem); out.restantes += fila.length - i; break; }
+    out.lotes++; out.custo = Math.round((out.custo + (r.custo || 0)) * 1e6) / 1e6;
+    var grava = [], vistos = {}, agora = agora_();
+    ((r.dados && r.dados.sugestoes) || []).forEach(function (s) {
+      var x = codRev[String(s.entrada || '').trim()]; if (!x || vistos[x.cod]) return; vistos[x.cod] = 1;
+      var refs = (s.lancamentos || []).map(function (k) { return mapa[String(k).trim()]; }).filter(Boolean);
+      var sug = { em: agora, modelo: r.modelo || cfg.modelo, acao: s.acao, conf: s.confianca, motivo: String(s.motivo || '').slice(0, 300) };
+      if (s.acao === 'ligar') sug.recs = refs.filter(function (o) { return o.tipo === 'L'; }).map(function (o) { return { chave: o.r.chave, id: o.r.id }; });
+      else if (s.acao === 'em_aberto') sug.abertos = refs.filter(function (o) { return o.tipo === 'A'; }).map(function (o) { return { aba: o.a.aba, linha: o.a.linha, id: o.a.id }; });
+      else if (s.acao === 'situacao') { sug.sit = s.situacao; var ms = refs.filter(function (o) { return o.tipo === 'M'; }); if (ms.length) sug.mens = ms.map(function (o) { return o.m.paciente + ' · ' + o.m.chave + ' · ' + brl_(o.m.valor); }); }
+      // o modelo não é confiável pra conta: a sugestão só vale se passar na mesma conferência de quando a tela carrega
+      var ia = concIAConferir_(x, sug, c, ocupados);
+      if (!ia) { sug = { em: agora, modelo: sug.modelo, acao: 'nenhuma', conf: 'baixa', motivo: 'sugestão descartada pela conferência do app (' + (s.acao || '?') + ': ' + String(s.motivo || '').slice(0, 120) + ')' }; }
+      else (ia._chaves || []).forEach(function (k) { ocupados[k] = 1; });
+      if (sug.acao === 'nenhuma') out.semSugestao++; else out.sugeridas++;
+      grava.push({ tipo: x.tipo, id: x.id, sug: sug });
+    });
+    lote.forEach(function (x) { if (!vistos[x.cod]) { out.semSugestao++; grava.push({ tipo: x.tipo, id: x.id, sug: { em: agora, modelo: r.modelo || cfg.modelo, acao: 'nenhuma', conf: 'baixa', motivo: 'o modelo não respondeu sobre esta entrada' } }); } });
+    gravarSugIA_(grava);
+  }
+  if (!out.mensagem && out.restantes) out.mensagem = out.restantes + ' entrada(s) ficaram pra próxima: clique de novo.';
+  return out;
 };
 
 API;

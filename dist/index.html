@@ -703,6 +703,10 @@ table.cm .acoes{justify-content:flex-end;gap:4px;flex-wrap:wrap}
 .cc-form{display:flex;flex-wrap:wrap;gap:6px;align-items:center;flex:1 1 420px;justify-content:flex-end}
 .cc-form select,.cc-form input{width:auto;min-height:36px;padding:6px 10px;font-size:13px;flex:1 1 160px;max-width:260px}
 .cc-tab{min-width:620px}
+.cc-ia{flex-basis:100%;font-size:13px;margin:2px 0 0}
+.cc-ia.faixa{padding:8px 12px}
+.cc-ia-corpo{display:flex;flex-wrap:wrap;align-items:center;gap:6px 12px;margin-top:4px}
+.cc-ia-corpo .cc-recs{display:flex;flex:1 1 auto}
 #cc-res-card summary{cursor:pointer}
 @media (max-width:700px){
   #cc-resumo{grid-template-columns:repeat(2,minmax(0,1fr))}
@@ -1371,8 +1375,10 @@ table.ar-mini{min-width:0}
     <div class="fd-lista" id="cc-sug"></div>
   </section>
   <section class="card compacto">
-    <div class="passo" style="padding:0"><h2 style="font-size:15px">No banco, sem lançamento</h2><span class="tag laranja" id="cc-n-semlanc">0</span></div>
-    <div class="muted" style="font-size:13px">Entrou na conta e o app não achou de quem é. Diga o que é, ou ligue a um lançamento da lista de baixo.</div>
+    <div class="passo" style="padding:0;flex-wrap:wrap"><h2 style="font-size:15px">No banco, sem lançamento</h2><span class="tag laranja" id="cc-n-semlanc">0</span><span class="esp"></span>
+      <button type="button" class="btn ter mini" id="cc-fixas" hidden></button><button type="button" class="btn ter mini" id="cc-ia-altas" hidden></button><button type="button" class="btn mini" id="cc-ia-btn" hidden>Sugerir com IA</button></div>
+    <div class="muted" style="font-size:13px">Entrou na conta e o app não achou de quem é. Diga o que é, ou ligue a um lançamento da lista de baixo. A IA só sugere: nada é gravado sem o seu clique.</div>
+    <div class="muted" id="cc-ia-hint" style="font-size:12px"></div>
     <div class="fd-lista" id="cc-semlanc"></div>
   </section>
   <section class="card compacto">
@@ -2053,7 +2059,7 @@ function mockAReceber(nome, d) {
   return { ok: true, meses: meses, porMotivo: g('motivo'), porConvenio: g('convenio'), porProfissional: g('profissional'), linhas: mockPerdidos, total: { atendido: 19432.7, perdido: mockPerdidos.reduce(function (a, l) { return a + l.valor; }, 0), n: mockPerdidos.length } };
 }
 // conciliação na simulação: extrato e vendas de mentira; confirmar muda a situação e some da lista
-var mockExt = null, mockVendas = null, mockConcOk = {};
+var mockExt = null, mockVendas = null, mockConcOk = {}, mockConcIA = false;
 function mockConc(nome, d) {
   var h = new Date(), mm = ('0' + (h.getMonth() + 1)).slice(-2) + '/' + h.getFullYear(), dd = function (n) { return ('0' + n).slice(-2) + '/' + mm; };
   if (nome === 'importarExtrato' || nome === 'importarVendasCartao') {
@@ -2063,9 +2069,13 @@ function mockConc(nome, d) {
   if (!mockExt) mockExt = [{ id: 'B1', data: dd(2), valor: 120, tipo: 'Pix', quem: 'Carla Barreto Lima', desc: 'Pix recebido - Carla Barreto Lima' }, { id: 'B2', data: dd(3), valor: 240, tipo: 'Pix', quem: 'Rita Almeida Rocha', desc: '' },
     { id: 'B3', data: dd(3), valor: 6137.79, tipo: 'Pix', quem: 'Cedplan Saude', desc: '', sugestao: 'convênio (fatura)' }, { id: 'B4', data: dd(1), valor: 200, tipo: 'Pix', quem: 'Marileia Rodrigues De Oliveira', desc: '', sugestao: 'aluguel de sala' },
     { id: 'B5', data: dd(6), valor: 90, tipo: 'Pix (QR Code)', quem: 'Pessoa Desconhecida', desc: '' }, { id: 'B6', data: dd(3), valor: 208.57, tipo: 'Cartão (vendas)', quem: '', desc: 'Vendas - Maquininha', situacao: 'conciliado', ligado: 'Venda no cartão V1' },
-    { id: 'B7', data: dd(5), valor: 0.42, tipo: 'Rendimento', quem: '', desc: 'Rendimento', situacao: 'não é paciente' }];
+    { id: 'B7', data: dd(5), valor: 0.42, tipo: 'Rendimento', quem: '', desc: 'Rendimento', situacao: 'não é paciente' },
+    { id: 'B8', data: dd(4), valor: 500, tipo: 'Outro', quem: 'Resgate de CDB', desc: 'Renda Fixa - Resgate de CDB', sugestao: 'não é paciente', fixa: true },
+    { id: 'B9', data: dd(7), valor: 160, tipo: 'Pix', quem: 'Debora Leidiane Travnik', desc: '' }, { id: 'B10', data: dd(3), valor: 425, tipo: 'Pix', quem: 'Marta Mensal', desc: '' },
+    { id: 'B11', data: dd(8), valor: 120, tipo: 'Pix', quem: 'Paulo Aberto', desc: '' }];
   if (!mockVendas) mockVendas = [{ id: 'V1', data: dd(2), forma: 'Crédito', parcelas: 'à Vista', bandeira: 'Visa', bruto: 215, taxa: 6.43, liquido: 208.57, liberacao: dd(3), comprador: '', depositoSug: { id: 'B6', data: dd(3), valor: 208.57, situacao: 'pendente' } },
     { id: 'V2', data: dd(4), forma: 'Crédito', parcelas: 'Parcelado 4x', bandeira: 'Mastercard', bruto: 1200, taxa: 23.4, liquido: 1176.6, liberacao: dd(4), comprador: '', depositoSug: null }];
+  if (nome === 'conciliacaoIA') { if (!mockIAE.itens.conciliacao) return { ok: false, motivo: 'pausada_item', erros: ['IA pausada pela gestão (Conciliação)'] }; mockConcIA = true; mockIAE.gastoMes = Math.round((mockIAE.gastoMes + 0.031) * 1000) / 1000; return { ok: true, sugeridas: 4, semSugestao: 1, restantes: 0, custo: 0.031, lotes: 1, mensagem: '', erros: [] }; }
   if (nome === 'conciliar') { (d.itens || []).forEach(function (it) { mockConcOk[it.id] = it.recs && it.recs.length ? 'conciliado' : it.situacao; (it.recs || []).forEach(function (r) { mockConcOk['lanc:' + r.id] = 1; }); }); return { ok: true, feitos: (d.itens || []).length, erros: [] }; }
   var L = function (id, dia, pac, prof, valor, forma) { return { aba: MESES_PT[h.getMonth()], linha: 2 + +id.slice(1), id: id, paciente: pac, profissional: prof, data: dd(dia), dataPag: dd(dia), valor: valor, forma: forma }; };
   var sug = [{ tipo: 'pix', forca: 'forte', aviso: '', ext: mockExt[0], recs: [L('L1', 2, 'Theo Barreto Lima', 'Juliana Ribeiro', 120, 'Pix')] },
@@ -2080,12 +2090,22 @@ function mockConc(nome, d) {
   var vendas = mockVendas.map(function (v) { return Object.assign({ situacao: feito(v.id) || 'pendente', ligado: '', deposito: '', obs: '' }, v); });
   var vsl = vendas.filter(function (v) { return v.situacao === 'pendente' && !sug.some(function (g) { return g.venda && g.venda.id === v.id; }); });
   var soma = function (l, f) { return Math.round(l.reduce(function (a, x) { return a + f(x); }, 0) * 100) / 100; };
-  return { ok: true, chave: d.chave, sugestoes: sug, semLancamento: semLanc, vendasSemLancamento: vsl, semBanco: semBanco, resolvidos: ext.filter(function (e) { return e.situacao !== 'pendente'; }), vendas: vendas,
+  if (mockConcIA) {
+    var iaDe = { B5: { acao: 'nenhuma', conf: 'baixa', motivo: 'nenhum lançamento nem paciente parecido com "Pessoa Desconhecida"' },
+      B9: !mockConcOk['lanc:L5'] && !mockConcOk['lanc:L6'] ? { acao: 'ligar', conf: 'alta', motivo: 'Pix da mãe, Débora Travnik, pelas sessões do Theo e da Beatriz', aviso: '', recs: semBanco.slice(0, 2) } : null,
+      B10: { acao: 'situacao', conf: 'alta', sit: 'mensalidade anotada em Mensalistas', motivo: 'mensalidade de ' + MESES_PT[h.getMonth()].toLowerCase() + ' da Lia (pagadora Marta Mensal)', aviso: '' },
+      B11: { acao: 'em_aberto', conf: 'media', motivo: 'parece a sessão do Rui em aberto (pagador Paulo)', aviso: '', abertos: [{ aba: MESES_PT[h.getMonth()], linha: 30, id: 'A-sim-r1', paciente: 'Rui Aberto', profissional: 'Juliana Ribeiro', data: dd(6), valor: 120 }] } };
+    semLanc.forEach(function (e) { if (iaDe[e.id]) e.ia = iaDe[e.id]; });
+    vsl.forEach(function (v) { if (v.id === 'V2') v.ia = { acao: 'situacao', conf: 'baixa', sit: 'sem lançamento no app', motivo: 'venda parcelada de R$ 1.200 sem lançamento em cartão no mês', aviso: '' }; });
+  }
+  var nIA = semLanc.filter(function (e) { return e.ia; }).length + vsl.filter(function (v) { return v.ia; }).length, nSem = semLanc.filter(function (e) { return !e.ia && !e.sugestao; }).length + vsl.filter(function (v) { return !v.ia; }).length;
+  var iaResp = { bloqueio: mockIAE.pausada ? mockIAE.mensagem : (!mockIAE.itens.conciliacao ? 'IA pausada pela gestão (Conciliação)' : ''), modelo: mockIAE.modelo, gastoMes: mockIAE.gastoMes, tetoMes: mockIAE.tetoMes, comIA: nIA, aSugerir: nSem };
+  return { ok: true, chave: d.chave, ia: iaResp, sugestoes: sug, semLancamento: semLanc, vendasSemLancamento: vsl, semBanco: semBanco, resolvidos: ext.filter(function (e) { return e.situacao !== 'pendente'; }), vendas: vendas,
     situacoes: ['conciliado', 'convênio (fatura)', 'mensalidade anotada em Mensalistas', 'mês anterior ao app', 'aluguel de sala', 'não é paciente', 'sem lançamento no app', 'pendente'],
     resumo: { entradas: ext.length, valorEntradas: soma(ext, function (e) { return e.valor; }), resolvidas: ext.length - pend.length, pendentes: pend.length, valorSemLanc: soma(semLanc, function (e) { return e.valor; }) + soma(vsl, function (v) { return v.bruto; }), valorSemBanco: soma(semBanco, function (r) { return r.valor; }), taxasCartao: soma(vendas, function (v) { return v.taxa; }), temExtrato: true, temVendas: true } };
 }
 // IA (16/10): estado/pausa/gatilho, guias lidas (5 casos: 1 linha · várias sessões · nome diferente · ilegível · não é guia · sem atendimento)
-var mockIAE = { ativa: true, itens: { guias: true, conciliacao: true, perguntar: true }, gastoMes: 0.42, gastoDia: 0.03, chamadasMes: 61, tetoMes: 20, tetoDia: 3, pct: 2, avisoPct: 80, pausada: '', mensagem: '', modelo: 'claude-haiku-5-5', horaGatilho: 19, gatilho: { instalado: true, n: 1 }, temChave: true, ultimaGuias: { quando: hojeStr() + ' 19:02', lidas: 6, confirmar: 2, conferir: 4, comErro: 0, restantes: 0, parou: '', custo: 0.0031, origem: 'gatilho' }, gestao: true };
+var mockIAE = { ativa: true, itens: { guias: true, conciliacao: true, perguntar: true }, gastoMes: 0.42, gastoDia: 0.03, chamadasMes: 61, tetoMes: 10, tetoDia: 3, pct: 4, avisoPct: 80, pausada: '', mensagem: '', modelo: 'claude-sonnet-5-5', horaGatilho: 19, gatilho: { instalado: true, n: 1 }, temChave: true, ultimaGuias: { quando: hojeStr() + ' 19:02', lidas: 6, confirmar: 2, conferir: 4, comErro: 0, restantes: 0, parou: '', custo: 0.0031, origem: 'gatilho' }, gestao: true };
 function mockGuia(id, nome, status, conf, lido, pac, linhas, motivos) { return { id: id, nome: nome, pasta: 'CEDPLAN/10 OUT 26/' + (pac || 'solto'), link: 'https://drive.google.com/file/d/' + id + '/view', miniatura: 'data:image/svg+xml;utf8,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="96" height="120"><rect width="96" height="120" fill="#f3eef7"/><text x="8" y="60" font-size="11" fill="#6B3FA0">guia</text></svg>'), convenio: 'Cedplan', lidaEm: hojeStr() + ' 19:02', status: status, confianca: conf, motivos: motivos || '', obs: '', lido: Object.assign({ numero: '', carteirinha: '', nome: '', datas: [], procedimento: 'Sessão de psicoterapia', quantidade: 1, assinatura: true, legibilidade: 'boa', observacao: '', paginas: 1, numeros: [] }, lido), sugestao: { paciente: pac || '', linhas: linhas || [], como: 'nome lido' }, candidatas: pac ? [{ aba: 'Setembro', id: 'A-sim-c1', data: '23/09/2026', hora: '10:00', profissional: 'Juliana Ribeiro', guia: 'Sim' }, { aba: 'Outubro', id: 'A-sim-c2', data: '07/10/2026', hora: '10:00', profissional: 'Juliana Ribeiro', guia: '' }] : [], confirmadoPor: '', linhasGravadas: '', custo: 0.0005 }; }
 var mockGuias = [
   mockGuia('g1', '30-09 Pedro Augusto.pdf', 'lida', 'alta', { numero: '1504122', carteirinha: '0012345', nome: 'Pedro Augusto Neves', datas: ['30/09/2026'] }, 'Pedro Augusto Neves', [{ aba: 'Setembro', id: 'A-sim-p2', data: '30/09/2026', hora: '10:00', profissional: 'Juliana Ribeiro', guia: '' }]),
@@ -2098,6 +2118,7 @@ var mockGuias = [
 function mockIA(nome, d) {
   if (nome === 'iaEstado') return Object.assign({ ok: true }, mockIAE);
   if (nome === 'iaPausar') { mockIAE.ativa = d.ativa !== false; mockIAE.pausada = mockIAE.ativa ? '' : 'pausada'; mockIAE.mensagem = mockIAE.ativa ? '' : 'IA pausada pela gestão'; return { ok: true, estado: Object.assign({ ok: true }, mockIAE) }; }
+  if (nome === 'iaDefinir' && d.chave === 'teto_mes_usd') { var t = Number(String(d.valor).replace(',', '.')); if (!(t > 0 && t <= 500)) return { ok: false, erros: ['Teto inválido: um valor em US$ entre 1 e 500.'] }; mockIAE.tetoMes = t; mockIAE.pct = Math.round(mockIAE.gastoMes / t * 100); return { ok: true, chave: d.chave, valor: t, estado: Object.assign({ ok: true }, mockIAE) }; }
   if (nome === 'iaDefinir') { var k = String(d.chave).replace(/^ia_/, ''); if (mockIAE.itens[k] !== undefined) mockIAE.itens[k] = !/^n/i.test(d.valor); return { ok: true, estado: Object.assign({ ok: true }, mockIAE) }; }
   if (nome === 'iaInstalarGatilho') { mockIAE.gatilho = { instalado: true, n: 1 }; return { ok: true, hora: mockIAE.horaGatilho, gatilho: mockIAE.gatilho }; }
   if (nome === 'lerGuias') return { ok: true, lidas: 2, confirmar: 1, conferir: 1, ignoradas: 0, duplicadas: 0, comErro: 0, restantes: 0, novos: 2, custo: 0.0011, custoPorGuia: 0.00055, parou: '', mensagens: [], erros: [] };
@@ -2203,7 +2224,7 @@ function mock(nome, d) {
     if (nome === 'corrigirLancamento') { var mr = mockReg.filter(function (x) { return x.id === d.id; })[0], cc = d.campos || {}, alt = []; ['pago', 'forma', 'nf', 'guia', 'nfNumero'].forEach(function (k) { if (cc[k] != null && (!mr || cc[k] !== mr[k === 'nfNumero' ? 'nfN' : k])) { if (mr) mr[k === 'nfNumero' ? 'nfN' : k] = cc[k]; alt.push(k); } }); if (cc.recebidoAgora && mr) { mr.pago = 'Sim'; mr.forma = cc.forma || ''; alt.push('Pago?'); } if (cc.observacao) alt.push('Observação'); if (!alt.length) return res({ ok: false, erros: ['Nada mudou: os campos já estavam assim.'] }); if (/^A-sim-p/.test(d.id)) mockPendOk.push(d.id); return res({ ok: true, id: d.id, aba: d.aba, linha: 41, alterados: alt, novos: cc, plano: null }); }
     if (nome === 'parcelamentos' || nome === 'criarParcelamento' || nome === 'pagarParcela' || nome === 'cancelarParcelamento') return res(mockParcelas(nome, d));
     if (nome === 'aReceber' || nome === 'darComoPerdido' || nome === 'perdasAno') return res(mockAReceber(nome, d));
-    if (nome === 'conciliacao' || nome === 'conciliar' || nome === 'importarExtrato' || nome === 'importarVendasCartao') return res(mockConc(nome, d));
+    if (nome === 'conciliacao' || nome === 'conciliacaoIA' || nome === 'conciliar' || nome === 'importarExtrato' || nome === 'importarVendasCartao') return res(mockConc(nome, d));
     if (nome === 'repasseMes') { var RG = window.__mockRegras = window.__mockRegras || [{ linha: 2, ativa: true, profissional: 'Juliana Ribeiro', convenio: 'Particular', procedimento: '', pct: 80, valorRef: 0, obs: '' }, { linha: 3, ativa: true, profissional: 'Giovana Grossi', convenio: 'Qualquer', procedimento: '', pct: 0, valorRef: 0, obs: 'estagiária' }];
       var LR = [{ data: '02/10/2026', paciente: 'Beatriz Almeida Rocha', profissional: 'Juliana Ribeiro', procedimento: 'Sessão de psicologia', convenio: 'Particular', pago: 'Sim', valor: 120, situacao: 'pago', pct: 80, basePago: 120, basePrev: 120, repassePago: 96, repassePrev: 96, oque: 'Atendido' }];
       var POR = {}; LR.forEach(function (x) { var q = POR[x.profissional] = POR[x.profissional] || { profissional: x.profissional, sessoes: 0, basePago: 0, repassePago: 0, basePrev: 0, repassePrev: 0, semRegra: 0, perdido: 0, desconto: 0, descontoObs: '', porConvenio: [] }; q.sessoes++; q.basePago += x.basePago; q.repassePago += x.repassePago; q.basePrev += x.basePrev; q.repassePrev += x.repassePrev; q.porConvenio.push({ convenio: x.convenio, pct: x.pct, sessoes: 1 }); q.liquidoPago = q.repassePago; q.liquidoPrev = q.repassePrev; });
@@ -4422,7 +4443,7 @@ function carregarIA() { $("#g-ia").textContent = 'carregando…'; call('iaEstado
 function renderIA() {
   var e = IAE, box = $("#g-ia"); if (!e) return;
   var pct = Math.min(100, e.pct || 0), cor = e.pausada ? 'vermelha' : pct >= (e.avisoPct || 80) ? 'amarela' : 'verde', ult = e.ultimaGuias;
-  var h = '<div class="ia-gasto"><b>' + esc(usdTxt(e.gastoMes)) + '</b><span class="muted">de ' + esc(usdTxt(e.tetoMes)) + ' no mês · hoje ' + esc(usdTxt(e.gastoDia)) + ' de ' + esc(usdTxt(e.tetoDia)) + ' · ' + (e.chamadasMes || 0) + ' chamada' + (e.chamadasMes === 1 ? '' : 's') + '</span></div>' +
+  var h = '<div class="ia-gasto"><b>' + esc(usdTxt(e.gastoMes)) + '</b><span class="muted">de ' + esc(usdTxt(e.tetoMes)) + ' no mês · hoje ' + esc(usdTxt(e.gastoDia)) + ' de ' + esc(usdTxt(e.tetoDia)) + ' · ' + (e.chamadasMes || 0) + ' chamada' + (e.chamadasMes === 1 ? '' : 's') + '</span>' + (e.gestao !== false ? '<span class="ia-teto"><button type="button" class="btn ter mini" id="g-ia-teto">Mudar teto</button></span>' : '') + '</div>' +
     '<div class="ia-barra"><div class="ia-barra-in ' + cor + '" style="width:' + pct + '%"></div></div>';
   if (e.pausada) h += '<div class="faixa erro" style="margin-top:8px">' + esc(e.mensagem) + '</div>';
   else if (pct >= (e.avisoPct || 80)) h += '<div class="faixa nota" style="margin-top:8px">' + ic('alerta', 14, 2.6) + ' Já usou ' + pct + '% do teto do mês (aviso enviado por e-mail). Ao chegar em 100% a IA para sozinha.</div>';
@@ -4434,6 +4455,11 @@ function renderIA() {
     '<button type="button" class="btn ter mini" id="g-ia-gatilho" title="Cria ou refaz o gatilho que lê a pasta todo dia">' + (e.gatilho && e.gatilho.instalado ? 'Gatilho diário instalado (' + e.horaGatilho + 'h) · refazer' : 'Instalar gatilho diário (' + e.horaGatilho + 'h)') + '</button></div>' +
     '<div id="g-ia-msg">' + iaMsg + '</div>';
   box.innerHTML = h;
+  var bt = $("#g-ia-teto"); if (bt) bt.addEventListener('click', function () {
+    var w = bt.parentNode; w.innerHTML = '<input type="number" min="1" max="500" step="1" class="mini" id="g-ia-teto-v" value="' + (e.tetoMes || 10) + '" aria-label="Teto do mês em US$" style="width:90px"> <button type="button" class="btn mini" id="g-ia-teto-ok">Salvar teto</button>';
+    $("#g-ia-teto-v").focus();
+    $("#g-ia-teto-ok").addEventListener('click', function () { var b = this; b.disabled = true; call('iaDefinir', { chave: 'teto_mes_usd', valor: $("#g-ia-teto-v").value, motivo: 'Mudar teto (tela)' }).then(function (r) { if (!r.ok) { b.disabled = false; return toast((r.erros || ['Não gravou']).join(' ')); } toast('Teto do mês: ' + usdTxt(r.valor)); IAE = r.estado; renderIA(); }).catch(function (err) { b.disabled = false; toast('Erro: ' + err.message); }); });
+  });
   $("#g-ia-pausa").addEventListener('click', function () { var b = this; doisCliques(b, e.ativa ? 'Confirmar: pausar toda a IA?' : 'Confirmar: reativar?', function () { b.disabled = true; call('iaPausar', { ativa: !e.ativa }).then(function (r) { if (!r.ok) { b.disabled = false; return toast((r.erros || ['Não gravou']).join(' ')); } toast(e.ativa ? 'IA pausada (aba IA, ia_ativa = Não)' : 'IA reativada'); IAE = r.estado; renderIA(); }).catch(function (err) { b.disabled = false; toast('Erro: ' + err.message); }); }); });
   $$('[data-item]', box).forEach(function (b) { b.addEventListener('click', function () { var k = b.dataset.item, on = !e.itens[k]; call('iaDefinir', { chave: 'ia_' + k, valor: on ? 'Sim' : 'Não' }).then(function (r) { if (!r.ok) return toast((r.erros || ['Não gravou']).join(' ')); IAE = r.estado; renderIA(); }).catch(function (err) { toast('Erro: ' + err.message); }); }); });
   $("#g-ia-ler").addEventListener('click', function () { var b = this, mes = $("#g-ia-mes").value; doisCliques(b, 'Confirmar: ler a pasta de ' + mes + '?', function () { b.disabled = true; b.textContent = 'Lendo… (até 5 min)'; iaMsg = ''; $("#g-ia-msg").innerHTML = '';
@@ -4644,7 +4670,7 @@ function renderConc() {
     var x = p.e || p.v, valor = p.e ? x.valor : x.bruto, sug = p.e ? x.sugestao : '';
     var opts = '<option value="">o que é?</option>' + sits.map(function (o) { return '<option' + (o === sug ? ' selected' : '') + '>' + esc(o) + '</option>'; }).join('');
     var lancs = '<option value="">ligar a um lançamento…</option>' + semBancoOrd(valor, x.data).map(function (l, j) { return '<option value="' + j + '">' + esc(l.paciente + ' · ' + ccDia(l.dataPag) + ' · ' + ccR(l.valor) + ' · ' + l.forma) + '</option>'; }).join('');
-    var it = el('<div class="fd-item cc-pend"><span class="cc-lado">' + (p.e ? ccBancoHtml(x) : ccVendaHtml(x)) + '</span>' + (sug ? '<span class="tag lilas">sugestão: ' + esc(sug) + '</span>' : '') + '<span class="esp"></span><span class="cc-form"><select class="cc-sit" aria-label="O que é">' + opts + '</select>' + (r.semBanco.length ? '<select class="cc-lanc" aria-label="Ligar a um lançamento">' + lancs + '</select>' : '') + '<input class="cc-obs" placeholder="Observação (opcional)" aria-label="Observação"><button type="button" class="btn mini">Salvar</button></span></div>');
+    var it = el('<div class="fd-item cc-pend"><span class="cc-lado">' + (p.e ? ccBancoHtml(x) : ccVendaHtml(x)) + '</span>' + (sug ? '<span class="tag lilas">sugestão: ' + esc(sug) + '</span>' : '') + ccIAHtml(x.ia) + '<span class="esp"></span><span class="cc-form"><select class="cc-sit" aria-label="O que é">' + opts + '</select>' + (r.semBanco.length ? '<select class="cc-lanc" aria-label="Ligar a um lançamento">' + lancs + '</select>' : '') + '<input class="cc-obs" placeholder="Observação (opcional)" aria-label="Observação"><button type="button" class="btn mini">Salvar</button></span></div>');
     var ord = semBancoOrd(valor, x.data), selL = $('.cc-lanc', it), selS = $('.cc-sit', it);
     if (selL) selL.addEventListener('change', function () { selS.disabled = !!selL.value; });
     $('button', it).addEventListener('click', function () {
@@ -4653,8 +4679,11 @@ function renderConc() {
       var recs = l ? ccRecs([l]) : [], extra = { situacao: l ? 'conciliado' : sit, obs: obs };
       ccSalvar([p.e ? Object.assign({ tipo: 'ext', id: x.id, recs: recs }, extra) : ccItemVenda(x, recs, extra)], this);
     });
+    var bIA = $('.cc-ia-aceitar', it); if (bIA) bIA.addEventListener('click', function () { ccSalvar([ccItemIA(p)], this); });
+    $$('.cc-ficha', it).forEach(function (a) { a.addEventListener('click', function (ev) { ev.preventDefault(); go('ficha', { nome: a.getAttribute('data-nome') }); }); });
     lsl.appendChild(it);
   });
+  ccRenderIA(r, pend);
   if (!pend.length) lsl.innerHTML = '<div class="muted">' + (s.temExtrato ? 'Nada solto no banco neste mês.' : '—') + '</div>';
   // 3) lançado sem banco
   $("#cc-n-sembanco").textContent = r.semBanco.length;
@@ -4677,6 +4706,49 @@ $("#cc-confirmar").addEventListener('click', function () {
   var itens = $$('#cc-sug input:checked').map(function (c) { var g = CC.sugestoes[+c.getAttribute('data-i')]; return g.venda ? ccItemVenda(g.venda, ccRecs(g.recs)) : { tipo: 'ext', id: g.ext.id, recs: ccRecs(g.recs) }; });
   if (itens.length) ccSalvar(itens, this);
 });
+/* ---------- conciliação assistida (IA parte 2, 17/10): o que sobrou das regras vai pro modelo; a sugestão aparece em cada entrada
+   e só vale com o clique (Aceitar = o mesmo Salvar). Sugestões fixas (resgate, própria clínica, antes do 1º mês do app) confirmam em lote. ---------- */
+function ccIAHtml(ia) {
+  if (!ia) return '';
+  var cab = '<span class="tag lilas">IA · ' + esc({ alta: 'confiança alta', media: 'confiança média', baixa: 'confiança baixa' }[ia.conf] || ia.conf || '') + '</span> ';
+  if (ia.acao === 'nenhuma') return '<div class="cc-ia muted">IA: ' + esc(ia.motivo || 'não soube dizer') + '</div>';
+  var corpo = '';
+  if (ia.acao === 'ligar') corpo = '<span class="cc-recs">' + (ia.recs || []).map(ccLancHtml).join('') + '</span>';
+  else if (ia.acao === 'situacao') corpo = '<b>' + esc(ia.sit) + '</b>';
+  else if (ia.acao === 'em_aberto') corpo = '<span>parece pagar sessões em aberto: ' + (ia.abertos || []).map(function (a) { return '<a href="#" class="link-discreto cc-ficha" data-nome="' + esc(a.paciente) + '">' + esc(a.paciente) + '</a> <span class="muted">' + esc(ccDia(a.data) + ' · ' + ccR(a.valor)) + '</span>'; }).join(', ') + '. Registre o pagamento na Ficha; depois ele concilia aqui.</span>';
+  var podeAceitar = ia.acao === 'ligar' || ia.acao === 'situacao';
+  return '<div class="cc-ia faixa lilas">' + cab + esc(ia.motivo || '') + (ia.aviso ? ' <span class="tag laranja">' + esc(ia.aviso) + '</span>' : '') + '<div class="cc-ia-corpo">' + corpo + (podeAceitar ? ' <button type="button" class="btn mini cc-ia-aceitar">Aceitar</button>' : '') + '</div></div>';
+}
+function ccItemIA(p) {
+  var x = p.e || p.v, ia = x.ia, extra = { obs: 'IA: ' + (ia.motivo || '') };
+  if (ia.acao === 'ligar') return p.e ? Object.assign({ tipo: 'ext', id: x.id, recs: ccRecs(ia.recs) }, extra) : ccItemVenda(x, ccRecs(ia.recs), extra);
+  extra.situacao = ia.sit; return p.e ? Object.assign({ tipo: 'ext', id: x.id, recs: [] }, extra) : ccItemVenda(x, [], extra);
+}
+function ccRenderIA(r, pend) {
+  var ia = r.ia || {}, btn = $("#cc-ia-btn"), hint = $("#cc-ia-hint"), fixas = pend.filter(function (p) { return p.e && p.e.fixa; });
+  var altas = pend.filter(function (p) { var a = (p.e || p.v).ia; return a && a.conf === 'alta' && !a.aviso && (a.acao === 'ligar' || a.acao === 'situacao'); });
+  var bf = $("#cc-fixas"); bf.hidden = !fixas.length;
+  if (fixas.length) { var cont = {}; fixas.forEach(function (p) { cont[p.e.sugestao] = (cont[p.e.sugestao] || 0) + 1; }); bf.textContent = 'Confirmar sugestões fixas (' + fixas.length + ')'; bf.title = Object.keys(cont).map(function (k) { return cont[k] + ' × ' + k; }).join(' · '); }
+  bf.onclick = function () { var b = this; doisCliques(b, 'Confirmar: ' + fixas.length + ' (' + b.title + ')?', function () { ccSalvar(fixas.map(function (p) { return { tipo: 'ext', id: p.e.id, recs: [], situacao: p.e.sugestao, obs: 'regra fixa do app' }; }), b); }); };
+  var ba = $("#cc-ia-altas"); ba.hidden = !altas.length; ba.textContent = 'Aceitar as da IA com confiança alta (' + altas.length + ')';
+  ba.onclick = function () { var b = this; doisCliques(b, 'Confirmar: aceitar ' + altas.length + '?', function () { ccSalvar(altas.map(ccItemIA), b); }); };
+  var refazer = !ia.aSugerir && ia.comIA > 0;
+  btn.hidden = !ehGestao() || !(ia.aSugerir || ia.comIA); btn.disabled = !!ia.bloqueio; btn.textContent = refazer ? 'Pedir de novo à IA' : 'Sugerir com IA (' + (ia.aSugerir || 0) + ')';
+  hint.textContent = ia.bloqueio ? 'IA indisponível: ' + ia.bloqueio : (ia.aSugerir || ia.comIA ? 'Uso da IA este mês: ' + usdTxt(ia.gastoMes) + ' de ' + usdTxt(ia.tetoMes) + ' · ' + (ia.modelo || '') : '');
+  btn.onclick = function () {
+    var b = this, vai = function () {
+      b.disabled = true; b.textContent = 'IA lendo… (até 4 min)';
+      call('conciliacaoIA', { chave: ccChave(), refazer: refazer }).then(function (x) {
+        b.disabled = false;
+        if (!x.ok) { $("#cc-aviso").innerHTML = erroBox(x.erros || ['A IA não respondeu'], 'IA'); carregarConc(); return; }
+        toast(x.mensagem && !x.sugeridas && !x.semSugestao ? x.mensagem : x.sugeridas + ' sugestão(ões)' + (x.semSugestao ? ' · ' + x.semSugestao + ' sem sugestão' : '') + (x.custo ? ' · ' + usdTxt(x.custo) : ''));
+        if (x.erros && x.erros.length) $("#cc-aviso").innerHTML = erroBox(x.erros, 'Parte não foi'); else if (x.mensagem && x.restantes) $("#cc-aviso").innerHTML = aviso('cinza', esc(x.mensagem), '');
+        carregarConc();
+      }).catch(function (e) { b.disabled = false; toast('A IA não respondeu: ' + e.message); carregarConc(); });
+    };
+    if (refazer) doisCliques(b, 'Confirmar: pedir de novo (refaz as sugestões soltas)?', vai); else vai();
+  };
+}
 
 /* ===== 64-areceber.js ===== */
 /* ================= A RECEBER E PERDAS (só gestão, Fase 2, 16/10) =================

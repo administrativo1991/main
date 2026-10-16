@@ -1,4 +1,4 @@
-# NOTAS — IA no app (parte 1: guias de convênio lidas da pasta do Drive)
+# NOTAS — IA no app (parte 1: guias de convênio lidas da pasta do Drive · parte 2: conciliação assistida)
 
 Arquivo de retomada deste item. Quem abrir um chat novo lê, nesta ordem: `docs/DEPLOYS.md` ("No ar agora"), este arquivo,
 `NOTAS-fase2.md`, `NOTAS-fase1.md`, `docs/ESTADO-ATUAL.md`. Escrito pra quem não viu a conversa.
@@ -8,6 +8,10 @@ Arquivo de retomada deste item. Quem abrir um chat novo lê, nesta ordem: `docs/
 > instalou o gatilho (19h) e rodou **"Ler guias agora → Setembro"**: 45 PDFs do Cedplan lidos, todos `ok`, **≈ US$ 0,021 no
 > total** (seção 2). O que a leitura real mostrou e o que mudou por causa dela está na seção 2 ("Setembro na real").
 > Próximo passo da recepção/gestão: confirmar as guias no card "Guias lidas ontem" (Meu dia). Seção 6 diz como.
+
+> **Parte 2 (17/10)**: conciliação assistida **no branch, ainda não publicada** (seção 8). Junto: modelo **Sonnet 5.5** pra
+> todos os itens, preço por modelo no código e teto do mês **US$ 10** (decisões da gestão em 16/10). Na publicação, gravar
+> `modelo` e `teto_mes_usd` na aba IA da real (a carga inicial só vale pra planilha nova).
 
 ## 1. O que foi feito
 
@@ -152,3 +156,50 @@ Arquivo de retomada deste item. Quem abrir um chat novo lê, nesta ordem: `docs/
 - Rotina diária nova: `ROTINAS_IA_.push(function () { ... })` em qualquer arquivo do servidor.
 - Testes: `tests/fakes-google.js` tem `UrlFetchApp` (resposta programável por requisição), `PropertiesService`, `MailApp`,
   `ScriptApp` e um Drive em memória.
+
+## 8. Parte 2 — conciliação assistida (17/10)
+
+**Pedido da gestão (16/10)**: depois das guias, a conciliação; um item por vez, plano aprovado antes do código. Decisões: regra
+fixa (sem IA) pros meses antes do app; Sonnet 5.5 pra todos os itens ("o gasto está bem baixo"); preço por modelo no código;
+teto de US$ 10/mês, com a possibilidade de aumentar pela tela.
+
+**Infra (`server-ia.js`)**:
+- `IA_PRECOS` (Haiku 5.5 0,10/0,50 · Sonnet 5.5 e Sonnet 5 2/10 · Opus 5.5 4/20, US$ por milhão) e `custoIA_` pelo modelo
+  **que respondeu** (`j.model`); modelo fora da tabela usa as células `preco_*` da aba IA.
+- `IA_PADRAO`: `modelo` = `claude-sonnet-5-5`, `teto_mes_usd` = 10, `instrucao_conciliacao` com o texto padrão. `abaIA_()`
+  agora escreve o padrão numa `instrucao_*` que já existia **vazia** (o caso da real), uma vez.
+- Sonnet/Opus 5.x mandam `fallbacks: "default"` (beta `server-side-fallback-2026-07-01`): se o classificador recusar, a API
+  refaz no modelo indicado. Se a API responder 400 citando o fallback, refaz sem ele. No Sonnet 5.5 o fallback só cobre recusas
+  de categoria cyber/frontier_llm: raríssimo aqui, mas não custa nada.
+- `iaDefinir` aceita `teto_mes_usd` (1 a 500); o card "Uso da IA" ganhou **Mudar teto**.
+
+**Conciliação (`server-fase2.js` + `server-conciliacao-ia.js` + `62-conciliacao.js`)**:
+- `API.conciliacao` virou `conciliacaoCalc_` (o mesmo cálculo; devolve também os recebimentos livres e as linhas lidas) +
+  `iaConciliacaoAnexar_`. Regras fixas novas, marcadas `fixa`: "Renda Fixa / Resgate de CDB" e "Clínica Nascente" no quem
+  pagou = **não é paciente**; data antes do 1º mês com lançamento (`inicioApp_`, a menor data das abas de mês) = **mês
+  anterior ao app**.
+- `API.conciliacaoIA({ chave, refazer })` (só gestão): manda pro modelo as entradas soltas **sem sugestão** (Pix e vendas no
+  cartão), em lotes de 15, até 60 por clique, ~4 min no máximo. Candidatos: L = recebimentos livres de 45 dias antes do mês a
+  10 depois; M = mensalidades pagas (Mensalistas) do mês e do anterior; A = sessões em aberto (`emAberto_`) de 60 dias antes
+  até o fim do mês. "Quem pagou" sai sem dígitos (o PagBank põe pedaço de CPF). JSON fixo (`CONC_SCHEMA`): `acao` ligar ·
+  situacao · em_aberto · nenhuma.
+- **O app confere tudo** (`concIAConferir_`): código existe, lançamento livre e no mesmo lugar (ID), não usado por outra
+  entrada, Pix só com Pix e venda só com cartão, soma × valor (venda até 10 % maior = acréscimo), data a mais de 45 dias =
+  aviso; com aviso, "alta" vira "média". Sugestão que não passa vira "nenhuma — descartada pela conferência". A mesma
+  conferência roda a cada carregamento sobre a coluna **`Sugestão IA`** (nova, no fim de `Extrato bancário` e `Vendas no
+  cartão`, JSON): sugestão velha que não vale mais some.
+- Tela: botão **Sugerir com IA (n)** / **Pedir de novo à IA**, faixa lilás por entrada com **Aceitar** (= `API.conciliar`, Observação
+  "IA: …"), **Aceitar as da IA com confiança alta** e **Confirmar sugestões fixas** (dois cliques cada). Desabilitado com o
+  motivo quando a IA está pausada, no teto ou sem chave.
+- Testes: `tests/servidor-conciliacao-ia.test.js` (regras fixas, sem chave, pausa do item, o que vai e o que não vai no texto,
+  descarte de código inventado / lançamento repetido / Pix × cartão, coluna gravada, sugestão guardada conferida, aceitar,
+  refazer, erro da API). `servidor-ia.test.js` cobre preço por modelo, fallback, refazer sem beta, teto pela tela e a
+  instrução vazia preenchida. Simulação 1280/390 sem erro e sem rolagem lateral.
+
+**Custo esperado (Sonnet 5.5)**: ≈ 4–8 mil tokens de entrada e 1–2 mil de saída por lote de 15 → **≈ US$ 0,03 por lote**;
+um mês com ~30 entradas soltas ≈ US$ 0,06. Guias com Sonnet: ≈ US$ 0,009 por guia (150/mês ≈ US$ 1,40). Medir na real e
+anotar aqui.
+
+**Como testar na real (depois da publicação)**: Conciliação → Setembro e Outubro → **Sugerir com IA** → conferir 5–10
+sugestões contra o extrato → Aceitar as certas. Março a agosto: **Confirmar sugestões fixas**. IA log: custo por lote.
+

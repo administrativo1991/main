@@ -10,38 +10,45 @@ var HIA = ['Parâmetro', 'Valor', 'Descrição'];
 var HIA_LOG = ['Data/hora', 'Item', 'Arquivos', 'Linhas', 'Modelo', 'Tokens entrada', 'Tokens saída', 'Custo (US$)', 'Quem', 'Resultado', 'Observação', 'Duração (s)'];
 var IA_ITENS = { guias: 'Guias', conciliacao: 'Conciliação', perguntar: 'Perguntar' };
 var IA_URL = 'https://api.anthropic.com/v1/messages', IA_VERSAO = '2023-06-01';
-var IA_CHAVE_PROP = 'ANTHROPIC_API_KEY';
+var IA_CHAVE_PROP = 'ANTHROPIC_API_KEY', IA_BETA_FALLBACK = 'server-side-fallback-2026-07-01';
 // carga inicial da aba IA (criada pelo app se não existir; chaves que faltarem são acrescentadas no fim, sem mexer nas existentes)
 var IA_PADRAO = [
   ['ia_ativa', 'Sim', 'Geral. "Não" pausa toda chamada à IA (guias, conciliação, perguntar). O card "Uso da IA" em Pendências grava aqui (Pausar tudo / Reativar). Pausar não perde nada: as guias ficam na pasta e são lidas quando reativar.'],
   ['ia_guias', 'Sim', 'Leitura das guias de convênio da pasta do Drive (gatilho diário). "Não" pausa só este item.'],
   ['ia_conciliacao', 'Sim', 'Conciliação assistida (próximo item). "Não" pausa só este item.'],
   ['ia_perguntar', 'Sim', '"Perguntar à planilha" (próximo item). "Não" pausa só este item.'],
-  ['modelo', 'claude-haiku-5-5', 'Modelo da API Claude. Haiku 5.5 = o mais barato da família com leitura de PDF/imagem (US$ 0,10 por milhão de tokens de entrada, 0,50 de saída). Mais preciso, ~10x o custo: claude-sonnet-5-5. Mudar aqui muda a próxima chamada.'],
+  ['modelo', 'claude-sonnet-5-5', 'Modelo da API Claude. Sonnet 5.5 (gestão, 16/10) = US$ 2 por milhão de tokens de entrada, 10 de saída; o mais barato, ~20x menos: claude-haiku-5-5. Mudar aqui muda a próxima chamada; o custo no IA log segue o preço do modelo que respondeu.'],
   ['esforco', 'low', 'Quanto o modelo pensa antes de responder: low · medium · high. low basta pra ler uma guia e segura o custo.'],
-  ['teto_mes_usd', 20, 'Teto de gasto no mês, em US$ (soma do IA log). Atingiu: a IA para sozinha e a tela avisa "teto do mês atingido".'],
+  ['teto_mes_usd', 10, 'Teto de gasto no mês, em US$ (soma do IA log). Atingiu: a IA para sozinha e a tela avisa "teto do mês atingido".'],
   ['teto_dia_usd', 3, 'Teto de gasto no dia, em US$.'],
   ['aviso_pct', 80, 'Ao passar desta % do teto do mês: aviso amarelo no card e um e-mail (uma vez por mês) pro endereço abaixo.'],
-  ['preco_entrada_usd_mtok', 0.1, 'Preço do modelo por milhão de tokens de ENTRADA, em US$ (tabela da Anthropic). Usado pra estimar o custo no IA log.'],
-  ['preco_saida_usd_mtok', 0.5, 'Preço por milhão de tokens de SAÍDA, em US$.'],
+  ['preco_entrada_usd_mtok', 2, 'Preço por milhão de tokens de ENTRADA, em US$, só para modelo fora da tabela do app (Haiku 5.5, Sonnet 5.5, Sonnet 5, Opus 5.5 já têm preço no código).'],
+  ['preco_saida_usd_mtok', 10, 'Preço por milhão de tokens de SAÍDA, em US$ (mesma regra da linha de cima).'],
   ['email_aviso', 'administrativo@clinicanascente.com.br', 'Quem recebe o e-mail de 80 % do teto.'],
   ['hora_gatilho', 19, 'Hora (0–23) em que o gatilho diário lê as guias novas da pasta. Mudar aqui e clicar "Instalar gatilho" no card.'],
   ['pasta_guias_id', '15tjkAjub3f5jTc1Jy8ciklaZPG0_ULsP', 'Id da pasta raiz GUIAS DE CONVÊNIOS no Drive (Drives compartilhados / Recepção). Dentro: uma pasta por convênio (CEDPLAN, SABIN SINAI) e, em cada uma, uma por mês (10 OUT 26), com subpastas por paciente.'],
   ['guias_mes_anterior_ate_dia', 5, 'Até este dia do mês o gatilho também lê a pasta do mês anterior (guias salvas atrasadas).'],
   ['guias_max_por_execucao', 25, 'Máximo de arquivos lidos por execução do gatilho (o resto fica pro dia seguinte). Cada execução tem no máximo ~5 minutos.'],
   ['instrucao_guias', 'Você lê guias de atendimento de convênio (Cedplan, Sabin Sinai) digitalizadas ou fotografadas por uma clínica de psicologia e pediatria. Extraia os dados e devolva somente o JSON pedido.\nRegras: cada página costuma ser uma guia; se uma página for continuação da anterior (mesmo número de guia, só mais datas ou assinaturas), marque continuacao_da_anterior = true. numero_guia: o número da guia ou da autorização (dígitos e hífens, sem espaços). carteirinha: o número do beneficiário na carteirinha (só dígitos). beneficiario: o nome do paciente como está na guia; se corresponder a um nome da lista de pacientes cadastrados (mesmo com abreviação, acento ou ordem diferente), devolva o nome exatamente como está na lista. datas: todas as datas de atendimento ou de sessão preenchidas na guia, no formato dd/mm/aaaa (guia com várias linhas de sessão = uma data por linha preenchida; linha em branco não conta). procedimento: a descrição do procedimento (ex.: Sessão de psicoterapia, Consulta); quantidade: o número de sessões ou procedimentos preenchidos. assinatura_visivel: true só se houver assinatura manuscrita (do paciente, do responsável ou do profissional) na guia. legibilidade: boa, parcial (algum campo em dúvida) ou ilegivel. Se o arquivo não for uma guia (comprovante, exame, foto solta, página em branco), e_guia = false e guias = []. Não invente: campo que não deu pra ler fica vazio ("" ou []). Em observacao, uma frase curta em português sobre o que viu (ex.: "guia Cedplan com 4 sessões assinadas").', 'Instrução que o modelo recebe pra ler uma guia (texto livre; a gestão pode ajustar). O JSON de resposta é fixo no código.'],
-  ['instrucao_conciliacao', '', 'Instrução do item Conciliação assistida (próximo).'],
+  ['instrucao_conciliacao', 'Você ajuda a gestão de uma clínica de psicologia e pediatria (Clínica Nascente, Juiz de Fora) a conciliar o extrato do PagBank com os lançamentos do app. Você recebe as entradas do banco que as regras do app não conseguiram casar (E…: Pix; V…: vendas no cartão) e listas de candidatos: L… = recebimentos lançados no app (Pix ou cartão, ainda não conciliados), M… = mensalidades marcadas como pagas na aba Mensalistas, A… = sessões lançadas e ainda em aberto (não pagas), além dos convênios e dos profissionais da clínica. Para cada entrada devolva uma sugestão no JSON pedido.\nRegras: acao = "ligar" quando um ou mais L… explicam a entrada (o mesmo pagador, muitas vezes mãe, pai ou responsável com sobrenome em comum, pagando sessões de um ou mais filhos; valores que somam o valor da entrada; datas próximas, o Pix pode vir alguns dias antes ou até 40 dias depois da sessão). Nunca use o mesmo L… em duas entradas. Só ligue cartão (V…) a lançamento em cartão e Pix a lançamento em Pix. acao = "situacao" quando a entrada não é de lançamento do app: "mensalidade anotada em Mensalistas" (um M… explica: mesmo pagador e valor), "convênio (fatura)" (quem pagou é um convênio), "aluguel de sala" (quem pagou é profissional da clínica), "não é paciente" (resgate de aplicação, transferência da própria clínica, devolução, pessoa sem relação com pacientes), "mês anterior ao app" (paga sessão de antes do primeiro mês do app), "sem lançamento no app" (parece pagamento de paciente, mas não há lançamento correspondente). acao = "em_aberto" quando a entrada parece pagar sessões que estão em aberto (A…): liste esses A… em lancamentos. acao = "nenhuma" quando não dá pra dizer. Não invente: na dúvida, confianca = "baixa". confianca "alta" só quando nome e valor batem sem ambiguidade. motivo: uma frase curta em português que a gestão entenda (ex.: "Pix da mãe, Débora Travnik, pelas sessões do Gustavo de 02 e 09/10").', 'Instrução que o modelo recebe na conciliação assistida (texto livre; a gestão pode ajustar). O JSON de resposta é fixo no código.'],
   ['instrucao_perguntar', '', 'Instrução do item Perguntar à planilha (próximo).']
 ];
 var IA_NUMERICOS = { teto_mes_usd: 1, teto_dia_usd: 1, aviso_pct: 1, preco_entrada_usd_mtok: 1, preco_saida_usd_mtok: 1, hora_gatilho: 1, guias_mes_anterior_ate_dia: 1, guias_max_por_execucao: 1 };
-var IA_EDITAVEIS_TELA = { ia_ativa: 1, ia_guias: 1, ia_conciliacao: 1, ia_perguntar: 1, hora_gatilho: 1 };
+var IA_EDITAVEIS_TELA = { ia_ativa: 1, ia_guias: 1, ia_conciliacao: 1, ia_perguntar: 1, hora_gatilho: 1, teto_mes_usd: 1 };
+// preço por milhão de tokens (US$, entrada/saída, prompt até 100 mil tokens) dos modelos que o app usa; modelo fora da tabela usa as células preco_* da aba IA
+var IA_PRECOS = { 'claude-haiku-5-5': [0.1, 0.5], 'claude-sonnet-5-5': [2, 10], 'claude-sonnet-5': [2, 10], 'claude-opus-5-5': [4, 20] };
+function precoIA_(modelo, cfg) { var m = String(modelo || '').replace(/-\d{8}$/, ''); return IA_PRECOS[m] || [Number(cfg.preco_entrada_usd_mtok) || 0, Number(cfg.preco_saida_usd_mtok) || 0]; }
 
 // aba IA: cria com a carga inicial se não existir; acrescenta no fim as chaves novas que faltarem (versões futuras)
 function abaIA_() {
   var ss = planilha_(), s = ss.getSheetByName(ABA_IA), criadas = [];
   if (!s) { s = ss.insertSheet(ABA_IA); s.getRange(1, 1, 1, HIA.length).setValues([HIA]).setFontWeight('bold'); s.setFrozenRows(1); }
-  var n = s.getLastRow(), tem = {};
-  if (n >= 2) s.getRange(2, 1, n - 1, 1).getValues().forEach(function (r) { var k = String(r[0] || '').trim(); if (k) tem[k] = 1; });
+  var n = s.getLastRow(), tem = {}, padrao = {}; IA_PADRAO.forEach(function (p) { padrao[p[0]] = p[1]; });
+  if (n >= 2) s.getRange(2, 1, n - 1, 2).getValues().forEach(function (r, i) {
+    var k = String(r[0] || '').trim(); if (!k) return; tem[k] = 1;
+    // instrução nova de uma versão futura numa chave que já existia vazia (instrucao_conciliacao veio vazia em 16/10): escreve o padrão uma vez
+    if (/^instrucao_/.test(k) && padrao[k] && !String(r[1] == null ? '' : r[1]).trim()) { s.getRange(i + 2, 2).setValue(padrao[k]); criadas.push(k); }
+  });
   var faltam = IA_PADRAO.filter(function (p) { return !tem[p[0]]; });
   if (faltam.length) { s.getRange(Math.max(n, 1) + 1, 1, faltam.length, 3).setValues(faltam.map(function (p) { return [p[0], p[1], p[2]]; })); faltam.forEach(function (p) { criadas.push(p[0]); }); }
   return { s: s, criadas: criadas };
@@ -80,10 +87,10 @@ function gastoIA_() {
   MEMO_.iagasto = { mes: Math.round(mes * 10000) / 10000, dia: Math.round(dia * 10000) / 10000, chamadasMes: chamadasMes, chamadasDia: chamadasDia };
   return MEMO_.iagasto;
 }
-function custoIA_(usage, cfg) {
-  var e = Number(usage && usage.input_tokens) || 0, s = Number(usage && usage.output_tokens) || 0;
+function custoIA_(usage, cfg, modelo) {
+  var e = Number(usage && usage.input_tokens) || 0, s = Number(usage && usage.output_tokens) || 0, p = precoIA_(modelo || cfg.modelo, cfg);
   var cr = Number(usage && usage.cache_read_input_tokens) || 0, cw = Number(usage && usage.cache_creation_input_tokens) || 0; // só pra contar; a leitura de cache custa 10 % da entrada
-  return Math.round(((e + cw) * (Number(cfg.preco_entrada_usd_mtok) || 0) + cr * (Number(cfg.preco_entrada_usd_mtok) || 0) * 0.1 + s * (Number(cfg.preco_saida_usd_mtok) || 0)) / 1e6 * 1e6) / 1e6;
+  return Math.round(((e + cw) * p[0] + cr * p[0] * 0.1 + s * p[1]) / 1e6 * 1e6) / 1e6;
 }
 function logIA_(l) {
   try {
@@ -137,10 +144,17 @@ function chamarIA(item, payload) {
   if (Object.keys(oc).length) body.output_config = oc;
   var base = { item: item, arquivos: payload.arquivos || (payload.documentos || []).length, linhas: payload.linhas || 0, modelo: body.model, quem: quem, obs: payload.observacao || '' };
   var dur = function () { return Math.round((new Date().getTime() - t0) / 100) / 10; };
+  // recusa do classificador de segurança: Sonnet/Opus 5.x refazem no modelo que a Anthropic indica (fallbacks "default"); Haiku não tem
+  var comFallback = /^claude-(sonnet|opus)-5/.test(body.model); if (comFallback) body.fallbacks = 'default';
+  var enviar = function () {
+    var hd = { 'x-api-key': chave, 'anthropic-version': IA_VERSAO }; if (body.fallbacks) hd['anthropic-beta'] = IA_BETA_FALLBACK;
+    var resp = UrlFetchApp.fetch(IA_URL, { method: 'post', contentType: 'application/json', headers: hd, payload: JSON.stringify(body), muteHttpExceptions: true });
+    return [resp.getResponseCode(), resp.getContentText()];
+  };
   var code, txt;
   try {
-    var resp = UrlFetchApp.fetch(IA_URL, { method: 'post', contentType: 'application/json', headers: { 'x-api-key': chave, 'anthropic-version': IA_VERSAO }, payload: JSON.stringify(body), muteHttpExceptions: true });
-    code = resp.getResponseCode(); txt = resp.getContentText();
+    var rr = enviar(); code = rr[0]; txt = rr[1];
+    if (comFallback && code === 400 && /fallback/i.test(txt)) { delete body.fallbacks; rr = enviar(); code = rr[0]; txt = rr[1]; } // conta sem acesso ao beta: segue sem
   } catch (e) {
     logIA_(Object.assign({}, base, { resultado: 'erro', obs: 'sem resposta: ' + (e && e.message || e), duracao: dur() }));
     return { ok: false, motivo: 'erro_api', mensagem: 'Não consegui falar com a API (' + (e && e.message || e) + ').' };
@@ -151,7 +165,7 @@ function chamarIA(item, payload) {
     logIA_(Object.assign({}, base, { resultado: 'erro ' + code, obs: em, duracao: dur() }));
     return { ok: false, motivo: 'erro_api', mensagem: 'A API respondeu ' + code + ': ' + em, codigo: code };
   }
-  var usage = j.usage || {}, custo = custoIA_(usage, cfg), saida = { entrada: Number(usage.input_tokens) || 0, saida: Number(usage.output_tokens) || 0 };
+  var usage = j.usage || {}, custo = custoIA_(usage, cfg, j.model || body.model), saida = { entrada: Number(usage.input_tokens) || 0, saida: Number(usage.output_tokens) || 0 };
   var comum = Object.assign({}, base, { modelo: j.model || body.model, entrada: saida.entrada, saida: saida.saida, custo: custo, duracao: dur() });
   if (j.stop_reason === 'refusal') { logIA_(Object.assign({}, comum, { resultado: 'recusa' })); avisoTetoIA_(cfg); return { ok: false, motivo: 'recusa', mensagem: 'O modelo recusou ler este arquivo.', usage: saida, custo: custo }; }
   var texto = (j.content || []).filter(function (b) { return b.type === 'text'; }).map(function (b) { return b.text; }).join('');
@@ -180,7 +194,9 @@ API.iaEstado = function () {
 API.iaDefinir = function (d) {
   d = d || {}; var u = usuario_(); if (u.perfil !== 'gestao') return { ok: false, erros: ['Só a gestão.'] };
   var k = String(d.chave || '').trim(), v = d.valor; if (!IA_EDITAVEIS_TELA[k]) return { ok: false, erros: ['Parâmetro não editável pela tela: ' + k] };
-  if (k === 'hora_gatilho') { v = parseInt(v, 10); if (!(v >= 0 && v <= 23)) return { ok: false, erros: ['Hora inválida (0–23).'] }; } else v = simNao_(v) ? 'Sim' : 'Não';
+  if (k === 'hora_gatilho') { v = parseInt(v, 10); if (!(v >= 0 && v <= 23)) return { ok: false, erros: ['Hora inválida (0–23).'] }; }
+  else if (k === 'teto_mes_usd') { v = numBR_(v); if (!(v > 0 && v <= 500)) return { ok: false, erros: ['Teto inválido: um valor em US$ entre 1 e 500.'] }; }
+  else v = simNao_(v) ? 'Sim' : 'Não';
   var lock = LockService.getScriptLock(); lock.waitLock(20000);
   try {
     var s = abaIA_().s, n = s.getLastRow(), linha = 0;

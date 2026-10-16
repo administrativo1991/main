@@ -181,7 +181,7 @@ function carregarIA() { $("#g-ia").textContent = 'carregando…'; call('iaEstado
 function renderIA() {
   var e = IAE, box = $("#g-ia"); if (!e) return;
   var pct = Math.min(100, e.pct || 0), cor = e.pausada ? 'vermelha' : pct >= (e.avisoPct || 80) ? 'amarela' : 'verde', ult = e.ultimaGuias;
-  var h = '<div class="ia-gasto"><b>' + esc(usdTxt(e.gastoMes)) + '</b><span class="muted">de ' + esc(usdTxt(e.tetoMes)) + ' no mês · hoje ' + esc(usdTxt(e.gastoDia)) + ' de ' + esc(usdTxt(e.tetoDia)) + ' · ' + (e.chamadasMes || 0) + ' chamada' + (e.chamadasMes === 1 ? '' : 's') + '</span></div>' +
+  var h = '<div class="ia-gasto"><b>' + esc(usdTxt(e.gastoMes)) + '</b><span class="muted">de ' + esc(usdTxt(e.tetoMes)) + ' no mês · hoje ' + esc(usdTxt(e.gastoDia)) + ' de ' + esc(usdTxt(e.tetoDia)) + ' · ' + (e.chamadasMes || 0) + ' chamada' + (e.chamadasMes === 1 ? '' : 's') + '</span>' + (e.gestao !== false ? '<span class="ia-teto"><button type="button" class="btn ter mini" id="g-ia-teto">Mudar teto</button></span>' : '') + '</div>' +
     '<div class="ia-barra"><div class="ia-barra-in ' + cor + '" style="width:' + pct + '%"></div></div>';
   if (e.pausada) h += '<div class="faixa erro" style="margin-top:8px">' + esc(e.mensagem) + '</div>';
   else if (pct >= (e.avisoPct || 80)) h += '<div class="faixa nota" style="margin-top:8px">' + ic('alerta', 14, 2.6) + ' Já usou ' + pct + '% do teto do mês (aviso enviado por e-mail). Ao chegar em 100% a IA para sozinha.</div>';
@@ -193,6 +193,11 @@ function renderIA() {
     '<button type="button" class="btn ter mini" id="g-ia-gatilho" title="Cria ou refaz o gatilho que lê a pasta todo dia">' + (e.gatilho && e.gatilho.instalado ? 'Gatilho diário instalado (' + e.horaGatilho + 'h) · refazer' : 'Instalar gatilho diário (' + e.horaGatilho + 'h)') + '</button></div>' +
     '<div id="g-ia-msg">' + iaMsg + '</div>';
   box.innerHTML = h;
+  var bt = $("#g-ia-teto"); if (bt) bt.addEventListener('click', function () {
+    var w = bt.parentNode; w.innerHTML = '<input type="number" min="1" max="500" step="1" class="mini" id="g-ia-teto-v" value="' + (e.tetoMes || 10) + '" aria-label="Teto do mês em US$" style="width:90px"> <button type="button" class="btn mini" id="g-ia-teto-ok">Salvar teto</button>';
+    $("#g-ia-teto-v").focus();
+    $("#g-ia-teto-ok").addEventListener('click', function () { var b = this; b.disabled = true; call('iaDefinir', { chave: 'teto_mes_usd', valor: $("#g-ia-teto-v").value, motivo: 'Mudar teto (tela)' }).then(function (r) { if (!r.ok) { b.disabled = false; return toast((r.erros || ['Não gravou']).join(' ')); } toast('Teto do mês: ' + usdTxt(r.valor)); IAE = r.estado; renderIA(); }).catch(function (err) { b.disabled = false; toast('Erro: ' + err.message); }); });
+  });
   $("#g-ia-pausa").addEventListener('click', function () { var b = this; doisCliques(b, e.ativa ? 'Confirmar: pausar toda a IA?' : 'Confirmar: reativar?', function () { b.disabled = true; call('iaPausar', { ativa: !e.ativa }).then(function (r) { if (!r.ok) { b.disabled = false; return toast((r.erros || ['Não gravou']).join(' ')); } toast(e.ativa ? 'IA pausada (aba IA, ia_ativa = Não)' : 'IA reativada'); IAE = r.estado; renderIA(); }).catch(function (err) { b.disabled = false; toast('Erro: ' + err.message); }); }); });
   $$('[data-item]', box).forEach(function (b) { b.addEventListener('click', function () { var k = b.dataset.item, on = !e.itens[k]; call('iaDefinir', { chave: 'ia_' + k, valor: on ? 'Sim' : 'Não' }).then(function (r) { if (!r.ok) return toast((r.erros || ['Não gravou']).join(' ')); IAE = r.estado; renderIA(); }).catch(function (err) { toast('Erro: ' + err.message); }); }); });
   $("#g-ia-ler").addEventListener('click', function () { var b = this, mes = $("#g-ia-mes").value; doisCliques(b, 'Confirmar: ler a pasta de ' + mes + '?', function () { b.disabled = true; b.textContent = 'Lendo… (até 5 min)'; iaMsg = ''; $("#g-ia-msg").innerHTML = '';

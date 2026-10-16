@@ -81,6 +81,20 @@ Menu **Conciliação** (só a gestão). Confere o que entrou na conta do PagBank
 Para desfazer uma confirmação: na aba `Extrato bancário` (ou `Vendas no cartão`) volte a Situação para "pendente" e apague
 "Ligado a"; na aba do mês, apague a célula da coluna `Conciliado` daquele lançamento.
 
+**Conciliação assistida (IA, 17/10)** — no card "No banco, sem lançamento":
+- **Sugestões fixas**, sem IA: resgate de CDB e transferência da própria clínica = "não é paciente"; entrada com data antes do
+  primeiro mês do app (setembro/2026) = "mês anterior ao app". O botão **Confirmar sugestões fixas (n)** salva todas de uma
+  vez (dois cliques). Útil pros meses de março a agosto, que vieram no OFX.
+- **Sugerir com IA (n)**: manda pro modelo só o que sobrou das regras (até 60 entradas por clique, em lotes de 15) com os
+  recebimentos lançados e ainda livres, as mensalidades pagas da aba Mensalistas e as sessões em aberto. Sem CPF, telefone nem
+  dígitos de documento. Leva até uns 4 minutos; o custo aparece no aviso e no IA log.
+- Cada entrada ganha uma faixa lilás **"IA · confiança …"** com o porquê. **Aceitar** grava igual ao Salvar (na Observação
+  fica "IA: …"). "Parece pagar sessões em aberto" não grava nada: registre o pagamento na Ficha e a entrada concilia pela
+  regra na próxima vez. **Aceitar as da IA com confiança alta (n)** aceita de uma vez as sem aviso (dois cliques).
+- A sugestão fica guardada na coluna `Sugestão IA` da aba do banco (não paga de novo ao reabrir) e é conferida a cada vez:
+  se o lançamento sugerido foi conciliado com outra coisa ou a sessão deixou de estar em aberto, ela some.
+  **Pedir de novo à IA** refaz as soltas. A IA nunca grava sozinha.
+
 ## A receber e perdas (Fase 2)
 
 Menu **A receber** (só a gestão).
@@ -154,7 +168,9 @@ Atendido e falta sem aviso consomem consulta; desmarcou com antecedência não c
   (grava na aba `IA`, sem abrir a planilha), um botão por item (Guias · Conciliação · Perguntar), **Ler guias agora** (escolha
   o mês) e **Instalar gatilho diário** (hora na aba `IA`, padrão 19h). Aos 80 % do teto o card fica amarelo e chega um e-mail;
   em 100 % a IA para sozinha. Pausar não perde nada: as guias ficam na pasta e são lidas quando reativar.
-- **Aba `IA`**: modelo, tetos, hora do gatilho, instrução que o modelo recebe. **Aba `IA log`**: cada chamada com tokens e
+- **Mudar teto** (no mesmo card): teto do mês em US$ (1 a 500), gravado na aba `IA` e no IA log. Desde 17/10: **US$ 10/mês**
+  e modelo **Sonnet 5.5** (gestão, 16/10). O custo no log segue o preço do modelo que respondeu (tabela no código).
+- **Aba `IA`**: modelo, tetos, hora do gatilho, instrução que o modelo recebe (uma por item: guias, conciliação). **Aba `IA log`**: cada chamada com tokens e
   custo. **Aba `Guias lidas`**: o que foi lido de cada arquivo e a sugestão.
 - **Pendências → "Guias a conferir"**: guias sem atendimento registrado, com leitura em dúvida ou que não pareceram guia.
   Na lista "Convênio sem guia assinada", a coluna **"PDF na pasta?"**: sim sem linha casada = problema de nome ou data;

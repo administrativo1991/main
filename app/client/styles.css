@@ -694,6 +694,10 @@ table.cm .acoes{justify-content:flex-end;gap:4px;flex-wrap:wrap}
 .cc-form{display:flex;flex-wrap:wrap;gap:6px;align-items:center;flex:1 1 420px;justify-content:flex-end}
 .cc-form select,.cc-form input{width:auto;min-height:36px;padding:6px 10px;font-size:13px;flex:1 1 160px;max-width:260px}
 .cc-tab{min-width:620px}
+.cc-ia{flex-basis:100%;font-size:13px;margin:2px 0 0}
+.cc-ia.faixa{padding:8px 12px}
+.cc-ia-corpo{display:flex;flex-wrap:wrap;align-items:center;gap:6px 12px;margin-top:4px}
+.cc-ia-corpo .cc-recs{display:flex;flex:1 1 auto}
 #cc-res-card summary{cursor:pointer}
 @media (max-width:700px){
   #cc-resumo{grid-template-columns:repeat(2,minmax(0,1fr))}

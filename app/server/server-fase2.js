@@ -194,8 +194,9 @@ API.fichaPaciente = function (d) {
    como recebido nas abas de mês (Pix e cartão; dinheiro fica no Fechar o dia) e sugere as ligações; a gestão confirma.
    Confirmar grava: na aba do extrato/vendas a Situação e o "Ligado a"; na aba do mês, a coluna nova "Conciliado" (no fim). */
 var ABA_EXT = 'Extrato bancário', ABA_CART = 'Vendas no cartão', COL_CONC = 'Conciliado';
-var HEXT = ['ID do banco', 'Data', 'Valor (R$)', 'Tipo', 'Quem pagou', 'Descrição', 'Situação', 'Ligado a', 'Observação', 'Importado em', 'Registrado por (app)'];
-var HCART = ['Código da transação', 'Data', 'Forma', 'Parcelas', 'Bandeira', 'Valor bruto (R$)', 'Taxa (R$)', 'Valor líquido (R$)', 'Liberação', 'Comprador', 'Situação', 'Ligado a', 'Depósito (ID do banco)', 'Observação', 'Importado em', 'Registrado por (app)'];
+// "Sugestão IA" (17/10): o que a conciliação assistida sugeriu (JSON); só sugestão, quem grava Situação/Ligado a é o Confirmar
+var HEXT = ['ID do banco', 'Data', 'Valor (R$)', 'Tipo', 'Quem pagou', 'Descrição', 'Situação', 'Ligado a', 'Observação', 'Importado em', 'Registrado por (app)', 'Sugestão IA'];
+var HCART = ['Código da transação', 'Data', 'Forma', 'Parcelas', 'Bandeira', 'Valor bruto (R$)', 'Taxa (R$)', 'Valor líquido (R$)', 'Liberação', 'Comprador', 'Situação', 'Ligado a', 'Depósito (ID do banco)', 'Observação', 'Importado em', 'Registrado por (app)', 'Sugestão IA'];
 // situações que a gestão escolhe para uma entrada do banco que não é de lançamento do app
 var SIT_EXT = ['conciliado', 'convênio (fatura)', 'mensalidade anotada em Mensalistas', 'mês anterior ao app', 'aluguel de sala', 'não é paciente', 'sem lançamento no app', 'pendente'];
 function soGestao_() { return usuario_().perfil === 'gestao' ? null : { ok: false, erros: ['Só a gestão.'] }; }
@@ -267,13 +268,13 @@ function notaNome_(a, nomes) {
 }
 function diasEntre_(a, b) { return Math.round((ymdDate_(a) - ymdDate_(b)) / 864e5); }
 function ymdDate_(s) { var d = s instanceof Date ? s : parseData_(s); return d ? new Date(d.getFullYear(), d.getMonth(), d.getDate()) : null; }
-// recebimentos lançados (Pix e cartão) de todas as abas de mês, com a data do pagamento
-function recebimentosApp_() {
+// recebimentos lançados (Pix e cartão) de todas as abas de mês, com a data do pagamento; `todas` (opcional) = linhasMes_ já lidas, por aba
+function recebimentosApp_(todas) {
   var idx = {}; indicePacientes_().forEach(function (p) { idx[p.nome] = p; }); var out = [];
   CONFIG.MESES.forEach(function (m) {
     var s = planilha_().getSheetByName(m); if (!s) return; var h = cabecalhos_(s), cc = h[COL_CONC];
     var concs = cc && s.getLastRow() >= 2 ? s.getRange(2, cc, s.getLastRow() - 1, 1).getValues() : [];
-    linhasMes_(m).linhas.forEach(function (r) {
+    ((todas && todas[m]) || linhasMes_(m)).linhas.forEach(function (r) {
       if (!(r.pago === 'Sim' || r.pago === 'Parcial')) return;
       var total = r.pago === 'Parcial' ? r.recebido : r.valor; if (!(total > 0)) return;
       // cada recebimento anotado na Observação ("Recebido R$ 50,00 em 20/10/2026 (Pix)", correção e parcelas) é uma entrada
@@ -295,13 +296,25 @@ function recebimentosApp_() {
   return out;
 }
 function recResumo_(r) { return { aba: r.aba, linha: r.linha, id: r.id, paciente: r.paciente, profissional: r.profissional, data: r.data, dataPag: r.dataPag, valor: r.valor, forma: r.forma }; }
+// primeiro dia do primeiro mês com lançamento no app (as abas de mês não têm ano no nome: vale a menor data lançada)
+function inicioApp_(todas) {
+  var min = null; Object.keys(todas).forEach(function (m) { todas[m].linhas.forEach(function (r) { var x = ymdDate_(r.data); if (x && (!min || x < min)) min = x; }); });
+  return min ? new Date(min.getFullYear(), min.getMonth(), 1) : null;
+}
 API.conciliacao = function (d) {
   var neg = soGestao_(); if (neg) return neg; d = d || {};
-  var chave = String(d.chave || chaveMes_(new Date())), ini = mesDaChave_(chave); if (!ini) return { ok: false, erros: ['Mês inválido.'] };
+  var c = conciliacaoCalc_(String(d.chave || chaveMes_(new Date()))); if (!c.ok) return c;
+  iaConciliacaoAnexar_(c); // sugestões da IA guardadas, conferidas de novo (server-conciliacao-ia.js)
+  return c.resp;
+};
+// o cálculo da conciliação do mês, separado pra conciliação assistida reaproveitar os candidatos (recs livres, linhas lidas)
+function conciliacaoCalc_(chave) {
+  var ini = mesDaChave_(chave); if (!ini) return { ok: false, erros: ['Mês inválido.'] };
   var fim = new Date(ini.getFullYear(), ini.getMonth() + 1, 0, 12), noMes = function (s) { var x = ymdDate_(s); return x && x >= ymdDate_(ini) && x <= ymdDate_(fim); };
-  var ext = linhasComo_(planilha_().getSheetByName(ABA_EXT)).filter(function (r) { return r['ID do banco']; }).map(function (r) { return { id: String(r['ID do banco']), data: r['Data'], valor: numBR_(r['Valor (R$)']), tipo: r['Tipo'], quem: r['Quem pagou'], desc: r['Descrição'], situacao: String(r['Situação'] || 'pendente'), ligado: r['Ligado a'] || '', obs: r['Observação'] || '' }; });
-  var vendas = linhasComo_(planilha_().getSheetByName(ABA_CART)).filter(function (r) { return r['Código da transação']; }).map(function (r) { return { id: String(r['Código da transação']), data: r['Data'], forma: r['Forma'], parcelas: r['Parcelas'], bandeira: r['Bandeira'], bruto: numBR_(r['Valor bruto (R$)']), taxa: numBR_(r['Taxa (R$)']), liquido: numBR_(r['Valor líquido (R$)']), liberacao: r['Liberação'], comprador: r['Comprador'] || '', situacao: String(r['Situação'] || 'pendente'), ligado: r['Ligado a'] || '', deposito: r['Depósito (ID do banco)'] || '', obs: r['Observação'] || '' }; });
-  var recs = recebimentosApp_(), usados = {}, usadosExt = {}, sug = [];
+  var ext = linhasComo_(planilha_().getSheetByName(ABA_EXT)).filter(function (r) { return r['ID do banco']; }).map(function (r) { return { id: String(r['ID do banco']), data: r['Data'], valor: numBR_(r['Valor (R$)']), tipo: r['Tipo'], quem: r['Quem pagou'], desc: r['Descrição'], situacao: String(r['Situação'] || 'pendente'), ligado: r['Ligado a'] || '', obs: r['Observação'] || '', sugIA: r['Sugestão IA'] || '' }; });
+  var vendas = linhasComo_(planilha_().getSheetByName(ABA_CART)).filter(function (r) { return r['Código da transação']; }).map(function (r) { return { id: String(r['Código da transação']), data: r['Data'], forma: r['Forma'], parcelas: r['Parcelas'], bandeira: r['Bandeira'], bruto: numBR_(r['Valor bruto (R$)']), taxa: numBR_(r['Taxa (R$)']), liquido: numBR_(r['Valor líquido (R$)']), liberacao: r['Liberação'], comprador: r['Comprador'] || '', situacao: String(r['Situação'] || 'pendente'), ligado: r['Ligado a'] || '', deposito: r['Depósito (ID do banco)'] || '', obs: r['Observação'] || '', sugIA: r['Sugestão IA'] || '' }; });
+  var todas = {}; CONFIG.MESES.forEach(function (m) { if (planilha_().getSheetByName(m)) todas[m] = linhasMes_(m); });
+  var recs = recebimentosApp_(todas), usados = {}, usadosExt = {}, sug = [], inicio = inicioApp_(todas);
   var livre = function (r) { return !r.conciliado && !usados[r.chave]; }, usa = function (r) { usados[r.chave] = 1; };
   var extMes = ext.filter(function (e) { return noMes(e.data); }), pend = extMes.filter(function (e) { return e.situacao === 'pendente'; });
   // quem pagou é convênio (aba Listas) ou profissional da clínica: sugere a situação; só casa com lançamento se o nome conferir
@@ -311,6 +324,12 @@ API.conciliacao = function (d) {
     if (!/^Pix/.test(e.tipo)) return; var tq = tokensNome_(e.quem), tem = function (n) { var t = tokensNome_(n).filter(function (x) { return x.length >= 3; }); return t.length && t.every(function (x) { return tq.indexOf(x) >= 0; }); };
     if (convs.some(tem)) e.sugestao = 'convênio (fatura)';
     else if (profs.some(function (p) { return tokensNome_(p).length >= 2 && tem(p); })) e.sugestao = 'aluguel de sala';
+  });
+  // regras fixas (17/10): resgate de aplicação e transferência da própria clínica não são paciente; antes do 1º mês do app, "mês anterior ao app"
+  pend.forEach(function (e) {
+    if (e.sugestao) return;
+    if (/^(Renda Fixa|Resgate)|resgate (total )?de cdb/i.test(String(e.desc || '')) || /cl[ií]nica nascente/i.test(Duplicatas.normalizar(e.quem || '') + ' ' + String(e.quem || ''))) { e.sugestao = 'não é paciente'; e.fixa = true; }
+    else if (inicio && ymdDate_(e.data) && ymdDate_(e.data) < inicio) { e.sugestao = 'mês anterior ao app'; e.fixa = true; }
   });
   // 1) Pix: um lançamento, mesmo valor, data de -3 a +3 dias; nome confere = "forte"
   pend.filter(function (e) { return /^Pix/.test(e.tipo); }).forEach(function (e) {
@@ -343,9 +362,12 @@ API.conciliacao = function (d) {
   var semBanco = recs.filter(function (r) { return livre(r) && noMes(r.dataPag); }).map(recResumo_);
   var soma = function (l, f) { return Math.round(l.reduce(function (a, x) { return a + (f(x) || 0); }, 0) * 100) / 100; };
   var vm = vendas.filter(function (v) { return noMes(v.data); });
-  return { ok: true, chave: chave, sugestoes: sug, semLancamento: semLanc, vendasSemLancamento: vendasSemLanc, semBanco: semBanco, resolvidos: extMes.filter(function (e) { return e.situacao !== 'pendente'; }), vendas: vm, situacoes: SIT_EXT,
+  var resp = { ok: true, chave: chave, sugestoes: sug, semLancamento: semLanc, vendasSemLancamento: vendasSemLanc, semBanco: semBanco, resolvidos: extMes.filter(function (e) { return e.situacao !== 'pendente'; }), vendas: vm, situacoes: SIT_EXT, inicioApp: inicio ? fmtData_(inicio) : '',
     resumo: { entradas: extMes.length, valorEntradas: soma(extMes, function (e) { return e.valor; }), resolvidas: extMes.length - pend.length, pendentes: pend.length, valorSemLanc: soma(semLanc, function (e) { return e.valor; }), valorSemBanco: soma(semBanco, function (r) { return r.valor; }), taxasCartao: soma(vm, function (v) { return v.taxa; }), temExtrato: ext.length > 0, temVendas: vendas.length > 0 } };
-};
+  // a resposta leva a sugestão da IA já conferida (x.ia, em iaConciliacaoAnexar_), não o JSON cru da coluna
+  var sugIA = {}; ext.forEach(function (e) { if (e.sugIA) sugIA['ext:' + e.id] = e.sugIA; delete e.sugIA; }); vendas.forEach(function (v) { if (v.sugIA) sugIA['venda:' + v.id] = v.sugIA; delete v.sugIA; });
+  return { ok: true, resp: resp, ini: ini, fim: fim, recs: recs, livre: livre, todas: todas, inicio: inicio, sugIA: sugIA };
+}
 // confirma ligações e classificações: [{ tipo: 'ext'|'venda', id, situacao, recs: [{aba, linha, id}], obs, deposito }]
 API.conciliar = function (d) {
   var neg = soGestao_(); if (neg) return neg; d = d || {};
