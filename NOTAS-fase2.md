@@ -3,10 +3,10 @@
 Arquivo de retomada da Fase 2 (começou em 15/10/2026, à noite). Quem abrir um chat novo lê, nesta ordem: `docs/DEPLOYS.md`
 ("No ar agora"), este arquivo, `NOTAS-fase1.md` (modelo de cobrança e decisões da Fase 1) e `docs/ESTADO-ATUAL.md` (mapa).
 
-> **Estado em 16/10 (noite)**: na real = deploy **2026-10-16-08** (Confirmações, Cobrar no WhatsApp, Lançar o dia, Ficha
-> do paciente, WhatsApp só em celular, Conciliação, **A receber e perdas, Parcelamentos**); teste = 2026-10-16-07 (mesmo
-> código). Próximo: item 6, Alertas (dentro da Ficha e da Agenda); telefones das outras páginas do ControleOdonto quando a
-> gestão exportar.
+> **Estado em 16/10 (noite)**: na real = deploy **2026-10-16-11** (Confirmações, Cobrar no WhatsApp, Lançar o dia, Ficha
+> do paciente, WhatsApp só em celular, Conciliação, A receber e perdas, Parcelamentos, **Alertas**); teste = 2026-10-16-10
+> (mesmo código). **A lista da Fase 2 está completa.** Pendente: telefones das outras páginas do ControleOdonto quando a
+> gestão exportar (enquanto isso, "sem celular" aparece para quase todos, só no painel e na Ficha).
 
 ## Ordem combinada com a gestão (15/10; revista à noite: "sua ordem está perfeita")
 
@@ -20,7 +20,7 @@ Arquivo de retomada da Fase 2 (começou em 15/10/2026, à noite). Quem abrir um 
 | 5 | **Conciliação** (gestão escolheu começar por ela) | **real** (16-05) |
 | 5b | **A receber e perdas** (todos os meses, por idade; dar como perdido em lote; perdas do ano) | **real** (16-08) |
 | 5c | **Parcelamentos** (serviço parcelado e dívida renegociada, na Ficha) | **real** (16-08) |
-| 6 | **Alertas** (avisos dentro da Ficha e da Agenda, não tela própria) | **teste** (16-10; o ⚠ abre a Ficha) |
+| 6 | **Alertas** (avisos dentro da Ficha e da Agenda, não tela própria) | **real** (16-11) |
 
 Fora da lista por enquanto: check-in e alta (não escolhidos em 15/10).
 

@@ -23,7 +23,7 @@ coluna E não afeta o app. Atualizar `E2` faz parte de toda publicação (passo 
 
 | Canal | Deploy | Peças | Commit |
 |---|---|---|---|
-| Real (`arquivos_real`) | **2026-10-16-08** (A receber e perdas + Parcelamentos) | 58 (duplicatas 3 · server 19 · index 36); ativas = 884–941; `antigo35:` = as do 2026-10-16-05 (830–883) | branch `claude/sweet-wozniak-aviy8u`, commit 77686b9 |
+| Real (`arquivos_real`) | **2026-10-16-11** (Alertas) | 60 (duplicatas 3 · server 20 · index 37); ativas = 942–1001; `antigo36:` = as do 2026-10-16-08 (884–941) | branch `claude/sweet-wozniak-aviy8u`, commit cede9d7 |
 | Teste (`arquivos`) | **2026-10-16-10** (Alertas, ⚠ abre a Ficha) | 60 (duplicatas 3 · server 20 · index 37), linhas 750–809; `antigo42:` = as do 16-09 (690–749) | branch `claude/sweet-wozniak-aviy8u`, commit cede9d7 |
 | Carregador real | 2026-10-06-02 (`dist/Code.real.gs`, implantado pela Roberta) | — | 4ad0272 |
 | Carregador teste | 2026-10-04-01 + nova versão pendente desde 05/10 (permissão do Drive, ver `COMO-INSTALAR.md`) | — | — |
@@ -48,6 +48,18 @@ Modelo:
 ```
 
 ## Lista
+
+### 2026-10-16-11 · Real · Alertas
+- **O que mudou**: o mesmo código do teste 2026-10-16-10 (alertas na Agenda e na Ficha; o ⚠ abre a Ficha).
+- **Peças**: aba `arquivos_real` ganhou 200 linhas no fim (tinha 1.000; nada apagado). 60 em `arquivos_real!A942:C1001`,
+  copiadas por "colar valores" de `arquivos!A750:C809`. **Deslize**: a cópia levou também a coluna A do teste, que já
+  estava ativa (sem `novo:`), e por alguns segundos a real teve dois blocos ativos (884–941 e 942–1001), até a gravação
+  seguinte pôr `novo:` em A942:A1001. Lidas de volta: **60/60 iguais a `dist/pedacos.json`**; index e duplicatas +
+  server iguais. Ativação numa gravação só (A884:A1001): 884–941 → `antigo36:`; ativas = só 942–1001 (conferido). E2
+  carimbado. **Regra daqui pra frente**: copiar do teste só as colunas B e C; a coluna A da real é sempre escrita à mão
+  com `novo:`.
+- **Dados**: nenhum. **Voltar**: `antigo36:` → nome (884–941) e 942–1001 → `antigo37:`.
+- **Commit**: cede9d7 · **Aprovação**: gestão, 16/10 ("funcionou, pode publicar no real").
 
 ### 2026-10-16-10 · Teste · Alertas: o ⚠ abre a Ficha
 - **O que mudou**: a gestão testou o 16-09 e clicou no ⚠ ao lado do nome na Agenda esperando abrir a Ficha (só mostrava
