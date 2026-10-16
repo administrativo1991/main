@@ -36,9 +36,7 @@ API.confirmacoes = function (d) {
     var dia = montarDia_(dataMais_(de, i), cache);
     dia.itens.forEach(function (it) {
       if (it.extra || it.registro || it.naoVem) return; // pagamento do mês, já registrado, ou já avisou que não vem
-      var p = idx[it.paciente] || {}, fone = foneWhats_(p.whats), deQuem = 'pagador';
-      if (!fone && foneWhats_(p.respTel)) { fone = foneWhats_(p.respTel); deQuem = 'responsável'; }
-      if (!fone && foneWhats_(p.telPac)) { fone = foneWhats_(p.telPac); deQuem = 'paciente'; }
+      var p = idx[it.paciente] || {}, fp = Mensagens.foneDoPaciente(p), fone = fp.fone, deQuem = fp.de; // só celular serve pro WhatsApp
       // uma mensagem por pagador (irmãos recebem uma só, com o número de quem tiver); sem pagador, por número; sem os dois, por paciente
       var chave = p.pagador ? 'p:' + Duplicatas.normalizar(p.pagador) : fone ? 'w:' + fone : 'x:' + it.paciente;
       var g = grupos[chave];
@@ -185,6 +183,6 @@ API.fichaPaciente = function (d) {
   var alts = linhasComo_(planilha_().getSheetByName(CONFIG.ABA.ALTERACOES)).filter(function (r) { return r['Paciente'] === nome; }).reverse().slice(0, 10)
     .map(function (r) { return { quando: String(r['Data/hora'] || ''), campo: r['Campo'], de: String(r['De'] || ''), para: String(r['Para'] || ''), quem: r['Quem informou'] || '' }; });
   var ult = sessoes.filter(function (r) { return /^Atendido/.test(r.oque) && dn(r) <= hojeN; })[0];
-  return { ok: true, paciente: { nome: nome, nasc: p.nasc, ativo: p.ativo, convenio: p.convenio, pagador: p.pagador, obsCobranca: p.obsCobranca, resp: p.resp, respPar: p.respPar, whats: p.whats, respTel: p.respTel, telPac: p.telPac, fone: f.fone, foneFmt: f.foneFmt, foneDe: f.de, cpfFinal: Duplicatas.digitos(p.cpf).slice(-4) },
+  return { ok: true, paciente: { nome: nome, nasc: p.nasc, ativo: p.ativo, convenio: p.convenio, pagador: p.pagador, obsCobranca: p.obsCobranca, resp: p.resp, respPar: p.respPar, whats: p.whats, respTel: p.respTel, telPac: p.telPac, fone: f.fone, foneFmt: f.foneFmt, foneDe: f.de, fixoFmt: f.fixoFmt, cpfFinal: Duplicatas.digitos(p.cpf).slice(-4) },
     cobrancas: cobrancas, fixos: fixos, proximos: proximos, aberto: aberto, mensal: mensal, sessoes: sessoes.slice(0, 80), totalSessoes: sessoes.length, ultimaVez: ult ? { data: ult.data, profissional: ult.profissional } : null, mensagens: msgs, alteracoes: alts };
 };

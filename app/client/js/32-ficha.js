@@ -27,6 +27,7 @@ function renderFicha() {
   var sub = []; if (p.nasc) { var i = idade(p.nasc); sub.push((i ? i + ' · ' : '') + 'nasc. ' + p.nasc); } sub.push(p.convenio || 'Particular'); if (/^n/i.test(p.ativo || 'Sim')) sub.push('INATIVO'); if (p.cpfFinal) sub.push('CPF ···' + p.cpfFinal);
   $("#fi-sub").textContent = sub.join(' · ');
   var zap = p.fone ? '<a class="btn sec mini" target="_blank" rel="noopener" href="' + esc(Mensagens.linkWhats(p.fone, '')) + '">' + ic('send', 13, 2.4) + ' ' + esc(p.foneFmt) + '</a>' + (p.foneDe !== 'pagador' ? ' <span class="muted">(telefone do ' + esc(p.foneDe) + ')</span>' : '') : '<span class="tag laranja">sem WhatsApp</span>';
+  if (p.fixoFmt) zap += ' <span class="muted">· fixo (ligar):</span> ' + esc(p.fixoFmt);
   $("#fi-contatos").innerHTML = '<div><span class="muted">Quem paga</span> <b>' + esc(p.pagador || p.nome) + '</b> · ' + zap + '</div>' + (p.resp ? '<div><span class="muted">Responsável</span> ' + esc(p.resp + (p.respPar ? ' (' + p.respPar + ')' : '')) + (p.respTel ? ' · ' + esc(p.respTel) : '') + '</div>' : '') + (p.telPac ? '<div><span class="muted">Telefone do paciente</span> ' + esc(p.telPac) + '</div>' : '');
   $("#fi-obs").innerHTML = p.obsCobranca ? '<div class="faixa nota">' + esc(p.obsCobranca) + '</div>' : '';
   var ac = $("#fi-acoes"); ac.innerHTML = '';

@@ -21,11 +21,14 @@ var Mensagens = (function () {
   // número pro link do WhatsApp: só dígitos com 55 na frente; vazio se não parece telefone do Brasil
   function fone(t) { var d = String(t || '').replace(/\D/g, ''); return /^55\d{10,11}$/.test(d) ? d : /^\d{10,11}$/.test(d) ? '55' + d : ''; }
   function foneFmt(t) { var d = fone(t).slice(2); if (!d) return ''; return d.length === 11 ? '(' + d.slice(0, 2) + ') ' + d.slice(2, 3) + ' ' + d.slice(3, 7) + '-' + d.slice(7) : '(' + d.slice(0, 2) + ') ' + d.slice(2, 6) + '-' + d.slice(6); }
-  // o número de um paciente: WhatsApp do pagador; se vazio, telefone do responsável; depois o do paciente
+  // celular do Brasil (DDD + 9 + 8 dígitos): só ele serve pro WhatsApp; fixo é guardado pra ligar (gestão, 16/10)
+  function ehCelular(t) { var d = fone(t).slice(2); return d.length === 11 && d.charAt(2) === '9'; }
+  // o número de um paciente pro WhatsApp: WhatsApp do pagador; se vazio, telefone do responsável; depois o do paciente.
+  // Só celular conta; o primeiro fixo achado volta em fixo/fixoFmt (a Ficha mostra pra ligar).
   function foneDoPaciente(p) {
-    p = p || {}; var ord = [['whats', 'pagador'], ['respTel', 'responsável'], ['telPac', 'paciente']];
-    for (var i = 0; i < ord.length; i++) { var f = fone(p[ord[i][0]]); if (f) return { fone: f, foneFmt: foneFmt(f), de: ord[i][1] }; }
-    return { fone: '', foneFmt: '', de: '' };
+    p = p || {}; var ord = [['whats', 'pagador'], ['respTel', 'responsável'], ['telPac', 'paciente']], fixo = '';
+    for (var i = 0; i < ord.length; i++) { var f = fone(p[ord[i][0]]); if (!f) continue; if (ehCelular(f)) return { fone: f, foneFmt: foneFmt(f), de: ord[i][1], fixo: fixo, fixoFmt: foneFmt(fixo) }; if (!fixo) fixo = f; }
+    return { fone: '', foneFmt: '', de: '', fixo: fixo, fixoFmt: foneFmt(fixo) };
   }
   // link que abre a conversa com o texto. wa.me trocava os emojis por "�" no WhatsApp (gestão, 15/10): api.whatsapp.com/send não
   function linkWhats(f, texto) { return 'https://api.whatsapp.com/send?phone=' + fone(f) + '&text=' + encodeURIComponent(texto); }
@@ -60,5 +63,5 @@ var Mensagens = (function () {
       .replace(/,\s*!/g, '!');
   }
   return { CONFIRMACAO_PADRAO: CONFIRMACAO_PADRAO, COBRANCA_MENSALIDADE_PADRAO: COBRANCA_MENSALIDADE_PADRAO, COBRANCA_CONSULTAS_PADRAO: COBRANCA_CONSULTAS_PADRAO,
-    confirmacao: confirmacao, cobranca: cobranca, linkWhats: linkWhats, tipoCobranca: tipoCobranca, fone: fone, foneFmt: foneFmt, foneDoPaciente: foneDoPaciente, valorBR: valorBR, mesTxt: mesTxt, hora: hora };
+    confirmacao: confirmacao, cobranca: cobranca, linkWhats: linkWhats, tipoCobranca: tipoCobranca, fone: fone, ehCelular: ehCelular, foneFmt: foneFmt, foneDoPaciente: foneDoPaciente, valorBR: valorBR, mesTxt: mesTxt, hora: hora };
 })();
