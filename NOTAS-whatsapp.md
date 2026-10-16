@@ -1,4 +1,7 @@
-# NOTAS — Confirmações enviadas pelo app (WhatsApp automático) · PLANO, aguardando OK da gestão
+# NOTAS — Confirmações enviadas pelo app (WhatsApp automático) · PLANO ARQUIVADO
+
+> **Decisão da gestão (16/10/2026): não seguir.** "Mais fácil manter a recepção enviando a mensagem, o volume não é tão
+> absurdo." A tela Confirmações continua manual ("Abrir WhatsApp"). Este plano fica como registro, caso o volume cresça.
 
 Arquivo de retomada deste item. Quem abrir um chat novo lê, nesta ordem: `docs/DEPLOYS.md` ("No ar agora"),
 `NOTAS-api.md`, este arquivo, `NOTAS-fase2.md` (seção 1, Confirmações), `NOTAS-fase1.md`, `docs/ESTADO-ATUAL.md`.
