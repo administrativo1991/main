@@ -5,7 +5,7 @@
    pelo Registrar e pela Cobrança do mês. Editar continua em Pacientes; registrar, no Registrar. */
 var FI = null, fiNome = '', fiGen = 0, fiComboOk = false;
 INICIAR.ficha = function (extra) {
-  if (!fiComboOk) { fiComboOk = true; comboPacientes($("#fi-busca"), function () { abrirFicha($("#fi-busca").value.trim()); }); }
+  if (!fiComboOk) { fiComboOk = true; comboPacientes($("#fi-busca"), function () { abrirFicha($("#fi-busca").value.trim()); }, { inativos: true }); }
   if (extra && extra.nome) { $("#fi-busca").value = extra.nome; abrirFicha(extra.nome); }
   else if (!fiNome) { $("#fi-vazio").hidden = false; $("#fi-corpo").hidden = true; setTimeout(function () { $("#fi-busca").focus(); }, 50); }
 };

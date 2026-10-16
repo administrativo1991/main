@@ -19,7 +19,7 @@ function iniciarPac() {
   if (pacIniciado) return; pacIniciado = true;
   preencherSelect($("#n-conv"), BOOT.listas.convenios || []);
   preencherSelect($("#n-prof"), BOOT.profissionais, '—');
-  comboPacientes($("#c-pac"), function () { carregarCad(); });
+  comboPacientes($("#c-pac"), function () { carregarCad(); }, { inativos: true });
   $("#p-carregando").hidden = true; $("#p-form").hidden = false; $("#p-rodape").hidden = telaAtual !== 'pacientes';
   if (lerRascunhoN()) toast('Rascunho do cadastro recuperado');
   mostrarResp();

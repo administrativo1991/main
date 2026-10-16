@@ -2537,6 +2537,13 @@ function conciliacaoCalc_(chave) {
     if (/^(Renda Fixa|Resgate)|resgate (total )?de cdb/i.test(String(e.desc || '')) || /cl[ií]nica nascente/i.test(Duplicatas.normalizar(e.quem || '') + ' ' + String(e.quem || ''))) { e.sugestao = 'não é paciente'; e.fixa = true; }
     else if (inicio && ymdDate_(e.data) && ymdDate_(e.data) < inicio) { e.sugestao = 'mês anterior ao app'; e.fixa = true; }
   });
+  // decisão anterior da gestão pro mesmo pagador (17/10): se todas as entradas já resolvidas dele tiveram a mesma situação fixa
+  // (aluguel de sala, não é paciente, convênio), sugere a mesma — sem IA, e sem entrar no "Confirmar sugestões fixas"
+  var hist = historicoPagadores_(ext, todas);
+  pend.forEach(function (e) {
+    if (e.sugestao || !/^Pix/.test(e.tipo)) return; var h = hist[chavePagador_(e.quem)]; if (!h) return;
+    var sits = Object.keys(h.sit); if (sits.length === 1 && /^(aluguel de sala|não é paciente|convênio \(fatura\))$/.test(sits[0]) && !h.pacientes.length) { e.sugestao = sits[0]; e.historico = h.sit[sits[0]]; }
+  });
   // 1) Pix: um lançamento, mesmo valor, data de -3 a +3 dias; nome confere = "forte"
   pend.filter(function (e) { return /^Pix/.test(e.tipo); }).forEach(function (e) {
     var c = recs.filter(function (r) { return livre(r) && !r.cartao && Math.abs(r.valor - e.valor) < 0.01 && Math.abs(diasEntre_(r.dataPag, e.data)) <= 3; })
@@ -2572,7 +2579,7 @@ function conciliacaoCalc_(chave) {
     resumo: { entradas: extMes.length, valorEntradas: soma(extMes, function (e) { return e.valor; }), resolvidas: extMes.length - pend.length, pendentes: pend.length, valorSemLanc: soma(semLanc, function (e) { return e.valor; }), valorSemBanco: soma(semBanco, function (r) { return r.valor; }), taxasCartao: soma(vm, function (v) { return v.taxa; }), temExtrato: ext.length > 0, temVendas: vendas.length > 0 } };
   // a resposta leva a sugestão da IA já conferida (x.ia, em iaConciliacaoAnexar_), não o JSON cru da coluna
   var sugIA = {}; ext.forEach(function (e) { if (e.sugIA) sugIA['ext:' + e.id] = e.sugIA; delete e.sugIA; }); vendas.forEach(function (v) { if (v.sugIA) sugIA['venda:' + v.id] = v.sugIA; delete v.sugIA; });
-  return { ok: true, resp: resp, ini: ini, fim: fim, recs: recs, livre: livre, todas: todas, inicio: inicio, sugIA: sugIA };
+  return { ok: true, resp: resp, ini: ini, fim: fim, recs: recs, livre: livre, todas: todas, inicio: inicio, sugIA: sugIA, hist: hist };
 }
 // confirma ligações e classificações: [{ tipo: 'ext'|'venda', id, situacao, recs: [{aba, linha, id}], obs, deposito }]
 API.conciliar = function (d) {
@@ -2921,7 +2928,7 @@ var IA_PADRAO = [
   ['guias_mes_anterior_ate_dia', 5, 'Até este dia do mês o gatilho também lê a pasta do mês anterior (guias salvas atrasadas).'],
   ['guias_max_por_execucao', 25, 'Máximo de arquivos lidos por execução do gatilho (o resto fica pro dia seguinte). Cada execução tem no máximo ~5 minutos.'],
   ['instrucao_guias', 'Você lê guias de atendimento de convênio (Cedplan, Sabin Sinai) digitalizadas ou fotografadas por uma clínica de psicologia e pediatria. Extraia os dados e devolva somente o JSON pedido.\nRegras: cada página costuma ser uma guia; se uma página for continuação da anterior (mesmo número de guia, só mais datas ou assinaturas), marque continuacao_da_anterior = true. numero_guia: o número da guia ou da autorização (dígitos e hífens, sem espaços). carteirinha: o número do beneficiário na carteirinha (só dígitos). beneficiario: o nome do paciente como está na guia; se corresponder a um nome da lista de pacientes cadastrados (mesmo com abreviação, acento ou ordem diferente), devolva o nome exatamente como está na lista. datas: todas as datas de atendimento ou de sessão preenchidas na guia, no formato dd/mm/aaaa (guia com várias linhas de sessão = uma data por linha preenchida; linha em branco não conta). procedimento: a descrição do procedimento (ex.: Sessão de psicoterapia, Consulta); quantidade: o número de sessões ou procedimentos preenchidos. assinatura_visivel: true só se houver assinatura manuscrita (do paciente, do responsável ou do profissional) na guia. legibilidade: boa, parcial (algum campo em dúvida) ou ilegivel. Se o arquivo não for uma guia (comprovante, exame, foto solta, página em branco), e_guia = false e guias = []. Não invente: campo que não deu pra ler fica vazio ("" ou []). Em observacao, uma frase curta em português sobre o que viu (ex.: "guia Cedplan com 4 sessões assinadas").', 'Instrução que o modelo recebe pra ler uma guia (texto livre; a gestão pode ajustar). O JSON de resposta é fixo no código.'],
-  ['instrucao_conciliacao', 'Você ajuda a gestão de uma clínica de psicologia e pediatria (Clínica Nascente, Juiz de Fora) a conciliar o extrato do PagBank com os lançamentos do app. Você recebe as entradas do banco que as regras do app não conseguiram casar (E…: Pix; V…: vendas no cartão) e listas de candidatos: L… = recebimentos lançados no app (Pix ou cartão, ainda não conciliados), M… = mensalidades marcadas como pagas na aba Mensalistas, A… = sessões lançadas e ainda em aberto (não pagas), além dos convênios e dos profissionais da clínica. Para cada entrada devolva uma sugestão no JSON pedido.\nRegras: acao = "ligar" quando um ou mais L… explicam a entrada (o mesmo pagador, muitas vezes mãe, pai ou responsável com sobrenome em comum, pagando sessões de um ou mais filhos; valores que somam o valor da entrada; datas próximas, o Pix pode vir alguns dias antes ou até 40 dias depois da sessão). Nunca use o mesmo L… em duas entradas. Só ligue cartão (V…) a lançamento em cartão e Pix a lançamento em Pix. acao = "situacao" quando a entrada não é de lançamento do app: "mensalidade anotada em Mensalistas" (um M… explica: mesmo pagador e valor), "convênio (fatura)" (quem pagou é um convênio), "aluguel de sala" (quem pagou é profissional da clínica), "não é paciente" (resgate de aplicação, transferência da própria clínica, devolução, pessoa sem relação com pacientes), "mês anterior ao app" (paga sessão de antes do primeiro mês do app), "sem lançamento no app" (parece pagamento de paciente, mas não há lançamento correspondente). acao = "em_aberto" quando a entrada parece pagar sessões que estão em aberto (A…): liste esses A… em lancamentos. acao = "nenhuma" quando não dá pra dizer. Não invente: na dúvida, confianca = "baixa". confianca "alta" só quando nome e valor batem sem ambiguidade. motivo: uma frase curta em português que a gestão entenda (ex.: "Pix da mãe, Débora Travnik, pelas sessões do Gustavo de 02 e 09/10").', 'Instrução que o modelo recebe na conciliação assistida (texto livre; a gestão pode ajustar). O JSON de resposta é fixo no código.'],
+  ['instrucao_conciliacao', 'Você ajuda a gestão de uma clínica de psicologia e pediatria (Clínica Nascente, Juiz de Fora) a conciliar o extrato do PagBank com os lançamentos do app. Você recebe as entradas do banco que as regras do app não conseguiram casar (E…: Pix; V…: vendas no cartão) e listas de candidatos: L… = recebimentos lançados no app (Pix ou cartão, ainda não conciliados), M… = mensalidades marcadas como pagas na aba Mensalistas, A… = sessões lançadas e ainda em aberto (não pagas), além dos convênios e dos profissionais da clínica. Para cada entrada devolva uma sugestão no JSON pedido.\nPRIMEIRO, para cada entrada, olhe a lista PAGADORES CONHECIDOS: ela diz, pelo cadastro, por quem aquele pagador paga (pagador habitual, nome no extrato, responsável ou o próprio paciente) e o que a gestão já decidiu antes para o mesmo pagador. Use isso antes de qualquer semelhança de nome: procure os lançamentos (L…, M…, A…) desses pacientes; se a gestão já decidiu sempre a mesma situação para esse pagador, repita a decisão. Só diga que o pagador não aparece depois de conferir essa lista.\nRegras: acao = "ligar" quando um ou mais L… explicam a entrada (o mesmo pagador, muitas vezes mãe, pai ou responsável com sobrenome em comum, pagando sessões de um ou mais filhos; valores que somam o valor da entrada; datas próximas, o Pix pode vir alguns dias antes ou até 40 dias depois da sessão). Nunca use o mesmo L… em duas entradas. Só ligue cartão (V…) a lançamento em cartão e Pix a lançamento em Pix. acao = "situacao" quando a entrada não é de lançamento do app: "mensalidade anotada em Mensalistas" (um M… explica: mesmo pagador e valor), "convênio (fatura)" (quem pagou é um convênio), "aluguel de sala" (quem pagou é profissional da clínica), "não é paciente" (resgate de aplicação, transferência da própria clínica, devolução, pessoa sem relação com pacientes), "mês anterior ao app" (paga sessão de antes do primeiro mês do app), "sem lançamento no app" (parece pagamento de paciente, mas não há lançamento correspondente). acao = "em_aberto" quando a entrada parece pagar sessões que estão em aberto (A…): liste esses A… em lancamentos. acao = "nenhuma" quando não dá pra dizer. Não invente: na dúvida, confianca = "baixa". confianca "alta" só quando nome e valor batem sem ambiguidade. motivo: uma frase curta em português que a gestão entenda (ex.: "Pix da mãe, Débora Travnik, pelas sessões do Gustavo de 02 e 09/10").', 'Instrução que o modelo recebe na conciliação assistida (texto livre; a gestão pode ajustar). O JSON de resposta é fixo no código.'],
   ['instrucao_perguntar', '', 'Instrução do item Perguntar à planilha (próximo).']
 ];
 var IA_NUMERICOS = { teto_mes_usd: 1, teto_dia_usd: 1, aviso_pct: 1, preco_entrada_usd_mtok: 1, preco_saida_usd_mtok: 1, hora_gatilho: 1, guias_mes_anterior_ate_dia: 1, guias_max_por_execucao: 1 };
@@ -3489,6 +3496,36 @@ var CONC_SCHEMA = { type: 'object', additionalProperties: false, required: ['sug
 function brl_(n) { return 'R$ ' + Mensagens.valorBR(Math.round((Number(n) || 0) * 100) / 100); }
 // "62.985.207 Luisa Maria" → "Luisa Maria": o PagBank põe pedaço de CPF/CNPJ no nome de quem pagou
 function semDigitos_(t) { return String(t || '').replace(/\d[\d.\-\/]*/g, ' ').replace(/\s+/g, ' ').trim(); }
+// mesmo pagador = mesmo nome sem dígitos, acento e caixa ("62.985.207 Luisa Maria" e "Luisa Maria" são a mesma chave)
+function chavePagador_(t) { return Duplicatas.normalizar(semDigitos_(t)); }
+// o que a gestão já decidiu pra cada pagador, a partir das entradas do extrato já resolvidas (qualquer mês):
+// { chave: { sit: { situação: n }, pacientes: [nomes, dos lançamentos ligados] } }
+function historicoPagadores_(ext, todas) {
+  var out = {}, linhaDe = function (aba, linha) { var t = todas[aba]; return t ? t.linhas.filter(function (l) { return l.linha === linha; })[0] : null; };
+  ext.forEach(function (e) {
+    if (!e.situacao || e.situacao === 'pendente' || !e.quem) return; var k = chavePagador_(e.quem); if (!k) return;
+    var h = out[k] = out[k] || { sit: {}, pacientes: [] }; h.sit[e.situacao] = (h.sit[e.situacao] || 0) + 1;
+    var m, re = /([A-Za-zÇçãé]+)!(\d+)/g; while ((m = re.exec(String(e.ligado || '')))) { var l = linhaDe(m[1], parseInt(m[2], 10)); if (l && h.pacientes.indexOf(l.paciente) < 0) h.pacientes.push(l.paciente); }
+  });
+  return out;
+}
+// pagadores conhecidos das entradas do lote: quem o cadastro diz que paga por quem (pagador habitual, nome no extrato,
+// responsável, o próprio paciente) e o que a gestão já decidiu pra esse pagador
+function concIAPagadores_(c, lote) {
+  var pacs = indicePacientes_(), linhas = [];
+  var bate = function (q, n) { var tq = tokensNome_(q), tn = tokensNome_(n); if (!tq.length || !tn.length) return false; if (Math.min(tq.length, tn.length) < 2) return Duplicatas.normalizar(q) === Duplicatas.normalizar(n); return notaNome_(q, [n]) >= 0.75; };
+  lote.forEach(function (x) {
+    var q = semDigitos_(x.tipo === 'venda' ? x.v.comprador : x.e.quem); if (!q) return;
+    var cad = [];
+    pacs.forEach(function (p) {
+      var como = bate(q, p.nome) ? 'o próprio paciente' : p.pagador && bate(q, p.pagador) ? 'pagador habitual' : p.pagadorExtrato && bate(q, p.pagadorExtrato) ? 'nome no extrato' : p.resp && bate(q, p.resp) ? 'responsável' : '';
+      if (como) cad.push(p.nome + ' (' + como + (/^n/i.test(p.ativo || '') ? ', inativo' : '') + ')');
+    });
+    var h = c.hist[chavePagador_(q)], dec = h ? Object.keys(h.sit).map(function (k) { return h.sit[k] + '× ' + k; }).join(', ') + (h.pacientes.length ? ' — ligado a ' + h.pacientes.slice(0, 6).join(', ') : '') : '';
+    if (cad.length || dec) linhas.push(x.cod + ' · ' + q + (cad.length ? ' → cadastro: ' + cad.slice(0, 6).join('; ') : '') + (dec ? ' → decisões anteriores da gestão: ' + dec : ''));
+  });
+  return linhas;
+}
 function saldoAberto_(r) { return Math.round(((r.pago === 'Parcial' ? r.valor - (r.recebido || 0) : r.valor) || 0) * 100) / 100; }
 
 // candidatos que o modelo pode usar: recebimentos livres de 45 dias antes do mês a 10 depois, mensalidades pagas do mês e do anterior,
@@ -3512,6 +3549,9 @@ function concIATexto_(c, lote, cand, cod) {
     if (x.tipo === 'venda') t.push(x.cod + ' · ' + fmtData_(x.v.data) + ' · venda no cartão ' + brl_(x.v.bruto) + ' (' + [x.v.forma, x.v.parcelas, x.v.bandeira].filter(Boolean).join(', ') + ')' + (x.v.comprador ? ' · comprador: ' + semDigitos_(x.v.comprador) : ''));
     else t.push(x.cod + ' · ' + fmtData_(x.e.data) + ' · ' + brl_(x.e.valor) + ' · ' + x.e.tipo + ' · quem pagou: ' + (semDigitos_(x.e.quem) || semDigitos_(x.e.desc) || '—'));
   });
+  var pg = concIAPagadores_(c, lote);
+  t.push('', 'PAGADORES CONHECIDOS (o cadastro diz quem paga por quem; as decisões anteriores da gestão pro mesmo pagador valem como regra, acima da semelhança de nomes):');
+  if (pg.length) pg.forEach(function (l) { t.push(l); }); else t.push('(nenhum)');
   t.push('', 'RECEBIMENTOS LANÇADOS NO APP, AINDA NÃO CONCILIADOS (L):');
   cand.L.forEach(function (r) { var nomes = r.nomes.filter(function (n) { return n !== r.paciente; }); t.push(cod.L(r) + ' · paciente ' + r.paciente + (nomes.length ? ' (pagador: ' + nomes.join(' / ') + ')' : '') + ' · sessão ' + r.data + ' · pago ' + r.dataPag + ' · ' + brl_(r.valor) + ' · ' + r.forma + ' · ' + r.profissional); });
   if (!cand.L.length) t.push('(nenhum)');

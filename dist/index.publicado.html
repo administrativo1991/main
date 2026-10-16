@@ -1064,7 +1064,7 @@ table.ar-mini{min-width:0}
 <div id="p-carregando" class="carregando">Carregando a planilha…</div>
 <div class="card" id="p-busca" hidden>
 <label class="campo">Paciente
-<div class="campo-wrap combo"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg><input id="c-pac" autocomplete="off" placeholder="Comece a digitar o nome…" style="font-weight:600"></div>
+<div class="campo-wrap combo"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg><input id="c-pac" autocomplete="off" placeholder="Nome do paciente, do pagador ou do responsável…" style="font-weight:600"></div>
 <span class="hint" id="c-pac-info"></span>
 </label>
 <div id="c-carregando" class="carregando" hidden>Carregando o cadastro…</div>
@@ -1153,7 +1153,7 @@ table.ar-mini{min-width:0}
 <section class="tela coluna" id="s-ficha" hidden>
 <div class="titulo no-print">
 <h1>Ficha do paciente</h1>
-<div class="campo-wrap combo" style="flex:1 1 320px;max-width:520px"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg><input id="fi-busca" placeholder="Buscar paciente (nome ou pagador)" aria-label="Buscar paciente" autocomplete="off"></div>
+<div class="campo-wrap combo" style="flex:1 1 320px;max-width:520px"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg><input id="fi-busca" placeholder="Nome do paciente, do pagador ou do responsável…" aria-label="Buscar paciente" autocomplete="off"></div>
 <span class="esp"></span>
 <button type="button" class="btn ter imprimir so-pc"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9V3h12v6"/><rect x="3" y="9" width="18" height="9" rx="2"/><path d="M6 14h12v7H6z"/></svg>Imprimir</button>
 </div>
@@ -1570,16 +1570,21 @@ function ehVariante(p, lista) { var i = p.nome.indexOf(' – '); if (i < 0) retu
 function tiposDe(esps) { var l = procsDe(esps); return l.filter(function (p) { return !ehVariante(p, l) && !/\(compra\)/.test(p.nome) && !/^Mensalidade|^Renovação|^Antecipado|^Taxa de falta/.test(p.nome); }); }
 function procObj(nome) { return AT.procedimentos.filter(function (p) { return p.nome === nome; })[0] || null; }
 function tipoCurto(it) { var t = String(it.tipo || '').trim(); if (t) return t.toLowerCase(); var o = String(it.origem || ''); if (/Primeira consulta|Retorno|Aplicação de teste|Encaixe|Reposição|Avulso/i.test(o)) return o.toLowerCase(); var esp = espDoProf(it.profissional); return /Psicolog|Psican|ABA|Psicopedag/i.test(esp) ? 'sessão' : 'consulta'; }
-// lista própria de pacientes (no lugar do datalist nativo): busca por nome ou pagador, setas, Enter, clique
-function comboPacientes(input, aoEscolher) {
+// lista própria de pacientes (no lugar do datalist nativo): busca por nome, pagador habitual, nome no extrato ou responsável
+// (17/10: achar o paciente de um Pix pelo nome de quem pagou), setas, Enter, clique. opts.inativos: lista também os inativos
+function comboPacientes(input, aoEscolher, opts) {
+opts = opts || {};
 var box = el('<div class="combo-lista" hidden role="listbox"></div>'), idx = -1, itens = [];
 input.parentNode.insertBefore(box, input.nextSibling); input.setAttribute('autocomplete', 'off'); input.removeAttribute('list');
 function fechar() { box.hidden = true; box.innerHTML = ''; idx = -1; itens = []; }
 function render() {
 var q = semAcento(input.value.trim()); if (!q || !AT) return fechar();
-itens = AT.pacientes.filter(function (p) { return !/^n/i.test(p.ativo || 'Sim') && (semAcento(p.nome).indexOf(q) >= 0 || (p.pagador && semAcento(p.pagador).indexOf(q) >= 0)); }).slice(0, 8);
-if (!itens.length) { box.innerHTML = '<div class="combo-vazio">Ninguém com “' + esc(input.value.trim()) + '” em Pacientes</div>'; box.hidden = false; return; }
-box.innerHTML = itens.map(function (p, i) { return '<div class="combo-item' + (i === idx ? ' ativo' : '') + '" role="option" data-i="' + i + '"><b>' + esc(p.nome) + '</b><span>' + esc([p.nasc ? idade(p.nasc) : '', p.pagador && p.pagador !== p.nome ? 'pagador: ' + p.pagador : ''].filter(Boolean).join(' · ')) + '</span></div>'; }).join('');
+var achou = function (p) { if (semAcento(p.nome).indexOf(q) >= 0) return { campo: '' }; var c = [['pagador', p.pagador], ['no extrato', p.pagadorExtrato], ['responsável', p.resp]].filter(function (x) { return x[1] && semAcento(x[1]).indexOf(q) >= 0; })[0]; return c ? { campo: c[0], valor: c[1] } : null; };
+itens = []; AT.pacientes.forEach(function (p) { if (itens.length >= 8 || (!opts.inativos && /^n/i.test(p.ativo || 'Sim'))) return; var a = achou(p); if (a) itens.push(Object.assign({}, p, { _achou: a })); });
+// quem bateu pelo nome do paciente vem primeiro; depois quem bateu pelo pagador/responsável
+itens.sort(function (a, b) { return (a._achou.campo ? 1 : 0) - (b._achou.campo ? 1 : 0); });
+if (!itens.length) { box.innerHTML = '<div class="combo-vazio">Ninguém com “' + esc(input.value.trim()) + '” em Pacientes (nome, pagador ou responsável)</div>'; box.hidden = false; return; }
+box.innerHTML = itens.map(function (p, i) { var a = p._achou; return '<div class="combo-item' + (i === idx ? ' ativo' : '') + '" role="option" data-i="' + i + '"><b>' + esc(p.nome) + '</b><span>' + esc([/^n/i.test(p.ativo || 'Sim') ? 'inativo' : '', p.nasc ? idade(p.nasc) : '', a.campo ? a.campo + ': ' + a.valor : p.pagador && p.pagador !== p.nome ? 'pagador: ' + p.pagador : ''].filter(Boolean).join(' · ')) + '</span></div>'; }).join('');
 $$('.combo-item', box).forEach(function (d) { d.addEventListener('mousedown', function (e) { e.preventDefault(); escolher(+d.dataset.i); }); });
 box.hidden = false;
 }
@@ -2830,7 +2835,7 @@ function iniciarPac() {
 if (pacIniciado) return; pacIniciado = true;
 preencherSelect($("#n-conv"), BOOT.listas.convenios || []);
 preencherSelect($("#n-prof"), BOOT.profissionais, '—');
-comboPacientes($("#c-pac"), function () { carregarCad(); });
+comboPacientes($("#c-pac"), function () { carregarCad(); }, { inativos: true });
 $("#p-carregando").hidden = true; $("#p-form").hidden = false; $("#p-rodape").hidden = telaAtual !== 'pacientes';
 if (lerRascunhoN()) toast('Rascunho do cadastro recuperado');
 mostrarResp();
@@ -3129,7 +3134,7 @@ mensagens de WhatsApp e alterações de cadastro. Abre pela busca daqui, por Pac
 pelo Registrar e pela Cobrança do mês. Editar continua em Pacientes; registrar, no Registrar. */
 var FI = null, fiNome = '', fiGen = 0, fiComboOk = false;
 INICIAR.ficha = function (extra) {
-if (!fiComboOk) { fiComboOk = true; comboPacientes($("#fi-busca"), function () { abrirFicha($("#fi-busca").value.trim()); }); }
+if (!fiComboOk) { fiComboOk = true; comboPacientes($("#fi-busca"), function () { abrirFicha($("#fi-busca").value.trim()); }, { inativos: true }); }
 if (extra && extra.nome) { $("#fi-busca").value = extra.nome; abrirFicha(extra.nome); }
 else if (!fiNome) { $("#fi-vazio").hidden = false; $("#fi-corpo").hidden = true; setTimeout(function () { $("#fi-busca").focus(); }, 50); }
 };
@@ -3883,7 +3888,7 @@ pend.forEach(function (p) {
 var x = p.e || p.v, valor = p.e ? x.valor : x.bruto, sug = p.e ? x.sugestao : '';
 var opts = '<option value="">o que é?</option>' + sits.map(function (o) { return '<option' + (o === sug ? ' selected' : '') + '>' + esc(o) + '</option>'; }).join('');
 var lancs = '<option value="">ligar a um lançamento…</option>' + semBancoOrd(valor, x.data).map(function (l, j) { return '<option value="' + j + '">' + esc(l.paciente + ' · ' + ccDia(l.dataPag) + ' · ' + ccR(l.valor) + ' · ' + l.forma) + '</option>'; }).join('');
-var it = el('<div class="fd-item cc-pend"><span class="cc-lado">' + (p.e ? ccBancoHtml(x) : ccVendaHtml(x)) + '</span>' + (sug ? '<span class="tag lilas">sugestão: ' + esc(sug) + '</span>' : '') + ccIAHtml(x.ia) + '<span class="esp"></span><span class="cc-form"><select class="cc-sit" aria-label="O que é">' + opts + '</select>' + (r.semBanco.length ? '<select class="cc-lanc" aria-label="Ligar a um lançamento">' + lancs + '</select>' : '') + '<input class="cc-obs" placeholder="Observação (opcional)" aria-label="Observação"><button type="button" class="btn mini">Salvar</button></span></div>');
+var it = el('<div class="fd-item cc-pend"><span class="cc-lado">' + (p.e ? ccBancoHtml(x) : ccVendaHtml(x)) + '</span>' + (sug ? '<span class="tag lilas" title="' + (x.historico ? 'mesma situação das ' + x.historico + ' entrada(s) já resolvida(s) deste pagador' : '') + '">sugestão: ' + esc(sug) + (x.historico ? ' (como antes)' : '') + '</span>' : '') + ccIAHtml(x.ia) + '<span class="esp"></span><span class="cc-form"><select class="cc-sit" aria-label="O que é">' + opts + '</select>' + (r.semBanco.length ? '<select class="cc-lanc" aria-label="Ligar a um lançamento">' + lancs + '</select>' : '') + '<input class="cc-obs" placeholder="Observação (opcional)" aria-label="Observação"><button type="button" class="btn mini">Salvar</button></span></div>');
 var ord = semBancoOrd(valor, x.data), selL = $('.cc-lanc', it), selS = $('.cc-sit', it);
 if (selL) selL.addEventListener('change', function () { selS.disabled = !!selL.value; });
 $('button', it).addEventListener('click', function () {

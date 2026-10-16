@@ -76,7 +76,7 @@ var mockBase = [
 ];
 var mockPacientes = [{ linha: 2, nome: 'Beatriz Almeida Rocha', cpf: '529.982.247-25', nasc: '03/05/1994', pagador: 'Beatriz Almeida Rocha', convenio: 'Particular', obsCobranca: '', ativo: 'Sim' },
   { linha: 3, nome: 'Carlos Henrique Dias', cpf: '529.982.247-25', nasc: '21/09/1979', pagador: 'Carlos Henrique Dias', convenio: 'Particular', obsCobranca: '', ativo: 'Sim' },
-  { linha: 4, nome: 'Theo Barreto Lima', cpf: '529.982.247-25', nasc: '12/07/2015', pagador: 'Daniela Barreto Lima', convenio: 'Particular', obsCobranca: '', ativo: 'Sim', resp: 'Daniela Barreto Lima', respPar: 'Mãe' },
+  { linha: 4, nome: 'Theo Barreto Lima', cpf: '529.982.247-25', nasc: '12/07/2015', pagador: 'Daniela Barreto Lima', pagadorExtrato: 'Daniela B Lima Souza', convenio: 'Particular', obsCobranca: '', ativo: 'Sim', resp: 'Daniela Barreto Lima', respPar: 'Mãe' },
   { linha: 5, nome: 'Lívia Fontes Pereira', cpf: '529.982.247-25', nasc: '26/01/2010', pagador: '', convenio: 'Particular', obsCobranca: 'Pro bono até 31/10. A partir de 01/11: social.', ativo: 'Sim' },
   { linha: 6, nome: 'Pedro Augusto Neves', cpf: '529.982.247-25', nasc: '31/07/1980', pagador: '', convenio: 'Cedplan', obsCobranca: 'Cedplan — guia assinada antes da sessão.', ativo: 'Sim' },
   { linha: 7, nome: 'Sofia Ramos Teixeira', cpf: '529.982.247-25', nasc: '16/06/1999', pagador: 'Associação Boa Esperança', convenio: 'Particular', obsCobranca: '', ativo: 'Sim' },
@@ -433,16 +433,21 @@ function ehVariante(p, lista) { var i = p.nome.indexOf(' – '); if (i < 0) retu
 function tiposDe(esps) { var l = procsDe(esps); return l.filter(function (p) { return !ehVariante(p, l) && !/\(compra\)/.test(p.nome) && !/^Mensalidade|^Renovação|^Antecipado|^Taxa de falta/.test(p.nome); }); }
 function procObj(nome) { return AT.procedimentos.filter(function (p) { return p.nome === nome; })[0] || null; }
 function tipoCurto(it) { var t = String(it.tipo || '').trim(); if (t) return t.toLowerCase(); var o = String(it.origem || ''); if (/Primeira consulta|Retorno|Aplicação de teste|Encaixe|Reposição|Avulso/i.test(o)) return o.toLowerCase(); var esp = espDoProf(it.profissional); return /Psicolog|Psican|ABA|Psicopedag/i.test(esp) ? 'sessão' : 'consulta'; }
-// lista própria de pacientes (no lugar do datalist nativo): busca por nome ou pagador, setas, Enter, clique
-function comboPacientes(input, aoEscolher) {
+// lista própria de pacientes (no lugar do datalist nativo): busca por nome, pagador habitual, nome no extrato ou responsável
+// (17/10: achar o paciente de um Pix pelo nome de quem pagou), setas, Enter, clique. opts.inativos: lista também os inativos
+function comboPacientes(input, aoEscolher, opts) {
+  opts = opts || {};
   var box = el('<div class="combo-lista" hidden role="listbox"></div>'), idx = -1, itens = [];
   input.parentNode.insertBefore(box, input.nextSibling); input.setAttribute('autocomplete', 'off'); input.removeAttribute('list');
   function fechar() { box.hidden = true; box.innerHTML = ''; idx = -1; itens = []; }
   function render() {
     var q = semAcento(input.value.trim()); if (!q || !AT) return fechar();
-    itens = AT.pacientes.filter(function (p) { return !/^n/i.test(p.ativo || 'Sim') && (semAcento(p.nome).indexOf(q) >= 0 || (p.pagador && semAcento(p.pagador).indexOf(q) >= 0)); }).slice(0, 8);
-    if (!itens.length) { box.innerHTML = '<div class="combo-vazio">Ninguém com “' + esc(input.value.trim()) + '” em Pacientes</div>'; box.hidden = false; return; }
-    box.innerHTML = itens.map(function (p, i) { return '<div class="combo-item' + (i === idx ? ' ativo' : '') + '" role="option" data-i="' + i + '"><b>' + esc(p.nome) + '</b><span>' + esc([p.nasc ? idade(p.nasc) : '', p.pagador && p.pagador !== p.nome ? 'pagador: ' + p.pagador : ''].filter(Boolean).join(' · ')) + '</span></div>'; }).join('');
+    var achou = function (p) { if (semAcento(p.nome).indexOf(q) >= 0) return { campo: '' }; var c = [['pagador', p.pagador], ['no extrato', p.pagadorExtrato], ['responsável', p.resp]].filter(function (x) { return x[1] && semAcento(x[1]).indexOf(q) >= 0; })[0]; return c ? { campo: c[0], valor: c[1] } : null; };
+    itens = []; AT.pacientes.forEach(function (p) { if (itens.length >= 8 || (!opts.inativos && /^n/i.test(p.ativo || 'Sim'))) return; var a = achou(p); if (a) itens.push(Object.assign({}, p, { _achou: a })); });
+    // quem bateu pelo nome do paciente vem primeiro; depois quem bateu pelo pagador/responsável
+    itens.sort(function (a, b) { return (a._achou.campo ? 1 : 0) - (b._achou.campo ? 1 : 0); });
+    if (!itens.length) { box.innerHTML = '<div class="combo-vazio">Ninguém com “' + esc(input.value.trim()) + '” em Pacientes (nome, pagador ou responsável)</div>'; box.hidden = false; return; }
+    box.innerHTML = itens.map(function (p, i) { var a = p._achou; return '<div class="combo-item' + (i === idx ? ' ativo' : '') + '" role="option" data-i="' + i + '"><b>' + esc(p.nome) + '</b><span>' + esc([/^n/i.test(p.ativo || 'Sim') ? 'inativo' : '', p.nasc ? idade(p.nasc) : '', a.campo ? a.campo + ': ' + a.valor : p.pagador && p.pagador !== p.nome ? 'pagador: ' + p.pagador : ''].filter(Boolean).join(' · ')) + '</span></div>'; }).join('');
     $$('.combo-item', box).forEach(function (d) { d.addEventListener('mousedown', function (e) { e.preventDefault(); escolher(+d.dataset.i); }); });
     box.hidden = false;
   }

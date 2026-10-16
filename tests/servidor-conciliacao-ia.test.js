@@ -87,6 +87,8 @@ assert.ok(!/Carla Souza/.test(texto.split('RECEBIMENTOS')[0]), 'B1 já casou pel
 assert.ok(!/Ana Souza · sessão/.test(texto) && !/L\d+ · paciente Ana Souza/.test(texto), 'L4 ocupado pela regra não é candidato');
 assert.ok(/M\d+ · paciente Lia Mensal \(pagador: Marta Mensal\) · Outubro\/2026 · R\$ 425,00/.test(texto)); assert.ok(/A\d+ · paciente Rui Aberto/.test(texto));
 assert.ok(/L\d+ · paciente Bruno Card[^\n]*Cartão/.test(texto), 'cartão também é candidato (só pra venda)');
+assert.ok(/PAGADORES CONHECIDOS[\s\S]*E\d+ · Debora Leidiane Travnik → cadastro: Gustavo Travnik \(pagador habitual\)/.test(texto), 'cadastro diz quem paga por quem');
+assert.ok(/E\d+ · Marta Mensal → cadastro: Lia Mensal \(pagador habitual\)/.test(texto));
 assert.strictEqual(r.sugeridas, 3); assert.strictEqual(r.semSugestao, 2, 'L999 e o L repetido viram "nenhuma"'); assert.strictEqual(r.custo, 0.012, '3000 × 2 + 600 × 10 por milhão');
 const log = ss._m['IA log'].d; assert.strictEqual(log[log.length - 1][1], 'conciliacao'); assert.strictEqual(log[log.length - 1][3], 5, 'linhas = entradas do lote');
 const E2 = ss._m['Extrato bancário'].d, hS = E2[0].indexOf('Sugestão IA'), sugDe = id => JSON.parse(E2.find(l => l[0] === id)[hS] || 'null');
@@ -120,4 +122,15 @@ c = ok(API.conciliacao({ chave: 'Outubro/2026' }), 'depois de refazer'); assert.
 resposta = () => ({ code: 529, json: { type: 'error', error: { message: 'Overloaded' } } });
 r = API.conciliacaoIA({ chave: 'Outubro/2026', refazer: true }); assert.strictEqual(r.ok, false); assert.ok(/529/.test(r.erros[0]));
 c = ok(API.conciliacao({ chave: 'Outubro/2026' }), 'depois do erro'); assert.ok(/não respondeu/.test(sl('B9').ia.motivo), 'sugestão anterior mantida');
+
+// 8. decisões anteriores da gestão pro mesmo pagador: situação fixa vira sugestão sem IA; ligação vira contexto pra IA
+ok(API.conciliar({ itens: [{ tipo: 'ext', id: 'B9', situacao: 'aluguel de sala' }] }), 'B9 aluguel');
+ok(API.importarExtrato({ texto: '<OFX>\n' + [tx('B12', '20261028', '50.00', 'Pix recebido - Outro Travnik'), tx('B13', '20261029', '90.00', 'Pix recebido - 777 Debora Leidiane Travnik')].join('\n') + '\n</OFX>' }), 'importa 2');
+c = ok(API.conciliacao({ chave: 'Outubro/2026' }), 'com histórico');
+assert.strictEqual(sl('B12').sugestao, 'aluguel de sala'); assert.strictEqual(sl('B12').historico, 1); assert.ok(!sl('B12').fixa, 'não entra no lote de fixas');
+resposta = body => ({ content: [{ type: 'text', text: JSON.stringify({ sugestoes: [] }) }], usage: { input_tokens: 10, output_tokens: 5 }, stop_reason: 'end_turn', model: 'claude-sonnet-5-5' });
+F.chamadas.length = 0; ok(API.conciliacaoIA({ chave: 'Outubro/2026' }), 'sugerir B13');
+const t8 = F.chamadas[0].body.messages[0].content[0].text;
+assert.ok(/E\d+ · Debora Leidiane Travnik → cadastro: Gustavo Travnik \(pagador habitual\) → decisões anteriores da gestão: 1× conciliado — ligado a Gustavo Travnik/.test(t8), t8.split('PAGADORES')[1].slice(0, 300));
+assert.ok(!/quem pagou: Outro Travnik/.test(t8), 'B12 já tem sugestão pelo histórico');
 console.log('servidor-conciliacao-ia: tudo ok');

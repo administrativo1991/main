@@ -16,6 +16,36 @@ var CONC_SCHEMA = { type: 'object', additionalProperties: false, required: ['sug
 function brl_(n) { return 'R$ ' + Mensagens.valorBR(Math.round((Number(n) || 0) * 100) / 100); }
 // "62.985.207 Luisa Maria" → "Luisa Maria": o PagBank põe pedaço de CPF/CNPJ no nome de quem pagou
 function semDigitos_(t) { return String(t || '').replace(/\d[\d.\-\/]*/g, ' ').replace(/\s+/g, ' ').trim(); }
+// mesmo pagador = mesmo nome sem dígitos, acento e caixa ("62.985.207 Luisa Maria" e "Luisa Maria" são a mesma chave)
+function chavePagador_(t) { return Duplicatas.normalizar(semDigitos_(t)); }
+// o que a gestão já decidiu pra cada pagador, a partir das entradas do extrato já resolvidas (qualquer mês):
+// { chave: { sit: { situação: n }, pacientes: [nomes, dos lançamentos ligados] } }
+function historicoPagadores_(ext, todas) {
+  var out = {}, linhaDe = function (aba, linha) { var t = todas[aba]; return t ? t.linhas.filter(function (l) { return l.linha === linha; })[0] : null; };
+  ext.forEach(function (e) {
+    if (!e.situacao || e.situacao === 'pendente' || !e.quem) return; var k = chavePagador_(e.quem); if (!k) return;
+    var h = out[k] = out[k] || { sit: {}, pacientes: [] }; h.sit[e.situacao] = (h.sit[e.situacao] || 0) + 1;
+    var m, re = /([A-Za-zÇçãé]+)!(\d+)/g; while ((m = re.exec(String(e.ligado || '')))) { var l = linhaDe(m[1], parseInt(m[2], 10)); if (l && h.pacientes.indexOf(l.paciente) < 0) h.pacientes.push(l.paciente); }
+  });
+  return out;
+}
+// pagadores conhecidos das entradas do lote: quem o cadastro diz que paga por quem (pagador habitual, nome no extrato,
+// responsável, o próprio paciente) e o que a gestão já decidiu pra esse pagador
+function concIAPagadores_(c, lote) {
+  var pacs = indicePacientes_(), linhas = [];
+  var bate = function (q, n) { var tq = tokensNome_(q), tn = tokensNome_(n); if (!tq.length || !tn.length) return false; if (Math.min(tq.length, tn.length) < 2) return Duplicatas.normalizar(q) === Duplicatas.normalizar(n); return notaNome_(q, [n]) >= 0.75; };
+  lote.forEach(function (x) {
+    var q = semDigitos_(x.tipo === 'venda' ? x.v.comprador : x.e.quem); if (!q) return;
+    var cad = [];
+    pacs.forEach(function (p) {
+      var como = bate(q, p.nome) ? 'o próprio paciente' : p.pagador && bate(q, p.pagador) ? 'pagador habitual' : p.pagadorExtrato && bate(q, p.pagadorExtrato) ? 'nome no extrato' : p.resp && bate(q, p.resp) ? 'responsável' : '';
+      if (como) cad.push(p.nome + ' (' + como + (/^n/i.test(p.ativo || '') ? ', inativo' : '') + ')');
+    });
+    var h = c.hist[chavePagador_(q)], dec = h ? Object.keys(h.sit).map(function (k) { return h.sit[k] + '× ' + k; }).join(', ') + (h.pacientes.length ? ' — ligado a ' + h.pacientes.slice(0, 6).join(', ') : '') : '';
+    if (cad.length || dec) linhas.push(x.cod + ' · ' + q + (cad.length ? ' → cadastro: ' + cad.slice(0, 6).join('; ') : '') + (dec ? ' → decisões anteriores da gestão: ' + dec : ''));
+  });
+  return linhas;
+}
 function saldoAberto_(r) { return Math.round(((r.pago === 'Parcial' ? r.valor - (r.recebido || 0) : r.valor) || 0) * 100) / 100; }
 
 // candidatos que o modelo pode usar: recebimentos livres de 45 dias antes do mês a 10 depois, mensalidades pagas do mês e do anterior,
@@ -39,6 +69,9 @@ function concIATexto_(c, lote, cand, cod) {
     if (x.tipo === 'venda') t.push(x.cod + ' · ' + fmtData_(x.v.data) + ' · venda no cartão ' + brl_(x.v.bruto) + ' (' + [x.v.forma, x.v.parcelas, x.v.bandeira].filter(Boolean).join(', ') + ')' + (x.v.comprador ? ' · comprador: ' + semDigitos_(x.v.comprador) : ''));
     else t.push(x.cod + ' · ' + fmtData_(x.e.data) + ' · ' + brl_(x.e.valor) + ' · ' + x.e.tipo + ' · quem pagou: ' + (semDigitos_(x.e.quem) || semDigitos_(x.e.desc) || '—'));
   });
+  var pg = concIAPagadores_(c, lote);
+  t.push('', 'PAGADORES CONHECIDOS (o cadastro diz quem paga por quem; as decisões anteriores da gestão pro mesmo pagador valem como regra, acima da semelhança de nomes):');
+  if (pg.length) pg.forEach(function (l) { t.push(l); }); else t.push('(nenhum)');
   t.push('', 'RECEBIMENTOS LANÇADOS NO APP, AINDA NÃO CONCILIADOS (L):');
   cand.L.forEach(function (r) { var nomes = r.nomes.filter(function (n) { return n !== r.paciente; }); t.push(cod.L(r) + ' · paciente ' + r.paciente + (nomes.length ? ' (pagador: ' + nomes.join(' / ') + ')' : '') + ' · sessão ' + r.data + ' · pago ' + r.dataPag + ' · ' + brl_(r.valor) + ' · ' + r.forma + ' · ' + r.profissional); });
   if (!cand.L.length) t.push('(nenhum)');

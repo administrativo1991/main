@@ -331,6 +331,13 @@ function conciliacaoCalc_(chave) {
     if (/^(Renda Fixa|Resgate)|resgate (total )?de cdb/i.test(String(e.desc || '')) || /cl[ií]nica nascente/i.test(Duplicatas.normalizar(e.quem || '') + ' ' + String(e.quem || ''))) { e.sugestao = 'não é paciente'; e.fixa = true; }
     else if (inicio && ymdDate_(e.data) && ymdDate_(e.data) < inicio) { e.sugestao = 'mês anterior ao app'; e.fixa = true; }
   });
+  // decisão anterior da gestão pro mesmo pagador (17/10): se todas as entradas já resolvidas dele tiveram a mesma situação fixa
+  // (aluguel de sala, não é paciente, convênio), sugere a mesma — sem IA, e sem entrar no "Confirmar sugestões fixas"
+  var hist = historicoPagadores_(ext, todas);
+  pend.forEach(function (e) {
+    if (e.sugestao || !/^Pix/.test(e.tipo)) return; var h = hist[chavePagador_(e.quem)]; if (!h) return;
+    var sits = Object.keys(h.sit); if (sits.length === 1 && /^(aluguel de sala|não é paciente|convênio \(fatura\))$/.test(sits[0]) && !h.pacientes.length) { e.sugestao = sits[0]; e.historico = h.sit[sits[0]]; }
+  });
   // 1) Pix: um lançamento, mesmo valor, data de -3 a +3 dias; nome confere = "forte"
   pend.filter(function (e) { return /^Pix/.test(e.tipo); }).forEach(function (e) {
     var c = recs.filter(function (r) { return livre(r) && !r.cartao && Math.abs(r.valor - e.valor) < 0.01 && Math.abs(diasEntre_(r.dataPag, e.data)) <= 3; })
@@ -366,7 +373,7 @@ function conciliacaoCalc_(chave) {
     resumo: { entradas: extMes.length, valorEntradas: soma(extMes, function (e) { return e.valor; }), resolvidas: extMes.length - pend.length, pendentes: pend.length, valorSemLanc: soma(semLanc, function (e) { return e.valor; }), valorSemBanco: soma(semBanco, function (r) { return r.valor; }), taxasCartao: soma(vm, function (v) { return v.taxa; }), temExtrato: ext.length > 0, temVendas: vendas.length > 0 } };
   // a resposta leva a sugestão da IA já conferida (x.ia, em iaConciliacaoAnexar_), não o JSON cru da coluna
   var sugIA = {}; ext.forEach(function (e) { if (e.sugIA) sugIA['ext:' + e.id] = e.sugIA; delete e.sugIA; }); vendas.forEach(function (v) { if (v.sugIA) sugIA['venda:' + v.id] = v.sugIA; delete v.sugIA; });
-  return { ok: true, resp: resp, ini: ini, fim: fim, recs: recs, livre: livre, todas: todas, inicio: inicio, sugIA: sugIA };
+  return { ok: true, resp: resp, ini: ini, fim: fim, recs: recs, livre: livre, todas: todas, inicio: inicio, sugIA: sugIA, hist: hist };
 }
 // confirma ligações e classificações: [{ tipo: 'ext'|'venda', id, situacao, recs: [{aba, linha, id}], obs, deposito }]
 API.conciliar = function (d) {
