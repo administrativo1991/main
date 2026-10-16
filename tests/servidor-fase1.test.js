@@ -224,4 +224,21 @@ assert.ok(lote.resultados[0].ok && lote.resultados[0].pago === 'Sim'); assert.ok
 assert.strictEqual(ok(API.registrarLote({ itens: [{ paciente: 'Lays Teste', profissional: 'Giovana Grossi', data: '15/10/2026', hora: '11:00', procedimento: 'Sessão de psicologia', oque: 'Atendido', recebeu: 'Sim', valor: '25', forma: 'Pix' }] }), 'lote repetido').resultados[0].repetido, true, 'a trava de repetido vale no lote');
 assert.strictEqual(API.registrarLote({ itens: [] }).ok, false);
 console.log('lançar o dia em lote ok');
+// Fase 2 · Ficha do paciente
+assert.strictEqual(API.fichaPaciente({ nome: 'Ninguém Assim' }).ok, false);
+const fj = ok(API.fichaPaciente({ nome: 'Julia Teste' }), 'ficha julia');
+assert.strictEqual(fj.paciente.nome, 'Julia Teste'); assert.strictEqual(fj.paciente.pagador, 'Bruno');
+assert.ok(fj.cobrancas.length >= 2 && fj.cobrancas.some(c => c.vigente) && fj.cobrancas.some(c => !c.vigente), 'vigente (até 31/10) e a que começa em 01/11');
+assert.deepStrictEqual(fj.fixos.map(x => x.dia + ' ' + x.hora), ['Quinta 10:00']);
+assert.ok(fj.proximos.length >= 2 && fj.proximos.every(x => x.profissional === 'Juliana Ribeiro'), 'quintas dos próximos 14 dias');
+const ymd = t => t.split('/').reverse().join(''); assert.ok(fj.sessoes.length >= 4 && fj.sessoes.every((x, i, a) => !i || ymd(a[i - 1].data) >= ymd(x.data)), 'mais recentes primeiro');
+assert.ok(fj.sessoes.every(x => x.paciente === 'Julia Teste') && fj.sessoes.some(x => x.id === 'O1'));
+assert.ok(fj.aberto.every(x => ['receber', 'guia', 'nf'].includes(x.tipo)));
+assert.ok(Array.isArray(fj.mensal) && Array.isArray(fj.mensagens) && Array.isArray(fj.alteracoes));
+const fc = ok(API.fichaPaciente({ nome: 'Carlos Ant' }), 'ficha carlos');
+assert.ok(fc.mensagens.some(m => m.tipo === 'Cobrança mensalidade' && m.competencia === 'Dezembro/2026'), 'cobrança mandada aparece na ficha');
+assert.ok(fc.alteracoes.some(a => a.campo === 'WhatsApp do pagador'), 'WhatsApp salvo aparece nas alterações');
+assert.strictEqual(fc.paciente.fone, '5532988776655');
+assert.ok(fc.mensal.some(m => m.chave === 'Outubro/2026'), 'competências do antecipado');
+console.log('ficha do paciente ok');
 console.log('servidor-fase1.test.js ok');

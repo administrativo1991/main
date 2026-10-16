@@ -15,7 +15,7 @@ Arquivo de retomada da Fase 2 (começou em 15/10/2026, à noite). Quem abrir um 
 | 1b | **Cobrar no WhatsApp** (Cobrança do mês, textos oficiais) | **real** (14) |
 | 2 | **Lançar o dia em lote** (Meu dia) | **real** (16) |
 | 3 | Carga de telefones do ControleOdonto | em andamento: 14 gravados na real (16/10); faltam as outras páginas |
-| 4 | Ficha do paciente | a fazer |
+| 4 | **Ficha do paciente** | feito · teste |
 | 5 | Perdas → Parcelas → Conciliação | a fazer |
 | 6 | Alertas (avisos dentro da Ficha e da Agenda, não tela própria) | a fazer |
 
@@ -148,4 +148,19 @@ pagador), só onde estava vazio, formato "(32) 9 9999-9999"; log em `Alteraçõe
 Amaral, Amanda Calichio); 2 com DDD "00" no ControleOdonto (Aleff, Alexsandra); Alice Oliveira já tinha WhatsApp.
 Próximo: a gestão exporta as outras páginas (mesmo de 20 em 20); o cruzamento e a gravação se repetem igual.
 O app relê o cadastro em até 5 min (cache).
+
+## 4. Ficha do paciente
+
+**O que é**: tela só de leitura com tudo de um paciente (`API.fichaPaciente`, `app/client/js/32-ficha.js`): cabeçalho
+(idade, convênio, CPF final, quem paga com o WhatsApp clicável, responsável, observação de cobrança), resumo (a receber,
+guias a assinar, última vez, atendimentos, faltas), **Em aberto** (a receber, guia a assinar, NF a emitir: mesma regra das
+pendências da Agenda), **Sessões** das abas de mês (mais recentes primeiro, até 80), **Próximos 14 dias** (como na Agenda:
+confirmado, não vem, registrado) e horário fixo, **Cobrança por profissional** (a que vale hoje e as encerradas/futuras),
+**Mensalidade/antecipado** (mês anterior, atual e próximo, com a situação), **Mensagens de WhatsApp** (confirmações e
+cobranças mandadas) e **Alterações de cadastro**. Botões: Registrar atendimento, Editar cadastro, Cobrança do mês.
+
+**Por onde abre**: Pacientes → **Ficha** (terceiro botão, com busca própria); painel da Agenda → **Ver ficha**; Registrar →
+**Ficha**; Cobrança do mês → clique no nome. Não está no menu lateral (a gestão pode pedir).
+
+**Testado**: `tests/servidor-fase1.test.js` (bloco "ficha do paciente"); simulação 1280/390 px pelos 3 caminhos, sem erro.
 

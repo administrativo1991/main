@@ -439,3 +439,4 @@ $("#r-salvar").addEventListener('click', function () {
   salvarRec(d);
 });
 function salvarRec(d) { $("#r-salvar").disabled = true; call('salvarAgendaFixa', d).then(function (r) { if (!r.ok) return toast((r.erros || ['Não gravou']).join(' ')); toast('Recorrência salva'); limparRec(); carregarRec(); carregarDia(); }).catch(function (e) { toast('Erro: ' + e.message); }).finally(function () { $("#r-salvar").disabled = false; }); }
+$("#pp-ficha").addEventListener('click', function () { var it = itemSelecionado(); if (it) go('ficha', { nome: it.paciente }); });

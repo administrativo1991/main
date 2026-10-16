@@ -638,3 +638,15 @@ table.cm .acoes{justify-content:flex-end;gap:4px;flex-wrap:wrap}
 .ld-extra .ld-det{flex:1 1 220px}
 @media (max-width:900px){.ld-item{grid-template-columns:1fr}}
 
+/* Ficha do paciente (Fase 2) */
+.fi-topo{display:flex;flex-wrap:wrap;align-items:flex-start;gap:10px 16px}
+.fi-contatos{display:flex;flex-direction:column;gap:6px;font-size:14px}
+.fi-contatos .muted{margin-right:4px}
+.fi-off{opacity:.6}
+.fi-tab,table.fi-tab{width:100%;border-collapse:collapse;font-size:13px;min-width:0}
+.fi-tab th{text-align:left;font-size:12px;color:var(--tx2);padding:6px 8px;border-bottom:1px solid var(--borda)}
+.fi-tab td{padding:7px 8px;border-bottom:1px solid var(--borda);vertical-align:top}
+.fi-tab tr.apagada td{color:var(--tx2)}
+.fi-tab .sub{font-size:12px;color:var(--tx3)}
+@media (max-width:900px){.md-grid{grid-template-columns:1fr}}
+

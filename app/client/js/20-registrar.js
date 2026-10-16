@@ -69,7 +69,7 @@ function cartaoPaciente() {
   $("#a-pc-conv").textContent = p ? (p.convenio || 'Particular') : '—';
   $("#a-pc-pag").textContent = p ? (p.pagador || p.nome) : '—';
   $("#a-pc-linhas").innerHTML = p ? (linhasDe(p.nome).map(function (l) { return '<div>' + esc(Cobranca.resumoLinha(l)) + '</div>'; }).join('') || '<div class="muted">sem cobrança cadastrada · cobra pela tabela</div>') : '';
-  $("#a-editcad").hidden = !p; $("#a-hist").hidden = !p;
+  $("#a-editcad").hidden = !p; $("#a-hist").hidden = !p; $("#a-ficha").hidden = !p;
 }
 // o bloco: tudo o que a recepção precisa saber antes de qualquer campo de dinheiro
 function aplicarBloco() {
@@ -211,5 +211,6 @@ $("#a-salvar-outro").addEventListener('click', function () { salvarAt(false); })
 $("#a-novo").addEventListener('click', function () { go('pacientes', { novo: true, voltar: 'registrar', nome: pacInfo($("#a-pac").value.trim()) ? '' : $("#a-pac").value.trim() }); });
 $("#a-editcad").addEventListener('click', function () { if (!cur) return; go('pacientes', { editar: cur.nome, voltar: 'registrar' }); });
 $("#a-hist").addEventListener('click', function () { if (!cur) return; go('cobranca', { buscar: cur.nome }); });
+$("#a-ficha").addEventListener('click', function () { if (!cur) return; go('ficha', { nome: cur.nome }); });
 ["a-forma", "a-nfn", "a-obs", "a-quem", "a-detalhe"].forEach(function (id) { $("#" + id).addEventListener('input', atualizarPreview); });
 CAMPOS_AT.forEach(function (id) { $("#" + id).addEventListener('input', salvarRascunhoAt); $("#" + id).addEventListener('change', salvarRascunhoAt); });

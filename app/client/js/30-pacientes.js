@@ -41,7 +41,7 @@ function setModo(m) {
   else { $("#p-form").hidden = !cadDados; $("#c-pac").focus(); }
   $("#p-cpp-card").hidden = !edit || !cadDados;
 }
-$$("#p-modo button").forEach(function (b) { b.addEventListener('click', function () { setModo(b.dataset.v); }); });
+$$("#p-modo button").forEach(function (b) { b.addEventListener('click', function () { if (b.dataset.v === 'ficha') { seg($("#p-modo"), pModo); go('ficha', { nome: pModo === 'editar' && cadNome ? cadNome : '' }); return; } setModo(b.dataset.v); }); });
 $("#n-prof").addEventListener('change', salvarRascunhoN);
 $("#n-conv").addEventListener('change', function () { $("#l-cart").hidden = this.value === 'Particular' || !this.value; salvarRascunhoN(); });
 

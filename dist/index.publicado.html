@@ -628,6 +628,17 @@ table.cm .acoes{justify-content:flex-end;gap:4px;flex-wrap:wrap}
 .ld-extra input,.ld-extra select{min-height:32px;padding:4px 8px;font-size:13px}
 .ld-extra .ld-det{flex:1 1 220px}
 @media (max-width:900px){.ld-item{grid-template-columns:1fr}}
+/* Ficha do paciente (Fase 2) */
+.fi-topo{display:flex;flex-wrap:wrap;align-items:flex-start;gap:10px 16px}
+.fi-contatos{display:flex;flex-direction:column;gap:6px;font-size:14px}
+.fi-contatos .muted{margin-right:4px}
+.fi-off{opacity:.6}
+.fi-tab,table.fi-tab{width:100%;border-collapse:collapse;font-size:13px;min-width:0}
+.fi-tab th{text-align:left;font-size:12px;color:var(--tx2);padding:6px 8px;border-bottom:1px solid var(--borda)}
+.fi-tab td{padding:7px 8px;border-bottom:1px solid var(--borda);vertical-align:top}
+.fi-tab tr.apagada td{color:var(--tx2)}
+.fi-tab .sub{font-size:12px;color:var(--tx3)}
+@media (max-width:900px){.md-grid{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
@@ -804,7 +815,7 @@ table.cm .acoes{justify-content:flex-end;gap:4px;flex-wrap:wrap}
 <div id="pp-pac" hidden>
 <div class="pp-cab">
 <span class="pp-av" id="pp-av">A</span>
-<div class="pp-quem"><div class="pp-nome" id="pp-nome"></div><div class="muted" id="pp-sub"></div></div>
+<div class="pp-quem"><div class="pp-nome" id="pp-nome"></div><div class="muted" id="pp-sub"></div><button type="button" class="btn link mini no-print" id="pp-ficha" style="padding:0;min-height:0">Ver ficha</button></div>
 <button type="button" class="btn icone p" id="pp-fechar" aria-label="Fechar"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
 </div>
 <dl class="pp-dl" id="pp-dl"></dl>
@@ -936,7 +947,7 @@ table.cm .acoes{justify-content:flex-end;gap:4px;flex-wrap:wrap}
 <div><dt class="muted">Convênio</dt><dd style="margin:0;font-weight:700" id="a-pc-conv">—</dd></div>
 </dl>
 <details id="a-pc-cad"><summary class="muted" style="cursor:pointer;font-size:13px;font-weight:700">Cobrança no cadastro</summary><div id="a-pc-linhas" style="font-size:13px;line-height:1.6;margin-top:6px"></div></details>
-<div style="display:flex;gap:14px;font-size:13px;font-weight:700"><button type="button" class="btn link" id="a-editcad" style="padding:0;min-height:0">Ver cadastro</button><button type="button" class="btn link" id="a-hist" style="padding:0;min-height:0">Cobrança do mês</button></div>
+<div style="display:flex;gap:14px;font-size:13px;font-weight:700"><button type="button" class="btn link" id="a-editcad" style="padding:0;min-height:0">Ver cadastro</button><button type="button" class="btn link" id="a-hist" style="padding:0;min-height:0">Cobrança do mês</button><button type="button" class="btn link" id="a-ficha" style="padding:0;min-height:0">Ficha</button></div>
 </div>
 <div class="card compacto">
 <div class="eyebrow">Vai ser gravado</div>
@@ -952,7 +963,7 @@ table.cm .acoes{justify-content:flex-end;gap:4px;flex-wrap:wrap}
 <section class="tela" id="s-pacientes" hidden>
 <form class="principal" id="f-pac" novalidate>
 <div class="titulo" style="gap:12px">
-<div class="seg" style="width:auto" id="p-modo"><button type="button" data-v="novo" aria-pressed="true">Novo paciente</button><button type="button" data-v="editar" aria-pressed="false">Buscar / editar cadastro</button></div>
+<div class="seg" style="width:auto" id="p-modo"><button type="button" data-v="novo" aria-pressed="true">Novo paciente</button><button type="button" data-v="editar" aria-pressed="false">Buscar / editar cadastro</button><button type="button" data-v="ficha" aria-pressed="false">Ficha</button></div>
 <span class="esp"></span>
 <span class="muted so-pc">Depois daqui: cadastrar no ControleOdonto (agenda e prontuário).</span>
 </div>
@@ -1045,6 +1056,37 @@ table.cm .acoes{justify-content:flex-end;gap:4px;flex-wrap:wrap}
 <button type="button" class="btn ter grande" id="p-so-salvar">Só cadastrar</button>
 <button type="button" class="btn grande" id="p-salvar">Salvar e registrar atendimento <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
 </footer>
+<section class="tela coluna" id="s-ficha" hidden>
+<div class="titulo no-print">
+<h1>Ficha do paciente</h1>
+<div class="campo-wrap combo" style="flex:1 1 320px;max-width:520px"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg><input id="fi-busca" placeholder="Buscar paciente (nome ou pagador)" aria-label="Buscar paciente" autocomplete="off"></div>
+<span class="esp"></span>
+<button type="button" class="btn ter imprimir so-pc"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9V3h12v6"/><rect x="3" y="9" width="18" height="9" rx="2"/><path d="M6 14h12v7H6z"/></svg>Imprimir</button>
+</div>
+<div id="fi-vazio" class="card compacto"><div class="muted">Escolha um paciente acima. A ficha mostra numa tela só: contatos, cobrança por profissional, horários, o que está em aberto, sessões e mensagens.</div></div>
+<div id="fi-carregando" class="carregando esqueleto" hidden><div></div><div></div></div>
+<div id="fi-corpo" hidden style="display:flex;flex-direction:column;gap:16px">
+<section class="card compacto fi-cab">
+<div class="fi-topo"><div><h2 id="fi-nome" style="font-size:20px"></h2><div class="muted" id="fi-sub"></div></div><span class="esp"></span><div class="acoes no-print" id="fi-acoes"></div></div>
+<div class="fi-contatos" id="fi-contatos"></div>
+<div id="fi-obs"></div>
+</section>
+<div class="fd-resumo" id="fi-resumo"></div>
+<div class="md-grid">
+<div>
+<section class="card compacto"><div class="passo" style="padding:0"><h2 style="font-size:15px">Em aberto</h2><span class="tag amarela" id="fi-n-aberto">0</span></div><div class="fd-lista" id="fi-aberto"></div></section>
+<section class="card compacto"><div class="passo" style="padding:0"><h2 style="font-size:15px">Sessões</h2><span class="muted" id="fi-n-sessoes"></span></div><div class="tabela-wrap"><table class="fi-tab"><thead><tr><th>Data</th><th>Profissional</th><th>Aconteceu · pagamento</th></tr></thead><tbody id="fi-sessoes"></tbody></table></div></section>
+</div>
+<div>
+<section class="card compacto"><div class="passo" style="padding:0"><h2 style="font-size:15px">Próximos 14 dias</h2></div><div class="fd-lista" id="fi-proximos"></div><div class="muted" id="fi-fixos"></div></section>
+<section class="card compacto"><div class="passo" style="padding:0"><h2 style="font-size:15px">Cobrança por profissional</h2></div><div class="fd-lista" id="fi-cobrancas"></div></section>
+<section class="card compacto" id="fi-mensal-card"><div class="passo" style="padding:0"><h2 style="font-size:15px">Mensalidade / antecipado</h2></div><div class="fd-lista" id="fi-mensal"></div></section>
+<section class="card compacto"><div class="passo" style="padding:0"><h2 style="font-size:15px">Mensagens de WhatsApp</h2></div><div class="fd-lista" id="fi-msgs"></div></section>
+<section class="card compacto"><div class="passo" style="padding:0"><h2 style="font-size:15px">Alterações de cadastro</h2></div><div class="fd-lista" id="fi-alts"></div></section>
+</div>
+</div>
+</div>
+</section>
 <section class="tela coluna" id="s-cobranca" hidden>
 <div class="titulo">
 <h1>Cobrança do mês</h1>
@@ -1470,8 +1512,8 @@ if (amplo && !c.quemInformou) e.push('Mudou dados da sessão ou valores: preench
 if (!Object.keys(c).filter(function (k) { return k !== 'quemInformou'; }).length) e.push('Nada pra corrigir: mude algum campo ou escreva na observação.');
 return e;
 }
-var TELAS = { hoje: 's-hoje', confirmar: 's-confirmar', registrar: 's-registrar', pacientes: 's-pacientes', cobranca: 's-cobranca', meudia: 's-meudia', gestao: 's-gestao', repasse: 's-repasse' };
-var TITULOS = { hoje: 'Agenda', confirmar: 'Confirmações', registrar: 'Registrar atendimento', pacientes: 'Pacientes', cobranca: 'Cobrança do mês', meudia: 'Meu dia', gestao: 'Pendências', repasse: 'Repasse' };
+var TELAS = { hoje: 's-hoje', confirmar: 's-confirmar', ficha: 's-ficha', registrar: 's-registrar', pacientes: 's-pacientes', cobranca: 's-cobranca', meudia: 's-meudia', gestao: 's-gestao', repasse: 's-repasse' };
+var TITULOS = { hoje: 'Agenda', confirmar: 'Confirmações', ficha: 'Ficha do paciente', registrar: 'Registrar atendimento', pacientes: 'Pacientes', cobranca: 'Cobrança do mês', meudia: 'Meu dia', gestao: 'Pendências', repasse: 'Repasse' };
 var SO_GESTAO = { gestao: true, repasse: true };
 var telaAtual = 'hoje', navGen = 0;
 var INICIAR = {};
@@ -1981,6 +2023,7 @@ d.encerrarAnterior = $("#r-apartir").checked;
 salvarRec(d);
 });
 function salvarRec(d) { $("#r-salvar").disabled = true; call('salvarAgendaFixa', d).then(function (r) { if (!r.ok) return toast((r.erros || ['Não gravou']).join(' ')); toast('Recorrência salva'); limparRec(); carregarRec(); carregarDia(); }).catch(function (e) { toast('Erro: ' + e.message); }).finally(function () { $("#r-salvar").disabled = false; }); }
+$("#pp-ficha").addEventListener('click', function () { var it = itemSelecionado(); if (it) go('ficha', { nome: it.paciente }); });
 /* ===== 12-confirmar.js ===== */
 /* ================= CONFIRMAÇÕES — WhatsApp (Fase 2, 15/10) =================
 A recepção escolhe o período (amanhã, daqui a 2 dias, a semana), vê as sessões agrupadas por pagador e abre o WhatsApp
@@ -2426,7 +2469,7 @@ $("#a-pc-nasc").textContent = p && p.nasc ? (idade(p.nasc) ? idade(p.nasc) + ' �
 $("#a-pc-conv").textContent = p ? (p.convenio || 'Particular') : '—';
 $("#a-pc-pag").textContent = p ? (p.pagador || p.nome) : '—';
 $("#a-pc-linhas").innerHTML = p ? (linhasDe(p.nome).map(function (l) { return '<div>' + esc(Cobranca.resumoLinha(l)) + '</div>'; }).join('') || '<div class="muted">sem cobrança cadastrada · cobra pela tabela</div>') : '';
-$("#a-editcad").hidden = !p; $("#a-hist").hidden = !p;
+$("#a-editcad").hidden = !p; $("#a-hist").hidden = !p; $("#a-ficha").hidden = !p;
 }
 // o bloco: tudo o que a recepção precisa saber antes de qualquer campo de dinheiro
 function aplicarBloco() {
@@ -2568,6 +2611,7 @@ $("#a-salvar-outro").addEventListener('click', function () { salvarAt(false); })
 $("#a-novo").addEventListener('click', function () { go('pacientes', { novo: true, voltar: 'registrar', nome: pacInfo($("#a-pac").value.trim()) ? '' : $("#a-pac").value.trim() }); });
 $("#a-editcad").addEventListener('click', function () { if (!cur) return; go('pacientes', { editar: cur.nome, voltar: 'registrar' }); });
 $("#a-hist").addEventListener('click', function () { if (!cur) return; go('cobranca', { buscar: cur.nome }); });
+$("#a-ficha").addEventListener('click', function () { if (!cur) return; go('ficha', { nome: cur.nome }); });
 ["a-forma", "a-nfn", "a-obs", "a-quem", "a-detalhe"].forEach(function (id) { $("#" + id).addEventListener('input', atualizarPreview); });
 CAMPOS_AT.forEach(function (id) { $("#" + id).addEventListener('input', salvarRascunhoAt); $("#" + id).addEventListener('change', salvarRascunhoAt); });
 /* ===== 30-pacientes.js ===== */
@@ -2613,7 +2657,7 @@ if (!edit) { cadDados = null; cadNome = ''; limparFormN(false); $("#p-form").hid
 else { $("#p-form").hidden = !cadDados; $("#c-pac").focus(); }
 $("#p-cpp-card").hidden = !edit || !cadDados;
 }
-$$("#p-modo button").forEach(function (b) { b.addEventListener('click', function () { setModo(b.dataset.v); }); });
+$$("#p-modo button").forEach(function (b) { b.addEventListener('click', function () { if (b.dataset.v === 'ficha') { seg($("#p-modo"), pModo); go('ficha', { nome: pModo === 'editar' && cadNome ? cadNome : '' }); return; } setModo(b.dataset.v); }); });
 $("#n-prof").addEventListener('change', salvarRascunhoN);
 $("#n-conv").addEventListener('change', function () { $("#l-cart").hidden = this.value === 'Particular' || !this.value; salvarRascunhoN(); });
 /* ---------- Cobrança por profissional (Fase 1, 15/10): recepção lê; gestão inclui/edita linhas ---------- */
@@ -2883,6 +2927,64 @@ $("#f-pac").addEventListener('submit', function (e) { e.preventDefault(); if (pM
 $("#p-salvar").addEventListener('click', function () { if (pModo === 'editar') salvarEdicao(); else salvarNovo(false, true); });
 $("#p-so-salvar").addEventListener('click', function () { salvarNovo(false, false); });
 $("#p-cancelar").addEventListener('click', function () { if (pVoltar) { var v = pVoltar; pVoltar = null; go(v); return; } if (pModo === 'editar') { $("#c-pac").value = ''; cadDados = null; $("#p-form").hidden = true; } else limparFormN(true); });
+/* ===== 32-ficha.js ===== */
+/* ================= FICHA DO PACIENTE (Fase 2, 16/10) =================
+Tudo de um paciente numa tela, só leitura (API.fichaPaciente): contatos e WhatsApp, cobrança por profissional, horários
+fixos e próximos 14 dias, o que está em aberto (a receber, guias, NF), mensalidade/antecipado, sessões das abas de mês,
+mensagens de WhatsApp e alterações de cadastro. Abre pela busca daqui, por Pacientes → Ficha, pelo painel da Agenda,
+pelo Registrar e pela Cobrança do mês. Editar continua em Pacientes; registrar, no Registrar. */
+var FI = null, fiNome = '', fiGen = 0, fiComboOk = false;
+INICIAR.ficha = function (extra) {
+if (!fiComboOk) { fiComboOk = true; comboPacientes($("#fi-busca"), function () { abrirFicha($("#fi-busca").value.trim()); }); }
+if (extra && extra.nome) { $("#fi-busca").value = extra.nome; abrirFicha(extra.nome); }
+else if (!fiNome) { $("#fi-vazio").hidden = false; $("#fi-corpo").hidden = true; setTimeout(function () { $("#fi-busca").focus(); }, 50); }
+};
+function abrirFicha(nome) {
+if (!nome) return; fiNome = nome; var gen = ++fiGen;
+$("#fi-vazio").hidden = true; $("#fi-corpo").hidden = true; $("#fi-carregando").hidden = false;
+call('fichaPaciente', { nome: nome }).then(function (r) {
+if (!aindaNa('ficha', navGen) || gen !== fiGen) return;
+$("#fi-carregando").hidden = true;
+if (!r.ok) { $("#fi-vazio").hidden = false; $("#fi-vazio").innerHTML = erroBox(r.erros || ['Não encontrei.'], 'Ficha'); return; }
+FI = r; renderFicha();
+}).catch(function (e) { if (gen !== fiGen) return; $("#fi-carregando").hidden = true; $("#fi-vazio").hidden = false; $("#fi-vazio").textContent = 'Não consegui carregar: ' + e.message; });
+}
+function fiItem(esq, dir, tag) { return '<div class="fd-item">' + esq + '<span class="esp"></span>' + (tag || '') + (dir || '') + '</div>'; }
+function fiLista(id, itens, html, vazio) { $("#" + id).innerHTML = itens.length ? itens.map(html).join('') : '<div class="muted">' + vazio + '</div>'; }
+function renderFicha() {
+var r = FI, p = r.paciente, rs = function (n) { return brlCurto(n || 0); };
+$("#fi-nome").textContent = p.nome; document.title = p.nome + ' · Ficha';
+var sub = []; if (p.nasc) { var i = idade(p.nasc); sub.push((i ? i + ' · ' : '') + 'nasc. ' + p.nasc); } sub.push(p.convenio || 'Particular'); if (/^n/i.test(p.ativo || 'Sim')) sub.push('INATIVO'); if (p.cpfFinal) sub.push('CPF ···' + p.cpfFinal);
+$("#fi-sub").textContent = sub.join(' · ');
+var zap = p.fone ? '<a class="btn sec mini" target="_blank" rel="noopener" href="' + esc(Mensagens.linkWhats(p.fone, '')) + '">' + ic('send', 13, 2.4) + ' ' + esc(p.foneFmt) + '</a>' + (p.foneDe !== 'pagador' ? ' <span class="muted">(telefone do ' + esc(p.foneDe) + ')</span>' : '') : '<span class="tag laranja">sem WhatsApp</span>';
+$("#fi-contatos").innerHTML = '<div><span class="muted">Quem paga</span> <b>' + esc(p.pagador || p.nome) + '</b> · ' + zap + '</div>' + (p.resp ? '<div><span class="muted">Responsável</span> ' + esc(p.resp + (p.respPar ? ' (' + p.respPar + ')' : '')) + (p.respTel ? ' · ' + esc(p.respTel) : '') + '</div>' : '') + (p.telPac ? '<div><span class="muted">Telefone do paciente</span> ' + esc(p.telPac) + '</div>' : '');
+$("#fi-obs").innerHTML = p.obsCobranca ? '<div class="faixa nota">' + esc(p.obsCobranca) + '</div>' : '';
+var ac = $("#fi-acoes"); ac.innerHTML = '';
+[['Registrar atendimento', function () { go('registrar', { paciente: p.nome }); }, 'btn mini'], ['Editar cadastro', function () { go('pacientes', { editar: p.nome, voltar: 'ficha' }); }, 'btn ter mini'], ['Cobrança do mês', function () { go('cobranca', { buscar: p.nome }); }, 'btn ter mini']].forEach(function (x) { var b = el('<button type="button" class="' + x[2] + '">' + esc(x[0]) + '</button>'); b.addEventListener('click', x[1]); ac.appendChild(b); });
+// resumo
+var receber = r.aberto.filter(function (x) { return x.tipo === 'receber'; }), totR = receber.reduce(function (a, x) { return a + (x.r.saldo || 0); }, 0);
+var atend = r.sessoes.filter(function (x) { return /^Atendido/.test(x.oque); }).length, faltas = r.sessoes.filter(function (x) { return /^(Faltou|Desmarcou)/.test(x.oque); }).length;
+$("#fi-resumo").innerHTML = '<div class="' + (totR ? 'atencao' : '') + '"><b>' + esc(rs(totR)) + '</b><span>a receber</span></div><div><b>' + r.aberto.filter(function (x) { return x.tipo === 'guia'; }).length + '</b><span>guias a assinar</span></div><div><b>' + (r.ultimaVez ? esc(r.ultimaVez.data.slice(0, 5)) : '—') + '</b><span>última vez' + (r.ultimaVez ? ' · ' + esc(profCurto(r.ultimaVez.profissional)) : '') + '</span></div><div><b>' + atend + '</b><span>atendimentos (abas de mês)</span></div><div><b>' + faltas + '</b><span>faltas e desmarcações</span></div>';
+// em aberto
+var rot = { receber: ['a receber', 'amarela'], guia: ['guia a assinar', 'lilas'], nf: ['NF a emitir', 'laranja'] };
+$("#fi-n-aberto").textContent = r.aberto.length;
+fiLista('fi-aberto', r.aberto, function (x) { return fiItem('<span class="quem">' + esc(x.r.data.slice(0, 5)) + '</span><span class="muted">' + esc(profCurto(x.r.profissional) + ' · ' + (x.r.procedimento || '')) + '</span>', x.tipo !== 'guia' && x.r.saldo ? '<b>' + esc(rs(x.tipo === 'nf' ? x.r.valor : x.r.saldo)) + '</b>' : '', '<span class="tag ' + rot[x.tipo][1] + '">' + rot[x.tipo][0] + '</span>'); }, 'Nada em aberto.');
+// sessões
+$("#fi-n-sessoes").textContent = r.totalSessoes > r.sessoes.length ? 'as ' + r.sessoes.length + ' mais recentes de ' + r.totalSessoes : r.totalSessoes + ' no ano';
+$("#fi-sessoes").innerHTML = r.sessoes.length ? r.sessoes.map(function (x) { var falta = !/^Atendido/.test(x.oque); return '<tr' + (falta ? ' class="apagada"' : '') + '><td>' + esc(x.data.slice(0, 5) + (x.hora ? ' ' + x.hora : '')) + '</td><td>' + esc(profCurto(x.profissional)) + '<div class="sub">' + esc(x.procedimento) + '</div></td><td>' + esc(x.oque.split(' (')[0]) + (x.decisao ? ' · gestão: ' + esc(x.decisao) : '') + '<div class="sub">' + esc((x.valor ? rs(x.valor) + ' · ' : '') + (x.pago || 'Pago? vazio') + (x.pago === 'Parcial' ? ' · falta ' + rs(x.saldo) : '')) + '</div></td></tr>'; }).join('') : '<tr><td colspan="3" class="muted">Nenhuma sessão nas abas de mês.</td></tr>';
+// próximos e horários fixos
+fiLista('fi-proximos', r.proximos, function (x) { var st = x.registrado ? '<span class="tag verde">' + esc(x.registrado.split(' (')[0]) + '</span>' : x.naoVem ? '<span class="tag vermelha">não vem</span>' : x.confirmado ? '<span class="tag verde">confirmado</span>' : '<span class="tag cinza">a confirmar</span>'; return fiItem('<span class="quem">' + esc(x.diaSemana.slice(0, 3).toLowerCase() + ' ' + x.data.slice(0, 5) + (x.hora ? ' · ' + x.hora : '')) + '</span><span class="muted">' + esc(profCurto(x.profissional) + (x.tipo ? ' · ' + x.tipo.toLowerCase() : '')) + '</span>', '', st); }, 'Nada agendado nos próximos 14 dias.');
+$("#fi-fixos").textContent = r.fixos.length ? 'Horário fixo: ' + r.fixos.map(function (x) { return x.dia.toLowerCase() + ' ' + x.hora + ' com ' + profCurto(x.profissional) + (/quinzen/i.test(x.frequencia) ? ' (quinzenal)' : '') + (x.tipo ? ' · ' + x.tipo.toLowerCase() : ''); }).join(' · ') : 'Sem horário fixo.';
+// cobrança por profissional
+fiLista('fi-cobrancas', r.cobrancas.slice().sort(function (a, b) { return (b.vigente ? 1 : 0) - (a.vigente ? 1 : 0); }), function (x) { return '<div class="fd-item' + (x.vigente ? '' : ' fi-off') + '"><span>' + esc(x.resumo) + (x.obs ? '<div class="sub">' + esc(x.obs) + '</div>' : '') + '</span><span class="esp"></span>' + (x.vigente ? '<span class="tag verde">vale hoje</span>' : '<span class="tag cinza">' + esc(!/^s/i.test(x.ativo || 'Sim') ? 'inativa' : x.desde ? 'a partir de ' + x.desde : x.ate ? 'até ' + x.ate : 'não vale hoje') + '</span>') + '</div>'; }, 'Sem cobrança cadastrada: cobra pela tabela. Avise a gestão.');
+// mensalidade / antecipado
+$("#fi-mensal-card").hidden = !r.mensal.length;
+fiLista('fi-mensal', r.mensal, function (x) { return fiItem('<span class="quem">' + esc(x.chave) + '</span><span class="muted">' + esc(profCurto(x.profissional)) + '</span>', x.pago ? '<span class="muted">' + esc((x.data || '') + (x.forma ? ' · ' + x.forma : '')) + '</span>' : '', '<span class="tag ' + (COR_FAIXA[x.cor] || 'cinza') + '">' + esc(x.situacao) + '</span>'); }, '');
+// mensagens e alterações
+fiLista('fi-msgs', r.mensagens, function (x) { return fiItem('<span class="quem">' + esc(String(x.quando).slice(0, 16)) + '</span><span class="muted">' + esc(x.tipo + (x.sessao ? ' · sessão ' + String(x.sessao).slice(0, 5) : '') + (x.competencia ? ' · ' + x.competencia : '') + (x.valor ? ' · ' + rs(x.valor) : '')) + '</span>', '<span class="muted">' + esc(x.por) + '</span>'); }, 'Nenhuma mensagem pelo app ainda.');
+fiLista('fi-alts', r.alteracoes, function (x) { return '<div class="fd-item"><span class="quem">' + esc(String(x.quando).slice(0, 10)) + '</span><span>' + esc(x.campo) + ': <span class="muted">' + esc(x.de || '(vazio)') + '</span> → <b>' + esc(x.para) + '</b><div class="sub">' + esc(x.quem) + '</div></span></div>'; }, 'Nenhuma alteração registrada.');
+$("#fi-corpo").hidden = false;
+}
 /* ===== 40-cobranca-mes.js ===== */
 /* ================= COBRANÇA DO MÊS (Fase 1, 15/10: substitui a tela Pacotes) =================
 Uma linha por paciente × profissional com Mensalidade fixa, Antecipado (valor × sessões agendadas) ou Fim do mês (Posterior).
@@ -2933,10 +3035,11 @@ var pg = it.pago === 'Sim' ? 'pago' + (it.data ? ' em ' + esc(it.data) : '') + (
 var acao = it.pagamento === 'Posterior' ? (it.aReceber > 0 ? '<button type="button" class="btn mini" data-pg>Receber o mês</button>' : '') : '<button type="button" class="btn' + (it.pago === 'Sim' ? ' ter' : '') + ' mini" data-pg>' + (it.pago === 'Sim' ? 'Outro pagamento' : 'Registrar pagamento') + '</button>';
 if (ehGestao() && it.cobranca !== 'Mensalidade fixa' && it.pagamento !== 'Posterior') acao += '<button type="button" class="btn link mini" data-ed>Editar sessões</button>';
 acao += botaoCobrarCM(it);
-var tr = el('<tr><td class="td-pac">' + esc(it.paciente) + '<div class="sub">' + esc(it.pagador && it.pagador !== it.paciente ? 'pagador: ' + it.pagador : '') + '</div></td><td>' + esc(profCurto(it.profissional)) + '<div class="sub">' + esc(it.rotulo.replace(/^[^:]+: /, '')) + (it.obs ? ' · ' + esc(it.obs) : '') + '</div></td><td>' + sess + '</td><td>' + valor + '</td><td><span class="tag ' + cor + '">' + esc(it.situacaoTxt) + '</span>' + (it.pago ? '<div class="sub">' + pg + '</div>' : '') + '</td><td class="no-print" style="text-align:right"><div class="acoes">' + acao + '</div></td></tr>');
+var tr = el('<tr><td class="td-pac"><a href="#" data-ficha>' + esc(it.paciente) + '</a><div class="sub">' + esc(it.pagador && it.pagador !== it.paciente ? 'pagador: ' + it.pagador : '') + '</div></td><td>' + esc(profCurto(it.profissional)) + '<div class="sub">' + esc(it.rotulo.replace(/^[^:]+: /, '')) + (it.obs ? ' · ' + esc(it.obs) : '') + '</div></td><td>' + sess + '</td><td>' + valor + '</td><td><span class="tag ' + cor + '">' + esc(it.situacaoTxt) + '</span>' + (it.pago ? '<div class="sub">' + pg + '</div>' : '') + '</td><td class="no-print" style="text-align:right"><div class="acoes">' + acao + '</div></td></tr>');
 var bp = $('[data-pg]', tr); if (bp) bp.addEventListener('click', function () { abrirPagamentoMes($("#cm-pagbox"), { paciente: it.paciente, profissional: it.profissional, cobranca: it.cobranca, pagamento: it.pagamento, valor: it.valor, valorMes: it.pagamento === 'Posterior' ? it.aReceber : it.valorMes, chave: CM.chave, pagador: it.pagador, proximas: [CM.proximaChave] }, function () { carregarCobrancaMes(); recarregarAT().catch(function () { }); }); });
 var be = $('[data-ed]', tr); if (be) be.addEventListener('click', function () { abrirEditarSessoes(it); });
 ligarCobrarCM(tr, it);
+$('[data-ficha]', tr).addEventListener('click', function (e) { e.preventDefault(); go('ficha', { nome: it.paciente }); });
 tb.appendChild(tr);
 });
 root.appendChild(card);

@@ -151,6 +151,16 @@ function mock(nome, d) {
     if (nome === 'salvarAgendaFixa') { var id = d.id || ('F-' + (mockAgenda.length + 1)); var ex = mockAgenda.filter(function (a) { return a.ID === id; })[0]; var row = { ID: id, Paciente: d.paciente, Profissional: d.profissional, 'Dia da semana': d.diaSemana, Hora: d.hora, 'Frequência': d.frequencia || 'Semanal', 'Começa em': d.comecaEm || '', 'Termina em': d.terminaEm || '', Ativo: d.ativo === false ? 'Não' : 'Sim', 'Observação': d.observacao || '', Tipo: d.tipo || '' }; if (ex) Object.assign(ex, row); else mockAgenda.push(row); return res({ ok: true, id: id }); }
     if (nome === 'acrescentarAoDia') { var nid = 'D-' + (mockDia.length + 1); mockDia.push({ id: nid, data: d.data, hora: d.hora, paciente: d.paciente, profissional: d.profissional, origem: d.origem || 'Avulso' }); return res({ ok: true, id: nid }); }
     if (nome === 'remarcar') { mockDia.push({ id: 'D-x' + mockDia.length, data: d.de, hora: d.horaDe, paciente: d.paciente, profissional: d.profissional, origem: 'Não vem · remarcado para ' + d.para }); mockDia.push({ id: 'D-y' + mockDia.length, data: d.para, hora: d.horaPara || d.horaDe, paciente: d.paciente, profissional: d.profissional, origem: 'Remarcação de ' + d.de }); return res({ ok: true }); }
+    if (nome === 'fichaPaciente') { var fp = mockPacientes.filter(function (x) { return x.nome === d.nome; })[0]; if (!fp) return res({ ok: false, erros: ['Paciente não encontrado em Pacientes.'] });
+      var fw = Mensagens.foneDoPaciente({ whats: mockWhats[fp.nome] }), fcpp = mockCPP.filter(function (l) { return l.paciente === fp.nome; });
+      var fses = mockReg.filter(function (x) { return x.paciente === fp.nome; }).map(function (x) { return { data: x.data, hora: x.hora, profissional: x.profissional, procedimento: x.procedimento, oque: x.oque, valor: x.valor, pago: x.pago, saldo: x.pago === 'Não' ? x.valor : 0, aba: '', id: x.id }; }).reverse();
+      fses.push({ data: '29/09/2026', hora: '09:00', profissional: 'Juliana Ribeiro', procedimento: 'Sessão de psicologia', oque: 'Atendido', valor: 70, pago: 'Não', saldo: 70, aba: 'Setembro', id: 'A-sim-f1' });
+      return res({ ok: true, paciente: { nome: fp.nome, nasc: fp.nasc, ativo: 'Sim', convenio: fp.convenio, pagador: fp.pagador, obsCobranca: fp.obsCobranca, resp: fp.resp || '', respPar: fp.respPar || '', fone: fw.fone, foneFmt: fw.foneFmt, foneDe: fw.de, cpfFinal: '7225' },
+        cobrancas: fcpp.map(function (l0) { var l = Cobranca.linhaDe(l0); return { id: l0.id, profissional: l0.profissional, resumo: Cobranca.resumoLinha(l), vigente: true, ativo: 'Sim', obs: l0.obs || '' }; }),
+        fixos: mockAgenda.filter(function (a) { return a.Paciente === fp.nome; }).map(function (a) { return { dia: a['Dia da semana'], hora: a.Hora, profissional: a.Profissional, frequencia: a['Frequência'], tipo: a.Tipo === 'sessão' ? '' : (a.Tipo || '') }; }),
+        proximos: mockAgenda.filter(function (a) { return a.Paciente === fp.nome; }).map(function (a) { return { data: '19/10/2026', diaSemana: 'Segunda', hora: a.Hora, profissional: a.Profissional, tipo: '', confirmado: false, naoVem: '', registrado: '' }; }),
+        aberto: fses.filter(function (x) { return x.pago === 'Não' && /^Atendido/.test(x.oque); }).map(function (x) { return { tipo: 'receber', r: x }; }), mensal: [], sessoes: fses, totalSessoes: fses.length, ultimaVez: fses[0] ? { data: fses[0].data, profissional: fses[0].profissional } : null,
+        mensagens: Object.keys(mockEnviadas).filter(function (k) { return k.indexOf(fp.nome) >= 0; }).map(function (k) { return { quando: mockEnviadas[k].quando, tipo: k.split('|').length > 3 || /^\d/.test(k) ? 'Confirmação' : 'Cobrança', por: 'simulacao@local' }; }), alteracoes: [] }); }
     if (nome === 'registrarLote') { var resL = []; return (d.itens || []).reduce(function (pr, x) { return pr.then(function () { return mock('registrarAtendimento', x).then(function (r1) { resL.push(r1); }); }); }, Promise.resolve()).then(function () { var nL = resL.filter(function (r1) { return r1.ok; }).length; res({ ok: true, gravados: nL, falharam: resL.length - nL, resultados: resL }); }); }
     if (nome === 'confirmacoes') { // simulação: todo dia útil repete a agenda fixa de segunda
       var cde = dataObj(d.de), cate = dataObj(d.ate) || cde; if (!cde) return res({ ok: false, erros: ['Data inválida.'] });
@@ -433,8 +443,8 @@ function corrigirValidar(c, reg) {
   return e;
 }
 
-var TELAS = { hoje: 's-hoje', confirmar: 's-confirmar', registrar: 's-registrar', pacientes: 's-pacientes', cobranca: 's-cobranca', meudia: 's-meudia', gestao: 's-gestao', repasse: 's-repasse' };
-var TITULOS = { hoje: 'Agenda', confirmar: 'Confirmações', registrar: 'Registrar atendimento', pacientes: 'Pacientes', cobranca: 'Cobrança do mês', meudia: 'Meu dia', gestao: 'Pendências', repasse: 'Repasse' };
+var TELAS = { hoje: 's-hoje', confirmar: 's-confirmar', ficha: 's-ficha', registrar: 's-registrar', pacientes: 's-pacientes', cobranca: 's-cobranca', meudia: 's-meudia', gestao: 's-gestao', repasse: 's-repasse' };
+var TITULOS = { hoje: 'Agenda', confirmar: 'Confirmações', ficha: 'Ficha do paciente', registrar: 'Registrar atendimento', pacientes: 'Pacientes', cobranca: 'Cobrança do mês', meudia: 'Meu dia', gestao: 'Pendências', repasse: 'Repasse' };
 var SO_GESTAO = { gestao: true, repasse: true };
 var telaAtual = 'hoje', navGen = 0;
 var INICIAR = {};

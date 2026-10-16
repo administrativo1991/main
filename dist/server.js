@@ -2312,4 +2312,54 @@ API.registrarLote = function (d) {
   return { ok: true, gravados: n, falharam: resultados.length - n, resultados: resultados };
 };
 
+/* ---------- Ficha do paciente (Fase 2, 16/10): tudo de um paciente numa tela, só leitura ----------
+   Cadastro (contatos) · cobrança por profissional (vigentes e encerradas) · horários fixos · próximos 14 dias ·
+   em aberto (a receber, guias, NF) · mensalidade/antecipado (mês anterior, atual, próximo) · sessões (abas de mês, mais
+   recentes primeiro) · mensagens de WhatsApp · alterações de cadastro. Os alertas do paciente saem daqui (item 6). */
+API.fichaPaciente = function (d) {
+  d = d || {};
+  var p = linhaPaciente_(d.nome); if (!p) return { ok: false, erros: ['Paciente não encontrado em Pacientes.'] };
+  var nome = p.nome, hoje = new Date(), hojeN = ymdNum_(hoje);
+  var f = Mensagens.foneDoPaciente(p);
+  // cobrança por profissional: todas as linhas do paciente; "vigente" = a que vale hoje pra aquele profissional
+  var cpp = cobrancasProf_().filter(function (l) { return l.paciente === nome; });
+  var vig = {}; Cobranca.linhasDoPaciente(cobrancasProf_(), nome, hoje).forEach(function (l) { vig[l.id] = 1; });
+  var cobrancas = cpp.map(function (l) { return { id: l.id, profissional: l.profissional, resumo: Cobranca.resumoLinha(l), vigente: !!vig[l.id], ativo: l.ativo, desde: l.desde || '', ate: l.ate || '', obs: l.obs || '', decidido: l.decididoPor || '' }; });
+  // horários fixos ativos e ainda valendo
+  var fixos = API.agendaFixa().filter(function (r) { if (r['Paciente'] !== nome || String(r['Ativo'] || 'Sim') === 'Não') return false; var t = r['Termina em'] ? parseData_(r['Termina em']) : null; return !t || t >= hoje; })
+    .map(function (r) { return { dia: r['Dia da semana'], hora: horaTxt_(r['Hora']), profissional: r['Profissional'], frequencia: r['Frequência'] || 'Semanal', tipo: String(r['Tipo'] || ''), obs: r['Observação'] || '' }; });
+  // próximos 14 dias (agenda montada como na Agenda: fixos + agendamentos − não vem)
+  var cache = {}, proximos = [];
+  for (var i = 0; i < 14; i++) {
+    var dia = montarDia_(dataMais_(hoje, i), cache);
+    dia.itens.forEach(function (it) { if (it.paciente !== nome || it.extra) return; proximos.push({ data: dia.data, diaSemana: dia.diaSemana, hora: horaTxt_(it.hora), profissional: it.profissional, tipo: it.tipo || '', naoVem: it.naoVem || '', confirmado: !!it.confirmado, registrado: it.registro ? it.registro.oque : '' }); });
+  }
+  // sessões das abas de mês
+  var sessoes = [];
+  CONFIG.MESES.forEach(function (m) { linhasMes_(m).linhas.forEach(function (r) { if (r.paciente !== nome) return; r.aba = m; r.saldo = saldo_(r); sessoes.push(r); }); });
+  var dn = function (r) { var x = parseData_(r.data); return x ? ymdNum_(x) : 0; };
+  sessoes.sort(function (a, b) { return dn(b) - dn(a) || String(b.hora).localeCompare(String(a.hora)); });
+  // em aberto: mesma regra das pendências da Agenda (particular atendido sem pagar; convênio sem guia) + NF a emitir
+  var aberto = [];
+  sessoes.forEach(function (r) {
+    if (!/^Atendido/.test(r.oque) || ehPerdido_(r.pago)) return;
+    var particular = !r.convenio || /^Particular$/i.test(r.convenio);
+    if (particular && (r.pago === '' || r.pago === 'Não' || r.pago === 'Parcial') && (!/^Mensalidade|pacote|plano|mensal|convênio|AAPI/i.test(r.procedimento) || /\(compra\)/i.test(r.procedimento)) && r.saldo > 0) aberto.push({ tipo: 'receber', r: r });
+    else if ((!particular || /^Convênio/i.test(r.pago)) && r.guia !== 'Sim') aberto.push({ tipo: 'guia', r: r });
+    if ((r.pago === 'Sim' || r.pago === 'Parcial') && r.nf !== 'Sim' && r.valor > 0) aberto.push({ tipo: 'nf', r: r });
+  });
+  // mensalidade/antecipado: competências do mês anterior, atual e próximo
+  var chaves = [-1, 0, 1].map(function (k) { return chaveMes_(new Date(hoje.getFullYear(), hoje.getMonth() + k, 1, 12)); }), mensal = [];
+  cpp.filter(function (l) { return vig[l.id] && (l.pagamento === 'Antecipado' || l.pagamento === 'Posterior' || l.cobranca === 'Mensalidade fixa'); }).forEach(function (l) {
+    chaves.forEach(function (ch) { try { var c = competenciaDe_(l, ch), s = Cobranca.situacaoCompetencia(l, c, hoje, parametros_()); mensal.push({ profissional: l.profissional, chave: ch, pago: c.pago, data: c.data, forma: c.forma, situacao: s.sit, cor: s.cor, texto: s.txt, aReceber: c.aReceber }); } catch (e) { } });
+  });
+  var msgs = linhasComo_(planilha_().getSheetByName(ABA_MSG)).filter(function (r) { return r['Paciente'] === nome; }).reverse().slice(0, 15)
+    .map(function (r) { return { quando: String(r['Data/hora'] || ''), tipo: r['Tipo'], profissional: r['Profissional'], sessao: r['Data da sessão'] || '', competencia: r['Competência'] || '', valor: numBR_(r['Valor (R$)']) || null, por: String(r['Registrado por (app)'] || '').split(' · ')[0] }; });
+  var alts = linhasComo_(planilha_().getSheetByName(CONFIG.ABA.ALTERACOES)).filter(function (r) { return r['Paciente'] === nome; }).reverse().slice(0, 10)
+    .map(function (r) { return { quando: String(r['Data/hora'] || ''), campo: r['Campo'], de: String(r['De'] || ''), para: String(r['Para'] || ''), quem: r['Quem informou'] || '' }; });
+  var ult = sessoes.filter(function (r) { return /^Atendido/.test(r.oque) && dn(r) <= hojeN; })[0];
+  return { ok: true, paciente: { nome: nome, nasc: p.nasc, ativo: p.ativo, convenio: p.convenio, pagador: p.pagador, obsCobranca: p.obsCobranca, resp: p.resp, respPar: p.respPar, whats: p.whats, respTel: p.respTel, telPac: p.telPac, fone: f.fone, foneFmt: f.foneFmt, foneDe: f.de, cpfFinal: Duplicatas.digitos(p.cpf).slice(-4) },
+    cobrancas: cobrancas, fixos: fixos, proximos: proximos, aberto: aberto, mensal: mensal, sessoes: sessoes.slice(0, 80), totalSessoes: sessoes.length, ultimaVez: ult ? { data: ult.data, profissional: ult.profissional } : null, mensagens: msgs, alteracoes: alts };
+};
+
 API;

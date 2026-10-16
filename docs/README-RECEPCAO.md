@@ -86,6 +86,8 @@ Aplicação de teste de paciente de convênio pede a **guia assinada**, como qua
   cadastrada". Avise a gestão.
 - **Buscar / editar**: "Quem informou" é obrigatório. Cada mudança fica registrada em "Alterações de cadastro". A seção
   **Cobrança por profissional** a recepção só lê.
+- **Ficha**: tudo do paciente numa tela (contatos, o que deve, guias, sessões, próximos horários, cobrança, mensagens).
+  Abre em Pacientes → Ficha, no painel da Agenda (**Ver ficha**), no Registrar e clicando no nome na Cobrança do mês.
 - Depois de cadastrar aqui, cadastre também no ControleOdonto.
 
 ## 5. Cobrança do mês
