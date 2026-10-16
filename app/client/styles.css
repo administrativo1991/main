@@ -695,3 +695,15 @@ table.ar-mini{min-width:0}
 .fi-parc-novo{display:flex;flex-direction:column;gap:10px;padding:12px;border:1px dashed var(--borda-in);border-radius:12px;margin:8px 0}
 .fi-parc-novo .check{margin:4px 0}
 @media (max-width:700px){ #fi-resumo{grid-template-columns:repeat(2,minmax(0,1fr))} }
+/* alertas (Fase 2, 16/10) */
+.alertas{display:flex;flex-direction:column;gap:6px;margin-bottom:8px}
+.alerta{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:10px;font-size:13px;border-left:4px solid;flex-wrap:wrap}
+.alerta svg{flex:none}
+.alerta span{flex:1 1 200px;min-width:0}
+.alerta.vermelha{background:var(--vm-bg);border-color:var(--vm-tx);color:var(--vm-tx2)}
+.alerta.laranja{background:var(--lar-bg);border-color:var(--lar-b);color:var(--pessego-tx)}
+.alerta.amarela{background:var(--am-bg);border-color:var(--am-b);color:var(--am-tx)}
+.alerta.lilas{background:var(--lilas);border-color:var(--lilas-b);color:var(--roxo-h)}
+.alerta.cinza{background:var(--bg);border-color:var(--borda-in);color:var(--tx2)}
+.alerta-tag{vertical-align:middle;margin-left:4px}
+.fi-alertas:empty{display:none}

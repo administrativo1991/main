@@ -684,6 +684,18 @@ table.ar-mini{min-width:0}
 .fi-parc-novo{display:flex;flex-direction:column;gap:10px;padding:12px;border:1px dashed var(--borda-in);border-radius:12px;margin:8px 0}
 .fi-parc-novo .check{margin:4px 0}
 @media (max-width:700px){ #fi-resumo{grid-template-columns:repeat(2,minmax(0,1fr))} }
+/* alertas (Fase 2, 16/10) */
+.alertas{display:flex;flex-direction:column;gap:6px;margin-bottom:8px}
+.alerta{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:10px;font-size:13px;border-left:4px solid;flex-wrap:wrap}
+.alerta svg{flex:none}
+.alerta span{flex:1 1 200px;min-width:0}
+.alerta.vermelha{background:var(--vm-bg);border-color:var(--vm-tx);color:var(--vm-tx2)}
+.alerta.laranja{background:var(--lar-bg);border-color:var(--lar-b);color:var(--pessego-tx)}
+.alerta.amarela{background:var(--am-bg);border-color:var(--am-b);color:var(--am-tx)}
+.alerta.lilas{background:var(--lilas);border-color:var(--lilas-b);color:var(--roxo-h)}
+.alerta.cinza{background:var(--bg);border-color:var(--borda-in);color:var(--tx2)}
+.alerta-tag{vertical-align:middle;margin-left:4px}
+.fi-alertas:empty{display:none}
 </style>
 </head>
 <body>
@@ -1118,6 +1130,7 @@ table.ar-mini{min-width:0}
 <div class="fi-contatos" id="fi-contatos"></div>
 <div id="fi-obs"></div>
 </section>
+<div class="fi-alertas" id="fi-alertas"></div>
 <div class="fd-resumo" id="fi-resumo"></div>
 <div class="md-grid">
 <div>
@@ -1871,7 +1884,7 @@ var s = statusItem(it), p = pacInfo(it.paciente), k = chaveItem(it);
 var sub1 = [], id = idadeCurta(p); if (id) sub1.push(id); if (!p) sub1.push('não está em Pacientes'); if (it.origem && !/Semanal|Quinzenal|Registrado/.test(it.origem)) sub1.push(it.origem);
 var tr = el('<tr class="' + (s === 'chegou' ? 'chegou' : '') + (s === 'atendido' || s === 'falta' ? ' apagada' : '') + (s === 'naovem' ? ' fora' : '') + (selecionado === k ? ' sel' : '') + '" tabindex="0" data-k="' + esc(k) + '">' +
 '<td class="td-hora">' + esc(it.hora || '—') + '<span class="td-tipo">' + esc(tipoCurto(it)) + '</span></td>' +
-'<td class="td-quem"><div class="nome">' + esc(it.paciente) + '</div><div class="sub">' + esc(sub1.join(' · ')) + '<span class="so-cel">' + (sub1.length ? ' · ' : '') + esc(profCurto(it.profissional)) + ' · ' + esc(cobrancaCurta(it, p)) + '</span></div></td>' +
+'<td class="td-quem"><div class="nome">' + esc(it.paciente) + alertaBadge(it.paciente) + '</div><div class="sub">' + esc(sub1.join(' · ')) + '<span class="so-cel">' + (sub1.length ? ' · ' : '') + esc(profCurto(it.profissional)) + ' · ' + esc(cobrancaCurta(it, p)) + '</span></div></td>' +
 '<td class="td-prof"><div>' + esc(profCurto(it.profissional)) + '</div><div class="sub">' + esc(cobrancaCurta(it, p)) + '</div></td>' +
 '<td class="td-cob"><div class="tags">' + cobrancaHtml(it, p) + '</div></td>' +
 '<td class="td-sit">' + pillSituacao(it, s) + '</td>' +
@@ -1934,7 +1947,7 @@ $("#pp-dl").innerHTML = '<div><dt>Hoje</dt><dd>' + esc((it.hora || '—') + ' ·
 // o bloco "O que fazer agora" (pequeno) + cadastro incompleto
 var avisoHtml = b && !reg ? blocoHtml(b, true) : '';
 if (p && (cadastroIncompleto(p) || faltasDoc(p).length)) avisoHtml += aviso('laranja', 'Cadastro incompleto', esc([cadastroIncompleto(p) ? 'Sem cobrança cadastrada: avise a gestão (Pacientes → Cobrança por profissional).' : '', faltasDoc(p).length ? 'Falta ' + faltasDocTxt(p) + ': peça o documento e complete.' : ''].filter(Boolean).join(' ')));
-$("#pp-aviso").innerHTML = avisoHtml;
+$("#pp-aviso").innerHTML = alertasHtml(alertasDe(it.paciente), it.paciente) + avisoHtml; ligarAlertas($("#pp-aviso"));
 // sessões anteriores em aberto: a recepção vê na chegada e resolve ali mesmo (grava na linha antiga, como a Gestão)
 var pendHtml = pendDe(it.paciente).map(function (x, i) {
 var quando = x.data + (x.hora ? ' ' + x.hora : '');
@@ -2070,6 +2083,8 @@ var devem = itens.filter(function (i) { return pendDe(i.paciente).some(function 
 if (devem.length) out.push(['amarela', devem.length, 'de hoje com sessão anterior sem pagamento · ' + devem.map(function (i) { return primeiroNome(i.paciente); }).join(', '), null]);
 var guiasAnt = itens.filter(function (i) { return pendDe(i.paciente).some(function (x) { return x.tipo === 'guia'; }); });
 if (guiasAnt.length) out.push(['lilas', guiasAnt.length, 'de hoje com guia anterior sem assinatura (pedir pra imprimir) · ' + guiasAnt.map(function (i) { return primeiroNome(i.paciente); }).join(', '), null]);
+var comAl = []; itens.forEach(function (i) { if (comAl.indexOf(i.paciente) < 0 && alertasDe(i.paciente).some(function (a) { return a.tipo !== 'whats'; })) comAl.push(i.paciente); }); // alertas (Fase 2): sem contar "sem celular"
+if (comAl.length) out.push(['laranja', comAl.length, 'de hoje com alerta (clique no paciente para ver) · ' + comAl.map(primeiroNome).join(', '), null]);
 var regs = itens.filter(function (i) { return i.registro && /^Atendido/.test(i.registro.oque); });
 var particular = function (r) { return !r.convenio || /^Particular$/i.test(r.convenio); }, dest = 'meudia';
 var sg = regs.filter(function (i) { var r = i.registro; return (!particular(r) || /^Convênio/i.test(r.pago)) && r.guia !== 'Sim' && !ehPerdido(r.pago); });
@@ -3095,6 +3110,7 @@ $("#fi-contatos").innerHTML = '<div><span class="muted">Quem paga</span> <b>' + 
 $("#fi-obs").innerHTML = p.obsCobranca ? '<div class="faixa nota">' + esc(p.obsCobranca) + '</div>' : '';
 var ac = $("#fi-acoes"); ac.innerHTML = '';
 [['Registrar atendimento', function () { go('registrar', { paciente: p.nome }); }, 'btn mini'], ['Editar cadastro', function () { go('pacientes', { editar: p.nome, voltar: 'ficha' }); }, 'btn ter mini'], ['Cobrança do mês', function () { go('cobranca', { buscar: p.nome }); }, 'btn ter mini']].forEach(function (x) { var b = el('<button type="button" class="' + x[2] + '">' + esc(x[0]) + '</button>'); b.addEventListener('click', x[1]); ac.appendChild(b); });
+$("#fi-alertas").innerHTML = alertasHtml(r.alertas || [], p.nome, true); ligarAlertas($("#fi-alertas"));
 // resumo
 var receber = r.aberto.filter(function (x) { return x.tipo === 'receber'; }), totR = receber.reduce(function (a, x) { return a + (x.r.saldo || 0); }, 0);
 var atend = r.sessoes.filter(function (x) { return /^Atendido/.test(x.oque); }).length, faltas = r.sessoes.filter(function (x) { return /^(Faltou|Desmarcou)/.test(x.oque); }).length;
@@ -3205,6 +3221,32 @@ toast('Parcelamento criado: ' + brlCurto(r.total) + ' em ' + r.vencimentos.lengt
 });
 });
 function numBRc(t) { t = String(t || '').trim().replace(/[R$\s]/g, ''); if (/,/.test(t)) t = t.replace(/\./g, '').replace(',', '.'); var n = parseFloat(t); return isNaN(n) ? 0 : n; }
+/* ===== 34-alertas.js ===== */
+/* ================= ALERTAS (Fase 2, 16/10) =================
+Avisos calculados no servidor (alertasDe_): na Agenda vêm com a lista do dia (DIA.alertas) e aparecem no paciente (etiqueta
+na linha, lista no painel) e numa linha das pendências; na Ficha, no topo. "Sem celular" não conta na etiqueta nem nas
+pendências (é quase todo mundo enquanto os números não forem cadastrados): só aparece no painel e na Ficha, em cinza. */
+function alertasDe(nome) { return (DIA && DIA.alertas && DIA.alertas[nome]) || []; }
+function alertaBadge(nome) {
+var l = alertasDe(nome).filter(function (a) { return a.tipo !== 'whats'; }); if (!l.length) return '';
+return ' <span class="tag p ' + l[0].cor + ' alerta-tag" title="' + esc(l.map(function (a) { return a.texto; }).join('\n')) + '">' + ic('alerta', 11, 2.6) + ' ' + l.length + '</span>';
+}
+var ACAO_ALERTA = { cobranca: 'Cobrança do mês', pacientes: 'Editar cadastro', ficha: 'Ver ficha' };
+function alertasHtml(l, nome, naFicha) {
+if (!l || !l.length) return '';
+return '<div class="alertas">' + l.map(function (a) {
+var acao = a.acao && ACAO_ALERTA[a.acao] && !(naFicha && a.acao === 'ficha') ? '<button type="button" class="btn ter mini no-print" data-alerta="' + esc(a.acao) + '" data-nome="' + esc(nome) + '">' + esc(ACAO_ALERTA[a.acao]) + '</button>' : '';
+return '<div class="alerta ' + esc(a.cor) + '">' + ic('alerta', 15, 2.4) + '<span>' + esc(a.texto) + '</span>' + acao + '</div>';
+}).join('') + '</div>';
+}
+function ligarAlertas(root) {
+$$('[data-alerta]', root).forEach(function (b) {
+b.addEventListener('click', function () {
+var n = b.dataset.nome, a = b.dataset.alerta;
+if (a === 'cobranca') go('cobranca', { buscar: n }); else if (a === 'pacientes') go('pacientes', { editar: n, voltar: telaAtual === 'ficha' ? 'ficha' : 'hoje' }); else go('ficha', { nome: n });
+});
+});
+}
 /* ===== 40-cobranca-mes.js ===== */
 /* ================= COBRANÇA DO MÊS (Fase 1, 15/10: substitui a tela Pacotes) =================
 Uma linha por paciente × profissional com Mensalidade fixa, Antecipado (valor × sessões agendadas) ou Fim do mês (Posterior).

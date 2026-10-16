@@ -20,7 +20,7 @@ Arquivo de retomada da Fase 2 (começou em 15/10/2026, à noite). Quem abrir um 
 | 5 | **Conciliação** (gestão escolheu começar por ela) | **real** (16-05) |
 | 5b | **A receber e perdas** (todos os meses, por idade; dar como perdido em lote; perdas do ano) | **real** (16-08) |
 | 5c | **Parcelamentos** (serviço parcelado e dívida renegociada, na Ficha) | **real** (16-08) |
-| 6 | Alertas (avisos dentro da Ficha e da Agenda, não tela própria) | a fazer |
+| 6 | **Alertas** (avisos dentro da Ficha e da Agenda, não tela própria) | pronto, a publicar no teste |
 
 Fora da lista por enquanto: check-in e alta (não escolhidos em 15/10).
 
@@ -263,3 +263,32 @@ atrasada), Registrar pagamento (valor da próxima já preenchido), Cancelar (mot
 
 **Testado**: `tests/servidor-parcelas.test.js` (serviço, dívida, atraso, cancelamento, conciliação do Pix da parcela);
 simulação 1280 gestão e 390 recepção sem erro.
+
+## 6. Alertas
+
+**Pedido da gestão (16/10)**: os 8 alertas propostos, sem tela própria. Cobrança: **cobrado e não pagou** (cobrança no
+WhatsApp pelo app há 5 dias ou mais e a competência ainda em aberto), **mês atrasado sem cobrança** (competência
+"atrasada" sem mensagem de cobrança), **parcela vencida**, **dívida antiga** (sessões em aberto há mais de 30 dias, fora de
+parcelamento em dia; vermelha se a mais antiga passa de 60). Atendimento: **faltas repetidas** (2+ "Faltou sem aviso" /
+"Faltou avisando em cima da hora" em 60 dias; o "Faltou com aviso" importado em setembro não conta), **parou de vir**
+(horário fixo ativo, começado há 21 dias ou mais, sem sessão atendida com aquele profissional há 21 dias), **sem celular**
+(`Mensagens.foneDoPaciente` vazio) e **avaliação parada** (Pendências → Avaliações em andamento com 14 dias ou mais).
+
+**Servidor** (`server-fase2.js`): `alertasBase_()` calcula todos os pacientes de uma vez e guarda em cache com a versão
+das competências (muda a cada gravação na aba do mês, parcelamento, agenda fixa), a versão dos alertas (muda a cada
+cobrança marcada como enviada: `renovarAlertas_`) e o dia. `alertasDe_(nomes)` junta o "sem celular" na hora (cadastro) e
+ordena por gravidade. Entram em `listaDoDia` (`r.alertas`, pacientes do dia), em `fichaPaciente` (`alertas`) e em
+`API.alertas({pacientes})`. Limites em variáveis `ALERTA_*` no topo do bloco.
+
+**Tela** (`34-alertas.js`): na Agenda, etiqueta com o nº de alertas ao lado do nome (cor do mais grave; passar o mouse
+mostra os textos), lista no painel do paciente (com botão Ver ficha / Cobrança do mês / Editar cadastro) e uma linha nas
+Pendências de hoje; na Ficha, no topo. **"Sem celular" não entra na etiqueta nem nas Pendências**: com os dados reais,
+530 de 533 pacientes ativos não têm celular no cadastro (só os 19 do ControleOdonto), então ele aparece só no painel e na
+Ficha, em cinza.
+
+**Com os dados reais** (cópia de Pacientes/Setembro/Outubro, sem agenda fixa, cobrança por profissional e mensagens):
+1 dívida antiga (Aline Amaral, R$ 180 de 14/09) e 530 "sem celular"; nenhuma falta repetida (setembro tem 1 "Faltou sem
+aviso" e 15 "Faltou com aviso").
+
+**Testado**: `tests/servidor-alertas.test.js` (um paciente por alerta, um sem nenhum, lista do dia, Ficha e o cache
+renovando depois de cobrar e de receber); simulação 1280 gestão e 390 recepção sem erro.

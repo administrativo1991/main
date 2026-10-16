@@ -96,6 +96,12 @@ Ficam na **Ficha do paciente** (card "Parcelamentos"); gestão e recepção cria
   Pix de uma parcela casa mesmo quando foi abatido em duas sessões.
 - Cancelar só muda a Situação para "cancelado" (com o motivo na Observação); nada é apagado.
 
+## Alertas (Fase 2)
+
+Avisos por paciente, na Agenda (etiqueta ao lado do nome, painel e Pendências de hoje) e no topo da Ficha. Os limites
+(5 dias depois de cobrar, 30 dias de dívida, 2 faltas em 60 dias, 21 dias sem vir, 14 dias de avaliação parada) estão no
+código (`ALERTA_*`, `app/server/server-fase2.js`); para mudar, peça. "Sem celular" aparece só no painel e na Ficha.
+
 ## Rotina mensal
 
 1. Últimos dias do mês: Gestão → criar aba do mês seguinte e as colunas em Mensalistas.

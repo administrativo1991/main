@@ -344,6 +344,7 @@ API.listaDoDia = function (d) {
       else if (aplic && b.situacao === 'sem-cobranca-tipo') { it.aplicacao = numAplicacao_(it.paciente, it.profissional, data); it.cobrancaHoje.curto = 'Aplicação nº ' + it.aplicacao + ' · sem cobrança'; it.cobrancaHoje.frase += ' (aplicação nº ' + it.aplicacao + ')'; } } catch (e) { it.cobrancaHoje = { situacao: 'erro', cor: 'cinza', curto: '—', frase: String(e && e.message || e) }; }
   });
   r.pendencias = pendenciasDe_(r.itens.map(function (it) { return it.paciente; }), data);
+  if (typeof alertasDe_ === 'function') r.alertas = alertasDe_(r.itens.filter(function (it) { return !it.extra; }).map(function (it) { return it.paciente; })); // Fase 2: avisos por paciente do dia
   r.params = parametros_();
   return r;
 };

@@ -154,7 +154,7 @@ function linhaDia(it) {
   var sub1 = [], id = idadeCurta(p); if (id) sub1.push(id); if (!p) sub1.push('não está em Pacientes'); if (it.origem && !/Semanal|Quinzenal|Registrado/.test(it.origem)) sub1.push(it.origem);
   var tr = el('<tr class="' + (s === 'chegou' ? 'chegou' : '') + (s === 'atendido' || s === 'falta' ? ' apagada' : '') + (s === 'naovem' ? ' fora' : '') + (selecionado === k ? ' sel' : '') + '" tabindex="0" data-k="' + esc(k) + '">' +
     '<td class="td-hora">' + esc(it.hora || '—') + '<span class="td-tipo">' + esc(tipoCurto(it)) + '</span></td>' +
-    '<td class="td-quem"><div class="nome">' + esc(it.paciente) + '</div><div class="sub">' + esc(sub1.join(' · ')) + '<span class="so-cel">' + (sub1.length ? ' · ' : '') + esc(profCurto(it.profissional)) + ' · ' + esc(cobrancaCurta(it, p)) + '</span></div></td>' +
+    '<td class="td-quem"><div class="nome">' + esc(it.paciente) + alertaBadge(it.paciente) + '</div><div class="sub">' + esc(sub1.join(' · ')) + '<span class="so-cel">' + (sub1.length ? ' · ' : '') + esc(profCurto(it.profissional)) + ' · ' + esc(cobrancaCurta(it, p)) + '</span></div></td>' +
     '<td class="td-prof"><div>' + esc(profCurto(it.profissional)) + '</div><div class="sub">' + esc(cobrancaCurta(it, p)) + '</div></td>' +
     '<td class="td-cob"><div class="tags">' + cobrancaHtml(it, p) + '</div></td>' +
     '<td class="td-sit">' + pillSituacao(it, s) + '</td>' +
@@ -217,7 +217,7 @@ function renderPainel() {
   // o bloco "O que fazer agora" (pequeno) + cadastro incompleto
   var avisoHtml = b && !reg ? blocoHtml(b, true) : '';
   if (p && (cadastroIncompleto(p) || faltasDoc(p).length)) avisoHtml += aviso('laranja', 'Cadastro incompleto', esc([cadastroIncompleto(p) ? 'Sem cobrança cadastrada: avise a gestão (Pacientes → Cobrança por profissional).' : '', faltasDoc(p).length ? 'Falta ' + faltasDocTxt(p) + ': peça o documento e complete.' : ''].filter(Boolean).join(' ')));
-  $("#pp-aviso").innerHTML = avisoHtml;
+  $("#pp-aviso").innerHTML = alertasHtml(alertasDe(it.paciente), it.paciente) + avisoHtml; ligarAlertas($("#pp-aviso"));
   // sessões anteriores em aberto: a recepção vê na chegada e resolve ali mesmo (grava na linha antiga, como a Gestão)
   var pendHtml = pendDe(it.paciente).map(function (x, i) {
     var quando = x.data + (x.hora ? ' ' + x.hora : '');
@@ -353,6 +353,8 @@ function renderPend(itens) {
   if (devem.length) out.push(['amarela', devem.length, 'de hoje com sessão anterior sem pagamento · ' + devem.map(function (i) { return primeiroNome(i.paciente); }).join(', '), null]);
   var guiasAnt = itens.filter(function (i) { return pendDe(i.paciente).some(function (x) { return x.tipo === 'guia'; }); });
   if (guiasAnt.length) out.push(['lilas', guiasAnt.length, 'de hoje com guia anterior sem assinatura (pedir pra imprimir) · ' + guiasAnt.map(function (i) { return primeiroNome(i.paciente); }).join(', '), null]);
+  var comAl = []; itens.forEach(function (i) { if (comAl.indexOf(i.paciente) < 0 && alertasDe(i.paciente).some(function (a) { return a.tipo !== 'whats'; })) comAl.push(i.paciente); }); // alertas (Fase 2): sem contar "sem celular"
+  if (comAl.length) out.push(['laranja', comAl.length, 'de hoje com alerta (clique no paciente para ver) · ' + comAl.map(primeiroNome).join(', '), null]);
   var regs = itens.filter(function (i) { return i.registro && /^Atendido/.test(i.registro.oque); });
   var particular = function (r) { return !r.convenio || /^Particular$/i.test(r.convenio); }, dest = 'meudia';
   var sg = regs.filter(function (i) { var r = i.registro; return (!particular(r) || /^Convênio/i.test(r.pago)) && r.guia !== 'Sim' && !ehPerdido(r.pago); });

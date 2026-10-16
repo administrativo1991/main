@@ -704,6 +704,18 @@ table.ar-mini{min-width:0}
 .fi-parc-novo{display:flex;flex-direction:column;gap:10px;padding:12px;border:1px dashed var(--borda-in);border-radius:12px;margin:8px 0}
 .fi-parc-novo .check{margin:4px 0}
 @media (max-width:700px){ #fi-resumo{grid-template-columns:repeat(2,minmax(0,1fr))} }
+/* alertas (Fase 2, 16/10) */
+.alertas{display:flex;flex-direction:column;gap:6px;margin-bottom:8px}
+.alerta{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:10px;font-size:13px;border-left:4px solid;flex-wrap:wrap}
+.alerta svg{flex:none}
+.alerta span{flex:1 1 200px;min-width:0}
+.alerta.vermelha{background:var(--vm-bg);border-color:var(--vm-tx);color:var(--vm-tx2)}
+.alerta.laranja{background:var(--lar-bg);border-color:var(--lar-b);color:var(--pessego-tx)}
+.alerta.amarela{background:var(--am-bg);border-color:var(--am-b);color:var(--am-tx)}
+.alerta.lilas{background:var(--lilas);border-color:var(--lilas-b);color:var(--roxo-h)}
+.alerta.cinza{background:var(--bg);border-color:var(--borda-in);color:var(--tx2)}
+.alerta-tag{vertical-align:middle;margin-left:4px}
+.fi-alertas:empty{display:none}
 
 </style>
 </head>
@@ -1174,6 +1186,7 @@ table.ar-mini{min-width:0}
       <div class="fi-contatos" id="fi-contatos"></div>
       <div id="fi-obs"></div>
     </section>
+    <div class="fi-alertas" id="fi-alertas"></div>
     <div class="fd-resumo" id="fi-resumo"></div>
     <div class="md-grid">
       <div>
@@ -1947,6 +1960,14 @@ function mockComp(l, chave) { // estado da competência na simulação: pago em 
 }
 function mockBloco(paciente, profissional, data, proc, oque) { var p = mockPacientes.filter(function (x) { return x.nome === paciente; })[0] || {}, v = Cobranca.linhaVigente(mockCPP, paciente, profissional, data), pr = mockProfs.filter(function (x) { return x.nome === profissional; })[0]; var esp = pr ? pr.esp : ''; var vl = mockValores.filter(function (x) { return x.especialidade === esp && /cheio/.test(x.nome); })[0]; return Cobranca.calcular({ linha: v.linha, profissional: profissional, especialidade: esp, valorCheio: vl ? vl.valor : null, procedimento: proc, oque: oque, competencia: v.linha ? mockComp(v.linha, Cobranca.chaveMes(data)) : null, hoje: data, params: mockParams, pagador: p.pagador || '', avisoLinha: v.aviso, convenioPaciente: p.convenio || '' }); }
 function mockComps() { var o = {}, h = new Date(), chs = [Cobranca.chaveMes(new Date(h.getFullYear(), h.getMonth() - 1, 1)), Cobranca.chaveMes(h), Cobranca.chaveMes(new Date(h.getFullYear(), h.getMonth() + 1, 1))]; mockCPP.forEach(function (l) { if (!(l.pagamento === 'Antecipado' || l.pagamento === 'Posterior' || l.cobranca === 'Mensalidade fixa')) return; var k = l.paciente + '|' + l.profissional; o[k] = o[k] || {}; chs.forEach(function (c) { o[k][c] = mockComp(l, c); }); }); return o; }
+// alertas na simulação (os textos são os do servidor: alertasBase_)
+function mockAlertasDe(nomes) {
+  var A = { 'Theo Barreto Lima': [{ tipo: 'divida', cor: 'vermelha', texto: 'Deve R$ 240,00 de 2 sessões sem pagamento, a mais antiga de 02/08 (75 dias)', acao: 'ficha' }, { tipo: 'cobrado', cor: 'laranja', texto: 'Cobrado no WhatsApp em 05/10 (há 11 dias) e outubro com Juliana Ribeiro ainda não foi pago', acao: 'cobranca' }],
+    'Beatriz Almeida Rocha': [{ tipo: 'faltas', cor: 'laranja', texto: '2 faltas sem aviso ou em cima da hora em 60 dias (25/09, 09/10)', acao: 'ficha' }, { tipo: 'avaliacao', cor: 'lilas', texto: 'Avaliação com Giovana Grossi parada: 3 aplicações, a última em 01/10 (15 dias). Confira com a profissional', acao: 'ficha' }],
+    'Igor Modelo Silva': [{ tipo: 'parou', cor: 'amarela', texto: 'Horário fixo de quarta 14:00 com Dr. Victor Cunha, mas a última sessão atendida foi em 10/09 (36 dias): confirme se continua ou encerre o horário', acao: 'agenda' }] }, out = {};
+  (nomes || []).forEach(function (n) { var l = (A[n] || []).slice(); if (!mockWhats[n]) l.push({ tipo: 'whats', cor: 'cinza', texto: 'Sem celular no cadastro: a confirmação e a cobrança no WhatsApp não saem. Peça o número', acao: 'pacientes' }); if (l.length) out[n] = l; });
+  return out;
+}
 // parcelamentos na simulação (mesma conta do servidor: estadoAcordo_)
 var mockParc = [], mockParcPag = {};
 function mockAcordo(a) {
@@ -2052,7 +2073,7 @@ function mock(nome, d) {
           var mp2 = mockPacientes.filter(function (p) { return p.nome === it.paciente; })[0]; if (!mp2) { it.cobrancaHoje = null; return; }
           var b2 = mockBloco(it.paciente, it.profissional, dt, it.registro ? it.registro.procedimento : (/aplicação de teste/i.test(it.tipo) ? 'Aplicação de teste' : ''), it.registro ? it.registro.oque : 'Atendido');
           it.cobrancaHoje = { situacao: b2.situacao, cor: b2.cor, curto: b2.curto, frase: b2.frase, apoio: b2.apoio, valor: b2.valor, valorMes: b2.valorMes, guia: b2.guia, nf: b2.nf, decidido: b2.decidido, obsLinha: b2.obsLinha, aviso: b2.aviso, linhas: Cobranca.linhasDoPaciente(mockCPP, it.paciente, dt).map(Cobranca.resumoLinha) }; });
-        return { data: ds, diaSemana: dn, itens: itens, abaMes: MESES_PT[dt.getMonth()], abaMesExiste: true };
+        return { data: ds, diaSemana: dn, itens: itens, abaMes: MESES_PT[dt.getMonth()], abaMesExiste: true, alertas: mockAlertasDe(itens.map(function (it) { return it.paciente; })) };
       };
       if (nome === 'agendaSemana') { var b0 = dataObj(d.data) || hoje, seg0 = new Date(b0.getFullYear(), b0.getMonth(), b0.getDate() - ((b0.getDay() + 6) % 7)), dias0 = []; for (var i0 = 0; i0 < 7; i0++) { var dt0 = new Date(seg0.getFullYear(), seg0.getMonth(), seg0.getDate() + i0), ds0 = ('0' + dt0.getDate()).slice(-2) + '/' + ('0' + (dt0.getMonth() + 1)).slice(-2) + '/' + dt0.getFullYear(), r0 = montar(ds0); dias0.push({ data: ds0, diaSemana: r0.diaSemana, itens: d.profissional ? r0.itens.filter(function (x) { return x.profissional === d.profissional; }) : r0.itens }); } return res({ inicio: dias0[0].data, profissional: d.profissional || '', dias: dias0 }); }
       var r = montar(d.data);
@@ -2072,7 +2093,7 @@ function mock(nome, d) {
         cobrancas: fcpp.map(function (l0) { var l = Cobranca.linhaDe(l0); return { id: l0.id, profissional: l0.profissional, resumo: Cobranca.resumoLinha(l), vigente: true, ativo: 'Sim', obs: l0.obs || '' }; }),
         fixos: mockAgenda.filter(function (a) { return a.Paciente === fp.nome; }).map(function (a) { return { dia: a['Dia da semana'], hora: a.Hora, profissional: a.Profissional, frequencia: a['Frequência'], tipo: a.Tipo === 'sessão' ? '' : (a.Tipo || '') }; }),
         proximos: mockAgenda.filter(function (a) { return a.Paciente === fp.nome; }).map(function (a) { return { data: '19/10/2026', diaSemana: 'Segunda', hora: a.Hora, profissional: a.Profissional, tipo: '', confirmado: false, naoVem: '', registrado: '' }; }),
-        aberto: fses.filter(function (x) { return x.pago === 'Não' && /^Atendido/.test(x.oque); }).map(function (x) { var noAcordo = mockParc.some(function (a) { return a.situacao === 'ativo' && a.linhas.some(function (l) { return l.id === x.id; }); }); return { tipo: noAcordo ? 'acordo' : 'receber', r: x }; }), mensal: [], parcelamentos: mockParcelas('parcelamentos', { paciente: fp.nome }).acordos, sessoes: fses, totalSessoes: fses.length, ultimaVez: fses[0] ? { data: fses[0].data, profissional: fses[0].profissional } : null,
+        aberto: fses.filter(function (x) { return x.pago === 'Não' && /^Atendido/.test(x.oque); }).map(function (x) { var noAcordo = mockParc.some(function (a) { return a.situacao === 'ativo' && a.linhas.some(function (l) { return l.id === x.id; }); }); return { tipo: noAcordo ? 'acordo' : 'receber', r: x }; }), mensal: [], parcelamentos: mockParcelas('parcelamentos', { paciente: fp.nome }).acordos, alertas: mockAlertasDe([fp.nome])[fp.nome] || [], sessoes: fses, totalSessoes: fses.length, ultimaVez: fses[0] ? { data: fses[0].data, profissional: fses[0].profissional } : null,
         mensagens: Object.keys(mockEnviadas).filter(function (k) { return k.indexOf(fp.nome) >= 0; }).map(function (k) { return { quando: mockEnviadas[k].quando, tipo: k.split('|').length > 3 || /^\d/.test(k) ? 'Confirmação' : 'Cobrança', por: 'simulacao@local' }; }), alteracoes: [] }); }
     if (nome === 'registrarLote') { var resL = []; return (d.itens || []).reduce(function (pr, x) { return pr.then(function () { return mock('registrarAtendimento', x).then(function (r1) { resL.push(r1); }); }); }, Promise.resolve()).then(function () { var nL = resL.filter(function (r1) { return r1.ok; }).length; res({ ok: true, gravados: nL, falharam: resL.length - nL, resultados: resL }); }); }
     if (nome === 'confirmacoes') { // simulação: todo dia útil repete a agenda fixa de segunda
@@ -2589,7 +2610,7 @@ function linhaDia(it) {
   var sub1 = [], id = idadeCurta(p); if (id) sub1.push(id); if (!p) sub1.push('não está em Pacientes'); if (it.origem && !/Semanal|Quinzenal|Registrado/.test(it.origem)) sub1.push(it.origem);
   var tr = el('<tr class="' + (s === 'chegou' ? 'chegou' : '') + (s === 'atendido' || s === 'falta' ? ' apagada' : '') + (s === 'naovem' ? ' fora' : '') + (selecionado === k ? ' sel' : '') + '" tabindex="0" data-k="' + esc(k) + '">' +
     '<td class="td-hora">' + esc(it.hora || '—') + '<span class="td-tipo">' + esc(tipoCurto(it)) + '</span></td>' +
-    '<td class="td-quem"><div class="nome">' + esc(it.paciente) + '</div><div class="sub">' + esc(sub1.join(' · ')) + '<span class="so-cel">' + (sub1.length ? ' · ' : '') + esc(profCurto(it.profissional)) + ' · ' + esc(cobrancaCurta(it, p)) + '</span></div></td>' +
+    '<td class="td-quem"><div class="nome">' + esc(it.paciente) + alertaBadge(it.paciente) + '</div><div class="sub">' + esc(sub1.join(' · ')) + '<span class="so-cel">' + (sub1.length ? ' · ' : '') + esc(profCurto(it.profissional)) + ' · ' + esc(cobrancaCurta(it, p)) + '</span></div></td>' +
     '<td class="td-prof"><div>' + esc(profCurto(it.profissional)) + '</div><div class="sub">' + esc(cobrancaCurta(it, p)) + '</div></td>' +
     '<td class="td-cob"><div class="tags">' + cobrancaHtml(it, p) + '</div></td>' +
     '<td class="td-sit">' + pillSituacao(it, s) + '</td>' +
@@ -2652,7 +2673,7 @@ function renderPainel() {
   // o bloco "O que fazer agora" (pequeno) + cadastro incompleto
   var avisoHtml = b && !reg ? blocoHtml(b, true) : '';
   if (p && (cadastroIncompleto(p) || faltasDoc(p).length)) avisoHtml += aviso('laranja', 'Cadastro incompleto', esc([cadastroIncompleto(p) ? 'Sem cobrança cadastrada: avise a gestão (Pacientes → Cobrança por profissional).' : '', faltasDoc(p).length ? 'Falta ' + faltasDocTxt(p) + ': peça o documento e complete.' : ''].filter(Boolean).join(' ')));
-  $("#pp-aviso").innerHTML = avisoHtml;
+  $("#pp-aviso").innerHTML = alertasHtml(alertasDe(it.paciente), it.paciente) + avisoHtml; ligarAlertas($("#pp-aviso"));
   // sessões anteriores em aberto: a recepção vê na chegada e resolve ali mesmo (grava na linha antiga, como a Gestão)
   var pendHtml = pendDe(it.paciente).map(function (x, i) {
     var quando = x.data + (x.hora ? ' ' + x.hora : '');
@@ -2788,6 +2809,8 @@ function renderPend(itens) {
   if (devem.length) out.push(['amarela', devem.length, 'de hoje com sessão anterior sem pagamento · ' + devem.map(function (i) { return primeiroNome(i.paciente); }).join(', '), null]);
   var guiasAnt = itens.filter(function (i) { return pendDe(i.paciente).some(function (x) { return x.tipo === 'guia'; }); });
   if (guiasAnt.length) out.push(['lilas', guiasAnt.length, 'de hoje com guia anterior sem assinatura (pedir pra imprimir) · ' + guiasAnt.map(function (i) { return primeiroNome(i.paciente); }).join(', '), null]);
+  var comAl = []; itens.forEach(function (i) { if (comAl.indexOf(i.paciente) < 0 && alertasDe(i.paciente).some(function (a) { return a.tipo !== 'whats'; })) comAl.push(i.paciente); }); // alertas (Fase 2): sem contar "sem celular"
+  if (comAl.length) out.push(['laranja', comAl.length, 'de hoje com alerta (clique no paciente para ver) · ' + comAl.map(primeiroNome).join(', '), null]);
   var regs = itens.filter(function (i) { return i.registro && /^Atendido/.test(i.registro.oque); });
   var particular = function (r) { return !r.convenio || /^Particular$/i.test(r.convenio); }, dest = 'meudia';
   var sg = regs.filter(function (i) { var r = i.registro; return (!particular(r) || /^Convênio/i.test(r.pago)) && r.guia !== 'Sim' && !ehPerdido(r.pago); });
@@ -3828,6 +3851,7 @@ function renderFicha() {
   $("#fi-obs").innerHTML = p.obsCobranca ? '<div class="faixa nota">' + esc(p.obsCobranca) + '</div>' : '';
   var ac = $("#fi-acoes"); ac.innerHTML = '';
   [['Registrar atendimento', function () { go('registrar', { paciente: p.nome }); }, 'btn mini'], ['Editar cadastro', function () { go('pacientes', { editar: p.nome, voltar: 'ficha' }); }, 'btn ter mini'], ['Cobrança do mês', function () { go('cobranca', { buscar: p.nome }); }, 'btn ter mini']].forEach(function (x) { var b = el('<button type="button" class="' + x[2] + '">' + esc(x[0]) + '</button>'); b.addEventListener('click', x[1]); ac.appendChild(b); });
+  $("#fi-alertas").innerHTML = alertasHtml(r.alertas || [], p.nome, true); ligarAlertas($("#fi-alertas"));
   // resumo
   var receber = r.aberto.filter(function (x) { return x.tipo === 'receber'; }), totR = receber.reduce(function (a, x) { return a + (x.r.saldo || 0); }, 0);
   var atend = r.sessoes.filter(function (x) { return /^Atendido/.test(x.oque); }).length, faltas = r.sessoes.filter(function (x) { return /^(Faltou|Desmarcou)/.test(x.oque); }).length;
@@ -3939,6 +3963,33 @@ $("#fi-parc-novo").addEventListener('click', function () {
   });
 });
 function numBRc(t) { t = String(t || '').trim().replace(/[R$\s]/g, ''); if (/,/.test(t)) t = t.replace(/\./g, '').replace(',', '.'); var n = parseFloat(t); return isNaN(n) ? 0 : n; }
+
+/* ===== 34-alertas.js ===== */
+/* ================= ALERTAS (Fase 2, 16/10) =================
+   Avisos calculados no servidor (alertasDe_): na Agenda vêm com a lista do dia (DIA.alertas) e aparecem no paciente (etiqueta
+   na linha, lista no painel) e numa linha das pendências; na Ficha, no topo. "Sem celular" não conta na etiqueta nem nas
+   pendências (é quase todo mundo enquanto os números não forem cadastrados): só aparece no painel e na Ficha, em cinza. */
+function alertasDe(nome) { return (DIA && DIA.alertas && DIA.alertas[nome]) || []; }
+function alertaBadge(nome) {
+  var l = alertasDe(nome).filter(function (a) { return a.tipo !== 'whats'; }); if (!l.length) return '';
+  return ' <span class="tag p ' + l[0].cor + ' alerta-tag" title="' + esc(l.map(function (a) { return a.texto; }).join('\n')) + '">' + ic('alerta', 11, 2.6) + ' ' + l.length + '</span>';
+}
+var ACAO_ALERTA = { cobranca: 'Cobrança do mês', pacientes: 'Editar cadastro', ficha: 'Ver ficha' };
+function alertasHtml(l, nome, naFicha) {
+  if (!l || !l.length) return '';
+  return '<div class="alertas">' + l.map(function (a) {
+    var acao = a.acao && ACAO_ALERTA[a.acao] && !(naFicha && a.acao === 'ficha') ? '<button type="button" class="btn ter mini no-print" data-alerta="' + esc(a.acao) + '" data-nome="' + esc(nome) + '">' + esc(ACAO_ALERTA[a.acao]) + '</button>' : '';
+    return '<div class="alerta ' + esc(a.cor) + '">' + ic('alerta', 15, 2.4) + '<span>' + esc(a.texto) + '</span>' + acao + '</div>';
+  }).join('') + '</div>';
+}
+function ligarAlertas(root) {
+  $$('[data-alerta]', root).forEach(function (b) {
+    b.addEventListener('click', function () {
+      var n = b.dataset.nome, a = b.dataset.alerta;
+      if (a === 'cobranca') go('cobranca', { buscar: n }); else if (a === 'pacientes') go('pacientes', { editar: n, voltar: telaAtual === 'ficha' ? 'ficha' : 'hoje' }); else go('ficha', { nome: n });
+    });
+  });
+}
 
 /* ===== 40-cobranca-mes.js ===== */
 /* ================= COBRANÇA DO MÊS (Fase 1, 15/10: substitui a tela Pacotes) =================

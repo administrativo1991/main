@@ -80,7 +80,7 @@ API.marcarMensagemEnviada = function (d) {
       if (h['Hora']) s.getRange(linha, h['Hora']).setNumberFormat('@');
       if (h['Competência']) s.getRange(linha, h['Competência']).setNumberFormat('@');
     });
-    SpreadsheetApp.flush();
+    SpreadsheetApp.flush(); if (!confirmacao) renovarAlertas_(); // "cobrado no WhatsApp" muda os alertas
     return { ok: true, n: itens.length, por: u.email || '', quando: agora_() };
   } finally { lock.releaseLock(); }
 };
@@ -185,7 +185,7 @@ API.fichaPaciente = function (d) {
     .map(function (r) { return { quando: String(r['Data/hora'] || ''), campo: r['Campo'], de: String(r['De'] || ''), para: String(r['Para'] || ''), quem: r['Quem informou'] || '' }; });
   var ult = sessoes.filter(function (r) { return /^Atendido/.test(r.oque) && dn(r) <= hojeN; })[0];
   return { ok: true, paciente: { nome: nome, nasc: p.nasc, ativo: p.ativo, convenio: p.convenio, pagador: p.pagador, obsCobranca: p.obsCobranca, resp: p.resp, respPar: p.respPar, whats: p.whats, respTel: p.respTel, telPac: p.telPac, fone: f.fone, foneFmt: f.foneFmt, foneDe: f.de, fixoFmt: f.fixoFmt, cpfFinal: Duplicatas.digitos(p.cpf).slice(-4) },
-    cobrancas: cobrancas, fixos: fixos, proximos: proximos, aberto: aberto, mensal: mensal, sessoes: sessoes.slice(0, 80), totalSessoes: sessoes.length, ultimaVez: ult ? { data: ult.data, profissional: ult.profissional } : null, mensagens: msgs, alteracoes: alts, parcelamentos: API.parcelamentos({ paciente: nome }).acordos };
+    cobrancas: cobrancas, fixos: fixos, proximos: proximos, aberto: aberto, mensal: mensal, sessoes: sessoes.slice(0, 80), totalSessoes: sessoes.length, ultimaVez: ult ? { data: ult.data, profissional: ult.profissional } : null, mensagens: msgs, alteracoes: alts, parcelamentos: API.parcelamentos({ paciente: nome }).acordos, alertas: alertasDe_([nome])[nome] || [] };
 };
 
 /* ---------- Conciliação (Fase 2, 16/10; só gestão) ----------
@@ -586,3 +586,77 @@ API.cancelarParcelamento = function (d) {
     return { ok: true };
   } finally { lock.releaseLock(); }
 };
+
+/* ================= ALERTAS (Fase 2, 16/10) =================
+   Avisos dentro da Ficha (todos do paciente) e da Agenda (pacientes do dia); sem tela própria. Escolhidos pela gestão (16/10):
+   cobrança: cobrado no WhatsApp há 5 dias ou mais e ainda em aberto · mês atrasado e ainda não cobrado · parcela vencida ·
+   dívida com mais de 30 dias; atendimento: 2+ faltas sem aviso / em cima da hora em 60 dias · horário fixo ativo sem
+   atendimento há 21 dias ou mais · sem celular no cadastro · avaliação sem aplicação há 14 dias ou mais.
+   A conta de todos os pacientes fica em cache por dia; muda a cada gravação na aba do mês ("comp") e a cada mensagem enviada. */
+var ALERTA_COBRADO_DIAS = 5, ALERTA_DIVIDA_DIAS = 30, ALERTA_FALTAS_DIAS = 60, ALERTA_FALTAS_N = 2, ALERTA_PAROU_DIAS = 21, ALERTA_AVAL_DIAS = 14;
+function versaoAlr_() { if (MEMO_.alrv === undefined) MEMO_.alrv = cacheGet_('alrv') || '0'; return MEMO_.alrv; }
+function renovarAlertas_() { MEMO_.alrv = String(new Date().getTime()); cachePut_('alrv', MEMO_.alrv); Object.keys(MEMO_).forEach(function (m) { if (/^alr:/.test(m)) delete MEMO_[m]; }); }
+function alertasBase_() {
+  return cacheado_('alr:' + versaoComp_() + ':' + versaoAlr_() + ':' + hoje_(), function () {
+    var hoje = ymdDate_(new Date()), dias = function (s) { var d = ymdDate_(s); return d ? Math.round((hoje - d) / 864e5) : 0; }, out = {};
+    var add = function (nome, a) { (out[nome] = out[nome] || []).push(a); };
+    var emDia = parcEmDia_(), porPac = {};
+    abasDeMes_().forEach(function (aba) { linhasMes_(aba).linhas.forEach(function (r) { r.aba = aba; (porPac[r.paciente] = porPac[r.paciente] || []).push(r); }); });
+    Object.keys(porPac).forEach(function (nome) {
+      var L = porPac[nome];
+      // dívida antiga: sessões em aberto há mais de 30 dias (fora de parcelamento em dia)
+      var div = L.filter(function (r) { return emAberto_(r) && !emDia[r.parc] && saldo_(r) > 0 && dias(r.data) > ALERTA_DIVIDA_DIAS; });
+      if (div.length) {
+        var tot = Math.round(div.reduce(function (s, r) { return s + saldo_(r); }, 0) * 100) / 100, velha = div.slice().sort(function (a, b) { return ymdDate_(a.data) - ymdDate_(b.data); })[0], dv = dias(velha.data);
+        add(nome, { tipo: 'divida', cor: dv > 60 ? 'vermelha' : 'laranja', texto: 'Deve ' + brl_(tot) + ' de ' + div.length + (div.length === 1 ? ' sessão' : ' sessões') + ' sem pagamento, a mais antiga de ' + velha.data.slice(0, 5) + ' (' + dv + ' dias)', acao: 'ficha' });
+      }
+      // faltas repetidas
+      var f = L.filter(function (r) { return /^Faltou (sem aviso|avisando em cima)/i.test(r.oque) && dias(r.data) >= 0 && dias(r.data) <= ALERTA_FALTAS_DIAS; }).sort(function (a, b) { return ymdDate_(a.data) - ymdDate_(b.data); });
+      if (f.length >= ALERTA_FALTAS_N) add(nome, { tipo: 'faltas', cor: 'laranja', texto: f.length + ' faltas sem aviso ou em cima da hora em ' + ALERTA_FALTAS_DIAS + ' dias (' + f.map(function (r) { return r.data.slice(0, 5); }).join(', ') + ')', acao: 'ficha' });
+    });
+    // horário fixo ativo sem atendimento há 21 dias ou mais (por profissional)
+    var ultimo = {}; Object.keys(porPac).forEach(function (nome) { porPac[nome].forEach(function (r) { if (!/^Atendido/.test(r.oque) || dias(r.data) < 0) return; var k = nome + '|' + r.profissional, d = ymdDate_(r.data); if (d && (!ultimo[k] || d > ultimo[k].d)) ultimo[k] = { d: d, data: r.data }; }); });
+    var vistos = {};
+    API.agendaFixa().forEach(function (r) {
+      if (String(r['Ativo'] || 'Sim') === 'Não') return; var t = r['Termina em'] ? parseData_(r['Termina em']) : null; if (t && t < hoje) return;
+      var c = r['Começa em'] ? ymdDate_(r['Começa em']) : null; if (c && Math.round((hoje - c) / 864e5) < ALERTA_PAROU_DIAS) return;
+      var nome = r['Paciente'], k = nome + '|' + r['Profissional']; if (vistos[k]) return; vistos[k] = 1;
+      var u = ultimo[k], d = u ? Math.round((hoje - u.d) / 864e5) : null;
+      if (u && d < ALERTA_PAROU_DIAS) return;
+      add(nome, { tipo: 'parou', cor: 'amarela', texto: 'Horário fixo de ' + String(r['Dia da semana'] || '').toLowerCase() + ' ' + horaTxt_(r['Hora']) + ' com ' + r['Profissional'] + (u ? ', mas a última sessão atendida foi em ' + u.data.slice(0, 5) + ' (' + d + ' dias)' : ', mas nenhuma sessão atendida nas abas de mês') + ': confirme se continua ou encerre o horário', acao: 'agenda' });
+    });
+    // cobrança no WhatsApp × competência ainda em aberto
+    var msgs = {}; linhasComo_(planilha_().getSheetByName(ABA_MSG)).forEach(function (m) { if (!/^Cobran/.test(m['Tipo'] || '')) return; var k = m['Paciente'] + '|' + (m['Competência'] || ''), d = parseData_(String(m['Data/hora'] || '').slice(0, 10)); if (d && (!msgs[k] || d > msgs[k])) msgs[k] = d; });
+    var hojeD = new Date(), chaves = [chaveMes_(new Date(hojeD.getFullYear(), hojeD.getMonth() - 1, 1, 12)), chaveMes_(hojeD)];
+    cobrancasProf_().forEach(function (l) {
+      if (!l.ativo || !(l.pagamento === 'Antecipado' || l.pagamento === 'Posterior' || l.cobranca === 'Mensalidade fixa')) return;
+      chaves.forEach(function (ch) {
+        var ini = mesDaChave_(ch); if (l.desde && parseData_(l.desde) > new Date(ini.getFullYear(), ini.getMonth() + 1, 0, 12)) return; if (l.ate && parseData_(l.ate) < ini) return;
+        var c, s; try { c = competenciaDe_(l, ch); s = Cobranca.situacaoCompetencia(l, c, hojeD, parametros_()); } catch (e) { return; }
+        if (/^Sim/i.test(c.pago || '') || s.sit === 'futura' || s.sit === 'em dia') return;
+        var mesTxt = ch.split('/')[0], quando = msgs[l.paciente + '|' + ch];
+        if (quando) { var dq = Math.round((hoje - ymdDate_(quando)) / 864e5); if (dq >= ALERTA_COBRADO_DIAS) add(l.paciente, { tipo: 'cobrado', cor: 'laranja', texto: 'Cobrado no WhatsApp em ' + fmtData_(quando).slice(0, 5) + ' (há ' + dq + ' dias) e ' + mesTxt.toLowerCase() + ' com ' + l.profissional + ' ainda não foi pago', acao: 'cobranca' }); }
+        else if (s.sit === 'atrasada') add(l.paciente, { tipo: 'atrasado', cor: 'vermelha', texto: mesTxt + ' com ' + l.profissional + ' atrasado e ainda não cobrado no WhatsApp', acao: 'cobranca' });
+      });
+    });
+    // parcela vencida
+    acordos_().forEach(function (a) { if (a.situacao !== 'ativo') return; a.parcelas.filter(function (q) { return q.atrasada; }).forEach(function (q) { add(a.paciente, { tipo: 'parcela', cor: 'vermelha', texto: 'Parcela ' + q.n + '/' + a.n + ' de ' + a.descricao + ' venceu em ' + q.venc.slice(0, 5) + ': falta ' + brl_(q.valor - q.pago), acao: 'ficha' }); }); });
+    // avaliação parada
+    avaliacoesEmAndamento_().forEach(function (x) { if (x.diasSemVir >= ALERTA_AVAL_DIAS) add(x.paciente, { tipo: 'avaliacao', cor: 'lilas', texto: 'Avaliação com ' + x.profissional + ' parada: ' + x.n + (x.n === 1 ? ' aplicação' : ' aplicações') + ', a última em ' + x.ultima.slice(0, 5) + ' (' + x.diasSemVir + ' dias). Confira com a profissional', acao: 'ficha' }); });
+    return out;
+  });
+}
+var ORDEM_ALERTA = { vermelha: 0, laranja: 1, amarela: 2, lilas: 3, cinza: 4 };
+// alertas de uma lista de pacientes: { nome: [ { tipo, cor, texto, acao } ] }; "sem celular" é calculado na hora (cadastro)
+function alertasDe_(nomes) {
+  var base = {}, out = {}, idx = {}; try { base = alertasBase_(); } catch (e) { base = {}; }
+  indicePacientes_().forEach(function (p) { idx[p.nome] = p; });
+  (nomes || []).forEach(function (nome) {
+    if (out[nome]) return; var l = (base[nome] || []).slice(), p = idx[nome];
+    if (p && !/^n/i.test(p.ativo || 'Sim') && !Mensagens.foneDoPaciente(p).fone) l.push({ tipo: 'whats', cor: 'cinza', texto: 'Sem celular no cadastro: a confirmação e a cobrança no WhatsApp não saem. Peça o número', acao: 'pacientes' });
+    l.sort(function (a, b) { return ORDEM_ALERTA[a.cor] - ORDEM_ALERTA[b.cor]; });
+    if (l.length) out[nome] = l;
+  });
+  return out;
+}
+API.alertas = function (d) { d = d || {}; return { ok: true, alertas: alertasDe_([].concat(d.pacientes || (d.paciente ? [d.paciente] : []))) }; };

@@ -32,6 +32,7 @@ function renderFicha() {
   $("#fi-obs").innerHTML = p.obsCobranca ? '<div class="faixa nota">' + esc(p.obsCobranca) + '</div>' : '';
   var ac = $("#fi-acoes"); ac.innerHTML = '';
   [['Registrar atendimento', function () { go('registrar', { paciente: p.nome }); }, 'btn mini'], ['Editar cadastro', function () { go('pacientes', { editar: p.nome, voltar: 'ficha' }); }, 'btn ter mini'], ['Cobrança do mês', function () { go('cobranca', { buscar: p.nome }); }, 'btn ter mini']].forEach(function (x) { var b = el('<button type="button" class="' + x[2] + '">' + esc(x[0]) + '</button>'); b.addEventListener('click', x[1]); ac.appendChild(b); });
+  $("#fi-alertas").innerHTML = alertasHtml(r.alertas || [], p.nome, true); ligarAlertas($("#fi-alertas"));
   // resumo
   var receber = r.aberto.filter(function (x) { return x.tipo === 'receber'; }), totR = receber.reduce(function (a, x) { return a + (x.r.saldo || 0); }, 0);
   var atend = r.sessoes.filter(function (x) { return /^Atendido/.test(x.oque); }).length, faltas = r.sessoes.filter(function (x) { return /^(Faltou|Desmarcou)/.test(x.oque); }).length;
