@@ -24,7 +24,7 @@ coluna E não afeta o app. Atualizar `E2` faz parte de toda publicação (passo 
 | Canal | Deploy | Peças | Commit |
 |---|---|---|---|
 | Real (`arquivos_real`) | **2026-10-15-16** (Lançar o dia em lote) | 49 (duplicatas 3 · server 15 · index 31); ativas = 731–779; `antigo32:` = as do 2026-10-15-14 (683–730) | branch `claude/sweet-wozniak-aviy8u`, commit 9fe7855 |
-| Teste (`arquivos`) | **2026-10-16-01** (Ficha do paciente) | 50 (duplicatas 3 · server 15 · index 32), linhas 422–471; `antigo36:` = as do 15 (373–421) | branch `claude/sweet-wozniak-aviy8u`, commit 78d631a |
+| Teste (`arquivos`) | **2026-10-16-02** (Ficha + WhatsApp só em celular) | 50 (duplicatas 3 · server 15 · index 32), linhas 472–521; `antigo37:` = as do 16-01 (422–471) | branch `claude/sweet-wozniak-aviy8u`, commit f3ba88c |
 | Carregador real | 2026-10-06-02 (`dist/Code.real.gs`, implantado pela Roberta) | — | 4ad0272 |
 | Carregador teste | 2026-10-04-01 + nova versão pendente desde 05/10 (permissão do Drive, ver `COMO-INSTALAR.md`) | — | — |
 
@@ -48,6 +48,16 @@ Modelo:
 ```
 
 ## Lista
+
+### 2026-10-16-02 · Teste · WhatsApp só em celular (+ Ficha)
+- **O que mudou**: o botão de WhatsApp (Confirmações, Cobrança do mês, Ficha) só usa **celular** (DDD + 9 + 8 dígitos); um
+  telefone fixo no cadastro não vira link de WhatsApp e aparece na Ficha como "fixo (ligar)" (gestão, 16/10: os fixos do
+  ControleOdonto devem ser anotados para contato).
+- **Peças**: 50 em `arquivos!A472:C521` com `novo:`; 46 iguais ao 16-01 copiadas por "colar valores", 4 gravadas (1 agente).
+  Lidas de volta: **50/50 iguais a `dist/pedacos.json`** (emojis da peça de mensagens conferidos); index e duplicatas +
+  server remontados iguais. Ativação numa gravação só (A422:A521): 422–471 → `antigo37:`; ativas = só 472–521. E2 carimbado.
+- **Dados**: nenhum. **Voltar**: `antigo37:` → nome (422–471) e 472–521 → `antigo38:`.
+- **Commit**: f3ba88c · **Aprovação**: só teste.
 
 ### 2026-10-16-01 · Teste · Ficha do paciente
 - **O que mudou**: tela **Ficha do paciente** (ver `NOTAS-fase2.md`, item 4), aberta por Pacientes → Ficha, Agenda → Ver

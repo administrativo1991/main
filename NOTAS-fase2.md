@@ -15,7 +15,7 @@ Arquivo de retomada da Fase 2 (começou em 15/10/2026, à noite). Quem abrir um 
 | 1b | **Cobrar no WhatsApp** (Cobrança do mês, textos oficiais) | **real** (14) |
 | 2 | **Lançar o dia em lote** (Meu dia) | **real** (16) |
 | 3 | Carga de telefones do ControleOdonto | em andamento: 14 gravados na real (16/10); faltam as outras páginas |
-| 4 | **Ficha do paciente** | feito · teste |
+| 4 | **Ficha do paciente** | teste (16-02) |
 | 5 | Perdas → Parcelas → Conciliação | a fazer |
 | 6 | Alertas (avisos dentro da Ficha e da Agenda, não tela própria) | a fazer |
 
@@ -148,6 +148,9 @@ pagador), só onde estava vazio, formato "(32) 9 9999-9999"; log em `Alteraçõe
 Amaral, Amanda Calichio); 2 com DDD "00" no ControleOdonto (Aleff, Alexsandra); Alice Oliveira já tinha WhatsApp.
 Próximo: a gestão exporta as outras páginas (mesmo de 20 em 20); o cruzamento e a gravação se repetem igual.
 O app relê o cadastro em até 5 min (cache).
+**Fixos (gestão, 16/10: "deve ser anotado, caso precisemos entrar em contato")**: vão para `Pacientes` → "Telefone do
+paciente" (vazio nos três), **depois** que a regra "WhatsApp só em celular" (deploy 16-02) estiver na real; antes disso o
+app usaria o fixo como WhatsApp. DDD "00" (Aleff, Alexsandra): a gestão confirma o DDD.
 
 ## 4. Ficha do paciente
 
