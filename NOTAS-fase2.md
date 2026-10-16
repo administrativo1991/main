@@ -3,9 +3,10 @@
 Arquivo de retomada da Fase 2 (começou em 15/10/2026, à noite). Quem abrir um chat novo lê, nesta ordem: `docs/DEPLOYS.md`
 ("No ar agora"), este arquivo, `NOTAS-fase1.md` (modelo de cobrança e decisões da Fase 1) e `docs/ESTADO-ATUAL.md` (mapa).
 
-> **Estado em 16/10**: na real = deploy **2026-10-16-03** (Confirmações, Cobrar no WhatsApp, Lançar o dia, Ficha do
-> paciente, WhatsApp só em celular); teste = 2026-10-16-02 (mesmo código). Telefones: 1ª página do ControleOdonto gravada.
-> Próximo: item 5 (Perdas → Parcelas → Conciliação), e as outras páginas de telefones quando a gestão exportar.
+> **Estado em 16/10 (noite)**: na real = deploy **2026-10-16-05** (Confirmações, Cobrar no WhatsApp, Lançar o dia, Ficha
+> do paciente, WhatsApp só em celular, **Conciliação**); teste = 2026-10-16-04 (mesmo código). Telefones: 1ª página do
+> ControleOdonto gravada. Próximo: a gestão importa o extrato/vendas na real e confere set/out; depois Perdas e Parcelas,
+> e as outras páginas de telefones quando a gestão exportar.
 
 ## Ordem combinada com a gestão (15/10; revista à noite: "sua ordem está perfeita")
 
@@ -16,7 +17,7 @@ Arquivo de retomada da Fase 2 (começou em 15/10/2026, à noite). Quem abrir um 
 | 2 | **Lançar o dia em lote** (Meu dia) | **real** (16) |
 | 3 | Carga de telefones do ControleOdonto | 19 gravados na real (16/10, a 1ª página); faltam as outras páginas |
 | 4 | **Ficha do paciente** | **real** (16-03) |
-| 5 | **Conciliação** (gestão escolheu começar por ela); depois Perdas e Parcelas | Conciliação **no teste** (16-04) |
+| 5 | **Conciliação** (gestão escolheu começar por ela); depois Perdas e Parcelas | Conciliação **real** (16-05) |
 | 6 | Alertas (avisos dentro da Ficha e da Agenda, não tela própria) | a fazer |
 
 Fora da lista por enquanto: check-in e alta (não escolhidos em 15/10).

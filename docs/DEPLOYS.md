@@ -23,7 +23,7 @@ coluna E não afeta o app. Atualizar `E2` faz parte de toda publicação (passo 
 
 | Canal | Deploy | Peças | Commit |
 |---|---|---|---|
-| Real (`arquivos_real`) | **2026-10-16-03** (Ficha do paciente + WhatsApp só em celular) | 50 (duplicatas 3 · server 15 · index 32); ativas = 780–829; `antigo33:` = as do 2026-10-15-16 (731–779) | branch `claude/sweet-wozniak-aviy8u`, commit f3ba88c |
+| Real (`arquivos_real`) | **2026-10-16-05** (Conciliação PagBank) | 54 (duplicatas 3 · server 17 · index 34); ativas = 830–883; `antigo34:` = as do 2026-10-16-03 (780–829) | branch `claude/sweet-wozniak-aviy8u`, commit 64a8e16 |
 | Teste (`arquivos`) | **2026-10-16-04** (Conciliação PagBank) | 54 (duplicatas 3 · server 17 · index 34), linhas 522–575; `antigo38:` = as do 16-02 (472–521) | branch `claude/sweet-wozniak-aviy8u`, commit 64a8e16 |
 | Carregador real | 2026-10-06-02 (`dist/Code.real.gs`, implantado pela Roberta) | — | 4ad0272 |
 | Carregador teste | 2026-10-04-01 + nova versão pendente desde 05/10 (permissão do Drive, ver `COMO-INSTALAR.md`) | — | — |
@@ -48,6 +48,16 @@ Modelo:
 ```
 
 ## Lista
+
+### 2026-10-16-05 · Real · Conciliação (PagBank)
+- **O que mudou**: o mesmo código do teste 2026-10-16-04 (menu Conciliação, só gestão).
+- **Peças**: 54 em `arquivos_real!A830:C883` com `novo:`; o conteúdo (coluna C) copiado por "colar valores" de
+  `arquivos!C522:C575` (já conferidas). Lidas de volta: **54/54 iguais a `dist/pedacos.json`**; index igual a
+  `dist/index.publicado.html`, duplicatas + server iguais a `dist/server.js`. Ativação numa gravação só (A780:A883):
+  780–829 → `antigo34:`; ativas = só 830–883 (coluna A inteira conferida). E2 carimbado.
+- **Dados**: nenhum ainda (as abas `Extrato bancário` e `Vendas no cartão` nascem na primeira importação; a coluna
+  `Conciliado` da aba do mês, na primeira confirmação). **Voltar**: `antigo34:` → nome (780–829) e 830–883 → `antigo35:`.
+- **Commit**: 64a8e16 · **Aprovação**: gestão, 16/10 ("perfeito, pode publicar no real").
 
 ### 2026-10-16-04 · Teste · Conciliação (PagBank)
 - **O que mudou**: menu **Conciliação** (só gestão; ver `NOTAS-fase2.md`, item 5 e `README-GESTAO.md`): importa o extrato
