@@ -136,4 +136,6 @@ que foi lido (nº, carteirinha, nome, datas) e a sessão que ele acha que é. Co
 assinada? = Sim", o nº e o link do PDF na linha). Se a sessão sugerida estiver errada, **Escolher outra linha**. Se o arquivo
 não for guia (comprovante salvo na pasta errada), **Não é guia / ignorar**. Laranja = o app ficou em dúvida (nome, data ou
 leitura ruim): confira com mais atenção. "Guia sem atendimento registrado" = a sessão não foi lançada: **Lançar a sessão**
-abre o Registrar já com o paciente e a data.
+abre o Registrar já com o paciente e a data. Quando a data impressa na guia (emissão) não é a do dia da sessão, o app
+mostra as duas linhas e avisa "data lida na guia difere da do nome do arquivo": desmarque a que não é e confirme. Toda noite
+o app refaz as sugestões ainda não confirmadas: a sessão que você lançou depois aparece sugerida no dia seguinte.

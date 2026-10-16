@@ -1,6 +1,6 @@
 # Estado atual do app — retomar daqui
 
-Atualizado em 16/10/2026 (Fase 2 completa; IA parte 1 — guias lidas do Drive — publicada na real no 16-12). Ao abrir um chat novo, leia nesta ordem:
+Atualizado em 16/10/2026 (Fase 2 completa; IA parte 1 — guias lidas do Drive — publicada na real no 16-12, casamento pela data do arquivo e sugestão refeita sem custo no 16-13). Ao abrir um chat novo, leia nesta ordem:
 
 1. **`docs/DEPLOYS.md`**, seção "No ar agora": o que roda em cada canal (teste e real), com commit e linhas da planilha de código.
 2. **`NOTAS-fase1.md`** (raiz): o modelo de cobrança da Fase 1, as decisões da gestão, o que falta e o que a gestão precisa olhar.

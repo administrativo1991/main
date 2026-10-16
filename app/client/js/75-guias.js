@@ -9,7 +9,7 @@ function carregarGuias(depois) {
   return call('guiasLidas', {}).then(function (r) { if (gen !== guiasGen) return null; GUIAS = r && r.ok ? r : { itens: [], ontem: 0, ia: {} }; if (depois) depois(GUIAS); return GUIAS; }).catch(function (e) { if (gen !== guiasGen) return null; GUIAS = { itens: [], ontem: 0, ia: { mensagem: 'não consegui ler as guias: ' + e.message }, erro: true }; if (depois) depois(GUIAS); return GUIAS; });
 }
 function guiaStatusTxt(st) { return { lida: 'sugestão pronta', sem_atendimento: 'guia sem atendimento registrado', baixa_confianca: 'conferir (baixa confiança)', nao_e_guia: 'o app não viu uma guia', erro: 'erro na leitura' }[st] || st; }
-function linhaTxt(l) { return l.data + (l.hora ? ' ' + l.hora : '') + ' · ' + profCurto(l.profissional) + (l.guia === 'Sim' ? ' · já assinada' : ''); }
+function linhaTxt(l) { return l.data + (l.hora ? ' ' + l.hora : '') + ' · ' + profCurto(l.profissional) + (l.guia === 'Sim' ? ' · já assinada' : '') + (l.origem === 'arquivo' ? ' · pela data do nome do arquivo' : ''); }
 // um item do card: miniatura/link · o que foi lido · linha(s) sugerida(s) · ações
 function guiaItemEl(it, aoMudar) {
   var lido = it.lido || {}, sug = it.sugestao || { linhas: [] }, baixa = it.status === 'baixa_confianca' || it.status === 'nao_e_guia', semLinha = !sug.linhas.length;

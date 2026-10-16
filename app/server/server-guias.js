@@ -113,8 +113,10 @@ function casarGuia_(g, conv, dica, mesPasta) {
   var datas = (g.datas || []).map(dataLida_).filter(Boolean);
   if (!datas.length && dica && dica.data) { datas = [dica.data]; motivos.push('data não lida na guia; usei a do nome do arquivo'); baixa = true; }
   if (!datas.length) { motivos.push('sem data de atendimento'); baixa = true; }
-  var linhas = [], vistos = {};
-  if (paciente) datas.forEach(function (ds) {
+  // a data do nome do arquivo ("28-09 Nome.pdf", posta pela recepção) costuma ser a da sessão; a lida na guia pode ser a de
+  // emissão/autorização. Quando as duas diferem (mais de 1 dia), as linhas das duas entram e a guia vai pra conferência.
+  var dataArq = dica && dica.data && !datas.some(function (ds) { return Math.abs(diasEntre_(ds, dica.data)) <= 1; }) ? dica.data : '';
+  var linhas = [], vistos = {}, buscar = function (ds, origem) {
     var d = parseData_(ds), cands = [];
     [new Date(d.getFullYear(), d.getMonth() - 1, 15), d, new Date(d.getFullYear(), d.getMonth() + 1, 15)].forEach(function (dm) {
       var aba = nomeAbaMes_(dm); if (cands.some(function (c) { return c.aba === aba; }) || !planilha_().getSheetByName(aba)) return;
@@ -124,19 +126,55 @@ function casarGuia_(g, conv, dica, mesPasta) {
         if (!(convL || /^Convênio/i.test(r.pago))) return;
         if (convL && conv && semAcento_(convL) !== semAcento_(conv)) return;
         var dr = parseData_(r.data); if (!dr) return; var dif = Math.abs(diasEntre_(r.data, ds)); if (dif > 1) return;
-        cands.push({ aba: aba, id: r.id, linha: r.linha, data: r.data, hora: r.hora, profissional: r.profissional, procedimento: r.procedimento, guia: r.guia, guiaN: '', dif: dif, dataGuia: ds });
+        cands.push({ aba: aba, id: r.id, linha: r.linha, data: r.data, hora: r.hora, profissional: r.profissional, procedimento: r.procedimento, guia: r.guia, guiaN: '', dif: dif, dataGuia: ds, origem: origem });
       });
     });
     var exatas = cands.filter(function (c) { return c.dif === 0; }), usar = exatas.length ? exatas : cands;
     if (exatas.length === 0 && cands.length) motivos.push('sessão de ' + ds + ' não achada; sugeri a de ' + cands[0].data);
-    usar.forEach(function (c) { var k = c.aba + '|' + (c.id || c.linha); if (!vistos[k]) { vistos[k] = 1; linhas.push(c); } });
-  });
+    var novas = 0; usar.forEach(function (c) { var k = c.aba + '|' + (c.id || c.linha); if (!vistos[k]) { vistos[k] = 1; linhas.push(c); novas++; } });
+    return novas;
+  };
+  if (paciente) {
+    datas.forEach(function (ds) { buscar(ds, 'guia'); });
+    if (dataArq) {
+      var nArq = buscar(dataArq, 'arquivo');
+      if (nArq) { motivos.push('data lida na guia (' + datas.join(', ') + ') difere da do nome do arquivo (' + dataArq + '): confira qual sessão é'); baixa = true; }
+    }
+  }
   var tipo = !linhas.length ? 'nenhuma' : linhas.length === 1 ? 'uma' : 'varias';
-  if (paciente && datas.length && tipo === 'nenhuma') motivos.push('nenhuma sessão de convênio de ' + paciente + ' em ' + datas.join(', '));
+  if (paciente && (datas.length || dataArq) && tipo === 'nenhuma') motivos.push('nenhuma sessão de convênio de ' + paciente + ' em ' + datas.concat(dataArq ? [dataArq + ' (nome do arquivo)'] : []).join(', '));
   return { paciente: paciente, como: como, confianca: baixa ? 'baixa' : 'alta', motivos: motivos, linhas: linhas, tipo: tipo, datas: datas };
 }
 
 /* ---------- leitura (gatilho diário ou botão) ---------- */
+// dica do nome da subpasta (paciente) e do arquivo ("dd-mm Nome.pdf"): nome e data da sessão
+function dicaGuia_(a) {
+  var ano = a.ano || new Date().getFullYear(), dica = dicaDoNome_(a.sub || a.nome, ano), dicaArq = dicaDoNome_(a.nome, ano);
+  if (!dica.nome) dica.nome = dicaArq.nome; if (!dica.data) dica.data = dicaArq.data;
+  return dica;
+}
+// casa as guias lidas de um arquivo com as linhas das abas do mês (determinístico, sem modelo) → status, sugestão, confiança, motivos
+function casamentoGuia_(guias, a) {
+  var dica = dicaGuia_(a), cas = guias.map(function (g) { return casarGuia_(g, a.conv, dica, a.mesNome); });
+  var linhas = [], vistos = {}, motivos = [], pacientes = [], baixa = false, semLinha = false;
+  cas.forEach(function (c) { c.linhas.forEach(function (l) { var k = l.aba + '|' + (l.id || l.linha); if (!vistos[k]) { vistos[k] = 1; linhas.push(l); } }); c.motivos.forEach(function (m) { if (motivos.indexOf(m) < 0) motivos.push(m); }); if (c.paciente && pacientes.indexOf(c.paciente) < 0) pacientes.push(c.paciente); if (c.confianca === 'baixa') baixa = true; if (c.tipo === 'nenhuma') semLinha = true; });
+  var status = !linhas.length ? 'sem_atendimento' : baixa ? 'baixa_confianca' : 'lida';
+  if (status === 'lida' && semLinha) { status = 'baixa_confianca'; motivos.push('parte das datas sem sessão registrada'); }
+  var sug = { paciente: pacientes.join(' / '), linhas: linhas.map(function (l) { return { aba: l.aba, id: l.id, linha: l.linha, data: l.data, hora: l.hora, profissional: l.profissional, procedimento: l.procedimento, guia: l.guia, origem: l.origem || '' }; }), datas: [].concat.apply([], cas.map(function (c) { return c.datas; })), como: cas[0] && cas[0].como };
+  return { status: status, sug: sug, confianca: baixa ? 'baixa' : 'alta', motivos: motivos.join('; ') };
+}
+// guia já lida e ainda pendente (lida · sem atendimento · baixa confiança): refaz o casamento com o que o modelo leu (custo 0).
+// Devolve true se status ou sugestão mudaram (ex.: a sessão foi lançada depois da leitura, ou o casamento melhorou).
+function recasarGuia_(idx, h, a) {
+  var r = idx.porId[a.id]; if (!r) return false;
+  var st = String(r['Status'] || ''); if (st !== 'lida' && st !== 'sem_atendimento' && st !== 'baixa_confianca') return false;
+  var lido = parseJSON_(r['Resultado']); if (!lido || !lido.e_guia || !(lido.guias || []).length) return false;
+  var cm = casamentoGuia_(lido.guias, a), sugAntes = JSON.stringify(parseJSON_(r['Sugestão']) || {}), sugNova = JSON.stringify(cm.sug);
+  if (cm.status === st && sugNova === sugAntes && cm.motivos === String(r['Motivos'] || '')) return false;
+  gravarCelulas_(idx.s, r._linha, h, { 'Status': cm.status, 'Sugestão': sugNova, 'Confiança': cm.confianca, 'Motivos': cm.motivos, 'Observação': 'sugestão refeita em ' + agora_() + (st !== cm.status ? ' (era ' + st + ')' : '') });
+  r['Status'] = cm.status; r['Sugestão'] = sugNova; r['Motivos'] = cm.motivos;
+  return true;
+}
 function lerGuias_(opts) {
   opts = opts || {};
   var t0 = new Date().getTime(), cfg = iaConfig_(), quem = opts.quem || usuario_().email || 'gatilho';
@@ -165,8 +203,7 @@ function lerGuias_(opts) {
     var blob, bytes; try { blob = a.file.getBlob(); bytes = blob.getBytes(); } catch (e1) { gravar(a, { 'Status': 'erro', 'Observação': 'não consegui abrir: ' + (e1 && e1.message || e1) }); res.comErro++; continue; }
     var hs = hashBytes_(bytes), dup = hs && idx.porHash[hs];
     if (dup && dup.id !== a.id) { gravar(a, { 'Status': 'duplicada', 'Hash': hs, 'Observação': 'mesmo conteúdo que ' + (dup['Nome'] || dup.id) + ' (' + dup['Pasta'] + ')' }); res.duplicadas++; continue; }
-    var pacs = pacientesConvenio_(a.conv), dica = dicaDoNome_(a.sub || a.nome, a.ano || new Date().getFullYear()), dicaArq = dicaDoNome_(a.nome, a.ano || new Date().getFullYear());
-    if (!dica.nome) dica.nome = dicaArq.nome; if (!dica.data) dica.data = dicaArq.data;
+    var pacs = pacientesConvenio_(a.conv);
     var texto = 'Arquivo: ' + a.nome + '\nPasta: ' + a.pasta + (a.sub ? ' (subpasta do paciente: ' + a.sub + ')' : '') + '\nConvênio da pasta: ' + (a.conv || '?') + '\nMês da pasta: ' + (a.mesNome || '') + '/' + (a.ano || '') + '\n\nPacientes de convênio cadastrados (nome · carteirinha · convênio):\n' +
       pacs.map(function (p) { return p.nome + ' · ' + (carteirinhas_().porNome[p.nome] || '-') + ' · ' + p.convenio; }).join('\n');
     var r = chamarIA('guias', { documentos: [{ nome: a.nome, bytes: bytes, mime: tipo === 'img' ? a.mime.toLowerCase() : 'application/pdf' }], texto: texto, schema: GUIA_SCHEMA, maxTokens: 3000, arquivos: 1, linhas: pacs.length, quem: quem, observacao: a.pasta + '/' + a.nome });
@@ -180,16 +217,14 @@ function lerGuias_(opts) {
     if (hs) idx.porHash[hs] = { id: a.id, Nome: a.nome, Pasta: a.pasta }; // só o que foi lido vale como original de uma duplicata
     var d = r.dados || {}, guias = (d.guias || []).filter(function (g) { return g && !g.continuacao_da_anterior; }), lido = { e_guia: d.e_guia !== false && guias.length > 0, observacao: d.observacao || '', guias: guias, modelo: r.modelo, tokens: r.usage };
     if (!lido.e_guia) { gravar(a, { 'Status': 'nao_e_guia', 'Hash': hs, 'Resultado': JSON.stringify(lido), 'Confiança': 'baixa', 'Motivos': 'o modelo não viu uma guia: ' + (d.observacao || ''), 'Páginas': (d.guias || []).length, 'Custo (US$)': r.custo || 0 }); res.conferir++; continue; }
-    var cas = guias.map(function (g) { return casarGuia_(g, a.conv, dica, a.mesNome); });
-    var linhas = [], vistos = {}, motivos = [], pacientes = [], baixa = false, semLinha = false;
-    cas.forEach(function (c) { c.linhas.forEach(function (l) { var k = l.aba + '|' + (l.id || l.linha); if (!vistos[k]) { vistos[k] = 1; linhas.push(l); } }); c.motivos.forEach(function (m) { if (motivos.indexOf(m) < 0) motivos.push(m); }); if (c.paciente && pacientes.indexOf(c.paciente) < 0) pacientes.push(c.paciente); if (c.confianca === 'baixa') baixa = true; if (c.tipo === 'nenhuma') semLinha = true; });
-    var status = !linhas.length ? 'sem_atendimento' : baixa ? 'baixa_confianca' : 'lida';
-    if (status === 'lida' && semLinha) { status = 'baixa_confianca'; motivos.push('parte das datas sem sessão registrada'); }
-    var sug = { paciente: pacientes.join(' / '), linhas: linhas.map(function (l) { return { aba: l.aba, id: l.id, linha: l.linha, data: l.data, hora: l.hora, profissional: l.profissional, procedimento: l.procedimento, guia: l.guia }; }), datas: [].concat.apply([], cas.map(function (c) { return c.datas; })), como: cas[0] && cas[0].como };
-    gravar(a, { 'Status': status, 'Hash': hs, 'Resultado': JSON.stringify(lido), 'Sugestão': JSON.stringify(sug), 'Confiança': baixa ? 'baixa' : 'alta', 'Motivos': motivos.join('; '), 'Páginas': guias.length, 'Custo (US$)': r.custo || 0, 'Observação': '' });
-    res.lidas++; if (status === 'lida') res.confirmar++; else res.conferir++;
+    var cm = casamentoGuia_(guias, a);
+    gravar(a, { 'Status': cm.status, 'Hash': hs, 'Resultado': JSON.stringify(lido), 'Sugestão': JSON.stringify(cm.sug), 'Confiança': cm.confianca, 'Motivos': cm.motivos, 'Páginas': guias.length, 'Custo (US$)': r.custo || 0, 'Observação': '' });
+    res.lidas++; if (cm.status === 'lida') res.confirmar++; else res.conferir++;
   }
   res.restantes = Math.max(0, novos.length - processados);
+  // refaz o casamento (sem chamar o modelo) das guias ainda pendentes: a sessão pode ter sido lançada depois da leitura
+  res.recasadas = 0;
+  try { lista.forEach(function (a) { if (novos.indexOf(a) >= 0) return; if (new Date().getTime() - t0 > GUIA_ORCAMENTO_MS) return; if (recasarGuia_(idx, h, a)) res.recasadas++; }); } catch (e2) { res.mensagens.push('não refiz as sugestões pendentes: ' + (e2 && e2.message || e2)); }
   SpreadsheetApp.flush();
   res.novos = novos.length; res.custo = Math.round(res.custo * 1e6) / 1e6; res.custoPorGuia = res.lidas ? Math.round(res.custo / res.lidas * 1e6) / 1e6 : 0;
   return fim();

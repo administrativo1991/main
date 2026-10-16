@@ -3,11 +3,11 @@
 Arquivo de retomada deste item. Quem abrir um chat novo lê, nesta ordem: `docs/DEPLOYS.md` ("No ar agora"), este arquivo,
 `NOTAS-fase2.md`, `NOTAS-fase1.md`, `docs/ESTADO-ATUAL.md`. Escrito pra quem não viu a conversa.
 
-> **Estado em 16/10 (noite)**: código **publicado direto na planilha real** (deploy `2026-10-16-12`, decisão da gestão:
-> "vamos fazer direto na planilha oficial"). Falta, do lado da gestão, **(1) colar a chave da API** e **(2) colar o
-> carregador novo e publicar nova versão** — sem isso o app continua funcionando, mas a leitura das guias fica
-> "indisponível" (o card diz o porquê). Depois disso: clicar "Instalar gatilho diário" e "Ler guias agora → Setembro" no
-> card "Uso da IA este mês" (Pendências) pra ler os ~45 PDFs reais do Cedplan e medir o custo. Seção 6 diz como.
+> **Estado em 16/10 (noite)**: código **publicado direto na planilha real** (deploys `2026-10-16-12` e `-13`, decisão da
+> gestão: "vamos fazer direto na planilha oficial"). A gestão já colou a chave, o carregador novo (versão 2 do projeto real),
+> instalou o gatilho (19h) e rodou **"Ler guias agora → Setembro"**: 45 PDFs do Cedplan lidos, todos `ok`, **≈ US$ 0,021 no
+> total** (seção 2). O que a leitura real mostrou e o que mudou por causa dela está na seção 2 ("Setembro na real").
+> Próximo passo da recepção/gestão: confirmar as guias no card "Guias lidas ontem" (Meu dia). Seção 6 diz como.
 
 ## 1. O que foi feito
 
@@ -76,8 +76,20 @@ Arquivo de retomada deste item. Quem abrir um chat novo lê, nesta ordem: `docs/
 - **Custo estimado por guia**: ≈ 2–3 mil tokens de entrada (PDF de 1 página + lista de ~80 pacientes de convênio +
   instrução) e ~200 de saída → **≈ US$ 0,0004 por guia** (teste com o Google falso: 0,00039). **150 guias/mês ≈ US$ 0,06**;
   mesmo com Sonnet seriam ≈ US$ 0,60. O teto de 20 fica muito folgado.
-- **Custo medido** (preencher depois de "Ler guias agora → Setembro" na real; o `IA log` tem uma linha por arquivo):
-  _a medir_.
+- **Custo medido na real (16/10, setembro do Cedplan)**: 45 PDFs lidos, todos `ok`, ≈ 3,5 mil tokens de entrada e ≈ 220 de
+  saída por arquivo (a lista enviada tinha os 19 pacientes de convênio do Cedplan) → **≈ US$ 0,00047 por guia, ≈ US$ 0,021
+  pelos 45**. Projeção: **150 guias/mês ≈ US$ 0,07**; com Sonnet ≈ US$ 0,70. O teto de US$ 20/mês é só rede de segurança.
+- **Setembro na real — o que a leitura mostrou**: nomes, números de guia e carteirinhas lidos certos em todas as amostras
+  conferidas. Resultado da primeira passada: 28 `lida` (sugestão pronta), 16 `sem_atendimento`, 1 `baixa_confianca`
+  (Alexandre 30-09, sem assinatura visível), 1 `duplicada`, 12 `nao_lida_tipo` (os `.zip`). **Os 16 "sem atendimento" eram
+  quase todos o mesmo caso: o modelo lê a data de emissão impressa na guia, e a sessão (que está no nome do arquivo,
+  `dd-mm Nome.pdf`) é outro dia.** Correção no deploy `-13`: o casamento também procura a linha pela data do nome do
+  arquivo quando ela difere da lida na guia; as duas entram marcadas, com o motivo "data lida na guia (…) difere da do
+  nome do arquivo (…): confira qual sessão é", e a guia vai pra conferência (laranja) em vez de "sem atendimento". E toda
+  execução (gatilho ou botão) **refaz, sem chamar o modelo, a sugestão das guias ainda pendentes** (`recasarGuia_`): a
+  sessão lançada depois da leitura passa a ser sugerida no dia seguinte; o que mudou ganha "sugestão refeita em …" na
+  coluna Observação. Os 16 de setembro são refeitos na próxima execução (gatilho das 19h ou "Ler guias agora → Setembro",
+  custo 0: nenhum arquivo novo).
 
 ## 3. Decisões
 
@@ -89,10 +101,14 @@ Arquivo de retomada deste item. Quem abrir um chat novo lê, nesta ordem: `docs/
 - `.zip` e outros tipos ficam registrados como `nao_lida_tipo` só na aba (não aparecem nos cards).
 - O gatilho roda sem usuário logado: `Quem` no log = `gatilho`.
 - Linha da aba do mês sem ID (digitada à mão) não é confirmável pelo app (mesma regra do Corrigir lançamento).
+- Data da guia × data do arquivo: o modelo devolve as datas que vê (muitas vezes só a emissão); o nome do arquivo
+  (`dd-mm Nome`) é a data da sessão pra recepção. As duas valem como candidatas; quando divergem a recepção decide.
+- Sugestão pendente é refeita a cada execução (sem custo); confirmada/ignorada nunca é mexida.
 
 ## 4. O que falta / fica de fora
 
-- Pendente da gestão: chave da API, carregador novo (`dist/Code.real.gs`), instalar o gatilho, ler setembro, medir custo.
+- Feito pela gestão em 16/10: chave, carregador novo (versão 2), gatilho, leitura de setembro, custo medido (seção 2).
+- Pendente: confirmar as guias de setembro no Meu dia; Sabin só pode ser testado quando houver PDF na pasta dele.
 - Convênios sem pasta no Drive (Unafisco, IPSM…) ficam fora da leitura automática.
 - HEIC e fotos fora de PDF/JPG/PNG/WEBP: `nao_lida_tipo`.
 - Cache de prompt da API: não usado (o prefixo estável é curto demais pra valer).
