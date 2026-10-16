@@ -18,8 +18,8 @@ Arquivo de retomada da Fase 2 (começou em 15/10/2026, à noite). Quem abrir um 
 | 3 | Carga de telefones do ControleOdonto | 19 gravados na real (16/10, a 1ª página); faltam as outras páginas |
 | 4 | **Ficha do paciente** | **real** (16-03) |
 | 5 | **Conciliação** (gestão escolheu começar por ela) | **real** (16-05) |
-| 5b | **A receber e perdas** (todos os meses, por idade; dar como perdido em lote; perdas do ano) | **teste** (16-06) |
-| 5c | **Parcelamentos** (serviço parcelado e dívida renegociada, na Ficha) | pronto, a publicar no teste |
+| 5b | **A receber e perdas** (todos os meses, por idade; dar como perdido em lote; perdas do ano) | **teste** (16-06, e no 16-07) |
+| 5c | **Parcelamentos** (serviço parcelado e dívida renegociada, na Ficha) | **teste** (16-07) |
 | 6 | Alertas (avisos dentro da Ficha e da Agenda, não tela própria) | a fazer |
 
 Fora da lista por enquanto: check-in e alta (não escolhidos em 15/10).

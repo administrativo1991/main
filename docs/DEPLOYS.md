@@ -24,7 +24,7 @@ coluna E não afeta o app. Atualizar `E2` faz parte de toda publicação (passo 
 | Canal | Deploy | Peças | Commit |
 |---|---|---|---|
 | Real (`arquivos_real`) | **2026-10-16-05** (Conciliação PagBank) | 54 (duplicatas 3 · server 17 · index 34); ativas = 830–883; `antigo34:` = as do 2026-10-16-03 (780–829) | branch `claude/sweet-wozniak-aviy8u`, commit 64a8e16 |
-| Teste (`arquivos`) | **2026-10-16-06** (A receber e perdas) | 56 (duplicatas 3 · server 18 · index 35), linhas 576–631; `antigo39:` = as do 16-04 (522–575) | branch `claude/sweet-wozniak-aviy8u`, commit 0b256c0 |
+| Teste (`arquivos`) | **2026-10-16-07** (A receber e perdas + Parcelamentos) | 58 (duplicatas 3 · server 19 · index 36), linhas 632–689; `antigo40:` = as do 16-06 (576–631) | branch `claude/sweet-wozniak-aviy8u`, commit 77686b9 |
 | Carregador real | 2026-10-06-02 (`dist/Code.real.gs`, implantado pela Roberta) | — | 4ad0272 |
 | Carregador teste | 2026-10-04-01 + nova versão pendente desde 05/10 (permissão do Drive, ver `COMO-INSTALAR.md`) | — | — |
 
@@ -48,6 +48,17 @@ Modelo:
 ```
 
 ## Lista
+
+### 2026-10-16-07 · Teste · Parcelamentos (+ A receber e perdas)
+- **O que mudou**: card **Parcelamentos** na Ficha (ver `NOTAS-fase2.md` 5c): serviço parcelado (cada pagamento vira um
+  lançamento no mês do pagamento) e sessões em aberto (dívida renegociada, abatida nas linhas antigas); "Parcelas vencidas"
+  no A receber; Conciliação separa cada "Recebido R$ … em …" de uma linha; Ficha com o resumo em 2 colunas no celular.
+- **Peças**: 58 em `arquivos!A632:C689` com `novo:`; 18 iguais ao 16-06 copiadas por "colar valores", 40 gravadas (4
+  agentes). Lidas de volta: **58/58 iguais** à cópia de `dist/pedacos.json` tirada antes; index e duplicatas + server
+  iguais. Ativação numa gravação só (A576:A689): 576–631 → `antigo40:`; ativas = só 632–689. E2 carimbado.
+- **Dados**: nenhum (as abas `Parcelamentos` e `Pagamentos de parcelas` nascem no primeiro acordo). **Voltar**:
+  `antigo40:` → nome (576–631) e 632–689 → `antigo41:`.
+- **Commit**: 77686b9 · **Aprovação**: só teste.
 
 ### 2026-10-16-06 · Teste · A receber e perdas
 - **O que mudou**: menu **A receber** (só gestão; ver `NOTAS-fase2.md` 5b): a receber de todos os meses por idade, dar como
