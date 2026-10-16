@@ -133,3 +133,17 @@ Atendido e falta sem aviso consomem consulta; desmarcou com antecedência não c
 - **App não carrega / tela em branco**: o código fica na planilha "Recepção Nascente — código do app (não mexer)", aba `arquivos`. Não edite essa planilha. Se alguém mexeu, me avise.
 - **Alguém inseriu linha no meio da aba do mês**: o app localiza linhas pelo ID, então não grava em cima da linha errada. Mas as colunas automáticas da planilha podem precisar de conferência.
 - **Precisa tirar um registro**: não apague a linha. Troque "O que aconteceu" pra "Cancelado pela clínica" e anote o motivo na Observação.
+
+
+## Uso da IA (guias lidas do Drive) — 16/10
+
+- **Pendências → card "Uso da IA este mês"**: quanto gastou (US$) do teto do mês e do dia, botão **Pausar tudo / Reativar**
+  (grava na aba `IA`, sem abrir a planilha), um botão por item (Guias · Conciliação · Perguntar), **Ler guias agora** (escolha
+  o mês) e **Instalar gatilho diário** (hora na aba `IA`, padrão 19h). Aos 80 % do teto o card fica amarelo e chega um e-mail;
+  em 100 % a IA para sozinha. Pausar não perde nada: as guias ficam na pasta e são lidas quando reativar.
+- **Aba `IA`**: modelo, tetos, hora do gatilho, instrução que o modelo recebe. **Aba `IA log`**: cada chamada com tokens e
+  custo. **Aba `Guias lidas`**: o que foi lido de cada arquivo e a sugestão.
+- **Pendências → "Guias a conferir"**: guias sem atendimento registrado, com leitura em dúvida ou que não pareceram guia.
+  Na lista "Convênio sem guia assinada", a coluna **"PDF na pasta?"**: sim sem linha casada = problema de nome ou data;
+  não = a guia não foi digitalizada.
+- A recepção confirma as guias lidas no **Meu dia** (card "Guias lidas ontem"); a gestão também pode.

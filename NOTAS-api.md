@@ -3,197 +3,136 @@
 Arquivo de retomada deste item. Quem abrir um chat novo lê, nesta ordem: `docs/DEPLOYS.md` ("No ar agora"), este arquivo,
 `NOTAS-fase2.md`, `NOTAS-fase1.md`, `docs/ESTADO-ATUAL.md`. Escrito pra quem não viu a conversa.
 
-> **Estado em 16/10 (noite)**: **plano escrito, aguardando o OK da gestão. Nenhum código tocado.** Branch
-> `claude/youthful-fermat-9l35tu` avançado (fast-forward) até o código que roda na real (`sweet-wozniak`, deploy 2026-10-16-11).
+> **Estado em 16/10 (noite)**: código **publicado direto na planilha real** (deploy `2026-10-16-12`, decisão da gestão:
+> "vamos fazer direto na planilha oficial"). Falta, do lado da gestão, **(1) colar a chave da API** e **(2) colar o
+> carregador novo e publicar nova versão** — sem isso o app continua funcionando, mas a leitura das guias fica
+> "indisponível" (o card diz o porquê). Depois disso: clicar "Instalar gatilho diário" e "Ler guias agora → Setembro" no
+> card "Uso da IA este mês" (Pendências) pra ler os ~45 PDFs reais do Cedplan e medir o custo. Seção 6 diz como.
 
-## Contexto
+## 1. O que foi feito
 
-O app "Recepção Nascente" (Apps Script sobre a planilha Controle da Recepção 2026) já tem as Fases 1 e 2 no ar
-(deploy 2026-10-16-11 na real). Falta o primeiro uso da API Claude: ler os PDFs das guias que a recepção salva em
-`Drives compartilhados / Recepção / GUIAS DE CONVÊNIOS / {CEDPLAN | SABIN SINAI} / {MM MÊS AA}`, casar cada guia com
-a(s) linha(s) da aba do mês e deixar a recepção confirmar com um clique. A infraestrutura (aba `IA`, aba `IA log`, pausa e
-teto, chave em `PropertiesService`, `chamarIA(item, payload)`) é genérica: os dois itens seguintes (conciliação assistida e
-"perguntar à planilha") vão reaproveitá-la.
+**Infra genérica** (`app/server/server-ia.js`), reaproveitada pelos próximos itens (conciliação assistida, perguntar à planilha):
 
-### O que achei antes de planejar (muda o ponto de partida)
+- **Aba `IA`** (criada pelo app na primeira chamada, com a carga inicial; a gestão edita): `ia_ativa`, `ia_guias`,
+  `ia_conciliacao`, `ia_perguntar` (Sim/Não), `modelo` (`claude-haiku-5-5`), `esforco` (`low`), `teto_mes_usd` (20),
+  `teto_dia_usd` (3), `aviso_pct` (80), `preco_entrada_usd_mtok` (0,10), `preco_saida_usd_mtok` (0,50), `email_aviso`,
+  `hora_gatilho` (19), `pasta_guias_id`, `guias_mes_anterior_ate_dia` (5), `guias_max_por_execucao` (25),
+  `instrucao_guias` (texto que o modelo recebe), `instrucao_conciliacao` e `instrucao_perguntar` (vazias). Chaves novas de
+  versões futuras são acrescentadas no fim sem mexer nas existentes.
+- **Aba `IA log`**: Data/hora · Item · Arquivos · Linhas · Modelo · Tokens entrada · Tokens saída · Custo (US$) · Quem ·
+  Resultado · Observação · Duração (s). Pausar/reativar e trocar hora do gatilho também entram (item `config`, custo 0).
+- **`chamarIA(item, payload)`**: confere `ia_ativa` e `ia_<item>`, soma o `IA log` do mês e do dia contra os tetos, pega a
+  chave em `PropertiesService` (`ANTHROPIC_API_KEY`), monta a requisição (`system` = instrução da aba, documentos PDF/imagem
+  em base64, texto, `output_config.format` json_schema quando há `schema`, `output_config.effort`), `UrlFetchApp.fetch`
+  com `muteHttpExceptions` dentro de `try/catch`, grava o log (custo = tokens × preço da aba) e devolve `{ ok, dados, usage,
+  custo }` ou `{ ok:false, motivo, mensagem }` (motivos: `pausada`, `pausada_item`, `teto_mes`, `teto_dia`, `sem_chave`,
+  `erro_api`, `recusa`, `json_invalido`). Nunca lança exceção pra fora. Aos 80 % do teto do mês manda um e-mail por mês.
+- **`API.iaEstado`**, **`API.iaDefinir`** (só `ia_*` e `hora_gatilho`, gestão), **`API.iaPausar`**,
+  **`API.iaInstalarGatilho`** (`ScriptApp`, diário na hora da aba), **`API.gatilhoDiarioIA`** (roda as rotinas registradas
+  em `ROTINAS_IA_`; a das guias é a primeira).
+- **Carregador** (`app/loader/Code.gs`): função `gatilhoDiarioIA()` (o gatilho precisa de uma função do projeto) e
+  `permissoes_()` cita `UrlFetchApp`, `PropertiesService`, `ScriptApp`, `MailApp` pro Google pedir as permissões.
 
-1. **O branch que recebi (`claude/youthful-fermat-9l35tu`) está em 06/10**, sem as Fases 1 e 2. O código que roda na real
-   está em `origin/claude/sweet-wozniak-aviy8u` (commit 98a2cc3, 16/10: `server-fase2.js`, Meu dia, Pendências, Conciliação,
-   NOTAS-fase1/2). Meu branch é ancestral dele → **passo 0: avançar `claude/youthful-fermat-9l35tu` até `sweet-wozniak`
-   (fast-forward, sem força) e trabalhar daí.** Nada se perde.
-2. **A pasta do Drive foi organizada hoje (16/10, 15h)** e tem um nível a mais do que o prompt diz: dentro do mês há
-   **subpasta por paciente**. Olhei setembro: `CEDPLAN/09 SET 26/` tem **13 subpastas de pacientes com ~45 PDFs** (um por
-   sessão, `dd-mm Nome.pdf`, 0,1–4 MB; nomes às vezes curtos: `10-09 Davi Daniel.pdf`, `09-09 sofia pires.pdf`,
-   `Alexandre_Cedplan_30-09_assinado_assinado (2).pdf`), **um `.zip` por paciente** (exportação da pasta antiga) e pelo menos
-   **uma duplicata** (o mesmo PDF do Alexandre com dois nomes). `SABIN SINAI/09 SET 26/` e as duas `10 OUT 26` estão vazias.
-   **Os 13 pacientes de setembro estão na aba `Setembro` da CÓPIA TESTE como Cedplan · `Convênio (fatura)`**, vários com
-   `Guia assinada?` em branco ou `Não`. Logo: o leitor percorre o mês **recursivamente**, aceita PDF/JPG/PNG, ignora o resto
-   (registrando o motivo), detecta duplicata (mesmo tamanho + mesma leitura → "duplicada"), e usa o nome da subpasta e do
-   arquivo (`dd-mm Nome`) como **dica** no casamento. E **o teste real é setembro**, não PDFs novos (ver "Testes").
-3. `O7 JUL 26` (letra O) existe nos dois convênios: renomeio pra `07 JUL 26` antes de começar (o código acha o mês por
-   `^0?7\b` de qualquer jeito).
-4. **`Nº da carteirinha` em `Pacientes` está vazio em quase todo mundo** → o casamento vai cair quase sempre no nome. Por
-   isso o Confirmar oferece "gravar a carteirinha lida no cadastro" (com log em `Alterações de cadastro`): o cadastro se
-   completa com o uso, como fizemos com o WhatsApp.
-5. O carregador da CÓPIA TESTE está desatualizado desde 05/10 (permissão do Drive pendente). Este item **exige** carregador
-   novo (UrlFetch, gatilho, e-mail, propriedades) → a gestão vai ter de colar o `dist/Code.gs` e publicar nova versão (ver
-   "O que preciso da gestão").
+**Guias** (`app/server/server-guias.js` + `app/client/js/75-guias.js`):
 
-### Modelo
+- Leitura (`lerGuias_`): pasta raiz da aba IA → uma pasta por convênio (`CEDPLAN`, `SABIN SINAI`, mapeadas pra `Cedplan` /
+  `Sabin Sinai` de Listas por nome sem acento) → pasta do mês achada pelo **número no início do nome** (`^0?7`, tolera
+  `O7`; confere o ano se o nome terminar em 2 dígitos) → recursiva até 3 níveis (subpasta por paciente). Aceita PDF, JPG,
+  PNG, WEBP, GIF; outros tipos (zip) ficam como `nao_lida_tipo`; **duplicata** (mesmo MD5 de um arquivo já lido) fica como
+  `duplicada` sem chamada. Mês lido: o corrente (+ o anterior até o dia 5), ou o escolhido no botão "Ler guias agora".
+  Máximo `guias_max_por_execucao` arquivos e ~4,5 min por execução; o resto fica pro dia seguinte. Pausa/teto/sem chave no
+  meio: nada é gravado, o arquivo fica pra próxima.
+- Pro modelo vai: o arquivo, o nome do arquivo e da subpasta, o convênio e o mês da pasta e a lista de pacientes de
+  convênio cadastrados (nome · carteirinha · convênio). **Sem CPF, telefone ou valores.** Resposta em JSON fixo
+  (`GUIA_SCHEMA`): `e_guia`, `observacao`, `guias[{ pagina, continuacao_da_anterior, convenio, numero_guia, carteirinha,
+  beneficiario, datas[], procedimento, quantidade, assinatura_visivel, legibilidade }]` — uma guia por página.
+- Casamento **sem modelo** (`casarGuia_`): paciente por carteirinha no cadastro → nome lido (`notaNome_` ≥ 0,8, o mesmo da
+  conciliação) → nome da subpasta/arquivo; linhas das abas do mês da data (e vizinhos) com `Atendido`, `Pago? = Convênio`
+  ou convênio na linha, mesmo convênio da pasta, data igual (±1 dia se não houver igual). 1 linha → `lida`; várias datas →
+  todas as linhas; nenhuma → `sem_atendimento`; leitura parcial/ilegível, sem assinatura, nome sem correspondência,
+  carteirinha divergente, nome da pasta não bate → `baixa_confianca`; o modelo não viu guia → `nao_e_guia`.
+- **Aba `Guias lidas`**: ID do arquivo · Nome · Pasta · Link · Convênio · Data de leitura · Status · Resultado (JSON) ·
+  Sugestão (JSON) · Confiança · Motivos · Confirmado por · Linhas gravadas · Observação · Páginas · Custo (US$) · Hash.
+- **Meu dia** (recepção e gestão): card **"Guias lidas ontem (n)"** com todas as pendentes (o título diz quantas foram
+  lidas ontem). Por guia: miniatura + link do PDF · o que foi lido · linha(s) sugerida(s) com caixinhas · **Confirmar** ·
+  **Escolher outra linha** (outras sessões de convênio do paciente) · **Não é guia / ignorar** (dois cliques) · "Lançar a
+  sessão" quando não há atendimento registrado (abre o Registrar com paciente e data). Confirmar grava `Guia assinada? =
+  Sim` (se ainda não era), **`Nº da guia`** e **`Link da guia`** (colunas novas no fim da aba do mês), carimbo em
+  `Registrado por (app)`, uma linha por campo em `Alterações de lançamento`; e, se marcado, a **carteirinha** lida vai pro
+  cadastro (só se estiver vazio) com log em `Alterações de cadastro`. Laranja = baixa confiança; vermelho = sem atendimento.
+- **Pendências** (gestão): card **"Uso da IA este mês: US$ X de Y"** (barra, gasto do dia, chamadas, item por item
+  clicável, Pausar tudo / Reativar, Ler guias agora com o mês, Instalar gatilho, última leitura, aviso amarelo ≥ 80 %, aviso
+  de chave ausente); card **"Guias a conferir (lidas pela IA)"** (sem atendimento, baixa confiança, não é guia, erro) com os
+  mesmos botões; a lista **"Convênio sem guia assinada"** ganhou a coluna **"PDF na pasta?"** (sim = há arquivo lido com
+  esse paciente/data ou apontando pra linha; não = a guia não foi digitalizada).
+- Tiles "guias a pegar" (Meu dia) e card "Convênio sem guia" caem sozinhos quando a linha vira `Sim`.
 
-`claude-haiku-5-5`: o mais barato da família com entrada de PDF/imagem na API (US$ 0,10 entrada · US$ 0,50 saída por
-milhão de tokens). Uma guia de 1 página ≈ 2–3 mil tokens de entrada (PDF + lista de pacientes de convênio + instrução) e
-~200 de saída → **≈ US$ 0,001 por guia; 150 guias/mês ≈ US$ 0,15** (teto de 20 fica folgado). Pedido com `effort: low`
-(Haiku 5.5 pensa por padrão; low segura o custo), resposta em JSON fixo via `output_config.format` (json_schema),
-sem prefill (removido nesses modelos), `stop_reason: refusal` tratado como erro de leitura. O nome do modelo fica na aba
-`IA`; se a gestão quiser mais precisão troca a célula pra `claude-sonnet-5-5` (≈ US$ 0,01/guia). Tudo isso vai pro
-`NOTAS-api.md`.
+## 2. Modelo e custo
 
-## Entrega 1 — Infra genérica (reaproveitada pelos próximos itens)
+- **`claude-haiku-5-5`**: o mais barato da família Claude com entrada de PDF e imagem na API (US$ 0,10 por milhão de tokens
+  de entrada, 0,50 de saída). Pensa por padrão; `esforco = low` segura o custo. Resposta forçada em JSON (`json_schema`),
+  sem prefill (removido nessa geração), `stop_reason = refusal` tratado como erro de leitura. Trocar pra
+  `claude-sonnet-5-5` (≈ 10× o custo, mais preciso) é só editar a célula `modelo` da aba IA.
+- **Custo estimado por guia**: ≈ 2–3 mil tokens de entrada (PDF de 1 página + lista de ~80 pacientes de convênio +
+  instrução) e ~200 de saída → **≈ US$ 0,0004 por guia** (teste com o Google falso: 0,00039). **150 guias/mês ≈ US$ 0,06**;
+  mesmo com Sonnet seriam ≈ US$ 0,60. O teto de 20 fica muito folgado.
+- **Custo medido** (preencher depois de "Ler guias agora → Setembro" na real; o `IA log` tem uma linha por arquivo):
+  _a medir_.
 
-Arquivo novo **`app/server/server-ia.js`** (mesmo escopo dos outros; `build.js` e `tests/carregar-servidor.js` passam a
-concatená-lo antes de `server-guias.js`).
+## 3. Decisões
 
-- **Aba `IA`** (criada pelo app com a carga inicial se não existir; formato de `Parâmetros`: Parâmetro · Valor · Descrição,
-  lida com cache de 1 min): `ia_ativa` (Sim), `ia_guias` (Sim), `ia_conciliacao` (Sim), `ia_perguntar` (Sim), `modelo`
-  (`claude-haiku-5-5`), `teto_mes_usd` (20), `teto_dia_usd` (3), `aviso_pct` (80), `preco_entrada_usd_mtok` (0,10),
-  `preco_saida_usd_mtok` (0,50), `hora_gatilho` (19), `pasta_guias_id` (`15tjkAjub3f5jTc1Jy8ciklaZPG0_ULsP`),
-  `guias_mes_anterior_ate_dia` (5), `guias_max_por_execucao` (25), `email_aviso` (administrativo@…),
-  `instrucao_guias` (texto da instrução do modelo, editável), `instrucao_conciliacao` e `instrucao_perguntar` (vazias, pros
-  próximos).
-- **Aba `IA log`** (criada pelo app): Data/hora · Item · Arquivos · Linhas · Modelo · Tokens entrada · Tokens saída ·
-  Custo (US$) · Quem · Resultado · Observação · Duração (s). Pausar/reativar também entra aqui (custo 0).
-- **`chamarIA(item, payload)`** — `payload = { texto, documentos: [{ nome, bytes/blob, mime }], schema, maxTokens,
-  arquivos, linhas }`. Faz, nesta ordem: lê a aba `IA`; confere `ia_ativa` e `ia_<item>`; soma o `IA log` do mês e do dia
-  contra os tetos; pega a chave em `PropertiesService.getScriptProperties().getProperty('ANTHROPIC_API_KEY')`; monta a
-  requisição (`system` = instrução da aba, `messages` = documentos em base64 + texto, `output_config.format` json_schema,
-  `max_tokens`); `UrlFetchApp.fetch` com `muteHttpExceptions` dentro de `try/catch`; grava o log (custo = tokens × preço da
-  aba); devolve `{ ok, dados (JSON), usage, custo }` ou `{ ok:false, motivo: 'pausada' | 'pausada_item' | 'teto_mes' |
-  'teto_dia' | 'sem_chave' | 'erro_api', mensagem }`. Ao cruzar `aviso_pct` do teto do mês manda **um** e-mail por mês
-  (`MailApp`, marca em `PropertiesService` `ia_aviso_AAAA-MM`). Nunca lança exceção pra fora: quem chama decide a mensagem.
-- **`API.iaEstado()`** (todos; a gestão vê mais): gasto do mês/dia, tetos, %, ativa geral e por item, motivo da pausa,
-  última execução do gatilho (hora, lidas, erros), gatilho instalado ou não. **`API.iaPausar({ ativa })`** (gestão) grava
-  `ia_ativa` na aba. **`API.iaInstalarGatilho()`** (gestão): `ScriptApp` cria/recria o gatilho diário na `hora_gatilho`.
-- **Carregador `app/loader/Code.gs`**: função `gatilhoDiarioIA()` (o gatilho só pode apontar pra função do projeto; ela
-  chama `carregarServidor_().gatilhoGuias()`), e `permissoes_()` passa a citar `UrlFetchApp`, `ScriptApp`, `MailApp`,
-  `PropertiesService` (pro Google pedir as permissões). `dist/Code.gs` e `dist/Code.real.gs` saem do build como hoje.
-- **Card "Uso da IA este mês: US$ X de Y"** na tela Pendências (só gestão), ao lado da Virada do mês: barra, gasto do
-  dia, estado por item, aviso amarelo ≥ 80 %, botão **Pausar tudo / Reativar** (dois cliques, sem `confirm` nativo),
-  **Ler guias agora**, **Instalar gatilho (19h)** e o texto do estado ("IA pausada pela gestão", "IA pausada: teto do
-  mês atingido (US$ X)", "leitura automática indisponível hoje" quando a última execução falhou na API).
+- **Direto na planilha real** (gestão, 16/10): sem passar pela CÓPIA TESTE. Publicado em `arquivos_real`
+  (`2026-10-16-12`); a aba `arquivos` (teste) ficou no 16-10.
+- O modelo **nunca grava**: `Guias lidas` é sugestão; só Confirmar escreve na aba do mês.
+- `Guia assinada?` já `Sim`: Confirmar não reescreve, só grava nº e link.
+- Subpasta por paciente dentro do mês (como a recepção organizou setembro) é suportada; arquivo direto na pasta do mês também.
+- `.zip` e outros tipos ficam registrados como `nao_lida_tipo` só na aba (não aparecem nos cards).
+- O gatilho roda sem usuário logado: `Quem` no log = `gatilho`.
+- Linha da aba do mês sem ID (digitada à mão) não é confirmável pelo app (mesma regra do Corrigir lançamento).
 
-## Entrega 2 — Guias (`app/server/server-guias.js` + tela)
+## 4. O que falta / fica de fora
 
-- **Aba `Guias lidas`** (criada pelo app): ID do arquivo · Nome · Pasta (convênio/mês/subpasta) · Link · Convênio ·
-  Data de leitura · Status (`lida` · `sem_atendimento` · `baixa_confianca` · `confirmada` · `ignorada` · `erro` ·
-  `nao_lida_tipo`) · Resultado (JSON compacto do que foi lido) · Sugestão (aba + IDs) · Confiança · Confirmado por ·
-  Linhas gravadas · Observação · Páginas · Custo (US$).
-- **`gatilhoGuias()`** (gatilho diário; também pelo botão "Ler guias agora", que aceita **escolher o mês** — é assim que
-  setembro entra no teste): acha as pastas `CEDPLAN` e `SABIN SINAI` (mapeadas pra `Cedplan` / `Sabin Sinai` da aba Listas
-  por nome sem acento; outros convênios sem pasta ficam fora), a pasta do mês corrente e, até o dia
-  `guias_mes_anterior_ate_dia`, a do anterior (por `^0?M\b` no início do nome); percorre
-  recursivamente; para cada PDF/JPG/PNG ainda sem linha em `Guias lidas` chama `chamarIA('guias', …)` com o arquivo, a lista
-  de pacientes de convênio (nome · carteirinha · convênio — sem CPF, telefone ou valores) e a dica (subpasta, nome do
-  arquivo). Schema da resposta: `{ e_guia, guias: [{ pagina, continuacao_da_anterior, convenio, numero_guia, carteirinha,
-  beneficiario, datas[], procedimento, quantidade, assinatura_visivel, legibilidade, observacao }] }` — uma guia por página,
-  salvo `continuacao_da_anterior`. Respeita `guias_max_por_execucao` e um orçamento de ~4,5 min por execução (o resto fica
-  pro dia seguinte). Se `chamarIA` devolver pausa/teto/erro: não grava nada em `Guias lidas` (o PDF fica na pasta e é
-  lido quando reativar) e o estado vai pro `iaEstado`.
-- **Casamento determinístico `casarGuia_()`** (sem modelo): linhas da aba do mês de cada data da guia (e do mês vizinho
-  quando a data cai na borda) com `Pago? = Convênio (fatura)` (ou `Convênio (auto)` igual, nas linhas antigas), mesmo
-  convênio (da pasta), paciente por carteirinha no cadastro → senão nome normalizado (`Duplicatas.normalizar` + tokens, nota
-  ≥ 0,8, reaproveitando `notaNome_` da conciliação) → senão nome da subpasta/arquivo; data igual ±1 dia. 1 linha →
-  sugestão simples; várias datas/sessões → todas as linhas do período; nenhuma → `sem_atendimento`; ilegível, sem assinatura
-  visível, nome sem correspondência ou carteirinha divergente do cadastro → `baixa_confianca` (laranja).
-- **`API.guiasLidas()`**: pendentes de confirmação (qualquer dia) com leitura, sugestão e candidatos alternativos (linhas de
-  convênio do paciente/mês). **`API.confirmarGuia({ idArquivo, linhas: [{ aba, id }], gravarCarteirinha })`** (recepção e
-  gestão; lock): em cada linha grava `Guia assinada? = Sim`, **`Nº da guia`** e **`Link da guia`** (colunas novas no fim da
-  aba do mês via `garantirColunas_`), carimbo em `Registrado por (app)`, log em `Alterações de lançamento` ("guia lida
-  (IA) · confirmada por …"); opcionalmente grava a carteirinha em `Pacientes` com log em `Alterações de cadastro`; status
-  `confirmada`; invalida o cache. Linha sem ID → "corrija na planilha" (mesma regra do Corrigir lançamento). Linha que já
-  está `Sim` (caso comum em setembro): a sugestão diz "já assinada — grava só nº e link" e Confirmar não reescreve o Sim.
-  **`API.ignorarGuia({ idArquivo, motivo })`**: status `ignorada` (não é guia / duplicada / outro). "Escolher outra linha"
-  = `confirmarGuia` com as linhas que a recepção marcou.
-- **Meu dia** (recepção e gestão): card **"Guias lidas ontem (n)"** no topo (abaixo de Lançar o dia), uma linha por guia:
-  miniatura (`drive.google.com/thumbnail?id=…`) + link do PDF · lido (convênio · nº · carteirinha · nome · datas ·
-  procedimento/qtd · assinatura) · linha(s) sugerida(s) · **Confirmar · Escolher outra linha · Não é guia / ignorar**.
-  Laranja = baixa confiança; "sem atendimento registrado" vira pendência (botão "Lançar a sessão" leva ao Registrar). Nada
-  de `alert/confirm` nativo: faixas, dois cliques e toast do app.
-- **Pendências** (gestão): card **"Guias a conferir"** (sem atendimento · baixa confiança · erro de leitura) com tabela e
-  as mesmas ações. A lista **"Convênio sem guia"** ganha a coluna **"PDF na pasta?"** (sim/não, lendo `Guias lidas`:
-  arquivo cujo nome/paciente/data bate com a linha, confirmado ou não). Os tiles "guias a pegar" (Meu dia) e o card
-  "Convênio sem guia" já caem sozinhos quando a linha ganha `Sim` (só invalidar `resumoMes` após confirmar).
+- Pendente da gestão: chave da API, carregador novo (`dist/Code.real.gs`), instalar o gatilho, ler setembro, medir custo.
+- Convênios sem pasta no Drive (Unafisco, IPSM…) ficam fora da leitura automática.
+- HEIC e fotos fora de PDF/JPG/PNG/WEBP: `nao_lida_tipo`.
+- Cache de prompt da API: não usado (o prefixo estável é curto demais pra valer).
+- Mover/renomear arquivos no Drive: o app só lê.
+- Fatura/glosa por guia: fora deste item.
 
-## Arquivos
+## 5. Perguntas pra gestão
 
-| Arquivo | Mudança |
-|---|---|
-| `app/server/server-ia.js` (novo) | aba IA, IA log, `chamarIA`, estado/pausa/gatilho, e-mail 80 % |
-| `app/server/server-guias.js` (novo) | Drive, leitura, casamento, `Guias lidas`, confirmar/ignorar, "PDF na pasta?" |
-| `app/server/server.js` | `CONFIG.ABA` ganha `IA`, `IA_LOG`, `GUIAS`; `CONFIG.HM` ganha `GUIA_N: 'Nº da guia'`, `GUIA_LINK: 'Link da guia'`; `gestaoResumo` devolve `pdfNaPasta` em `semGuia` |
-| `app/loader/Code.gs` | `gatilhoDiarioIA()` + permissões |
-| `build.js`, `tests/carregar-servidor.js` | concatenar os dois arquivos novos |
-| `app/client/telas/70-meudia.html`, `js/70-meudia.js` | card Guias lidas ontem |
-| `app/client/telas/50-gestao.html`, `js/50-gestao.js` | card Uso da IA; card Guias a conferir; coluna PDF na pasta? |
-| `app/client/js/00-base.js` | mock dos endpoints novos pra simulação local; `doisCliques` sobe pra cá (hoje está em 50-gestao) |
-| `app/client/styles.css` | estilos do card de guias (miniatura, laranja) e da barra de uso |
-| `tests/servidor-ia.test.js`, `tests/servidor-guias.test.js` (novos) | fakes de `UrlFetchApp`, `DriveApp`, `PropertiesService`, `MailApp`, `ScriptApp` |
-| `NOTAS-api.md` (novo), `docs/DEPLOYS.md`, `docs/ESTADO-ATUAL.md`, `docs/COMO-INSTALAR.md`, `docs/README-GESTAO.md`, `docs/README-RECEPCAO.md` | notas, deploy, passos do carregador e da chave, manual |
+- Sabin: `SABIN SINAI/09 SET 26` está vazia. As guias do Sabin estão em outro lugar ou ainda não foram digitalizadas?
+- "Guias a conferir" mostra pendências de qualquer mês (não só o mês escolhido). OK assim?
 
-Reaproveito: `cacheado_`/`invalidar_` (server-cobranca), `garantirColunas_`, `gravarCelulas_`, `proximaLinha_`,
-`abaComCabecalho_`, `linhasMes_`, `indicePacientes_`, `notaNome_`/`tokensNome_`, `Duplicatas.normalizar`,
-`tabelaG`, `doisCliques`, `erroBox`, `toast`, `aviso`, `store`.
+## 6. Como testar / operar (gestão)
 
-## Ordem de execução
+1. **Chave**: planilha real → Extensões → Apps Script → ⚙ Configurações do projeto → Propriedades do script → Adicionar:
+   `ANTHROPIC_API_KEY` = chave criada em console.anthropic.com → Salvar.
+2. **Carregador**: no mesmo editor, apagar o `Código.gs` e colar `dist/Code.real.gs` → salvar → Implantar → Gerenciar
+   implantações → ✎ → Versão: Nova versão → Implantar. Ao abrir o app, autorizar de novo (vai pedir conexão externa,
+   gatilhos, e-mail e Drive).
+3. No app: Pendências → card "Uso da IA este mês" → **Instalar gatilho diário (19h)** → escolher **Setembro** → **Ler guias
+   agora** (até 5 min; lê no máximo 25 por vez — repetir até dizer "nenhum arquivo novo").
+4. Meu dia → card "Guias lidas ontem": conferir 5 guias contra o PDF (nº, nome, datas), Confirmar; testar "Escolher outra
+   linha" e "Não é guia" (zip não aparece; a duplicata do Alexandre fica como `duplicada` na aba).
+5. Pendências → "Convênio sem guia assinada" → coluna "PDF na pasta?"; "Guias a conferir".
+6. `IA log`: custo por guia (coluna Custo) — anotar na seção 2. Testar a pausa: Pausar tudo → "Ler guias agora" tem de
+   recusar com "IA pausada pela gestão"; Reativar. Teto: pôr `teto_dia_usd` = 0,0001 na aba IA → recusa "teto do dia";
+   voltar pra 3.
+7. Local: `node build.js && for t in tests/*.test.js; do node $t; done` (`servidor-ia.test.js` e `servidor-guias.test.js`
+   cobrem pausa, teto, custo, e-mail, pasta por número, zip, duplicata, os 6 casos de casamento, confirmar, ignorar, PDF na
+   pasta?). Simulação: `dist/index.html` (Meu dia e Pendências com os casos falsos).
 
-1. Avançar o branch até `sweet-wozniak`; renomear `O7 JUL 26` → `07 JUL 26` (dois convênios).
-2. `server-ia.js` + carregador + testes da infra (pausa geral/por item, teto mês/dia, custo, log, e-mail uma vez, sem chave).
-3. `server-guias.js` + testes (pasta por número, recursão, zip ignorado, casamento 1/várias/nenhuma/baixa, confirmar grava
-   Sim + nº + link + logs, ignorar, PDF na pasta?).
-4. Tela: card em Meu dia, cards em Pendências, coluna nova; mocks; `node build.js`; todos os `tests/*.test.js`; simulação
-   Playwright (1280 e 390 px) sem erro de console.
-5. Publicar em `arquivos` com prefixo `novo:` → ler de volta e conferir contra `dist/pedacos.json` → ativar → `E2` →
-   `DEPLOYS.md`. Na CÓPIA TESTE: criar/conferir abas `IA`, `IA log`, `Guias lidas`; gatilho; **"Ler guias agora → Setembro"**
-   lê os ~45 PDFs reais do Cedplan (≈ US$ 0,05 no total com Haiku; a aba `Setembro` da cópia é a real de 15/10); mostrar o
-   card com os 5 casos tirados de lá (1 linha · várias sessões, se houver PDF de mais de uma página · nome diferente do
-   cadastro, ex. `09-09 sofia pires` · ilegível, o que o modelo marcar · "não é guia" = os `.zip` e a duplicata do Alexandre);
-   medir o custo por guia no `IA log`. Se a gestão quiser, repete com PDFs de outubro quando houver.
-6. `NOTAS-api.md` (modelo e por quê, custo médio por guia, estimativa mensal, o que ficou de fora, o que a conciliação e o
-   perguntar precisam saber da infra). Commit e push.
-7. Real só depois do seu OK, versão nomeada por data (`arquivos_real`, `Code.real.gs` novo colado pela gestão).
+## 7. Pro próximo prompt (conciliação assistida e perguntar à planilha): o que a infra já dá
 
-## O que preciso da gestão (bloqueia o teste na CÓPIA TESTE, não o código)
-
-1. **Chave da API**: criar em console.anthropic.com e colar no Apps Script da CÓPIA TESTE → Configurações do projeto →
-   Propriedades do script → `ANTHROPIC_API_KEY`. Nunca na planilha nem no código.
-2. **Carregador novo**: colar `dist/Code.gs` em `Código.gs` da cópia, Implantar → Gerenciar implantações → Nova versão,
-   e autorizar de novo (vai pedir Drive, conexões externas, gatilhos e e-mail). Depois clicar "Instalar gatilho" no card.
-3. **PDFs de teste**: não precisa mandar — uso os de setembro do Cedplan (só leitura; o app nunca move nem renomeia
-   arquivo). Sabin fica sem teste real até existir PDF na pasta dele (setembro e outubro vazias).
-
-## Perguntas (responda junto com o OK; sem resposta sigo com o padrão)
-
-1. **Teste lê a pasta real** (`GUIAS DE CONVÊNIOS/CEDPLAN/09 SET 26`, só leitura) a partir da CÓPIA TESTE; `Guias lidas`,
-   `IA log` e as gravações ficam só na cópia. OK? (A real passa a usar a mesma pasta quando for publicada.)
-2. **Subpasta por paciente** dentro do mês é o padrão da recepção (como em `09 SET 26`)? Suporto os dois jeitos; só
-   confirmo pra escrever o manual certo.
-3. **Quem confirma**: card do Meu dia pra recepção e gestão; "Guias a conferir" só gestão. OK?
-4. Os **`.zip`** de setembro (exportação da pasta antiga) podem ficar; o app ignora. Quer que eu liste os ignorados em
-   "Guias a conferir" (padrão: só na aba `Guias lidas`, sem incomodar)?
-
-## Fica de fora (registrado no NOTAS-api.md)
-
-Convênios sem pasta (Unafisco, IPSM…); HEIC/fotos fora de PDF-JPG-PNG; cache de prompt (prefixo curto demais pra valer);
-mover/renomear arquivos no Drive (o app só lê); fatura/glosa.
-
-## Verificação
-
-- `node build.js && for t in tests/*.test.js; do node $t; done` — tudo verde, incluindo os dois testes novos.
-- Simulação local (`dist/index.html` + Playwright): Meu dia mostra o card com os 5 casos falsos; Pendências mostra Uso da IA
-  (pausar/reativar muda o estado), Guias a conferir e a coluna "PDF na pasta?"; sem erro de console em 1280 e 390 px.
-- CÓPIA TESTE: abas criadas; `iaEstado` com chave ausente → "leitura automática indisponível"; com chave → "Ler guias
-  agora → Setembro" lê os ~45 PDFs do Cedplan, `Guias lidas` e `IA log` preenchidos (zips e duplicata como ignorados),
-  custo por guia anotado; conferência por amostra: 5 guias lidas × o PDF aberto (nº, nome, data batem?); Confirmar grava `Sim` + `Nº da guia` +
-  `Link da guia` + log; tile "guias a pegar" e "Convênio sem guia" caem; pausar pela tela bloqueia a chamada seguinte;
-  teto diário em 0,001 pra provar o bloqueio e depois voltar a 3.
-- Peças lidas de volta iguais ao build; `E2` carimbado; `DEPLOYS.md` e `NOTAS-api.md` atualizados; push no branch.
+- Chame `chamarIA('conciliacao', { texto, documentos?, schema?, maxTokens?, arquivos, linhas, observacao })`. A instrução do
+  sistema vem de `instrucao_conciliacao` na aba IA (hoje vazia: preencha a carga inicial em `IA_PADRAO` de `server-ia.js`
+  e a `abaIA_()` acrescenta a chave nas planilhas que já têm a aba). Idem `'perguntar'`.
+- Pausa por item já existe (`ia_conciliacao`, `ia_perguntar`) e aparece no card; tetos e log são compartilhados.
+- Mande só o necessário: para conciliação, linhas do extrato + lançamentos candidatos (sem CPF/telefone); para perguntar,
+  um recorte da aba, não a planilha inteira (o teto diário de US$ 3 é a rede de segurança).
+- A resposta deve ser **sugestão** que a tela confirma com um clique; nunca grave direto do retorno do modelo.
+- `iaBloqueio_(item, cfg)` serve pra desabilitar o botão na tela antes de chamar (`API.iaEstado().pausada`).
+- Rotina diária nova: `ROTINAS_IA_.push(function () { ... })` em qualquer arquivo do servidor.
+- Testes: `tests/fakes-google.js` tem `UrlFetchApp` (resposta programável por requisição), `PropertiesService`, `MailApp`,
+  `ScriptApp` e um Drive em memória.

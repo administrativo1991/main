@@ -1,11 +1,12 @@
 # Estado atual do app — retomar daqui
 
-Atualizado em 16/10/2026 (Fase 2 completa na real: alertas no 16-11). Ao abrir um chat novo, leia nesta ordem:
+Atualizado em 16/10/2026 (Fase 2 completa; IA parte 1 — guias lidas do Drive — publicada na real no 16-12). Ao abrir um chat novo, leia nesta ordem:
 
 1. **`docs/DEPLOYS.md`**, seção "No ar agora": o que roda em cada canal (teste e real), com commit e linhas da planilha de código.
 2. **`NOTAS-fase1.md`** (raiz): o modelo de cobrança da Fase 1, as decisões da gestão, o que falta e o que a gestão precisa olhar.
-3. **`NOTAS-fase2.md`** (raiz): a Fase 2 em andamento (ordem dos itens, decisões, o que está no teste).
-4. Este arquivo: o mapa do projeto.
+3. **`NOTAS-api.md`** (raiz): a IA no app (infra genérica + guias lidas do Drive) e o que os próximos itens de IA precisam saber.
+4. **`NOTAS-fase2.md`** (raiz): a Fase 2 (ordem dos itens, decisões).
+5. Este arquivo: o mapa do projeto.
 
 O histórico deste arquivo até 08/10 (planos, pacotes, Mensalistas como tela) está no git. Aquele modelo saiu do app em 15/10.
 
@@ -21,7 +22,8 @@ pra testar antes. O código fica numa terceira planilha, **"Recepção Nascente 
 
 | O quê | Onde |
 |---|---|
-| Servidor | `app/server/server.js` + `app/server/server-cobranca.js` (Fase 1) + `app/server/server-fase2.js` (Fase 2), os três no mesmo escopo, + `app/server/duplicatas.js` |
+| Servidor | `app/server/server.js` + `server-cobranca.js` (Fase 1) + `server-fase2.js` (Fase 2) + `server-ia.js` (infra de IA) + `server-guias.js` (guias), todos no mesmo escopo, + `app/server/duplicatas.js` |
+| IA | aba `IA` (modelo, tetos, pausa, instruções), aba `IA log` (tokens e custo), chave em PropertiesService (`ANTHROPIC_API_KEY`); `chamarIA(item, payload)` em `server-ia.js`; testes com Google falso em `tests/fakes-google.js` |
 | Regra de cobrança (servidor e tela) | `app/shared/cobranca.js`: a única fonte das frases do bloco "O que fazer agora" |
 | Tela | `app/client/` (`layout.html`, `telas/*.html`, `js/00-base.js … 90-boot.js`, `styles.css`) |
 | Build | `node build.js` → `dist/index.html` (simulação local, dados falsos), `dist/pedacos.json` (peças ≤ 12.000 caracteres), `dist/Code.gs` / `dist/Code.real.gs` |
@@ -31,7 +33,7 @@ pra testar antes. O código fica numa terceira planilha, **"Recepção Nascente 
 
 ## Telas
 
-Recepção: **Agenda · Confirmações (Fase 2) · Registrar · Pacientes · Cobrança do mês · Meu dia**. Gestão: tudo isso + **Pendências · Repasse · Conciliação · A receber (Fase 2)**. Parcelamentos ficam na Ficha do paciente; alertas, na Agenda e na Ficha.
+Recepção: **Agenda · Confirmações (Fase 2) · Registrar · Pacientes · Cobrança do mês · Meu dia** (com o card "Guias lidas ontem"). Gestão: tudo isso + **Pendências** (com "Uso da IA este mês" e "Guias a conferir") **· Repasse · Conciliação · A receber (Fase 2)**. Parcelamentos ficam na Ficha do paciente; alertas, na Agenda e na Ficha.
 
 ## Jeito de trabalhar (combinado com a gestão)
 

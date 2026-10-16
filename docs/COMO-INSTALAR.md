@@ -41,6 +41,19 @@ Nada a fazer. Em até 2 minutos a tela nova aparece sozinha (basta recarregar a 
 
 **Pendente em 05/10:** o carregador mudou uma vez, pra pedir a permissão do Drive (a exportação da Gestão agora salva na pasta do Controle Financeiro). Cole o `dist/Code.gs` novo no `Código.gs`, salve, publique a nova versão como acima e, ao abrir o app, autorize de novo quando o Google pedir (vai aparecer o Drive na lista de permissões). Até fazer isso, exportar funciona, mas o arquivo fica na raiz do Meu Drive.
 
+## Chave da API Claude e carregador novo (16/10/2026 — leitura das guias)
+
+A leitura automática das guias de convênio usa a API Claude. Duas coisas, uma vez só, na **planilha real**:
+
+1. **Chave**: Extensões → Apps Script → ⚙ **Configurações do projeto** (menu da esquerda) → **Propriedades do script** →
+   **Adicionar propriedade do script** → Propriedade `ANTHROPIC_API_KEY`, Valor = a chave criada em
+   console.anthropic.com (Settings → API keys) → **Salvar propriedades do script**. A chave nunca vai pra planilha nem pro código.
+2. **Carregador**: no mesmo editor, apague o `Código.gs` e cole o `dist/Code.real.gs` novo (tem a função `gatilhoDiarioIA` e
+   as permissões de conexão externa, gatilhos e e-mail) → salvar → **Implantar → Gerenciar implantações → ✎ → Versão: Nova
+   versão → Implantar**. Ao abrir o app, autorize de novo quando o Google pedir.
+
+Depois, no app: Pendências → card "Uso da IA este mês" → **Instalar gatilho diário**. O card diz se falta a chave.
+
 ## Se der algum erro
 
 Copie a mensagem que apareceu na tela (ou um print) e me mande. Nada do que você digitou se perde: o rascunho fica guardado no computador até gravar.

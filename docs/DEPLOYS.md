@@ -23,9 +23,9 @@ coluna E não afeta o app. Atualizar `E2` faz parte de toda publicação (passo 
 
 | Canal | Deploy | Peças | Commit |
 |---|---|---|---|
-| Real (`arquivos_real`) | **2026-10-16-11** (Alertas) | 60 (duplicatas 3 · server 20 · index 37); ativas = 942–1001; `antigo36:` = as do 2026-10-16-08 (884–941) | branch `claude/sweet-wozniak-aviy8u`, commit cede9d7 |
+| Real (`arquivos_real`) | **2026-10-16-12** (IA parte 1: guias lidas do Drive) | 65 (duplicatas 3 · server 24 · index 38); ativas = 1002–1066; `antigo37:` = as do 2026-10-16-11 (942–1001) | branch `claude/youthful-fermat-9l35tu`, commit 618b511 |
 | Teste (`arquivos`) | **2026-10-16-10** (Alertas, ⚠ abre a Ficha) | 60 (duplicatas 3 · server 20 · index 37), linhas 750–809; `antigo42:` = as do 16-09 (690–749) | branch `claude/sweet-wozniak-aviy8u`, commit cede9d7 |
-| Carregador real | 2026-10-06-02 (`dist/Code.real.gs`, implantado pela Roberta) | — | 4ad0272 |
+| Carregador real | 2026-10-06-02 (`dist/Code.real.gs`, implantado pela Roberta) · **nova versão pendente desde 16/10** (`gatilhoDiarioIA` + permissões de conexão externa, propriedades, gatilhos e e-mail; sem ela a leitura de guias fica indisponível) | — | 4ad0272 |
 | Carregador teste | 2026-10-04-01 + nova versão pendente desde 05/10 (permissão do Drive, ver `COMO-INSTALAR.md`) | — | — |
 
 ## Como registrar um deploy novo
@@ -48,6 +48,21 @@ Modelo:
 ```
 
 ## Lista
+
+### 2026-10-16-12 · Real · IA parte 1: guias de convênio lidas da pasta do Drive
+- **O que mudou**: infra genérica de IA (aba `IA`, aba `IA log`, `chamarIA`, pausa geral e por item, teto do mês e do dia,
+  e-mail aos 80 %, gatilho diário) e leitura das guias (aba `Guias lidas`, card "Guias lidas ontem" no Meu dia, card "Uso da
+  IA este mês" e "Guias a conferir" nas Pendências, coluna "PDF na pasta?" em Convênio sem guia; `Nº da guia` e `Link da
+  guia` no fim da aba do mês ao confirmar). Ver `NOTAS-api.md`. **Publicado direto na real por decisão da gestão** (a aba
+  `arquivos` de teste ficou no 16-10).
+- **Peças**: 65 em `arquivos_real!A1002:C1066` com `novo:`; 24 iguais ao 16-11 copiadas por `copyPaste` de valores
+  (duplicatas 0–2, server 0–18, index 0–1), 41 gravadas (3 agentes). Lidas de volta: LEN e soma de CODE iguais ao
+  `dist/pedacos.json` (65/65). Ativação numa gravação só (A942:A1066): 942–1001 → `antigo37:`; ativas = só 1002–1066. E2 carimbado.
+- **Dados**: pastas `O7 JUL 26` → `07 JUL 26` renomeadas nos dois convênios (Drive). Abas `IA`, `IA log`, `Guias lidas` são
+  criadas pelo app na primeira chamada. **Voltar**: `antigo37:` → nome (942–1001) e 1002–1066 → `antigo38:`.
+- **Pendente**: chave `ANTHROPIC_API_KEY` nas propriedades do script e carregador novo (`dist/Code.real.gs`) colado + nova
+  versão pela gestão; depois "Instalar gatilho" e "Ler guias agora → Setembro".
+- **Commit**: 618b511 (código) · **Aprovação**: gestão, 16/10 ("vamos fazer direto na planilha oficial").
 
 ### 2026-10-16-11 · Real · Alertas
 - **O que mudou**: o mesmo código do teste 2026-10-16-10 (alertas na Agenda e na Ficha; o ⚠ abre a Ficha).

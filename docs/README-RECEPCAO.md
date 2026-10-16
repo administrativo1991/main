@@ -126,3 +126,14 @@ do mês para quem paga no fim do mês), com valor, Pix e favorecido. Confira e e
 - **"A aba do mês não existe"**: peça à gestão pra criar (Pendências → Virada do mês).
 - **O app demorou**: depois de 20 s aparece "Demorou mais que o normal". Espere ou clique em tentar de novo.
 - **Erro vermelho**: copie a mensagem (ou tire print) e mande pra gestão. O que você digitou fica guardado.
+
+
+## Guias lidas ontem (Meu dia) — 16/10
+
+Nada muda no jeito de salvar: digitalize a guia assinada e salve o PDF na pasta do convênio e do mês, como sempre. Todo dia
+às 19h o app lê os PDFs novos e, no dia seguinte, o **Meu dia** mostra o card **"Guias lidas ontem"**: para cada guia, o
+que foi lido (nº, carteirinha, nome, datas) e a sessão que ele acha que é. Confira e clique **Confirmar** (grava "Guia
+assinada? = Sim", o nº e o link do PDF na linha). Se a sessão sugerida estiver errada, **Escolher outra linha**. Se o arquivo
+não for guia (comprovante salvo na pasta errada), **Não é guia / ignorar**. Laranja = o app ficou em dúvida (nome, data ou
+leitura ruim): confira com mais atenção. "Guia sem atendimento registrado" = a sessão não foi lançada: **Lançar a sessão**
+abre o Registrar já com o paciente e a data.
