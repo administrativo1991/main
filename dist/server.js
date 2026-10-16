@@ -512,7 +512,7 @@ function lerPacientes_() {
   var H = CONFIG.H, col = function (k) { return h[H[k]] ? h[H[k]] - 1 : -1; };
   var cNome = col('NOME'), cCpf = col('CPF'), cNasc = col('NASC'), cAtivo = col('ATIVO'), cMod = col('MODALIDADE'),
       cPag = col('PAGADOR'), cConv = col('CONVENIO'), cRegra = col('REGRA'), cObs = col('OBS_COBRANCA'), cVal = col('VALOR_COMB'),
-      cResp = col('RESP'), cTel = col('TEL_PAC'), cWhats = col('WHATS'), cRespPar = col('RESP_PAR'), cRespTel = col('RESP_TEL'),
+      cResp = col('RESP'), cTel = col('TEL_PAC'), cWhats = col('WHATS'), cPagExt = col('PAGADOR_EXTRATO'), cRespPar = col('RESP_PAR'), cRespTel = col('RESP_TEL'),
       cVN = col('VALOR_NUM'), cPN = col('PCT_N'), cPV = col('PCT_V'), cPg = col('PAGAMENTO');
   var numOu = function (r, c) { if (c < 0) return null; var v = r[c]; if (v === '' || v == null) return null; var n = numBR_(v); return isNaN(n) ? null : n; };
   var out = [];
@@ -531,7 +531,7 @@ function lerPacientes_() {
       obsCobranca: cObs >= 0 ? String(r[cObs] || '').trim() : '',
       valorCombinado: cVal >= 0 ? String(r[cVal] || '').trim() : '',
       valorNum: numOu(r, cVN), pctN: numOu(r, cPN), pctV: numOu(r, cPV), pagamento: cPg >= 0 ? pagNorm_(r[cPg]) : '',
-      telPac: cTel >= 0 ? String(r[cTel] || '').trim() : '', resp: cResp >= 0 ? String(r[cResp] || '').trim() : '', respPar: cRespPar >= 0 ? String(r[cRespPar] || '').trim() : '', respTel: cRespTel >= 0 ? String(r[cRespTel] || '').trim() : '', whats: cWhats >= 0 ? String(r[cWhats] || '').trim() : ''
+      telPac: cTel >= 0 ? String(r[cTel] || '').trim() : '', resp: cResp >= 0 ? String(r[cResp] || '').trim() : '', respPar: cRespPar >= 0 ? String(r[cRespPar] || '').trim() : '', respTel: cRespTel >= 0 ? String(r[cRespTel] || '').trim() : '', whats: cWhats >= 0 ? String(r[cWhats] || '').trim() : '', pagadorExtrato: cPagExt >= 0 ? String(r[cPagExt] || '').trim() : ''
     });
   });
   return out;
@@ -2361,6 +2361,190 @@ API.fichaPaciente = function (d) {
   var ult = sessoes.filter(function (r) { return /^Atendido/.test(r.oque) && dn(r) <= hojeN; })[0];
   return { ok: true, paciente: { nome: nome, nasc: p.nasc, ativo: p.ativo, convenio: p.convenio, pagador: p.pagador, obsCobranca: p.obsCobranca, resp: p.resp, respPar: p.respPar, whats: p.whats, respTel: p.respTel, telPac: p.telPac, fone: f.fone, foneFmt: f.foneFmt, foneDe: f.de, fixoFmt: f.fixoFmt, cpfFinal: Duplicatas.digitos(p.cpf).slice(-4) },
     cobrancas: cobrancas, fixos: fixos, proximos: proximos, aberto: aberto, mensal: mensal, sessoes: sessoes.slice(0, 80), totalSessoes: sessoes.length, ultimaVez: ult ? { data: ult.data, profissional: ult.profissional } : null, mensagens: msgs, alteracoes: alts };
+};
+
+/* ---------- Conciliação (Fase 2, 16/10; só gestão) ----------
+   Extrato do banco (OFX do PagBank) e vendas da maquininha (CSV "detalhado" do PagBank) entram em abas próprias, uma linha
+   por entrada (o código do banco evita duplicar quando o mesmo arquivo é enviado de novo). O app cruza com o que foi lançado
+   como recebido nas abas de mês (Pix e cartão; dinheiro fica no Fechar o dia) e sugere as ligações; a gestão confirma.
+   Confirmar grava: na aba do extrato/vendas a Situação e o "Ligado a"; na aba do mês, a coluna nova "Conciliado" (no fim). */
+var ABA_EXT = 'Extrato bancário', ABA_CART = 'Vendas no cartão', COL_CONC = 'Conciliado';
+var HEXT = ['ID do banco', 'Data', 'Valor (R$)', 'Tipo', 'Quem pagou', 'Descrição', 'Situação', 'Ligado a', 'Observação', 'Importado em', 'Registrado por (app)'];
+var HCART = ['Código da transação', 'Data', 'Forma', 'Parcelas', 'Bandeira', 'Valor bruto (R$)', 'Taxa (R$)', 'Valor líquido (R$)', 'Liberação', 'Comprador', 'Situação', 'Ligado a', 'Depósito (ID do banco)', 'Observação', 'Importado em', 'Registrado por (app)'];
+// situações que a gestão escolhe para uma entrada do banco que não é de lançamento do app
+var SIT_EXT = ['conciliado', 'convênio (fatura)', 'mensalidade anotada em Mensalistas', 'mês anterior ao app', 'aluguel de sala', 'não é paciente', 'sem lançamento no app', 'pendente'];
+function soGestao_() { return usuario_().perfil === 'gestao' ? null : { ok: false, erros: ['Só a gestão.'] }; }
+function tipoExt_(memo) { var m = String(memo || ''); return /^QR Code Pix recebido/i.test(m) ? 'Pix (QR Code)' : /^Pix recebido/i.test(m) ? 'Pix' : /^Vendas/i.test(m) ? 'Cartão (vendas)' : /^Rendimento/i.test(m) ? 'Rendimento' : /^Devolu/i.test(m) ? 'Devolução' : 'Outro'; }
+// OFX (SGML ou XML): cada <STMTTRN> até o fechamento ou o próximo
+function lerOFX_(t) {
+  return String(t || '').split(/<STMTTRN>/i).slice(1).map(function (b) {
+    b = b.split(/<\/STMTTRN>/i)[0];
+    var g = function (k) { var m = b.match(new RegExp('<' + k + '>([^<\\r\\n]*)', 'i')); return m ? m[1].trim() : ''; };
+    var d = g('DTPOSTED'), memo = g('MEMO') || g('NAME');
+    return { id: g('FITID'), data: d.length >= 8 ? d.slice(6, 8) + '/' + d.slice(4, 6) + '/' + d.slice(0, 4) : '', valor: Number(String(g('TRNAMT')).replace(',', '.')), memo: memo };
+  }).filter(function (x) { return x.id && x.data && x.valor > 0; }); // só entradas
+}
+// CSV ";" com cabeçalho (aspas opcionais)
+function lerCSV_(t) {
+  var linhas = String(t || '').replace(/^﻿/, '').split(/\r?\n/).filter(function (l) { return l.trim(); });
+  var campos = function (l) { var out = [], cur = '', q = false; for (var i = 0; i < l.length; i++) { var c = l.charAt(i); if (c === '"') { if (q && l.charAt(i + 1) === '"') { cur += '"'; i++; } else q = !q; } else if (c === ';' && !q) { out.push(cur); cur = ''; } else cur += c; } out.push(cur); return out.map(function (x) { return x.trim(); }); };
+  if (!linhas.length) return []; var h = campos(linhas[0]);
+  return linhas.slice(1).map(function (l) { var v = campos(l), o = {}; h.forEach(function (k, i) { o[k] = v[i] || ''; }); return o; });
+}
+function gravarLinhas_(s, h, linhaIni, objs) {
+  var n = s.getLastColumn(), vals = objs.map(function (o) { var r = []; for (var c = 0; c < n; c++) r.push(''); Object.keys(o).forEach(function (k) { if (h[k]) r[h[k] - 1] = o[k]; }); return r; });
+  if (vals.length) s.getRange(linhaIni, 1, vals.length, n).setValues(vals);
+}
+API.importarExtrato = function (d) {
+  var neg = soGestao_(); if (neg) return neg; d = d || {};
+  var tx = lerOFX_(d.texto); if (!tx.length) return { ok: false, erros: ['Não achei entradas nesse arquivo. É o OFX do banco?'] };
+  var lock = LockService.getScriptLock(); lock.waitLock(20000);
+  try {
+    var s = abaComCabecalho_(ABA_EXT, HEXT), h = garantirColunas_(s, HEXT).h, ja = {}, u = usuario_(), quando = agora_();
+    linhasComo_(s).forEach(function (r) { ja[String(r['ID do banco'])] = 1; });
+    var novos = tx.filter(function (x) { return !ja[x.id]; }).map(function (x) {
+      var tipo = tipoExt_(x.memo);
+      return { 'ID do banco': x.id, 'Data': parseData_(x.data), 'Valor (R$)': x.valor, 'Tipo': tipo, 'Quem pagou': (String(x.memo).split(' - ').slice(1).join(' - ') || '').trim(), 'Descrição': x.memo,
+        'Situação': tipo === 'Rendimento' ? 'não é paciente' : 'pendente', 'Importado em': quando, 'Registrado por (app)': (u.email || 'app') + ' · ' + quando };
+    });
+    var ini = proximaLinha_(s, h['ID do banco']); gravarLinhas_(s, h, ini, novos);
+    if (novos.length && h['Data']) s.getRange(ini, h['Data'], novos.length, 1).setNumberFormat('dd/MM/yyyy');
+    SpreadsheetApp.flush();
+    return { ok: true, lidos: tx.length, novos: novos.length, jaTinha: tx.length - novos.length };
+  } finally { lock.releaseLock(); }
+};
+API.importarVendasCartao = function (d) {
+  var neg = soGestao_(); if (neg) return neg; d = d || {};
+  var vs = lerCSV_(d.texto).filter(function (r) { return r['Código da Transação'] && /^Aprovad/i.test(r['Status'] || 'Aprovada'); });
+  if (!vs.length) return { ok: false, erros: ['Não achei vendas nesse arquivo. É o CSV "detalhado" do PagBank?'] };
+  var lock = LockService.getScriptLock(); lock.waitLock(20000);
+  try {
+    var s = abaComCabecalho_(ABA_CART, HCART), h = garantirColunas_(s, HCART).h, ja = {}, u = usuario_(), quando = agora_();
+    linhasComo_(s).forEach(function (r) { ja[String(r['Código da transação'])] = 1; });
+    var novos = vs.filter(function (r) { return !ja[r['Código da Transação']]; }).map(function (r) {
+      return { 'Código da transação': r['Código da Transação'], 'Data': parseData_(String(r['Data da Transação']).slice(0, 10)), 'Forma': r['Forma de Pagamento'], 'Parcelas': r['Parcela'], 'Bandeira': r['Bandeira'],
+        'Valor bruto (R$)': numBR_(r['Valor Bruto']), 'Taxa (R$)': numBR_(r['Valor Taxa']), 'Valor líquido (R$)': numBR_(r['Valor Líquido']), 'Liberação': parseData_(String(r['Data prevista de liberação']).slice(0, 10)),
+        'Comprador': r['Nome Comprador'] || '', 'Situação': 'pendente', 'Importado em': quando, 'Registrado por (app)': (u.email || 'app') + ' · ' + quando };
+    });
+    var ini = proximaLinha_(s, h['Código da transação']); gravarLinhas_(s, h, ini, novos);
+    ['Data', 'Liberação'].forEach(function (k) { if (novos.length && h[k]) s.getRange(ini, h[k], novos.length, 1).setNumberFormat('dd/MM/yyyy'); });
+    SpreadsheetApp.flush();
+    return { ok: true, lidos: vs.length, novos: novos.length, jaTinha: vs.length - novos.length };
+  } finally { lock.releaseLock(); }
+};
+var STOP_NOMES_ = { de: 1, da: 1, do: 1, dos: 1, das: 1, e: 1 };
+function tokensNome_(s) { return Duplicatas.normalizar(String(s || '')).split(/\s+/).filter(function (x) { return x && !STOP_NOMES_[x]; }); }
+// parecido de nomes: fração dos tokens do nome menor que aparecem no outro (0 a 1)
+function notaNome_(a, nomes) {
+  var ta = tokensNome_(a); if (!ta.length) return 0; var best = 0;
+  nomes.forEach(function (b) { var tb = tokensNome_(b); if (!tb.length) return; var comum = ta.filter(function (x) { return tb.indexOf(x) >= 0; }).length; best = Math.max(best, comum / Math.min(ta.length, tb.length)); });
+  return best;
+}
+function diasEntre_(a, b) { return Math.round((ymdDate_(a) - ymdDate_(b)) / 864e5); }
+function ymdDate_(s) { var d = s instanceof Date ? s : parseData_(s); return d ? new Date(d.getFullYear(), d.getMonth(), d.getDate()) : null; }
+// recebimentos lançados (Pix e cartão) de todas as abas de mês, com a data do pagamento
+function recebimentosApp_() {
+  var idx = {}; indicePacientes_().forEach(function (p) { idx[p.nome] = p; }); var out = [];
+  CONFIG.MESES.forEach(function (m) {
+    var s = planilha_().getSheetByName(m); if (!s) return; var h = cabecalhos_(s), cc = h[COL_CONC];
+    var concs = cc && s.getLastRow() >= 2 ? s.getRange(2, cc, s.getLastRow() - 1, 1).getValues() : [];
+    linhasMes_(m).linhas.forEach(function (r) {
+      if (!(r.pago === 'Sim' || r.pago === 'Parcial')) return;
+      var forma = String(r.forma || ''); if (!/pix|cart/i.test(forma)) return;
+      var valor = r.pago === 'Parcial' ? r.recebido : r.valor; if (!(valor > 0)) return;
+      var p = idx[r.paciente] || {};
+      out.push({ aba: m, linha: r.linha, id: r.id, paciente: r.paciente, profissional: r.profissional, data: r.data, dataPag: r.dataPag || r.data, valor: Math.round(valor * 100) / 100, forma: forma,
+        cartao: /cart/i.test(forma), nomes: [r.paciente, r.quem, p.pagador, p.pagadorExtrato].filter(function (x) { return x; }), conciliado: cc ? String((concs[r.linha - 2] || [''])[0] || '') : '' });
+    });
+  });
+  return out;
+}
+function recResumo_(r) { return { aba: r.aba, linha: r.linha, id: r.id, paciente: r.paciente, profissional: r.profissional, data: r.data, dataPag: r.dataPag, valor: r.valor, forma: r.forma }; }
+API.conciliacao = function (d) {
+  var neg = soGestao_(); if (neg) return neg; d = d || {};
+  var chave = String(d.chave || chaveMes_(new Date())), ini = mesDaChave_(chave); if (!ini) return { ok: false, erros: ['Mês inválido.'] };
+  var fim = new Date(ini.getFullYear(), ini.getMonth() + 1, 0, 12), noMes = function (s) { var x = ymdDate_(s); return x && x >= ymdDate_(ini) && x <= ymdDate_(fim); };
+  var ext = linhasComo_(planilha_().getSheetByName(ABA_EXT)).filter(function (r) { return r['ID do banco']; }).map(function (r) { return { id: String(r['ID do banco']), data: r['Data'], valor: numBR_(r['Valor (R$)']), tipo: r['Tipo'], quem: r['Quem pagou'], desc: r['Descrição'], situacao: String(r['Situação'] || 'pendente'), ligado: r['Ligado a'] || '', obs: r['Observação'] || '' }; });
+  var vendas = linhasComo_(planilha_().getSheetByName(ABA_CART)).filter(function (r) { return r['Código da transação']; }).map(function (r) { return { id: String(r['Código da transação']), data: r['Data'], forma: r['Forma'], parcelas: r['Parcelas'], bandeira: r['Bandeira'], bruto: numBR_(r['Valor bruto (R$)']), taxa: numBR_(r['Taxa (R$)']), liquido: numBR_(r['Valor líquido (R$)']), liberacao: r['Liberação'], comprador: r['Comprador'] || '', situacao: String(r['Situação'] || 'pendente'), ligado: r['Ligado a'] || '', deposito: r['Depósito (ID do banco)'] || '', obs: r['Observação'] || '' }; });
+  var recs = recebimentosApp_(), usados = {}, usadosExt = {}, sug = [];
+  var livre = function (r) { return !r.conciliado && !usados[r.aba + '!' + r.linha]; }, usa = function (r) { usados[r.aba + '!' + r.linha] = 1; };
+  var extMes = ext.filter(function (e) { return noMes(e.data); }), pend = extMes.filter(function (e) { return e.situacao === 'pendente'; });
+  // quem pagou é convênio (aba Listas) ou profissional da clínica: sugere a situação; só casa com lançamento se o nome conferir
+  var convs = []; try { convs = colunaLista_(CONFIG.LISTAS.CONVENIO).filter(function (c) { return c && !/^Particular$/i.test(c); }); } catch (e0) { }
+  var profs = profissionais_().map(function (p) { return String(p.nome).replace(/^Dra?\.\s+/, ''); });
+  pend.forEach(function (e) {
+    if (!/^Pix/.test(e.tipo)) return; var tq = tokensNome_(e.quem), tem = function (n) { var t = tokensNome_(n).filter(function (x) { return x.length >= 3; }); return t.length && t.every(function (x) { return tq.indexOf(x) >= 0; }); };
+    if (convs.some(tem)) e.sugestao = 'convênio (fatura)';
+    else if (profs.some(function (p) { return tokensNome_(p).length >= 2 && tem(p); })) e.sugestao = 'aluguel de sala';
+  });
+  // 1) Pix: um lançamento, mesmo valor, data de -3 a +3 dias; nome confere = "forte"
+  pend.filter(function (e) { return /^Pix/.test(e.tipo); }).forEach(function (e) {
+    var c = recs.filter(function (r) { return livre(r) && !r.cartao && Math.abs(r.valor - e.valor) < 0.01 && Math.abs(diasEntre_(r.dataPag, e.data)) <= 3; })
+      .map(function (r) { return { r: r, nota: notaNome_(e.quem, r.nomes), dd: Math.abs(diasEntre_(r.dataPag, e.data)) }; }).sort(function (a, b) { return b.nota - a.nota || a.dd - b.dd; })[0];
+    if (!c || (e.sugestao && c.nota < 0.5)) return; usa(c.r); usadosExt[e.id] = 1; delete e.sugestao; // convênio/profissional só casa se o nome confere
+    sug.push({ tipo: 'pix', forca: c.nota >= 0.5 ? 'forte' : 'confira', aviso: c.nota >= 0.5 ? '' : 'nome diferente: ' + e.quem + ' pagando por ' + c.r.paciente, ext: e, recs: [recResumo_(c.r)] });
+  });
+  // 2) Pix pagando 2 a 4 lançamentos do mesmo pagador (nome confere), de 7 dias antes a 3 depois
+  pend.filter(function (e) { return /^Pix/.test(e.tipo) && !usadosExt[e.id]; }).forEach(function (e) {
+    var c = recs.filter(function (r) { return livre(r) && !r.cartao && notaNome_(e.quem, r.nomes) >= 0.5 && diasEntre_(r.dataPag, e.data) <= 3 && diasEntre_(r.dataPag, e.data) >= -7; }).slice(0, 12), achou = null;
+    (function busca(i, esc, soma) { if (achou) return; if (esc.length >= 2 && Math.abs(soma - e.valor) < 0.01) { achou = esc.slice(); return; } if (esc.length >= 4 || soma > e.valor + 0.01) return; for (var j = i; j < c.length; j++) { esc.push(c[j]); busca(j + 1, esc, soma + c[j].valor); esc.pop(); } })(0, [], 0);
+    if (!achou) return; achou.forEach(usa); usadosExt[e.id] = 1; delete e.sugestao;
+    sug.push({ tipo: 'varios', forca: 'confira', aviso: achou.length + ' lançamentos num Pix só', ext: e, recs: achou.map(recResumo_) });
+  });
+  // 3) cartão: venda (CSV) × lançamento em cartão no mesmo dia; venda até 10% maior = acréscimo na maquininha
+  var depUsado = {};
+  vendas.filter(function (v) { return noMes(v.data); }).forEach(function (v) {
+    var dep = ext.filter(function (e) { return e.tipo === 'Cartão (vendas)' && !depUsado[e.id] && Math.abs(e.valor - v.liquido) < 0.01 && Math.abs(diasEntre_(e.data, v.liberacao || v.data)) <= 2; })[0];
+    if (dep) depUsado[dep.id] = 1; v.depositoSug = dep ? { id: dep.id, data: dep.data, valor: dep.valor, situacao: dep.situacao } : null;
+    if (v.situacao !== 'pendente') return;
+    var c = recs.filter(function (r) { return livre(r) && r.cartao && diasEntre_(r.dataPag, v.data) === 0 && v.bruto >= r.valor - 0.01 && v.bruto <= r.valor * 1.1 + 0.01; })
+      .sort(function (a, b) { return Math.abs(a.valor - v.bruto) - Math.abs(b.valor - v.bruto); })[0];
+    if (!c) return; usa(c);
+    var dif = Math.round((v.bruto - c.valor) * 100) / 100;
+    sug.push({ tipo: 'cartao', forca: dif ? 'confira' : 'forte', aviso: dif ? 'R$ ' + Mensagens.valorBR(dif) + ' a mais na maquininha (acréscimo?)' : '', venda: v, recs: [recResumo_(c)] });
+  });
+  var semLanc = pend.filter(function (e) { return !usadosExt[e.id] && !(e.tipo === 'Cartão (vendas)' && depUsado[e.id]); }); // depósito de cartão sem venda no CSV também aparece
+  var vendasSemLanc = vendas.filter(function (v) { return noMes(v.data) && v.situacao === 'pendente' && !sug.some(function (s) { return s.venda && s.venda.id === v.id; }); });
+  var semBanco = recs.filter(function (r) { return livre(r) && noMes(r.dataPag); }).map(recResumo_);
+  var soma = function (l, f) { return Math.round(l.reduce(function (a, x) { return a + (f(x) || 0); }, 0) * 100) / 100; };
+  var vm = vendas.filter(function (v) { return noMes(v.data); });
+  return { ok: true, chave: chave, sugestoes: sug, semLancamento: semLanc, vendasSemLancamento: vendasSemLanc, semBanco: semBanco, resolvidos: extMes.filter(function (e) { return e.situacao !== 'pendente'; }), vendas: vm, situacoes: SIT_EXT,
+    resumo: { entradas: extMes.length, valorEntradas: soma(extMes, function (e) { return e.valor; }), resolvidas: extMes.length - pend.length, pendentes: pend.length, valorSemLanc: soma(semLanc, function (e) { return e.valor; }), valorSemBanco: soma(semBanco, function (r) { return r.valor; }), taxasCartao: soma(vm, function (v) { return v.taxa; }), temExtrato: ext.length > 0, temVendas: vendas.length > 0 } };
+};
+// confirma ligações e classificações: [{ tipo: 'ext'|'venda', id, situacao, recs: [{aba, linha, id}], obs, deposito }]
+API.conciliar = function (d) {
+  var neg = soGestao_(); if (neg) return neg; d = d || {};
+  var itens = (d.itens || []).slice(0, 200); if (!itens.length) return { ok: false, erros: ['Nada marcado.'] };
+  var lock = LockService.getScriptLock(); lock.waitLock(25000);
+  try {
+    var u = usuario_(), carimbo = (u.email || 'app') + ' · ' + agora_(), erros = [], feitos = 0;
+    var sE = abaComCabecalho_(ABA_EXT, HEXT), hE = garantirColunas_(sE, HEXT).h, sC = abaComCabecalho_(ABA_CART, HCART), hC = garantirColunas_(sC, HCART).h;
+    var linhaDe = function (s, h, col, id) { if (s.getLastRow() < 2) return 0; var ids = s.getRange(2, h[col], s.getLastRow() - 1, 1).getValues(); for (var i = 0; i < ids.length; i++) if (String(ids[i][0]) === String(id)) return i + 2; return 0; };
+    var abas = {};
+    itens.forEach(function (it) {
+      var venda = it.tipo === 'venda', s = venda ? sC : sE, h = venda ? hC : hE, li = linhaDe(s, h, venda ? 'Código da transação' : 'ID do banco', it.id);
+      if (!li) { erros.push('Não achei ' + (venda ? 'a venda ' : 'a entrada ') + it.id); return; }
+      var recs = it.recs || [], sit = recs.length ? 'conciliado' : String(it.situacao || ''); if (SIT_EXT.indexOf(sit) < 0) { erros.push('Situação inválida: ' + sit); return; }
+      if (!recs.length && sit === 'conciliado') { erros.push('Conciliado precisa de um lançamento.'); return; }
+      var lig = [], ok = true, valorBanco = numBR_(s.getRange(li, h[venda ? 'Valor bruto (R$)' : 'Valor (R$)']).getValue()), dataBanco = fmtData_(s.getRange(li, h['Data']).getValue());
+      recs.forEach(function (r) {
+        var sm = planilha_().getSheetByName(r.aba); if (!sm) { erros.push('Aba ' + r.aba + ' não existe.'); ok = false; return; }
+        if (!abas[r.aba]) abas[r.aba] = { s: sm, h: garantirColunas_(sm, [COL_CONC]).h };
+        var hm = abas[r.aba].h, idCol = hm[CONFIG.HM.ID] || hm['ID'];
+        if (idCol && r.id && String(sm.getRange(r.linha, idCol).getValue()) !== String(r.id)) { erros.push(r.aba + ' linha ' + r.linha + ': o lançamento mudou de lugar; recarregue.'); ok = false; return; }
+        sm.getRange(r.linha, hm[COL_CONC]).setValue((venda ? 'Cartão ' : 'PagBank ') + dataBanco + ' · R$ ' + Mensagens.valorBR(valorBanco) + ' · ' + String(it.id).slice(0, 8) + ' · ' + carimbo);
+        lig.push(r.aba + '!' + r.linha + (r.id ? ' (' + r.id + ')' : ''));
+      });
+      if (!ok) return;
+      var par = { 'Situação': sit, 'Ligado a': lig.join(' + '), 'Registrado por (app)': carimbo };
+      if (it.obs != null && String(it.obs).trim()) par['Observação'] = String(it.obs).trim();
+      gravarCelulas_(s, li, h, par);
+      if (venda && it.deposito) { var ld = linhaDe(sE, hE, 'ID do banco', it.deposito); if (ld) { gravarCelulas_(sC, li, hC, { 'Depósito (ID do banco)': it.deposito }); gravarCelulas_(sE, ld, hE, { 'Situação': 'conciliado', 'Ligado a': 'Venda no cartão ' + String(it.id).slice(0, 8), 'Registrado por (app)': carimbo }); } }
+      feitos++;
+    });
+    SpreadsheetApp.flush();
+    return { ok: true, feitos: feitos, erros: erros };
+  } finally { lock.releaseLock(); }
 };
 
 API;
