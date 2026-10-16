@@ -705,5 +705,6 @@ table.ar-mini{min-width:0}
 .alerta.amarela{background:var(--am-bg);border-color:var(--am-b);color:var(--am-tx)}
 .alerta.lilas{background:var(--lilas);border-color:var(--lilas-b);color:var(--roxo-h)}
 .alerta.cinza{background:var(--bg);border-color:var(--borda-in);color:var(--tx2)}
-.alerta-tag{vertical-align:middle;margin-left:4px}
+.alerta-tag{vertical-align:middle;margin-left:4px;border:0;cursor:pointer;font-family:inherit;min-height:0}
+.alerta-tag:hover{filter:brightness(.95);text-decoration:underline}
 .fi-alertas:empty{display:none}

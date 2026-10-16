@@ -5,8 +5,13 @@
 function alertasDe(nome) { return (DIA && DIA.alertas && DIA.alertas[nome]) || []; }
 function alertaBadge(nome) {
   var l = alertasDe(nome).filter(function (a) { return a.tipo !== 'whats'; }); if (!l.length) return '';
-  return ' <span class="tag p ' + l[0].cor + ' alerta-tag" title="' + esc(l.map(function (a) { return a.texto; }).join('\n')) + '">' + ic('alerta', 11, 2.6) + ' ' + l.length + '</span>';
+  return ' <button type="button" class="tag p ' + l[0].cor + ' alerta-tag" data-alerta-ficha="' + esc(nome) + '" title="' + esc(l.map(function (a) { return a.texto; }).join('\n') + '\n(clique para abrir a ficha)') + '" aria-label="' + l.length + (l.length === 1 ? ' alerta' : ' alertas') + ': abrir a ficha de ' + esc(nome) + '">' + ic('alerta', 11, 2.6) + ' ' + l.length + '</button>';
 }
+// o ⚠ ao lado do nome abre a Ficha (antes de a linha da Agenda tratar o clique)
+document.addEventListener('click', function (e) {
+  var b = e.target && e.target.closest ? e.target.closest('[data-alerta-ficha]') : null; if (!b) return;
+  e.preventDefault(); e.stopPropagation(); go('ficha', { nome: b.getAttribute('data-alerta-ficha') });
+}, true);
 var ACAO_ALERTA = { cobranca: 'Cobrança do mês', pacientes: 'Editar cadastro', ficha: 'Ver ficha' };
 function alertasHtml(l, nome, naFicha) {
   if (!l || !l.length) return '';
