@@ -502,10 +502,10 @@ API.decidirFalta = function (d) {
   } finally { lock.releaseLock(); }
 };
 
-/* ---------- Cobrança por profissional: cadastro (gestão edita; recepção lê) ---------- */
+/* ---------- Cobrança por profissional: cadastro (gestão e recepção incluem/editam; o log guarda quem gravou e quem decidiu) ---------- */
 API.cobrancasDoPaciente = function (d) { d = d || {}; var nome = String(d.nome || '').trim(); return { ok: true, linhas: cobrancasProf_().filter(function (l) { return l.paciente === nome; }).map(function (l) { l.resumo = Cobranca.resumoLinha(l); return l; }), valores: valoresSessao_() }; };
 API.salvarCobrancaProf = function (d) {
-  d = d || {}; var u = usuario_(); if (u.perfil !== 'gestao') return { ok: false, erros: ['Só a gestão altera a cobrança por profissional.'] };
+  d = d || {}; var u = usuario_();
   var erros = [], paciente = String(d.paciente || '').trim(), profissional = String(d.profissional || '').trim(), cob = Cobranca.normCobranca(d.cobranca);
   if (!paciente) erros.push('Escolha o paciente.'); if (!profissional) erros.push('Escolha o profissional.');
   if (Cobranca.COBRANCAS.indexOf(cob) < 0) erros.push('Cobrança fora da lista (' + Cobranca.COBRANCAS.join(' · ') + ').');

@@ -92,10 +92,11 @@ Aplicação de teste de paciente de convênio pede a **guia assinada**, como qua
 ## 4. Pacientes
 
 - **Novo paciente**: dados pessoais, quem paga, convênio e carteirinha. O app avisa se já existe alguém parecido (nome,
-  CPF, nascimento). A **cobrança é da gestão**: até ela cadastrar, o app cobra pela tabela e mostra "sem cobrança
-  cadastrada". Avise a gestão.
-- **Buscar / editar**: "Quem informou" é obrigatório. Cada mudança fica registrada em "Alterações de cadastro". A seção
-  **Cobrança por profissional** a recepção só lê.
+  CPF, nascimento). Até alguém cadastrar a cobrança, o app cobra pela tabela e mostra "sem cobrança cadastrada".
+- **Buscar / editar**: "Quem informou" é obrigatório. Cada mudança fica registrada em "Alterações de cadastro". Na seção
+  **Cobrança por profissional** a recepção também inclui e edita (**+ Adicionar profissional** / **Editar**): quando a
+  Juliana, o profissional ou a gestão passa como o paciente paga, lance e escreva em "Valor decidido por" quem decidiu.
+  Lance só o que foi combinado por eles; desconto pedido pelo paciente continua sem negociar na recepção.
 - **Ficha**: tudo do paciente numa tela (contatos, o que deve, guias, sessões, próximos horários, cobrança, mensagens).
   Abre em Pacientes → Ficha, no painel da Agenda (**Ver ficha**), no Registrar e clicando no nome na Cobrança do mês.
 - Depois de cadastrar aqui, cadastre também no ControleOdonto.

@@ -23,7 +23,7 @@ gestão (Pendências → Lançamentos corrige).
 | 🔵 azul | **Não cobrar — convênio {nome}** · guia assinada obrigatória | pega a **guia assinada** e marca ☑ Guia assinada | Convênio (fatura) |
 | ⚪ cinza | **Não cobrar — pro bono / permuta** · **Não cobrar — aplicação de teste / retorno** | nada a cobrar | Não se aplica (pro bono / permuta) |
 | ⚪ cinza | **Sem cobrança — faltou / desmarcou. A gestão decide.** | escreva no **Detalhe** quem avisou, a que horas e como (obrigatório em falta sem aviso e em cima da hora). A gestão decide depois em Pendências → Faltas | (vazio) |
-| 🟠 laranja | **Sem cobrança cadastrada pra {profissional} — cobrar R$ X** | cobra o valor da tabela e **avisa a gestão** (ela cadastra a cobrança por profissional) | Sim · Não · Parcial |
+| 🟠 laranja | **Sem cobrança cadastrada pra {profissional} — cobrar R$ X** | cobra o valor da tabela e se a Juliana, o profissional ou a gestão já passou o combinado, **lança em Pacientes → Cobrança por profissional**; se não, avisa a gestão | Sim · Não · Parcial |
 
 Regras que o app já aplica: antecipado = valor × sessões agendadas no mês; sessão **cancelada pela clínica** abate no mês
 seguinte; **falta** só abate se a gestão decidir; mensalidade vence dia **10**, tolerância até dia **15** (parâmetros da

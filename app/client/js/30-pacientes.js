@@ -45,17 +45,17 @@ $$("#p-modo button").forEach(function (b) { b.addEventListener('click', function
 $("#n-prof").addEventListener('change', salvarRascunhoN);
 $("#n-conv").addEventListener('change', function () { $("#l-cart").hidden = this.value === 'Particular' || !this.value; salvarRascunhoN(); });
 
-/* ---------- Cobrança por profissional (Fase 1, 15/10): recepção lê; gestão inclui/edita linhas ---------- */
+/* ---------- Cobrança por profissional (Fase 1, 15/10): gestão e recepção incluem/editam linhas (16/10: a Juliana passa e a recepção já lança) ---------- */
 var cppLinhas = [], cppEdit = null;
 function renderCPP() {
   var box = $("#p-cpp-lista"), nome = cadNome; box.innerHTML = '';
   var hoje = new Date();
-  if (!cppLinhas.length) { box.innerHTML = '<div class="faixa laranja">' + ic('alerta', 22) + '<div class="corpo"><div class="t">Sem cobrança cadastrada</div><div>' + (ehConvenio(pacInfo(nome)) ? 'Convênio no cadastro, mas sem linha por profissional: o app cobra pela tabela até a gestão cadastrar.' : 'O app cobra pela tabela (valor cheio) até a gestão cadastrar como este paciente paga cada profissional.') + '</div></div></div>'; return; }
+  if (!cppLinhas.length) { box.innerHTML = '<div class="faixa laranja">' + ic('alerta', 22) + '<div class="corpo"><div class="t">Sem cobrança cadastrada</div><div>' + (ehConvenio(pacInfo(nome)) ? 'Convênio no cadastro, mas sem linha por profissional: o app cobra pela tabela até alguém cadastrar aqui.' : 'O app cobra pela tabela (valor cheio) até alguém cadastrar aqui como este paciente paga cada profissional (+ Adicionar profissional).') + '</div></div></div>'; return; }
   cppLinhas.forEach(function (l0) {
     var l = Cobranca.linhaDe(l0), vig = !/^n/i.test(String(l0.ativo || 'Sim')) && (!l.desde || Cobranca.dataObj(l.desde) <= hoje) && (!l.ate || Cobranca.dataObj(l.ate) >= hoje);
     var futura = l.desde && Cobranca.dataObj(l.desde) > hoje, encerrada = (l.ate && Cobranca.dataObj(l.ate) < hoje) || /^n/i.test(String(l0.ativo || 'Sim'));
     var tag = encerrada ? '<span class="tag cinza">encerrada</span>' : futura ? '<span class="tag azul">a partir de ' + esc(l.desde) + '</span>' : '<span class="tag verde">vigente</span>';
-    var d = el('<div class="cpp-linha' + (vig ? '' : ' apagada') + '"><b>' + esc(l.profissional) + '</b><span>' + esc((l0.resumo || Cobranca.resumoLinha(l)).replace(/^[^:]+: /, '')) + '</span>' + tag + (l.ate && !encerrada ? '<span class="muted">até ' + esc(l.ate) + '</span>' : '') + (l.obs ? '<span class="muted">' + esc(l.obs) + '</span>' : '') + '<span class="muted">decidido por ' + esc(l.decididoPor || '—') + (l.decididoEm ? ' em ' + esc(l.decididoEm) : '') + '</span><span class="esp"></span>' + (ehGestao() ? '<button type="button" class="btn link mini" data-ed>Editar</button>' : '') + '</div>');
+    var d = el('<div class="cpp-linha' + (vig ? '' : ' apagada') + '"><b>' + esc(l.profissional) + '</b><span>' + esc((l0.resumo || Cobranca.resumoLinha(l)).replace(/^[^:]+: /, '')) + '</span>' + tag + (l.ate && !encerrada ? '<span class="muted">até ' + esc(l.ate) + '</span>' : '') + (l.obs ? '<span class="muted">' + esc(l.obs) + '</span>' : '') + '<span class="muted">decidido por ' + esc(l.decididoPor || '—') + (l.decididoEm ? ' em ' + esc(l.decididoEm) : '') + '</span><span class="esp"></span>' + '<button type="button" class="btn link mini" data-ed>Editar</button>' + '</div>');
     var be = $('[data-ed]', d); if (be) be.addEventListener('click', function () { abrirFormCPP(l0); });
     box.appendChild(d);
   });

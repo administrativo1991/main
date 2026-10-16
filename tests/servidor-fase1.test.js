@@ -118,7 +118,9 @@ sc = ok(API.salvarCobrancaProf({ paciente: 'Beatriz Nova', profissional: 'Dr. Vi
 r = ok(reg({ paciente: 'Beatriz Nova', profissional: 'Dr. Victor Cunha', procedimento: 'Consulta pediátrica', recebeu: 'Sim', forma: 'Pix' }), 'beatriz com linha'); assert.strictEqual(r.bloco.situacao, 'na-hora');
 sc = ok(API.salvarCobrancaProf({ id: sc.id, paciente: 'Beatriz Nova', profissional: 'Dr. Victor Cunha', cobranca: 'Por sessão', valorSessao: '200', pagamento: 'Posterior', decididoPor: 'Victor' }), 'cpp edit'); assert.deepStrictEqual(sc.alterados, ['Pagamento']);
 assert.ok(ss._m['Alterações de cadastro'].d.some(l => /Cobrança por profissional · Dr. Victor Cunha · Pagamento/.test(l[2])));
-email = 'recepcao@x'; assert.strictEqual(API.salvarCobrancaProf({ paciente: 'Beatriz Nova', profissional: 'Juliana Ribeiro', cobranca: 'Pro bono', decididoPor: 'x' }).ok, false);
+// recepção também inclui (16/10: a Juliana passa e a recepção lança); o log guarda o e-mail de quem gravou
+email = 'recepcao@x'; sc = ok(API.salvarCobrancaProf({ paciente: 'Beatriz Nova', profissional: 'Giovana Grossi', cobranca: 'Pro bono', decididoPor: 'Juliana' }), 'cpp recepção'); assert.ok(/^C-/.test(sc.id));
+assert.ok(ss._m['Alterações de cadastro'].d.some(l => /Cobrança por profissional · Giovana Grossi · linha nova/.test(l[2]) && /recepcao@x/.test(l[6])));
 email = 'administrativo@clinicanascente.com.br';
 
 // lançamento repetido (13/10 na real: o mesmo "Desmarcou" gravado duas vezes, um minuto depois): recusa e diz onde está
