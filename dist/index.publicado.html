@@ -3847,6 +3847,10 @@ toast(r.novos + ' ' + x[2] + (r.jaTinha ? ' · ' + r.jaTinha + ' já estavam' : 
 });
 var lab = $('label[for="' + x[0].slice(1) + '"]'); lab.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); inp.click(); } });
 });
+// nomes na tela (gestão, 16/10); a planilha continua gravando os valores de sempre (SIT_EXT), então histórico e IA não mudam
+var CC_ROTULO = { 'conciliado': 'Sessão/consulta lançada', 'mês anterior ao app': 'Sessão/consulta de antes do app (até agosto)', 'sem lançamento no app': 'Sessão/consulta ainda não lançada', 'mensalidade anotada em Mensalistas': 'Mensalidade', 'convênio (fatura)': 'Pagamento do convênio', 'aluguel de sala': 'Aluguel de sala', 'não é paciente': 'Movimentação financeira' };
+var CC_ORDEM = ['conciliado', 'mês anterior ao app', 'sem lançamento no app', 'mensalidade anotada em Mensalistas', 'convênio (fatura)', 'aluguel de sala', 'não é paciente'];
+function ccRot(s) { return CC_ROTULO[s] || s; }
 function ccR(n) { return 'R$ ' + brl(n || 0); }
 function ccDia(s) { return String(s || '').slice(0, 5); }
 function ccLancHtml(r) { return '<span><a href="#" class="link-discreto cc-ficha" data-nome="' + esc(r.paciente) + '">' + esc(r.paciente) + '</a> <span class="muted">· ' + esc(ccDia(r.dataPag) + (r.dataPag !== r.data ? ' (sessão ' + ccDia(r.data) + ')' : '') + ' · ' + profCurto(r.profissional) + ' · ' + r.forma) + '</span> <b>' + esc(ccR(r.valor)) + '</b></span>'; }
@@ -3879,21 +3883,23 @@ var it = el('<label class="fd-item cc-sug check"><input type="checkbox" data-i="
 ls.appendChild(it);
 });
 // 2) no banco, sem lançamento (entradas do extrato e vendas no cartão)
-var sits = r.situacoes.filter(function (x) { return x !== 'conciliado' && x !== 'pendente'; });
+// uma lista só (gestão, 16/10): "Sessão/consulta lançada" abre a lista de lançamentos; as outras são as situações de sempre, com nome claro
+var sits = CC_ORDEM.filter(function (x) { return x !== 'conciliado' && r.situacoes.indexOf(x) >= 0; });
 var semBancoOrd = function (valor, data) { return r.semBanco.slice().sort(function (a, b) { return Math.abs(a.valor - valor) - Math.abs(b.valor - valor) || Math.abs(diasCC(a.dataPag, data)) - Math.abs(diasCC(b.dataPag, data)); }); };
 var lsl = $("#cc-semlanc"); lsl.innerHTML = '';
 var pend = r.semLancamento.map(function (e) { return { e: e }; }).concat(r.vendasSemLancamento.map(function (v) { return { v: v }; }));
 $("#cc-n-semlanc").textContent = pend.length;
 pend.forEach(function (p) {
 var x = p.e || p.v, valor = p.e ? x.valor : x.bruto, sug = p.e ? x.sugestao : '';
-var opts = '<option value="">o que é?</option>' + sits.map(function (o) { return '<option' + (o === sug ? ' selected' : '') + '>' + esc(o) + '</option>'; }).join('');
-var lancs = '<option value="">ligar a um lançamento…</option>' + semBancoOrd(valor, x.data).map(function (l, j) { return '<option value="' + j + '">' + esc(l.paciente + ' · ' + ccDia(l.dataPag) + ' · ' + ccR(l.valor) + ' · ' + l.forma) + '</option>'; }).join('');
-var it = el('<div class="fd-item cc-pend"><span class="cc-lado">' + (p.e ? ccBancoHtml(x) : ccVendaHtml(x)) + '</span>' + (sug ? '<span class="tag lilas" title="' + (x.historico ? 'mesma situação das ' + x.historico + ' entrada(s) já resolvida(s) deste pagador' : '') + '">sugestão: ' + esc(sug) + (x.historico ? ' (como antes)' : '') + '</span>' : '') + ccIAHtml(x.ia) + '<span class="esp"></span><span class="cc-form"><select class="cc-sit" aria-label="O que é">' + opts + '</select>' + (r.semBanco.length ? '<select class="cc-lanc" aria-label="Ligar a um lançamento">' + lancs + '</select>' : '') + '<input class="cc-obs" placeholder="Observação (opcional)" aria-label="Observação"><button type="button" class="btn mini">Salvar</button></span></div>');
+var opts = '<option value="">o que é?</option>' + (r.semBanco.length ? '<option value="conciliado">' + esc(ccRot('conciliado')) + ' →</option>' : '') + sits.map(function (o) { return '<option value="' + esc(o) + '"' + (o === sug ? ' selected' : '') + '>' + esc(ccRot(o)) + '</option>'; }).join('');
+var lancs = '<option value="">qual lançamento?</option>' + semBancoOrd(valor, x.data).map(function (l, j) { return '<option value="' + j + '">' + esc(l.paciente + ' · ' + ccDia(l.dataPag) + ' · ' + ccR(l.valor) + ' · ' + l.forma) + '</option>'; }).join('');
+var it = el('<div class="fd-item cc-pend"><span class="cc-lado">' + (p.e ? ccBancoHtml(x) : ccVendaHtml(x)) + '</span>' + (sug ? '<span class="tag lilas" title="' + (x.historico ? 'mesma situação das ' + x.historico + ' entrada(s) já resolvida(s) deste pagador' : '') + '">sugestão: ' + esc(ccRot(sug)) + (x.historico ? ' (como antes)' : '') + '</span>' : '') + ccIAHtml(x.ia) + '<span class="esp"></span><span class="cc-form"><select class="cc-sit" aria-label="O que é">' + opts + '</select>' + (r.semBanco.length ? '<select class="cc-lanc" aria-label="Qual lançamento" hidden>' + lancs + '</select>' : '') + '<input class="cc-obs" placeholder="Observação (opcional)" aria-label="Observação"><button type="button" class="btn mini">Salvar</button></span></div>');
 var ord = semBancoOrd(valor, x.data), selL = $('.cc-lanc', it), selS = $('.cc-sit', it);
-if (selL) selL.addEventListener('change', function () { selS.disabled = !!selL.value; });
+selS.addEventListener('change', function () { if (selL) { selL.hidden = selS.value !== 'conciliado'; if (selL.hidden) selL.value = ''; else selL.focus(); } });
 $('button', it).addEventListener('click', function () {
-var l = selL && selL.value !== '' ? ord[+selL.value] : null, sit = selS.value, obs = $('.cc-obs', it).value.trim();
-if (!l && !sit) return toast('Escolha o que é, ou ligue a um lançamento');
+var sit = selS.value, l = sit === 'conciliado' && selL && selL.value !== '' ? ord[+selL.value] : null, obs = $('.cc-obs', it).value.trim();
+if (!sit) return toast('Escolha o que é');
+if (sit === 'conciliado' && !l) return toast('Escolha qual lançamento');
 var recs = l ? ccRecs([l]) : [], extra = { situacao: l ? 'conciliado' : sit, obs: obs };
 ccSalvar([p.e ? Object.assign({ tipo: 'ext', id: x.id, recs: recs }, extra) : ccItemVenda(x, recs, extra)], this);
 });
@@ -3909,11 +3915,11 @@ $("#cc-sembanco").innerHTML = r.semBanco.length ? r.semBanco.map(function (l) { 
 // 4) vendas no cartão
 $("#cc-vendas-card").hidden = !r.vendas.length;
 $("#cc-taxas").textContent = r.vendas.length ? r.vendas.length + ' vendas · taxas ' + ccR(s.taxasCartao) : '';
-$("#cc-vendas").innerHTML = r.vendas.map(function (v) { return '<tr><td>' + esc(ccDia(v.data)) + '</td><td>' + esc([v.forma, v.parcelas].filter(Boolean).join(' · ')) + '<div class="sub">' + esc(v.bandeira || '') + '</div></td><td class="num">' + esc(brl(v.bruto)) + '</td><td class="num">' + esc(brl(v.taxa)) + '</td><td class="num"><b>' + esc(brl(v.liquido)) + '</b></td><td>' + (v.depositoSug ? esc(ccDia(v.depositoSug.data)) : '<span class="muted">não achei</span>') + '</td><td><span class="tag ' + (v.situacao === 'pendente' ? 'amarela' : 'verde') + '">' + esc(v.situacao) + '</span>' + (v.ligado ? '<div class="sub">' + esc(v.ligado) + '</div>' : '') + '</td></tr>'; }).join('');
+$("#cc-vendas").innerHTML = r.vendas.map(function (v) { return '<tr><td>' + esc(ccDia(v.data)) + '</td><td>' + esc([v.forma, v.parcelas].filter(Boolean).join(' · ')) + '<div class="sub">' + esc(v.bandeira || '') + '</div></td><td class="num">' + esc(brl(v.bruto)) + '</td><td class="num">' + esc(brl(v.taxa)) + '</td><td class="num"><b>' + esc(brl(v.liquido)) + '</b></td><td>' + (v.depositoSug ? esc(ccDia(v.depositoSug.data)) : '<span class="muted">não achei</span>') + '</td><td><span class="tag ' + (v.situacao === 'pendente' ? 'amarela' : 'verde') + '">' + esc(ccRot(v.situacao)) + '</span>' + (v.ligado ? '<div class="sub">' + esc(v.ligado) + '</div>' : '') + '</td></tr>'; }).join('');
 // 5) resolvidas
 $("#cc-n-res").textContent = r.resolvidos.length ? '(' + r.resolvidos.length + ')' : '';
 $("#cc-res-card").hidden = !r.resolvidos.length;
-$("#cc-res").innerHTML = r.resolvidos.map(function (e) { return '<div class="fd-item">' + ccBancoHtml(e) + '<span class="esp"></span><span class="tag ' + (e.situacao === 'conciliado' ? 'verde' : 'lilas') + '">' + esc(e.situacao) + '</span>' + (e.ligado || e.obs ? '<span class="muted" style="flex-basis:100%;font-size:12px">' + esc([e.ligado, e.obs].filter(Boolean).join(' · ')) + '</span>' : '') + '</div>'; }).join('');
+$("#cc-res").innerHTML = r.resolvidos.map(function (e) { return '<div class="fd-item">' + ccBancoHtml(e) + '<span class="esp"></span><span class="tag ' + (e.situacao === 'conciliado' ? 'verde' : 'lilas') + '">' + esc(ccRot(e.situacao)) + '</span>' + (e.ligado || e.obs ? '<span class="muted" style="flex-basis:100%;font-size:12px">' + esc([e.ligado, e.obs].filter(Boolean).join(' · ')) + '</span>' : '') + '</div>'; }).join('');
 $$('.cc-ficha', $("#s-conciliacao")).forEach(function (a) { a.addEventListener('click', function (ev) { ev.preventDefault(); ev.stopPropagation(); go('ficha', { nome: a.getAttribute('data-nome') }); }); });
 ccContarMarcados();
 }
@@ -3932,7 +3938,7 @@ var cab = '<span class="tag lilas">IA · ' + esc({ alta: 'confiança alta', medi
 if (ia.acao === 'nenhuma') return '<div class="cc-ia muted">IA: ' + esc(ia.motivo || 'não soube dizer') + '</div>';
 var corpo = '';
 if (ia.acao === 'ligar') corpo = '<span class="cc-recs">' + (ia.recs || []).map(ccLancHtml).join('') + '</span>';
-else if (ia.acao === 'situacao') corpo = '<b>' + esc(ia.sit) + '</b>';
+else if (ia.acao === 'situacao') corpo = '<b>' + esc(ccRot(ia.sit)) + '</b>';
 else if (ia.acao === 'em_aberto') corpo = '<span>parece pagar sessões em aberto: ' + (ia.abertos || []).map(function (a) { return '<a href="#" class="link-discreto cc-ficha" data-nome="' + esc(a.paciente) + '">' + esc(a.paciente) + '</a> <span class="muted">' + esc(ccDia(a.data) + ' · ' + ccR(a.valor)) + '</span>'; }).join(', ') + '. Registre o pagamento na Ficha; depois ele concilia aqui.</span>';
 var podeAceitar = ia.acao === 'ligar' || ia.acao === 'situacao';
 return '<div class="cc-ia faixa lilas">' + cab + esc(ia.motivo || '') + (ia.aviso ? ' <span class="tag laranja">' + esc(ia.aviso) + '</span>' : '') + '<div class="cc-ia-corpo">' + corpo + (podeAceitar ? ' <button type="button" class="btn mini cc-ia-aceitar">Aceitar</button>' : '') + '</div></div>';
@@ -3946,7 +3952,7 @@ function ccRenderIA(r, pend) {
 var ia = r.ia || {}, btn = $("#cc-ia-btn"), hint = $("#cc-ia-hint"), fixas = pend.filter(function (p) { return p.e && p.e.fixa; });
 var altas = pend.filter(function (p) { var a = (p.e || p.v).ia; return a && a.conf === 'alta' && !a.aviso && (a.acao === 'ligar' || a.acao === 'situacao'); });
 var bf = $("#cc-fixas"); bf.hidden = !fixas.length;
-if (fixas.length) { var cont = {}; fixas.forEach(function (p) { cont[p.e.sugestao] = (cont[p.e.sugestao] || 0) + 1; }); bf.textContent = 'Confirmar sugestões fixas (' + fixas.length + ')'; bf.title = Object.keys(cont).map(function (k) { return cont[k] + ' × ' + k; }).join(' · '); }
+if (fixas.length) { var cont = {}; fixas.forEach(function (p) { cont[p.e.sugestao] = (cont[p.e.sugestao] || 0) + 1; }); bf.textContent = 'Confirmar sugestões fixas (' + fixas.length + ')'; bf.title = Object.keys(cont).map(function (k) { return cont[k] + ' × ' + ccRot(k); }).join(' · '); }
 bf.onclick = function () { var b = this; doisCliques(b, 'Confirmar: ' + fixas.length + ' (' + b.title + ')?', function () { ccSalvar(fixas.map(function (p) { return { tipo: 'ext', id: p.e.id, recs: [], situacao: p.e.sugestao, obs: 'regra fixa do app' }; }), b); }); };
 var ba = $("#cc-ia-altas"); ba.hidden = !altas.length; ba.textContent = 'Aceitar as da IA com confiança alta (' + altas.length + ')';
 ba.onclick = function () { var b = this; doisCliques(b, 'Confirmar: aceitar ' + altas.length + '?', function () { ccSalvar(altas.map(ccItemIA), b); }); };

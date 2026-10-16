@@ -81,6 +81,16 @@ Menu **Conciliação** (só a gestão). Confere o que entrou na conta do PagBank
 Para desfazer uma confirmação: na aba `Extrato bancário` (ou `Vendas no cartão`) volte a Situação para "pendente" e apague
 "Ligado a"; na aba do mês, apague a célula da coluna `Conciliado` daquele lançamento.
 
+**Lista "o que é?" (16/10, noite)** — uma lista só, com nomes claros (a planilha grava os mesmos valores de antes):
+Sessão/consulta lançada → escolher qual (= conciliado) · Sessão/consulta de antes do app, até agosto (= mês anterior ao app) ·
+Sessão/consulta ainda não lançada (= sem lançamento no app: lançar no Registrar) · Mensalidade (= mensalidade anotada em
+Mensalistas) · Pagamento do convênio (= convênio (fatura)) · Aluguel de sala · Movimentação financeira (= não é paciente:
+resgate, transferência da própria clínica, devolução). Pagador que você sempre resolveu igual (aluguel, movimentação,
+convênio) já chega com a mesma sugestão, marcada "(como antes)".
+
+**Busca de paciente** (Pacientes, Ficha, Agenda, Registrar): acha pelo nome do paciente, do pagador habitual, do nome no
+extrato e do responsável, e mostra por qual achou; em Pacientes e na Ficha aparecem também os inativos.
+
 **Conciliação assistida (IA, 17/10)** — no card "No banco, sem lançamento":
 - **Sugestões fixas**, sem IA: resgate de CDB e transferência da própria clínica = "não é paciente"; entrada com data antes do
   primeiro mês do app (setembro/2026) = "mês anterior ao app". O botão **Confirmar sugestões fixas (n)** salva todas de uma
