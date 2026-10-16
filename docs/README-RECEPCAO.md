@@ -5,7 +5,8 @@ certa, com a hora e o seu e-mail. Nada é apagado. Errou? Corrija em Pendências
 
 Abra pelo link que a gestão passou, logada com o e-mail da clínica. O app é feito pra usar no computador.
 
-Menu: **Agenda · Confirmações · Registrar · Pacientes · Cobrança do mês · Meu dia**.
+Menu: **Agenda · Confirmações · Registrar · Pacientes · Cobrança do mês · Meu dia · Pendências**. Nessas telas a recepção
+faz o mesmo que a gestão, com poucas exceções (ver "O que continua só com a gestão", na seção 6).
 
 **Cobrança** (o bloco colorido "O que fazer agora", a pergunta **Recebeu?** e o que cada frase quer dizer): está tudo no
 **`docs/POP-RECEPCAO-COBRANCA.md`**, de uma página. Este guia cobre o resto.
@@ -89,17 +90,13 @@ sessão 3 de 5" e, depois, "sessão 6 · adicional" (confira a autorização ant
 psicóloga: no Registrar, tipo **Avaliação neuropsicológica** (para paciente de convênio o app grava a sessão do pacote).
 Aplicação de teste de paciente de convênio pede a **guia assinada**, como qualquer sessão de convênio.
 
-## Pendências (16/10)
-
-A recepção usa Pendências pra ver o que falta e corrigir lançamentos (inclusive convênio e modalidade da linha). **Só a
-gestão** exporta o mês, faz a virada (criar aba e colunas), publica o lembrete, decide faltas (Faltas → Decidir) e marca
-"Perdido / glosa". Tudo o que a recepção grava aparece pra gestão em "O que a recepção fez".
-
 ## 4. Pacientes
 
 - **Novo paciente**: dados pessoais, quem paga, convênio e carteirinha. O app avisa se já existe alguém parecido (nome,
   CPF, nascimento). Até alguém cadastrar a cobrança, o app cobra pela tabela e mostra "sem cobrança cadastrada".
-- **Buscar / editar**: "Quem informou" é obrigatório. Cada mudança fica registrada em "Alterações de cadastro". Na seção
+- **Buscar / editar**: "Quem informou" é obrigatório. Cada mudança fica registrada em "Alterações de cadastro". A
+  recepção também corrige CPF e data de nascimento já preenchidos e escreve a **Observação de cobrança**. Trocou o
+  convênio? O app pergunta se as sessões em aberto do paciente passam pro convênio novo. Na seção
   **Cobrança por profissional** a recepção também inclui e edita (**+ Adicionar profissional** / **Editar**): quando a
   Juliana, o profissional ou a gestão passa como o paciente paga, lance e escreva em "Valor decidido por" quem decidiu.
   Lance só o que foi combinado por eles; desconto pedido pelo paciente continua sem negociar na recepção.
@@ -119,13 +116,33 @@ gestão** exporta o mês, faz a virada (criar aba e colunas), publica o lembrete
 
 Uma linha por paciente × profissional que paga **antecipado** (até o dia 10), **no fim do mês** ou **mensalidade**: valor
 do mês (sessões agendadas × valor, menos as canceladas pela clínica), situação (em dia · vence dia 10 · tolerância até 15 ·
-atrasada · a receber) e **Registrar pagamento** (pode marcar mais de um mês = adiantamento).
+atrasada · a receber) e **Registrar pagamento** (pode marcar mais de um mês = adiantamento). **Editar sessões** corrige
+quantas sessões entram no mês (ex.: paciente viajou), com motivo.
 
 **Cobrar no WhatsApp** (linhas em aberto): abre a conversa com a mensagem oficial de cobrança (mensalidade, ou consultas
 do mês para quem paga no fim do mês), com valor, Pix e favorecido. Confira e envie no WhatsApp. A linha passa a mostrar
 "cobrado" com a data. Sem número no cadastro, o app pede o WhatsApp e guarda no paciente.
 
-## 6. Perguntas frequentes
+## 6. Pendências
+
+O que falta pra fechar o mês, em cartões: particulares sem "Pago?", pagos sem NF, convênio sem guia, faltas, atendidos sem
+cobrança cadastrada (botão **Cadastrar cobrança**), pagou outra pessoa, avaliações em andamento e linhas de convênio sem
+o convênio. Clique no cartão pra ver a lista e na linha pra corrigir sem abrir a planilha.
+
+- **Lançamentos**: ache qualquer sessão já lançada (no mês ou em todos os meses) e corrija valor, recebimento, data,
+  profissional, convênio e modalidade da linha. Toda correção fica registrada.
+- **+ Lançar sessão que faltou**: abre o Registrar; ponha a data da sessão e ela vai pra aba do mês certo.
+- **Faltas → Decidir**: a recepção vê a lista e o Detalhe, mas quem decide (não abate, abate, taxa, relevar) é a gestão.
+
+Tudo o que a recepção grava (cadastro, cobrança por profissional, correções de lançamento) aparece pra gestão no cartão
+"O que a recepção fez", com quem informou ou decidiu. Por isso: preencha sempre **Quem informou** e **Valor decidido por**.
+
+### O que continua só com a gestão
+
+Exportar o mês, virada do mês (criar a aba e as colunas do mês), lembrete da tela Agenda, decidir faltas, marcar ou
+desmarcar "Perdido / glosa", o que é da IA (uso da IA e guias a conferir) e os menus Repasse, Conciliação e A receber.
+
+## 7. Perguntas frequentes
 
 - **Agendei duas vezes a mesma pessoa**: clique no item repetido → **Remover** → motivo "duplicado". A linha fica marcada
   como removida.
