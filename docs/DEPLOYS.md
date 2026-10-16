@@ -24,7 +24,7 @@ coluna E não afeta o app. Atualizar `E2` faz parte de toda publicação (passo 
 | Canal | Deploy | Peças | Commit |
 |---|---|---|---|
 | Real (`arquivos_real`) | **2026-10-16-08** (A receber e perdas + Parcelamentos) | 58 (duplicatas 3 · server 19 · index 36); ativas = 884–941; `antigo35:` = as do 2026-10-16-05 (830–883) | branch `claude/sweet-wozniak-aviy8u`, commit 77686b9 |
-| Teste (`arquivos`) | **2026-10-16-09** (Alertas) | 60 (duplicatas 3 · server 20 · index 37), linhas 690–749; `antigo41:` = as do 16-07 (632–689) | branch `claude/sweet-wozniak-aviy8u`, commit aae42ca |
+| Teste (`arquivos`) | **2026-10-16-10** (Alertas, ⚠ abre a Ficha) | 60 (duplicatas 3 · server 20 · index 37), linhas 750–809; `antigo42:` = as do 16-09 (690–749) | branch `claude/sweet-wozniak-aviy8u`, commit cede9d7 |
 | Carregador real | 2026-10-06-02 (`dist/Code.real.gs`, implantado pela Roberta) | — | 4ad0272 |
 | Carregador teste | 2026-10-04-01 + nova versão pendente desde 05/10 (permissão do Drive, ver `COMO-INSTALAR.md`) | — | — |
 
@@ -48,6 +48,15 @@ Modelo:
 ```
 
 ## Lista
+
+### 2026-10-16-10 · Teste · Alertas: o ⚠ abre a Ficha
+- **O que mudou**: a gestão testou o 16-09 e clicou no ⚠ ao lado do nome na Agenda esperando abrir a Ficha (só mostrava
+  o texto ao passar o mouse). Agora o ⚠ é um botão que abre a Ficha do paciente.
+- **Peças**: 60 em `arquivos!A750:C809`; 57 iguais ao 16-09 copiadas por "colar valores" (colunas B e C), 3 gravadas (1
+  agente). Lidas de volta: **60/60 iguais**; index e duplicatas + server iguais. Ativação numa gravação só (A690:A809):
+  690–749 → `antigo42:`; ativas = só 750–809. E2 carimbado.
+- **Dados**: nenhum. **Voltar**: `antigo42:` → nome (690–749) e 750–809 → `antigo43:`.
+- **Commit**: cede9d7 · **Aprovação**: só teste.
 
 ### 2026-10-16-09 · Teste · Alertas
 - **O que mudou**: alertas na Agenda (etiqueta ao lado do nome, lista no painel, linha nas Pendências de hoje) e no topo da

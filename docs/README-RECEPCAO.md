@@ -46,7 +46,8 @@ mensalidade, a taxa decidida pela gestão). Não são atendimentos e não contam
 
 ### Alertas (Agenda e Ficha)
 
-Ao lado do nome do paciente na Agenda aparece um ⚠ com o número de alertas; clique no paciente para ver. Na Ficha eles
+Ao lado do nome do paciente na Agenda aparece um ⚠ com o número de alertas: clique no ⚠ para abrir a Ficha, ou no
+paciente para ver os alertas no painel. Na Ficha eles
 ficam no topo. São: cobrado no WhatsApp e ainda não pagou · mês atrasado e ainda não cobrado · parcela vencida · deve
 sessões há mais de 30 dias · 2 ou mais faltas sem aviso em 60 dias · horário fixo sem vir há 3 semanas · avaliação
 parada há 2 semanas · sem celular no cadastro (em cinza: peça o número). Os botões levam para a Cobrança do mês, a Ficha

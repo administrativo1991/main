@@ -20,7 +20,7 @@ Arquivo de retomada da Fase 2 (começou em 15/10/2026, à noite). Quem abrir um 
 | 5 | **Conciliação** (gestão escolheu começar por ela) | **real** (16-05) |
 | 5b | **A receber e perdas** (todos os meses, por idade; dar como perdido em lote; perdas do ano) | **real** (16-08) |
 | 5c | **Parcelamentos** (serviço parcelado e dívida renegociada, na Ficha) | **real** (16-08) |
-| 6 | **Alertas** (avisos dentro da Ficha e da Agenda, não tela própria) | **teste** (16-09) |
+| 6 | **Alertas** (avisos dentro da Ficha e da Agenda, não tela própria) | **teste** (16-10; o ⚠ abre a Ficha) |
 
 Fora da lista por enquanto: check-in e alta (não escolhidos em 15/10).
 
@@ -281,7 +281,7 @@ ordena por gravidade. Entram em `listaDoDia` (`r.alertas`, pacientes do dia), em
 `API.alertas({pacientes})`. Limites em variáveis `ALERTA_*` no topo do bloco.
 
 **Tela** (`34-alertas.js`): na Agenda, etiqueta com o nº de alertas ao lado do nome (cor do mais grave; passar o mouse
-mostra os textos), lista no painel do paciente (com botão Ver ficha / Cobrança do mês / Editar cadastro) e uma linha nas
+mostra os textos; clicar abre a Ficha, pedido da gestão no teste), lista no painel do paciente (com botão Ver ficha / Cobrança do mês / Editar cadastro) e uma linha nas
 Pendências de hoje; na Ficha, no topo. **"Sem celular" não entra na etiqueta nem nas Pendências**: com os dados reais,
 530 de 533 pacientes ativos não têm celular no cadastro (só os 19 do ControleOdonto), então ele aparece só no painel e na
 Ficha, em cinza.
