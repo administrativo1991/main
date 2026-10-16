@@ -23,7 +23,7 @@ coluna E não afeta o app. Atualizar `E2` faz parte de toda publicação (passo 
 
 | Canal | Deploy | Peças | Commit |
 |---|---|---|---|
-| Real (`arquivos_real`) | **2026-10-16-14** (Confirmações: escolher o dia) | 65 (duplicatas 3 · server 24 · index 38); ativas = 1002–1035, 1037–1046, 1049–1069 (index 7, 18, 19 novas em 1067–1069); `antigo44:` = as 3 do 16-13 (1036, 1047, 1048) | branch `claude/keen-lovelace-d1q07l`, commit e0e560f |
+| Real (`arquivos_real`) | **2026-10-16-15** (recepção nas telas do dia a dia + "O que a recepção fez") | 65 (duplicatas 3 · server 24 · index 38); ativas = 1002–1006, 1009–1010, 1014–1016, 1019–1035, 1039–1040, 1044, 1049–1051, 1056, 1061–1069, 1070–1091; `antigo45:` = as 22 trocadas | branch `claude/brave-galileo-y2mi72`, commit 7c3f828 |
 | Teste (`arquivos`) | **2026-10-16-10** (Alertas, ⚠ abre a Ficha) | 60 (duplicatas 3 · server 20 · index 37), linhas 750–809; `antigo42:` = as do 16-09 (690–749) | branch `claude/sweet-wozniak-aviy8u`, commit cede9d7 |
 | Carregador real | 2026-10-16 (`dist/Code.real.gs` com `gatilhoDiarioIA` + permissões; versão 2 do projeto real, implantada pela gestão em 16/10 17:27) | — | 618b511 |
 | Carregador teste | 2026-10-04-01 + nova versão pendente desde 05/10 (permissão do Drive, ver `COMO-INSTALAR.md`) | — | — |
@@ -48,6 +48,27 @@ Modelo:
 ```
 
 ## Lista
+
+### 2026-10-16-15 · Real · recepção nas telas do dia a dia + "O que a recepção fez"
+- **O que mudou**: recepção passa a ver **Pendências** e faz o que a gestão faz em Agenda, Confirmações, Registrar,
+  Pacientes, Cobrança do mês e Meu dia: cobrança por profissional (incluir/editar, "Valor decidido por" obrigatório),
+  observação de cobrança, CPF e nascimento já preenchidos, convênio/modalidade da linha, linhas abertas do cadastro,
+  editar sessões da competência, "Linhas de convênio sem convênio". **Continuam só da gestão**: exportar, virada do mês
+  (criar aba e colunas), lembrete, Faltas → Decidir, Perdido/glosa (e relatório), IA (card e Guias a conferir), Repasse,
+  Conciliação, A receber. Novo card da gestão em Pendências: **"O que a recepção fez · últimos 7 dias"** (Alterações de
+  cadastro + Alterações de lançamento gravadas por e-mail fora da gestão). Criar aba, criar colunas e exportar passam a
+  ficar registrados em `Alterações de lançamento`. Pedidos da gestão em 16/10.
+- **Peças**: só as 22 células que mudaram (server 2, 3, 6, 7, 8, 12, 13 · index 8, 9, 12, 13, 14, 16, 17, 23–26, 28–31).
+  Método novo, sem colar o código inteiro: `copyPaste` (valores, colunas B:C) das 22 linhas ativas para 1070–1091 com
+  `novo:` na coluna A, depois 48 `findReplace` literais, um por célula (cada trecho único na célula). **Atenção**: os
+  cortes dessas 22 células não são os de `dist/pedacos.json` (o arquivo remontado é idêntico ao do commit 7c3f828, mas
+  com 65 peças em vez de 66); o próximo deploy deve comparar com o que está na aba, não peça a peça com o pedacos.json.
+- **Conferência**: LEN e soma de UNICODE das 22 lidas de volta iguais ao esperado (calculado localmente aplicando as mesmas
+  substituições sobre as peças do e0e560f; a concatenação bate com o `dist/pedacos.json` de 7c3f828). Fórmulas
+  temporárias em F:G apagadas. Ativação numa gravação só (A1002:A1091); lido de volta: server 0–23, index 0–37 e
+  duplicatas 0–2 ativas uma vez cada. E2 carimbado. Testes locais 13/13; simulação Playwright gestão e recepção sem erro.
+  **Voltar**: `antigo45:` → nome nas 22 linhas antigas e 1070–1091 → `antigo46:`.
+- **Commit**: 7c3f828 · **Aprovação**: gestão, 16/10 ("pode publicar direto na planilha real").
 
 ### 2026-10-16-14 · Real · Confirmações: escolher o dia das sessões
 - **O que mudou**: na tela Confirmações, os botões de período (Amanhã · Daqui a 2 dias · Resto da semana · Próxima semana ·
