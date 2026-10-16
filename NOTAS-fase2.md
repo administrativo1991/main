@@ -14,7 +14,7 @@ Arquivo de retomada da Fase 2 (começou em 15/10/2026, à noite). Quem abrir um 
 | 1 | **Confirmações + WhatsApp** (não só na véspera: a recepção escolhe amanhã, daqui a 2 dias, a semana) | **real** (14) |
 | 1b | **Cobrar no WhatsApp** (Cobrança do mês, textos oficiais) | **real** (14) |
 | 2 | **Lançar o dia em lote** (Meu dia) | **real** (16) |
-| 3 | Carga de telefones do ControleOdonto | a fazer (gestão manda a exportação) |
+| 3 | Carga de telefones do ControleOdonto | em andamento: 14 gravados na real (16/10); faltam as outras páginas |
 | 4 | Ficha do paciente | a fazer |
 | 5 | Perdas → Parcelas → Conciliação | a fazer |
 | 6 | Alertas (avisos dentro da Ficha e da Agenda, não tela própria) | a fazer |
@@ -137,4 +137,15 @@ com a variante de convênio). Fica para o Registrar: pagou só uma parte, NF com
 
 **Testado**: `tests/servidor-fase1.test.js` (lote com 1 erro e 2 gravados, falta com Detalhe vai para Faltas → Decidir,
 repetido barrado); simulação Playwright 1280 e 390 px sem erro (Detalhe obrigatório cobrado, 2 gravados, 9 ficam).
+
+## 3. Carga de telefones do ControleOdonto
+
+**16/10**: a gestão conseguiu exportar só uma página da lista de pacientes do ControleOdonto (arquivo "Pacientes
+Exportados", "Escopo: Pacientes filtrados em tela": 20 pacientes, de Adirlene a Amanda Marques). Cruzamento pelo nome com
+`Pacientes` da real: 20/20 achados. Gravado na real, com o OK da gestão, **14 celulares** em `Pacientes!U` (WhatsApp do
+pagador), só onde estava vazio, formato "(32) 9 9999-9999"; log em `Alterações de cadastro!A382:G395` ("ControleOdonto
+(exportação …)"). Lido de volta: nomes × números conferidos. **Não gravados**: 3 só com telefone fixo (Ágatha Helena, Aline
+Amaral, Amanda Calichio); 2 com DDD "00" no ControleOdonto (Aleff, Alexsandra); Alice Oliveira já tinha WhatsApp.
+Próximo: a gestão exporta as outras páginas (mesmo de 20 em 20); o cruzamento e a gravação se repetem igual.
+O app relê o cadastro em até 5 min (cache).
 
