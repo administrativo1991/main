@@ -121,7 +121,12 @@ assert.ok(ss._m['Alterações de cadastro'].d.some(l => /Cobrança por profissio
 // recepção também inclui (16/10: a Juliana passa e a recepção lança); o log guarda o e-mail de quem gravou
 email = 'recepcao@x'; sc = ok(API.salvarCobrancaProf({ paciente: 'Beatriz Nova', profissional: 'Giovana Grossi', cobranca: 'Pro bono', decididoPor: 'Juliana' }), 'cpp recepção'); assert.ok(/^C-/.test(sc.id));
 assert.ok(ss._m['Alterações de cadastro'].d.some(l => /Cobrança por profissional · Giovana Grossi · linha nova/.test(l[2]) && /recepcao@x/.test(l[6])));
+assert.deepStrictEqual(API.gestaoResumo({ mes: 'Outubro' }).feitoRecepcao, [], 'recepção não recebe o bloco');
 email = 'administrativo@clinicanascente.com.br';
+// "O que a recepção fez" (gestão, 16/10): só o que a recepção gravou; o que a gestão gravou fica de fora
+const fr = ok(API.gestaoResumo({ mes: 'Outubro' }), 'feito recepção').feitoRecepcao;
+assert.ok(fr.some(x => x.tipo === 'Cadastro' && /Giovana Grossi · linha nova/.test(x.campo) && x.por === 'recepcao@x' && x.quem === 'Juliana'), JSON.stringify(fr));
+assert.ok(!fr.some(x => /Dr. Victor Cunha/.test(x.campo)), 'o que a gestão gravou não entra');
 
 // lançamento repetido (13/10 na real: o mesmo "Desmarcou" gravado duas vezes, um minuto depois): recusa e diz onde está
 const rep1 = ok(API.registrarAtendimento({ paciente: 'Lays Teste', profissional: 'Giovana Grossi', data: '20/10/2026', hora: '14:00', procedimento: 'Sessão de psicologia', oque: 'Desmarcou com antecedência (≥ 24h)' }), 'rep1');

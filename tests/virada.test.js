@@ -33,10 +33,9 @@ const g = API.registrarAtendimento(novoReg());
 assert.strictEqual(g.ok, false); assert.ok(/Outubro ainda está em modo planilha/.test(g.erros[0]), g.erros[0]);
 assert.strictEqual(API.corrigirLancamento({ aba: 'Setembro', id: 'S1', campos: { guia: 'Sim' } }).ok, false, 'correção também espera a virada');
 assert.strictEqual(API.gestaoResumo({ mes: 'Setembro' }).virada.modo, 'planilha');
-// 2. virada: #REF! para sem gravar; recepção não vira; depois a fórmula some e os valores ficam iguais
+// 2. virada: #REF! para sem gravar (a recepção também vira desde 16/10); depois a fórmula some e os valores ficam iguais
 const repAntes = JSON.stringify(API.repasseMes({ mes: 'Setembro' }).porProfissional);
 S.d[2][5] = '#REF!'; let v = API.virarAbaMes({ mes: 'Setembro' }); assert.strictEqual(v.ok, false); assert.ok(/F3 \(#REF!\)/.test(v.erros[0]), v.erros[0]); assert.ok(S.f['2,6']); S.d[2][5] = 'Cedplan';
-email = 'atendimento@clinicanascente.com.br'; assert.strictEqual(API.virarAbaMes({ mes: 'Setembro' }).ok, false); email = 'administrativo@clinicanascente.com.br';
 const fotoSet = JSON.stringify(S.d);
 v = API.virarAbaMes({ mes: 'Setembro' }); assert.ok(v.ok && v.diferencas === 0 && v.linhas === 3, JSON.stringify(v));
 assert.ok(/^Setembro · virada para o app em 10\/10\/2026 15:00 por administrativo@/.test(v.texto), v.texto);
@@ -45,11 +44,11 @@ assert.strictEqual(JSON.stringify(API.repasseMes({ mes: 'Setembro' }).porProfiss
 const ja = API.virarAbaMes({ mes: 'Setembro' }); assert.ok(ja.jaVirada && /Já virada em 10\/10\/2026 15:00/.test(ja.mensagem), ja.mensagem);
 assert.strictEqual(API.gestaoResumo({ mes: 'Setembro' }).virada.viradaEm, '10/10/2026 15:00');
 assert.ok(API.virarAbaMes({ mes: 'Outubro' }).ok);
-// 3. card "Linhas de convênio sem convênio" (só gestão) e correção pela gestão (convênio + modalidade), pelo ID
+// 3. card "Linhas de convênio sem convênio" (gestão e recepção, 16/10) e correção (convênio + modalidade), pelo ID
 let sc = API.gestaoResumo({ mes: 'Setembro' }).semConvenio; assert.deepStrictEqual(sc.map(l => l.id), ['S3']);
 email = 'atendimento@clinicanascente.com.br';
-assert.deepStrictEqual(API.gestaoResumo({ mes: 'Setembro' }).semConvenio, []);
-assert.strictEqual(API.corrigirLancamento({ aba: 'Setembro', id: 'S3', campos: { convenio: 'Sabin Sinai' } }).ok, false, 'recepção não troca convênio');
+assert.deepStrictEqual(API.gestaoResumo({ mes: 'Setembro' }).semConvenio.map(l => l.id), ['S3']);
+const cr = API.corrigirLancamento({ aba: 'Setembro', id: 'S3', campos: { convenio: 'Unimed' } }); assert.strictEqual(cr.ok, false); assert.ok(!/Só a gestão/.test(cr.erros.join(' ')), 'recepção troca convênio: só a lista barra');
 email = 'administrativo@clinicanascente.com.br';
 assert.strictEqual(API.corrigirLancamento({ aba: 'Setembro', id: 'S3', campos: { convenio: 'Unimed' } }).ok, false, 'fora da lista');
 const antes3 = linhaId(S, 'S3').slice();

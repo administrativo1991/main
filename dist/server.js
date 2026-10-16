@@ -787,6 +787,29 @@ function bloqueioPlanilha_(abas) {
 }
 function letraCol_(c) { var t = ''; while (c > 0) { var m = (c - 1) % 26; t = String.fromCharCode(65 + m) + t; c = Math.floor((c - 1) / 26); } return t; }
 var CAMPO_VIRADA = 'Virada para o app';
+// ações da aba inteira (criar aba, colunas, exportar) entram em "Alterações de lançamento" pra gestão ver quem fez
+function logAcao_(aba, campo, para) {
+  try { var sa = abaComCabecalho_(CONFIG.ABA.ALT_LANC, CONFIG.HL_LANC), ha = cabecalhos_(sa); gravarCelulas_(sa, proximaLinha_(sa, ha['ID']), ha, { 'Data/hora': agora_(), 'Aba': aba, 'ID': '(aba inteira)', 'Paciente': '', 'Campo': campo, 'De': '', 'Para': para || '', 'Quem informou': '', 'Registrado por (app)': (usuario_().email || 'app') + ' · ' + agora_() }); } catch (e) { }
+}
+// "O que a recepção fez" (gestão, 16/10): a gestão acompanha sem lançar. Junta "Alterações de cadastro", "Alterações de
+// lançamento" e "Lembretes" dos últimos `dias` dias, só o que foi gravado por e-mail fora da gestão (o último e-mail do log)
+function feitoRecepcao_(dias) {
+  var gest = CONFIG.GESTAO.concat(emailsGestao_()), limite = new Date(), out = [], ss = planilha_(), seq = 0;
+  limite.setHours(0, 0, 0, 0); limite.setDate(limite.getDate() - (dias - 1));
+  var quemGravou = function (log) { var m = String(log || '').match(/[\w.+-]+@[\w.-]*\w/g); return m ? m[m.length - 1].toLowerCase() : ''; };
+  var junta = function (aba, tipo, f) {
+    linhasComo_(ss.getSheetByName(aba)).forEach(function (r) {
+      var dt = parseData_(String(r['Data/hora'] || '').slice(0, 10)), por = quemGravou(r['Registrado por (app)']);
+      if (!dt || dt < limite || !por || gest.indexOf(por) >= 0) return;
+      var o = f(r); o.tipo = tipo; o.quando = String(r['Data/hora'] || ''); o.por = por; o._t = dt.getTime(); o._s = seq++; out.push(o);
+    });
+  };
+  junta(CONFIG.ABA.ALTERACOES, 'Cadastro', function (r) { return { paciente: r['Paciente'] || '', campo: r['Campo'] || '', de: r['De'], para: r['Para'], quem: r['Quem informou'] || '' }; });
+  junta(CONFIG.ABA.ALT_LANC, 'Lançamento', function (r) { return { paciente: r['Paciente'] || '', campo: (r['Aba'] ? r['Aba'] + ' · ' : '') + (r['Campo'] || ''), de: r['De'], para: r['Para'], quem: r['Quem informou'] || '' }; });
+  junta(CONFIG.ABA.LEMBRETES, 'Lembrete', function (r) { return { paciente: '', campo: 'Lembrete da tela Hoje', de: '', para: r['Lembrete'] || '(encerrou o lembrete)', quem: '' }; });
+  out.sort(function (a, b) { return b._t - a._t || b._s - a._s; });
+  return out.slice(0, 300).map(function (o) { delete o._t; delete o._s; return o; });
+}
 function viradaLog_(mes) {
   var sa = planilha_().getSheetByName(CONFIG.ABA.ALT_LANC), achou = null;
   linhasComo_(sa).forEach(function (r) { if (String(r['Aba'] || '') === mes && String(r['Campo'] || '') === CAMPO_VIRADA) achou = { quando: String(r['Data/hora'] || ''), texto: String(r['Quem informou'] || ''), por: String(r['Registrado por (app)'] || '') }; });
@@ -870,6 +893,7 @@ API.corrigirLancamento = function (d) {
     var u = usuario_(), erros = [], novos = {}, rotulos = [], amplos = [];
     var quer = function (k) { return Object.prototype.hasOwnProperty.call(c, k); };
     // perdido / glosa: só a gestão marca, desmarca ou recebe numa linha perdida
+    if (u.perfil !== 'gestao' && (ehPerdido_(c.pago) || (ehPerdido_(pagoAtual) && (quer('pago') || quer('recebidoAgora'))))) return { ok: false, erros: ['Só a gestão marca ou desmarca "' + PAGO_PERDIDO + '".'] };
     var motivoPerdido = String(c.motivoPerdido || '').trim();
     if (ehPerdido_(c.pago) && !ehPerdido_(pagoAtual) && !motivoPerdido) return { ok: false, erros: ['"' + PAGO_PERDIDO + '": informe o motivo (ex.: guia não autorizada pelo convênio).'] };
     var atualDe = function (k) { return k === 'DATA_PAG' || k === 'DATA' ? fmtData_(g(k)) : k === 'HORA' ? horaTxt_(g(k)) : (k === 'VALOR' || k === 'RECEBIDO') ? (g(k) === '' ? '' : String(numBR_(g(k)))) : txt(k); };
@@ -1422,13 +1446,14 @@ API.gestaoResumo = function (d) {
     // aplicações de teste (gestão, 15/10): sem número fixo; quem fez aplicação nos últimos 60 dias, com quantas já fez
     avaliacoes: avaliacoesEmAndamento_(),
     // relatório "Perdidos e glosas" (só gestão): o Valor é a referência do que se perdeu
-    perdidos: L.filter(function (r) { return ehPerdido_(r.pago); }),
+    perdidos: usuario_().perfil === 'gestao' ? L.filter(function (r) { return ehPerdido_(r.pago); }) : [],
     descontos: L.filter(function (r) { return /^Desconto:/i.test(r.obs); }),
     extras: L.filter(function (r) { return /^Sessão extra liberada/i.test(r.obs); }),
     pagadorDiferente: atend.filter(function (r) { return r.quem; }),
     // linhas de convênio sem convênio gravado (gestão, 10/10): sem o nome, o Repasse joga em "Convênio (sem nome)" sem regra
     semConvenio: L.filter(function (r) { return (/^Convênio/i.test(r.pago) || ehPerdido_(r.pago)) && !String(r.convenio || '').trim(); }),
     virada: m.existe ? estadoVirada_(mes) : null,
+    feitoRecepcao: usuario_().perfil === 'gestao' ? feitoRecepcao_(7) : [],
     alteracoes: []
   };
   var sl = planilha_().getSheetByName(CONFIG.ABA.ALTERACOES);
@@ -1587,6 +1612,7 @@ API.exportarMes = function (d) {
   aba.getRange(1, 1, n, c).setValues(vals).setNumberFormats(fmts);
   aba.getRange(1, 1, 1, c).setFontWeight('bold'); aba.setFrozenRows(1);
   SpreadsheetApp.flush();
+  logAcao_(mes, 'Exportar mês', nome);
   return { ok: true, nome: nome, url: ss.getUrl(), xlsx: 'https://docs.google.com/spreadsheets/d/' + ss.getId() + '/export?format=xlsx', linhas: n - 1, pasta: destino ? destino.caminho : '', criadas: destino ? destino.criadas : [], aviso: aviso, atualizado: agora_() };
 };
 // Gestão: cria a aba de um mês copiando a estrutura da aba-modelo: só cabeçalho, validações e formatação.
@@ -1605,6 +1631,7 @@ API.criarAbaMes = function (d) {
     if (max > 1) nova.getRange(2, 1, max - 1, nova.getMaxColumns()).clearContent();
     ss.setActiveSheet(nova); ss.moveActiveSheet(CONFIG.MESES.indexOf(nome) < CONFIG.MESES.indexOf(modelo.getName()) ? modelo.getIndex() : modelo.getIndex() + 1);
     SpreadsheetApp.flush();
+    logAcao_(nome, 'Criar aba do mês', 'modelo: ' + modelo.getName());
     return { ok: true, aba: nome, modelo: modelo.getName(), formulas: formulasAuto_(nova) };
   } finally { lock.releaseLock(); }
 };
@@ -2071,6 +2098,7 @@ API.criarColunasMes = function (d) {
     if (mensalistasIdx_().cols[chave] && mensalistasIdx_().cols[chave]['pago?'] != null) return { ok: false, erros: ['As colunas de ' + chave + ' já existem.'] };
     garantirColunas_(s, ['Profissional']); colunasComp_(s, chave);
     invalidar_(['mens']); SpreadsheetApp.flush();
+    logAcao_(CONFIG.ABA.MENSALISTAS, 'Criar colunas de ' + chave, '');
     return { ok: true, chave: chave, colunas: CONFIG.COMP_COLS.map(function (c) { return nomeColComp_(chave, c); }) };
   } finally { lock.releaseLock(); }
 };
@@ -2078,7 +2106,7 @@ API.criarColunasMes = function (d) {
 /* ---------- Faltas → Decidir (gestão): a recepção registra, a gestão decide ---------- */
 var DECISOES_FALTA = ['não abate', 'abate no mês seguinte', 'cobrar taxa de falta', 'relevar'];
 API.decidirFalta = function (d) {
-  d = d || {}; var u = usuario_();
+  d = d || {}; var u = usuario_(); if (u.perfil !== 'gestao') return { ok: false, erros: ['Só a gestão decide sobre faltas.'] };
   var aba = String(d.aba || '').trim(), id = String(d.id || '').trim(), decisao = String(d.decisao || '').trim().toLowerCase();
   if (CONFIG.MESES.indexOf(aba) < 0 || !id) return { ok: false, erros: ['Aba e ID do lançamento são obrigatórios.'] };
   if (DECISOES_FALTA.indexOf(decisao) < 0) return { ok: false, erros: ['Decisão inválida. Use: ' + DECISOES_FALTA.join(' · ')] };

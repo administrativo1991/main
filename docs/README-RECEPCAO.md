@@ -1,7 +1,7 @@
 # Recepção Nascente — guia da recepção
 
 O app é uma página ligada à planilha "Controle da Recepção 2026". Tudo o que você grava vai direto pra planilha, na linha
-certa, com a hora e o seu e-mail. Nada é apagado. Errou? Avise a gestão, que corrige em Pendências → Lançamentos.
+certa, com a hora e o seu e-mail. Nada é apagado. Errou? Corrija em Pendências → Lançamentos.
 
 Abra pelo link que a gestão passou, logada com o e-mail da clínica. O app é feito pra usar no computador.
 
@@ -89,6 +89,12 @@ sessão 3 de 5" e, depois, "sessão 6 · adicional" (confira a autorização ant
 psicóloga: no Registrar, tipo **Avaliação neuropsicológica** (para paciente de convênio o app grava a sessão do pacote).
 Aplicação de teste de paciente de convênio pede a **guia assinada**, como qualquer sessão de convênio.
 
+## Pendências (16/10)
+
+A recepção usa Pendências como a gestão: corrige lançamentos (inclusive convênio e modalidade da linha), faz a virada do
+mês, cria a aba e as colunas, exporta o mês e publica o lembrete. **Só a gestão** decide faltas (Faltas → Decidir) e marca
+"Perdido / glosa". Tudo o que a recepção grava aparece pra gestão em "O que a recepção fez".
+
 ## 4. Pacientes
 
 - **Novo paciente**: dados pessoais, quem paga, convênio e carteirinha. O app avisa se já existe alguém parecido (nome,
@@ -125,7 +131,7 @@ do mês para quem paga no fim do mês), com valor, Pix e favorecido. Confira e e
   como removida.
 - **Remarcar**: **⋯** → **Remarcar** → nova data e hora.
 - **Paciente não aparece no Registrar**: só quem está em Pacientes aparece. Cadastre primeiro.
-- **"A aba do mês não existe"**: peça à gestão pra criar (Pendências → Virada do mês).
+- **"A aba do mês não existe"**: crie em Pendências → Virada do mês.
 - **O app demorou**: depois de 20 s aparece "Demorou mais que o normal". Espere ou clique em tentar de novo.
 - **Erro vermelho**: copie a mensagem (ou tire print) e mande pra gestão. O que você digitou fica guardado.
 

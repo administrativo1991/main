@@ -459,6 +459,7 @@ API.criarColunasMes = function (d) {
     if (mensalistasIdx_().cols[chave] && mensalistasIdx_().cols[chave]['pago?'] != null) return { ok: false, erros: ['As colunas de ' + chave + ' já existem.'] };
     garantirColunas_(s, ['Profissional']); colunasComp_(s, chave);
     invalidar_(['mens']); SpreadsheetApp.flush();
+    logAcao_(CONFIG.ABA.MENSALISTAS, 'Criar colunas de ' + chave, '');
     return { ok: true, chave: chave, colunas: CONFIG.COMP_COLS.map(function (c) { return nomeColComp_(chave, c); }) };
   } finally { lock.releaseLock(); }
 };
@@ -466,7 +467,7 @@ API.criarColunasMes = function (d) {
 /* ---------- Faltas → Decidir (gestão): a recepção registra, a gestão decide ---------- */
 var DECISOES_FALTA = ['não abate', 'abate no mês seguinte', 'cobrar taxa de falta', 'relevar'];
 API.decidirFalta = function (d) {
-  d = d || {}; var u = usuario_();
+  d = d || {}; var u = usuario_(); if (u.perfil !== 'gestao') return { ok: false, erros: ['Só a gestão decide sobre faltas.'] };
   var aba = String(d.aba || '').trim(), id = String(d.id || '').trim(), decisao = String(d.decisao || '').trim().toLowerCase();
   if (CONFIG.MESES.indexOf(aba) < 0 || !id) return { ok: false, erros: ['Aba e ID do lançamento são obrigatórios.'] };
   if (DECISOES_FALTA.indexOf(decisao) < 0) return { ok: false, erros: ['Decisão inválida. Use: ' + DECISOES_FALTA.join(' · ')] };
