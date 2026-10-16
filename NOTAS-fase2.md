@@ -17,7 +17,9 @@ Arquivo de retomada da Fase 2 (começou em 15/10/2026, à noite). Quem abrir um 
 | 2 | **Lançar o dia em lote** (Meu dia) | **real** (16) |
 | 3 | Carga de telefones do ControleOdonto | 19 gravados na real (16/10, a 1ª página); faltam as outras páginas |
 | 4 | **Ficha do paciente** | **real** (16-03) |
-| 5 | **Conciliação** (gestão escolheu começar por ela); depois Perdas e Parcelas | Conciliação **real** (16-05) |
+| 5 | **Conciliação** (gestão escolheu começar por ela) | **real** (16-05) |
+| 5b | **A receber e perdas** (todos os meses, por idade; dar como perdido em lote; perdas do ano) | no teste |
+| 5c | Parcelas (avaliação parcelada e dívida renegociada) | a fazer |
 | 6 | Alertas (avisos dentro da Ficha e da Agenda, não tela própria) | a fazer |
 
 Fora da lista por enquanto: check-in e alta (não escolhidos em 15/10).
@@ -207,3 +209,27 @@ importar) sem erro; recepção não vê o menu nem a tela.
 
 **Na real, depois do OK**: importar o OFX e o CSV que a gestão mandou (estão só no chat; ela pode importar pela tela) e
 conferir setembro e outubro com ela.
+
+## 5b. A receber e perdas
+
+**Pedido da gestão (16/10)**: de Perdas, o que faltava era "a receber antigo" (todos os meses juntos, por idade, com dar
+como perdido ali mesmo) e o "relatório do ano". Motivos fixos não (o campo continua livre, com sugestões).
+
+**Já existia (Fase 1)**: Pago? = "Perdido / glosa" só pela gestão, com motivo obrigatório (vai na Observação como
+"PERDIDO / glosa: motivo"), card "Perdidos e glosas" do mês em Pendências e o Repasse tratando como repasse 0.
+
+**Servidor** (`server-fase2.js`): `aReceber()` junta as linhas de todas as abas de mês com a regra `emAberto_` (tirada de
+`gestaoResumo` para `server.js`, a mesma de "Particulares atendidos sem Pago?"; a saída de Pendências não mudou), com o
+saldo (Parcial = o que falta), os dias desde a sessão e a faixa (até 30, 31–60, mais de 60). `darComoPerdido({motivo,
+itens})` chama `corrigirLancamento` linha a linha (mesma validação, carimbo e Observação da Fase 1). `perdasAno()` soma as
+linhas perdidas por mês (com o atendido do mês e o %), motivo (o texto depois de "PERDIDO / glosa:"; sem ele, "sem motivo
+escrito"), convênio e profissional. Só a gestão (as 3).
+
+**Tela** (`64-areceber.js`, menu "A receber", só gestão): Em aberto (faixas clicáveis, filtro por paciente/pagador,
+marcar várias, motivo com sugestões, dar como perdido em dois cliques) e Perdas do ano. Nomes abrem a Ficha.
+
+**Com os dados reais** (cópia de Pacientes/Setembro/Outubro, nada gravado): 29 linhas em aberto, R$ 3.762,50 (quase
+tudo até 30 dias; muitas são "Pagamento de setembro (valor do mês)"); 7 perdidos em setembro, R$ 280, todos sem motivo.
+
+**Testado**: `tests/servidor-perdas.test.js`; simulação 1280/390 (filtros, busca, motivo obrigatório, dois cliques,
+perdas do ano, Ficha); recepção não vê.

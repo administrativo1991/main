@@ -670,3 +670,16 @@ table.cm .acoes{justify-content:flex-end;gap:4px;flex-wrap:wrap}
   .cc-form{flex-basis:100%}
   .cc-form select,.cc-form input{max-width:none}
 }
+/* a receber e perdas (Fase 2, 16/10) */
+.ar-faixas button{text-align:left;background:var(--sup);border:1px solid var(--borda);border-radius:14px;padding:12px 14px;cursor:pointer;font:inherit;color:inherit}
+.ar-faixas button[aria-pressed="true"]{border-color:var(--roxo);box-shadow:inset 0 0 0 1px var(--roxo)}
+.ar-faixas{grid-template-columns:repeat(4,minmax(0,1fr))}
+.ar-tab{min-width:680px}
+.ar-tab .ar-ck{width:36px}
+.ar-tab input[type=checkbox],#ar-todos{width:18px;height:18px;min-height:0;accent-color:var(--roxo)}
+.ar-tab tr.sel td{background:#F8F5FA}
+.ar-barra{position:sticky;bottom:0;display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;padding:12px;margin:0 -12px -12px;background:var(--sup);border-top:1px solid var(--borda);border-radius:0 0 14px 14px}
+.ar-barra input{flex:1 1 220px;max-width:380px;min-height:38px;padding:7px 12px;font-size:14px}
+.ar-barra #ar-sel{font-weight:700}
+table.ar-mini{min-width:0}
+@media (max-width:700px){ .ar-faixas,#ar-p-resumo{grid-template-columns:repeat(2,minmax(0,1fr))} .ar-barra{bottom:64px} }

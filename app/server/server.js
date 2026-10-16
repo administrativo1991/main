@@ -1008,6 +1008,12 @@ API.lancamentos = function (d) {
   abas.forEach(function (aba) { linhasMes_(aba).linhas.forEach(function (r) { if (q && Duplicatas.normalizar(r.paciente).indexOf(q) < 0) return; r.aba = aba; r.saldo = saldo_(r); out.push(r); }); });
   return { ok: true, linhas: out.slice(-400), total: out.length };
 };
+// particular atendido com Pago? vazio, Não ou Parcial = a receber (Pendências e "A receber" da Fase 2 usam a mesma regra)
+// compra de plano "a receber" (lançada com Pago? = Não) entra; sessões de plano/mensalidade/convênio não (aprovado pela Roberta em 06/10)
+function emAberto_(r) {
+  return /^Atendido/.test(r.oque) && (!r.convenio || /^Particular$/i.test(r.convenio)) && (r.pago === '' || r.pago === 'Não' || r.pago === 'Parcial') &&
+    (!/^Mensalidade|pacote|plano|mensal|convênio|AAPI/i.test(r.procedimento) || /\(compra\)/i.test(r.procedimento));
+}
 API.gestaoResumo = function (d) {
   d = d || {};
   // recepção também vê (gestão, 07/10: a tela virou "Pendências"); exportar e virada do mês continuam só da gestão
@@ -1019,8 +1025,8 @@ API.gestaoResumo = function (d) {
   var out = {
     ok: true, mes: mes, abaExiste: m.existe, total: L.length, atendidos: atend.length,
     recebido: atend.reduce(function (a, r) { return a + (r.pago === 'Sim' ? r.valor : r.pago === 'Parcial' ? r.recebido : 0); }, 0),
-    // compra de plano "a receber" (lançada com Pago? = Não) entra aqui; sessões de plano/mensalidade/convênio não (aprovado pela Roberta em 06/10)
-    pagamentoPendente: atend.filter(function (r) { return particular(r) && (r.pago === '' || r.pago === 'Não' || r.pago === 'Parcial') && (!/^Mensalidade|pacote|plano|mensal|convênio|AAPI/i.test(r.procedimento) || /\(compra\)/i.test(r.procedimento)); }),
+    // regra em emAberto_ (a mesma da tela "A receber")
+    pagamentoPendente: atend.filter(emAberto_),
     nfPendente: atend.filter(function (r) { return (r.pago === 'Sim' || r.pago === 'Parcial') && r.nf !== 'Sim' && r.nf !== 'Não se aplica'; }),
     semGuia: L.filter(function (r) { return (!particular(r) || /^Convênio/i.test(r.pago)) && r.guia !== 'Sim' && /^Atendido/.test(r.oque) && !ehPerdido_(r.pago); }),
     // Faltas → Decidir (gestão, 15/10): TODA falta e desmarcação entra, com o Detalhe da recepção e a decisão da gestão

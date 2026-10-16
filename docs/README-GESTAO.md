@@ -67,6 +67,19 @@ Menu **Conciliação** (só a gestão). Confere o que entrou na conta do PagBank
 Para desfazer uma confirmação: na aba `Extrato bancário` (ou `Vendas no cartão`) volte a Situação para "pendente" e apague
 "Ligado a"; na aba do mês, apague a célula da coluna `Conciliado` daquele lançamento.
 
+## A receber e perdas (Fase 2)
+
+Menu **A receber** (só a gestão).
+
+- **Em aberto**: todo particular atendido sem pagamento (Pago? vazio, Não ou Parcial), de **todos os meses**, do mais
+  antigo para o mais novo, com quantos dias tem. A regra é a mesma do card de Pendências. Clique numa faixa (até 30, 31 a
+  60, mais de 60 dias) para filtrar, ou digite o paciente/pagador. O que dá para cobrar, cobre (Cobrança do mês, Ficha).
+- **Dar como perdido**: marque as linhas, escreva o motivo (sugestões: glosa do convênio, guia não autorizada, paciente
+  não pagou, paciente desistiu, relevado pela gestão) e clique duas vezes. Cada linha fica com Pago? = "Perdido / glosa"
+  e "PERDIDO / glosa: motivo" na Observação, como na correção de Pendências.
+- **Perdas do ano**: quanto se perdeu por mês (e o % do atendido), por motivo, por convênio e por profissional, e a lista.
+  Linhas marcadas direto na planilha sem motivo aparecem como "sem motivo escrito".
+
 ## Rotina mensal
 
 1. Últimos dias do mês: Gestão → criar aba do mês seguinte e as colunas em Mensalistas.

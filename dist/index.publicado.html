@@ -659,6 +659,19 @@ table.cm .acoes{justify-content:flex-end;gap:4px;flex-wrap:wrap}
 .cc-form{flex-basis:100%}
 .cc-form select,.cc-form input{max-width:none}
 }
+/* a receber e perdas (Fase 2, 16/10) */
+.ar-faixas button{text-align:left;background:var(--sup);border:1px solid var(--borda);border-radius:14px;padding:12px 14px;cursor:pointer;font:inherit;color:inherit}
+.ar-faixas button[aria-pressed="true"]{border-color:var(--roxo);box-shadow:inset 0 0 0 1px var(--roxo)}
+.ar-faixas{grid-template-columns:repeat(4,minmax(0,1fr))}
+.ar-tab{min-width:680px}
+.ar-tab .ar-ck{width:36px}
+.ar-tab input[type=checkbox],#ar-todos{width:18px;height:18px;min-height:0;accent-color:var(--roxo)}
+.ar-tab tr.sel td{background:#F8F5FA}
+.ar-barra{position:sticky;bottom:0;display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;padding:12px;margin:0 -12px -12px;background:var(--sup);border-top:1px solid var(--borda);border-radius:0 0 14px 14px}
+.ar-barra input{flex:1 1 220px;max-width:380px;min-height:38px;padding:7px 12px;font-size:14px}
+.ar-barra #ar-sel{font-weight:700}
+table.ar-mini{min-width:0}
+@media (max-width:700px){ .ar-faixas,#ar-p-resumo{grid-template-columns:repeat(2,minmax(0,1fr))} .ar-barra{bottom:64px} }
 </style>
 </head>
 <body>
@@ -704,6 +717,7 @@ table.cm .acoes{justify-content:flex-end;gap:4px;flex-wrap:wrap}
 <button type="button" data-go="gestao" id="menu-gestao"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 19V10M10 19V5M16 19v-8M22 19H2"/></svg>Pendências</button>
 <button type="button" data-go="repasse" hidden><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M15 9.5c-.5-1-1.6-1.5-3-1.5-1.7 0-3 .8-3 2s1.3 1.7 3 2 3 .9 3 2.1-1.3 1.9-3 1.9c-1.5 0-2.6-.6-3-1.6M12 6.5v11"/></svg>Repasse</button>
 <button type="button" data-go="conciliacao" hidden><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 10h18M5 10v8M9.5 10v8M14.5 10v8M19 10v8M3 21h18M12 3l9 5H3z"/></svg>Conciliação</button>
+<button type="button" data-go="areceber" hidden><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>A receber</button>
 <span class="esp"></span>
 <div class="chip-user" id="chip-user" title="">
 <span class="av" id="chip-av">R</span>
@@ -1253,6 +1267,46 @@ table.cm .acoes{justify-content:flex-end;gap:4px;flex-wrap:wrap}
 <div class="fd-lista" id="cc-res" style="margin-top:10px"></div>
 </details>
 </section>
+<section class="tela coluna" id="s-areceber" hidden>
+<div class="titulo">
+<h1>A receber e perdas</h1>
+<div class="seg mini" id="ar-modo" role="group" aria-label="Ver"><button type="button" data-v="aberto" aria-pressed="true">Em aberto</button><button type="button" data-v="perdas" aria-pressed="false">Perdas do ano</button></div>
+<span class="muted">só a gestão vê · todas as abas de mês</span>
+<span class="esp"></span>
+<button type="button" class="btn ter imprimir so-pc"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9V3h12v6"/><rect x="3" y="9" width="18" height="9" rx="2"/><path d="M6 14h12v7H6z"/></svg>Imprimir</button>
+</div>
+<div id="ar-carregando" class="carregando">Carregando…</div>
+<div id="ar-aviso"></div>
+<div id="ar-aberto" hidden style="display:flex;flex-direction:column;gap:16px">
+<div class="fd-resumo ar-faixas" id="ar-faixas"></div>
+<section class="card compacto">
+<div class="passo" style="padding:0;flex-wrap:wrap;gap:8px 12px"><h2 style="font-size:15px">Particulares atendidos sem pagamento</h2><span class="tag amarela" id="ar-n">0</span><span class="esp"></span>
+<div class="campo-wrap" style="flex:0 1 280px;min-height:38px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg><input id="ar-busca" placeholder="Filtrar por paciente ou pagador" aria-label="Filtrar por paciente ou pagador" style="padding:7px 0"></div></div>
+<div class="muted" style="font-size:13px">Mesma regra de Pendências, juntando todos os meses. O que ainda dá para cobrar, cobre pela Cobrança do mês ou pela Ficha. Dar como perdido tira do a receber; o valor fica como referência do que se perdeu.</div>
+<div class="tabela-wrap"><table class="ar-tab"><thead><tr><th class="ar-ck"><input type="checkbox" id="ar-todos" aria-label="Marcar todos os visíveis"></th><th>Sessão</th><th>Paciente</th><th>Profissional · procedimento</th><th class="num">Em aberto</th><th>Pago?</th><th class="num">Dias</th></tr></thead><tbody id="ar-linhas"></tbody></table></div>
+<div class="ar-barra no-print" id="ar-barra" hidden>
+<span id="ar-sel"></span>
+<input id="ar-motivo" list="ar-motivos" placeholder="Motivo da perda (obrigatório)" aria-label="Motivo da perda" autocomplete="off"><datalist id="ar-motivos"></datalist>
+<button type="button" class="btn mini" id="ar-perder">Dar como perdido</button>
+</div>
+</section>
+</div>
+<div id="ar-perdas" hidden style="display:flex;flex-direction:column;gap:16px">
+<div class="fd-resumo" id="ar-p-resumo"></div>
+<div class="md-grid">
+<div>
+<section class="card compacto"><h2 style="font-size:15px">Por mês</h2><div class="tabela-wrap"><table class="ar-mini"><thead><tr><th>Mês</th><th class="num">Atendido</th><th class="num">Perdido</th><th class="num">%</th></tr></thead><tbody id="ar-p-meses"></tbody></table></div></section>
+<section class="card compacto"><h2 style="font-size:15px">Por motivo</h2><div class="fd-lista" id="ar-p-motivos"></div></section>
+</div>
+<div>
+<section class="card compacto"><h2 style="font-size:15px">Por convênio</h2><div class="fd-lista" id="ar-p-conv"></div></section>
+<section class="card compacto"><h2 style="font-size:15px">Por profissional</h2><div class="fd-lista" id="ar-p-prof"></div></section>
+</div>
+</div>
+<section class="card compacto"><div class="passo" style="padding:0"><h2 style="font-size:15px">Linhas perdidas</h2><span class="tag lilas" id="ar-p-n">0</span></div>
+<div class="tabela-wrap"><table><thead><tr><th>Data</th><th>Paciente</th><th>Profissional</th><th>Convênio</th><th class="num">Valor</th><th>Motivo</th></tr></thead><tbody id="ar-p-linhas"></tbody></table></div></section>
+</div>
+</section>
 <section class="tela coluna" id="s-meudia" hidden>
 <div class="titulo">
 <h1>Meu dia</h1>
@@ -1575,9 +1629,9 @@ if (amplo && !c.quemInformou) e.push('Mudou dados da sessão ou valores: preench
 if (!Object.keys(c).filter(function (k) { return k !== 'quemInformou'; }).length) e.push('Nada pra corrigir: mude algum campo ou escreva na observação.');
 return e;
 }
-var TELAS = { hoje: 's-hoje', confirmar: 's-confirmar', ficha: 's-ficha', registrar: 's-registrar', pacientes: 's-pacientes', cobranca: 's-cobranca', meudia: 's-meudia', gestao: 's-gestao', repasse: 's-repasse', conciliacao: 's-conciliacao' };
-var TITULOS = { hoje: 'Agenda', confirmar: 'Confirmações', ficha: 'Ficha do paciente', registrar: 'Registrar atendimento', pacientes: 'Pacientes', cobranca: 'Cobrança do mês', meudia: 'Meu dia', gestao: 'Pendências', repasse: 'Repasse', conciliacao: 'Conciliação' };
-var SO_GESTAO = { gestao: true, repasse: true, conciliacao: true };
+var TELAS = { hoje: 's-hoje', confirmar: 's-confirmar', ficha: 's-ficha', registrar: 's-registrar', pacientes: 's-pacientes', cobranca: 's-cobranca', meudia: 's-meudia', gestao: 's-gestao', repasse: 's-repasse', conciliacao: 's-conciliacao', areceber: 's-areceber' };
+var TITULOS = { hoje: 'Agenda', confirmar: 'Confirmações', ficha: 'Ficha do paciente', registrar: 'Registrar atendimento', pacientes: 'Pacientes', cobranca: 'Cobrança do mês', meudia: 'Meu dia', gestao: 'Pendências', repasse: 'Repasse', conciliacao: 'Conciliação', areceber: 'A receber e perdas' };
+var SO_GESTAO = { gestao: true, repasse: true, conciliacao: true, areceber: true };
 var telaAtual = 'hoje', navGen = 0;
 var INICIAR = {};
 function go(id, extra) {
@@ -1623,8 +1677,8 @@ $("#chip-nome").textContent = quemSou(); $("#chip-av").textContent = quemSou().c
 $("#chip-mail").textContent = (ehGestao() ? 'gestão' : 'recepção') + (MOCK ? ' · simulação' : '');
 $("#chip-user").title = (email || '') + ' · perfil ' + (ehGestao() ? 'gestão' : 'recepção');
 if (ehGestao()) $("#chip-user").classList.add('gestao');
-// menu por perfil (gestão 14/10): recepção vê Agenda · Registrar · Pacientes · Cobrança do mês · Meu dia; gestão também Pendências · Repasse · Conciliação
-$$('[data-go=repasse], [data-go=gestao], [data-go=conciliacao]').forEach(function (x) { x.hidden = !ehGestao(); });
+// menu por perfil (gestão 14/10): recepção vê Agenda · Registrar · Pacientes · Cobrança do mês · Meu dia; gestão também Pendências · Repasse · Conciliação · A receber
+$$('[data-go=repasse], [data-go=gestao], [data-go=conciliacao], [data-go=areceber]').forEach(function (x) { x.hidden = !ehGestao(); });
 $$('.so-gestao').forEach(function (x) { x.hidden = !ehGestao(); });
 $$('.so-recepcao').forEach(function (x) { x.hidden = ehGestao(); });
 var dl = $("#dl-pagadores"); dl.innerHTML = ''; var vistos = {};
@@ -3626,6 +3680,87 @@ $("#cc-confirmar").addEventListener('click', function () {
 var itens = $$('#cc-sug input:checked').map(function (c) { var g = CC.sugestoes[+c.getAttribute('data-i')]; return g.venda ? ccItemVenda(g.venda, ccRecs(g.recs)) : { tipo: 'ext', id: g.ext.id, recs: ccRecs(g.recs) }; });
 if (itens.length) ccSalvar(itens, this);
 });
+/* ===== 64-areceber.js ===== */
+/* ================= A RECEBER E PERDAS (só gestão, Fase 2, 16/10) =================
+Em aberto: o a receber de todas as abas de mês (API.aReceber, mesma regra de Pendências), com a idade de cada linha;
+a gestão marca várias como "Perdido / glosa" de uma vez, com motivo (API.darComoPerdido, que usa a correção da Fase 1).
+Perdas do ano: o que foi dado como perdido, por mês, motivo, convênio e profissional (API.perdasAno). */
+var AR = null, ARP = null, arModo = 'aberto', arFaixa = '', arMarc = {}, arGen = 0, arConfirma = null;
+INICIAR.areceber = function () {
+if (!ehGestao()) { go('hoje'); return toast('Só a gestão vê o a receber e as perdas'); }
+carregarAR();
+};
+function carregarAR() {
+var gen = ++arGen; $("#ar-carregando").hidden = false; $("#ar-carregando").textContent = 'Carregando…';
+$$('#ar-modo button').forEach(function (b) { b.setAttribute('aria-pressed', b.dataset.v === arModo ? 'true' : 'false'); });
+call(arModo === 'aberto' ? 'aReceber' : 'perdasAno', {}).then(function (r) {
+if (gen !== arGen || !aindaNa('areceber', navGen)) return;
+$("#ar-carregando").hidden = true;
+if (!r.ok) { $("#ar-aviso").innerHTML = erroBox(r.erros || [], 'Não consegui carregar'); return; }
+$("#ar-aviso").innerHTML = '';
+if (arModo === 'aberto') { AR = r; arMarc = {}; renderAR(); } else { ARP = r; renderPerdas(); }
+$("#ar-aberto").hidden = arModo !== 'aberto'; $("#ar-perdas").hidden = arModo !== 'perdas';
+}).catch(function (e) { if (gen === arGen) $("#ar-carregando").textContent = 'Não consegui carregar: ' + e.message; });
+}
+$$('#ar-modo button').forEach(function (b) { b.addEventListener('click', function () { if (arModo === b.dataset.v) return; arModo = b.dataset.v; carregarAR(); }); });
+var AR_FAIXAS = [['', 'em aberto'], ['ate30', 'até 30 dias'], ['ate60', '31 a 60 dias'], ['mais60', 'mais de 60 dias']];
+function arVisiveis() {
+var q = Duplicatas.normalizar($("#ar-busca").value || '');
+return AR.linhas.filter(function (l) { return (!arFaixa || l.faixa === arFaixa) && (!q || Duplicatas.normalizar(l.paciente + ' ' + l.pagador).indexOf(q) >= 0); });
+}
+function renderAR() {
+var r = AR, cont = function (f) { return r.linhas.filter(function (l) { return !f || l.faixa === f; }).length; };
+$("#ar-faixas").innerHTML = AR_FAIXAS.map(function (f) { var v = f[0] ? r.faixas[f[0]] : r.total; return '<button type="button" class="ar-fx' + (f[0] === 'mais60' && v ? ' atencao' : '') + '" data-f="' + f[0] + '" aria-pressed="' + (arFaixa === f[0]) + '"><b>' + esc(brlCurto(v)) + '</b><span>' + esc(f[1]) + ' · ' + cont(f[0]) + (cont(f[0]) === 1 ? ' linha' : ' linhas') + '</span></button>'; }).join('');
+$$('#ar-faixas button').forEach(function (b) { b.addEventListener('click', function () { arFaixa = b.dataset.f; renderAR(); }); });
+$("#ar-motivos").innerHTML = r.motivos.map(function (m) { return '<option value="' + esc(m) + '">'; }).join('');
+renderLinhasAR();
+}
+function renderLinhasAR() {
+var vis = arVisiveis();
+$("#ar-n").textContent = vis.length;
+$("#ar-linhas").innerHTML = vis.length ? vis.map(function (l) {
+var k = l.aba + '|' + l.id;
+return '<tr class="' + (arMarc[k] ? 'sel' : '') + '"><td class="ar-ck"><input type="checkbox" data-k="' + esc(k) + '"' + (arMarc[k] ? ' checked' : '') + (l.id ? '' : ' disabled title="Lançamento sem ID: corrija direto na planilha"') + ' aria-label="Marcar ' + esc(l.paciente + ' ' + l.data) + '"></td><td>' + esc(l.data.slice(0, 5)) + '<div class="sub">' + esc(l.aba) + '</div></td><td><a href="#" class="link-discreto ar-ficha" data-nome="' + esc(l.paciente) + '">' + esc(l.paciente) + '</a>' + (l.pagador && l.pagador !== l.paciente ? '<div class="sub">paga: ' + esc(l.pagador) + '</div>' : '') + '</td><td>' + esc(profCurto(l.profissional)) + '<div class="sub">' + esc(l.procedimento) + '</div></td><td class="num"><b>' + esc(brl(l.saldo)) + '</b>' + (l.saldo !== l.valor ? '<div class="sub">de ' + esc(brl(l.valor)) + '</div>' : '') + '</td><td>' + esc(l.pago) + '</td><td class="num"><span class="tag p ' + (l.faixa === 'mais60' ? 'vermelha' : l.faixa === 'ate60' ? 'laranja' : 'cinza') + '">' + l.dias + '</span></td></tr>';
+}).join('') : '<tr><td colspan="7" class="vazio">' + (AR.linhas.length ? 'Nada com esse filtro.' : 'Nenhum particular atendido em aberto.') + '</td></tr>';
+$$('#ar-linhas .ar-ficha').forEach(function (a) { a.addEventListener('click', function (e) { e.preventDefault(); go('ficha', { nome: a.dataset.nome }); }); });
+var marcaveis = vis.filter(function (l) { return l.id; });
+$("#ar-todos").checked = marcaveis.length > 0 && marcaveis.every(function (l) { return arMarc[l.aba + '|' + l.id]; });
+barraAR();
+}
+function arMarcadas() { return AR.linhas.filter(function (l) { return arMarc[l.aba + '|' + l.id]; }); }
+function barraAR() {
+var m = arMarcadas(), tot = m.reduce(function (a, l) { return a + l.saldo; }, 0);
+$("#ar-barra").hidden = !m.length; arConfirma = null;
+$("#ar-sel").textContent = m.length + (m.length === 1 ? ' linha marcada · ' : ' linhas marcadas · ') + brlCurto(tot);
+$("#ar-perder").textContent = 'Dar como perdido'; $("#ar-perder").classList.remove('vermelho');
+}
+$("#ar-linhas").addEventListener('change', function (e) { var c = e.target; if (!c.dataset || !c.dataset.k) return; if (c.checked) arMarc[c.dataset.k] = 1; else delete arMarc[c.dataset.k]; c.closest('tr').classList.toggle('sel', c.checked); barraAR(); $("#ar-todos").checked = arVisiveis().filter(function (l) { return l.id; }).every(function (l) { return arMarc[l.aba + '|' + l.id]; }); });
+$("#ar-todos").addEventListener('change', function () { var on = this.checked; arVisiveis().forEach(function (l) { if (!l.id) return; if (on) arMarc[l.aba + '|' + l.id] = 1; else delete arMarc[l.aba + '|' + l.id]; }); renderLinhasAR(); });
+$("#ar-busca").addEventListener('input', function () { if (AR) renderLinhasAR(); });
+$("#ar-perder").addEventListener('click', function () {
+var m = arMarcadas(), motivo = $("#ar-motivo").value.trim(), btn = this;
+if (!m.length) return;
+if (!motivo) { $("#ar-motivo").focus(); return toast('Escreva o motivo da perda'); }
+if (!arConfirma) { arConfirma = setTimeout(function () { arConfirma = null; barraAR(); }, 6000); btn.textContent = 'Confirmar: ' + m.length + (m.length === 1 ? ' linha' : ' linhas') + ' como perdidas'; btn.classList.add('vermelho'); return; }
+clearTimeout(arConfirma); arConfirma = null; btn.disabled = true; btn.textContent = 'Gravando…';
+call('darComoPerdido', { motivo: motivo, itens: m.map(function (l) { return { aba: l.aba, id: l.id, paciente: l.paciente, data: l.data }; }) }).then(function (r) {
+btn.disabled = false;
+if (!r.ok) { $("#ar-aviso").innerHTML = erroBox(r.erros || [], 'Não gravei'); barraAR(); return; }
+toast(r.feitos + (r.feitos === 1 ? ' linha dada como perdida' : ' linhas dadas como perdidas'));
+$("#ar-aviso").innerHTML = r.erros.length ? erroBox(r.erros, 'Estas não foram') : '';
+$("#ar-motivo").value = ''; carregarAR();
+}).catch(function (e) { btn.disabled = false; barraAR(); toast('Não gravei: ' + e.message); });
+});
+function renderPerdas() {
+var r = ARP, t = r.total, pct = function (a, b) { return b ? (Math.round(a / b * 1000) / 10).toString().replace('.', ',') + '%' : '—'; };
+$("#ar-p-resumo").innerHTML = '<div class="' + (t.perdido ? 'atencao' : '') + '"><b>' + esc(brlCurto(t.perdido)) + '</b><span>perdido no ano</span></div><div><b>' + esc(pct(t.perdido, t.atendido)) + '</b><span>do valor atendido (' + esc(brlCurto(t.atendido)) + ')</span></div><div><b>' + t.n + '</b><span>' + (t.n === 1 ? 'linha perdida' : 'linhas perdidas') + '</span></div>';
+$("#ar-p-meses").innerHTML = r.meses.map(function (m) { return '<tr><td>' + esc(m.mes) + '</td><td class="num">' + esc(brl(m.atendido)) + '</td><td class="num"><b>' + esc(brl(m.perdido)) + '</b></td><td class="num">' + esc(pct(m.perdido, m.atendido)) + '</td></tr>'; }).join('') || '<tr><td colspan="4" class="vazio">Nenhuma aba de mês.</td></tr>';
+var grupo = function (id, l) { $("#" + id).innerHTML = l.length ? l.map(function (g) { return '<div class="fd-item"><span class="quem">' + esc(g.nome) + '</span><span class="esp"></span><span class="muted">' + g.n + (g.n === 1 ? ' linha' : ' linhas') + '</span><b>' + esc(brlCurto(g.valor)) + '</b></div>'; }).join('') : '<div class="muted">Nada perdido no ano.</div>'; };
+grupo('ar-p-motivos', r.porMotivo); grupo('ar-p-conv', r.porConvenio); grupo('ar-p-prof', r.porProfissional);
+$("#ar-p-n").textContent = r.linhas.length;
+$("#ar-p-linhas").innerHTML = r.linhas.length ? r.linhas.map(function (l) { return '<tr><td>' + esc(l.data) + '</td><td><a href="#" class="link-discreto ar-ficha" data-nome="' + esc(l.paciente) + '">' + esc(l.paciente) + '</a></td><td>' + esc(profCurto(l.profissional)) + '<div class="sub">' + esc(l.procedimento) + '</div></td><td>' + esc(l.convenio) + '</td><td class="num">' + esc(brl(l.valor)) + '</td><td>' + esc(l.motivo) + '</td></tr>'; }).join('') : '<tr><td colspan="6" class="vazio">Nada dado como perdido no ano.</td></tr>';
+$$('#ar-p-linhas .ar-ficha').forEach(function (a) { a.addEventListener('click', function (e) { e.preventDefault(); go('ficha', { nome: a.dataset.nome }); }); });
+}
 /* ===== 70-meudia.js ===== */
 /* ================= MEU DIA — Fechar o dia (Fase 1, 15/10) =================
 As 4 listas do dia (a cobrar · recebido · guias a pegar · NF a emitir) com a mesma conta da Agenda (fechamentoDia),

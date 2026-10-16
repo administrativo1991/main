@@ -110,6 +110,23 @@ function mockComp(l, chave) { // estado da competência na simulação: pago em 
 }
 function mockBloco(paciente, profissional, data, proc, oque) { var p = mockPacientes.filter(function (x) { return x.nome === paciente; })[0] || {}, v = Cobranca.linhaVigente(mockCPP, paciente, profissional, data), pr = mockProfs.filter(function (x) { return x.nome === profissional; })[0]; var esp = pr ? pr.esp : ''; var vl = mockValores.filter(function (x) { return x.especialidade === esp && /cheio/.test(x.nome); })[0]; return Cobranca.calcular({ linha: v.linha, profissional: profissional, especialidade: esp, valorCheio: vl ? vl.valor : null, procedimento: proc, oque: oque, competencia: v.linha ? mockComp(v.linha, Cobranca.chaveMes(data)) : null, hoje: data, params: mockParams, pagador: p.pagador || '', avisoLinha: v.aviso, convenioPaciente: p.convenio || '' }); }
 function mockComps() { var o = {}, h = new Date(), chs = [Cobranca.chaveMes(new Date(h.getFullYear(), h.getMonth() - 1, 1)), Cobranca.chaveMes(h), Cobranca.chaveMes(new Date(h.getFullYear(), h.getMonth() + 1, 1))]; mockCPP.forEach(function (l) { if (!(l.pagamento === 'Antecipado' || l.pagamento === 'Posterior' || l.cobranca === 'Mensalidade fixa')) return; var k = l.paciente + '|' + l.profissional; o[k] = o[k] || {}; chs.forEach(function (c) { o[k][c] = mockComp(l, c); }); }); return o; }
+// a receber e perdas na simulação
+var mockPerdidos = [{ aba: 'Setembro', id: 'A-p1', data: '03/09/2026', paciente: 'Igor Modelo Silva', profissional: 'Juliana Ribeiro', procedimento: 'Sessão de psicologia – convênio', convenio: 'Cedplan', valor: 100, motivo: 'glosa do convênio' }], mockAR = null;
+function mockAReceber(nome, d) {
+  var h = new Date(), dia = function (n) { var x = new Date(h.getTime() - n * 864e5); return ('0' + x.getDate()).slice(-2) + '/' + ('0' + (x.getMonth() + 1)).slice(-2) + '/' + x.getFullYear(); };
+  var L = function (id, n, pac, pag, prof, proc, valor, saldo, pago) { return { aba: MESES_PT[new Date(h.getTime() - n * 864e5).getMonth()], linha: 2, id: id, data: dia(n), paciente: pac, pagador: pag, profissional: prof, procedimento: proc, valor: valor, saldo: saldo, pago: pago, dias: n, faixa: n <= 30 ? 'ate30' : n <= 60 ? 'ate60' : 'mais60', obs: '' }; };
+  if (!mockAR) mockAR = [L('A-r1', 75, 'Theo Barreto Lima', 'Rita Lima', 'Juliana Ribeiro', 'Sessão de psicologia', 120, 120, 'Não'), L('A-r2', 44, 'Beatriz Almeida Rocha', '', 'Giovana Grossi', 'Avaliação neuropsicológica', 900, 600, 'Parcial'),
+    L('A-r3', 12, 'Igor Modelo Silva', '', 'Dr. Victor Cunha', 'Consulta pediátrica', 250, 250, '(vazio)'), L('A-r4', 3, 'Theo Barreto Lima', 'Rita Lima', 'Juliana Ribeiro', 'Sessão de psicologia', 120, 120, 'Não'), L('', 2, 'Ana Luísa Fontes Braga', '', 'Juliana Ribeiro', 'Sessão de psicologia', 120, 120, 'Não')];
+  var motivos = ['glosa do convênio', 'guia não autorizada', 'paciente não pagou', 'paciente desistiu', 'relevado pela gestão'];
+  if (nome === 'darComoPerdido') { if (!String(d.motivo || '').trim()) return { ok: false, erros: ['Escreva o motivo da perda.'] }; var ids = (d.itens || []).map(function (x) { return x.id; });
+    mockAR.filter(function (l) { return ids.indexOf(l.id) >= 0; }).forEach(function (l) { mockPerdidos.push({ aba: l.aba, id: l.id, data: l.data, paciente: l.paciente, profissional: l.profissional, procedimento: l.procedimento, convenio: 'Particular', valor: l.valor, motivo: d.motivo }); });
+    mockAR = mockAR.filter(function (l) { return ids.indexOf(l.id) < 0; }); return { ok: true, feitos: ids.length, erros: [] }; }
+  var soma = function (f) { return mockAR.filter(f).reduce(function (a, l) { return a + l.saldo; }, 0); };
+  if (nome === 'aReceber') return { ok: true, linhas: mockAR.slice().sort(function (a, b) { return b.dias - a.dias; }), motivos: motivos, total: soma(function () { return true; }), faixas: { ate30: soma(function (l) { return l.faixa === 'ate30'; }), ate60: soma(function (l) { return l.faixa === 'ate60'; }), mais60: soma(function (l) { return l.faixa === 'mais60'; }) } };
+  var g = function (k) { var o = {}; mockPerdidos.forEach(function (l) { var x = o[l[k]] = o[l[k]] || { nome: l[k], n: 0, valor: 0 }; x.n++; x.valor += l.valor; }); return Object.keys(o).map(function (k2) { return o[k2]; }).sort(function (a, b) { return b.valor - a.valor; }); };
+  var meses = ['Setembro', 'Outubro'].map(function (m) { var p = mockPerdidos.filter(function (l) { return l.aba === m; }); return { mes: m, atendido: m === 'Setembro' ? 14060.2 : 5372.5, perdido: p.reduce(function (a, l) { return a + l.valor; }, 0), n: p.length }; });
+  return { ok: true, meses: meses, porMotivo: g('motivo'), porConvenio: g('convenio'), porProfissional: g('profissional'), linhas: mockPerdidos, total: { atendido: 19432.7, perdido: mockPerdidos.reduce(function (a, l) { return a + l.valor; }, 0), n: mockPerdidos.length } };
+}
 // conciliação na simulação: extrato e vendas de mentira; confirmar muda a situação e some da lista
 var mockExt = null, mockVendas = null, mockConcOk = {};
 function mockConc(nome, d) {
@@ -236,6 +253,7 @@ function mock(nome, d) {
     if (nome === 'atualizarLinhasDoCadastro') return res({ ok: true, aba: 'Outubro', atualizadas: d.ids });
     if (nome === 'lancamentos') { var ml = mockReg.map(function (r) { return Object.assign({ aba: MESES_PT[(dataObj(r.data) || hoje).getMonth()], linha: 12, dataPag: '', quem: '', saldo: r.pago === 'Não' ? r.valor : 0 }, r); }); var qn = (d.paciente || '').toLowerCase(); return res({ ok: true, linhas: ml.filter(function (x) { return !qn || x.paciente.toLowerCase().indexOf(qn) >= 0; }), total: ml.length }); }
     if (nome === 'corrigirLancamento') { var mr = mockReg.filter(function (x) { return x.id === d.id; })[0], cc = d.campos || {}, alt = []; ['pago', 'forma', 'nf', 'guia', 'nfNumero'].forEach(function (k) { if (cc[k] != null && (!mr || cc[k] !== mr[k === 'nfNumero' ? 'nfN' : k])) { if (mr) mr[k === 'nfNumero' ? 'nfN' : k] = cc[k]; alt.push(k); } }); if (cc.recebidoAgora && mr) { mr.pago = 'Sim'; mr.forma = cc.forma || ''; alt.push('Pago?'); } if (cc.observacao) alt.push('Observação'); if (!alt.length) return res({ ok: false, erros: ['Nada mudou: os campos já estavam assim.'] }); if (/^A-sim-p/.test(d.id)) mockPendOk.push(d.id); return res({ ok: true, id: d.id, aba: d.aba, linha: 41, alterados: alt, novos: cc, plano: null }); }
+    if (nome === 'aReceber' || nome === 'darComoPerdido' || nome === 'perdasAno') return res(mockAReceber(nome, d));
     if (nome === 'conciliacao' || nome === 'conciliar' || nome === 'importarExtrato' || nome === 'importarVendasCartao') return res(mockConc(nome, d));
     if (nome === 'repasseMes') { var RG = window.__mockRegras = window.__mockRegras || [{ linha: 2, ativa: true, profissional: 'Juliana Ribeiro', convenio: 'Particular', procedimento: '', pct: 80, valorRef: 0, obs: '' }, { linha: 3, ativa: true, profissional: 'Giovana Grossi', convenio: 'Qualquer', procedimento: '', pct: 0, valorRef: 0, obs: 'estagiária' }];
       var LR = [{ data: '02/10/2026', paciente: 'Beatriz Almeida Rocha', profissional: 'Juliana Ribeiro', procedimento: 'Sessão de psicologia', convenio: 'Particular', pago: 'Sim', valor: 120, situacao: 'pago', pct: 80, basePago: 120, basePrev: 120, repassePago: 96, repassePrev: 96, oque: 'Atendido' }];
@@ -476,9 +494,9 @@ function corrigirValidar(c, reg) {
   return e;
 }
 
-var TELAS = { hoje: 's-hoje', confirmar: 's-confirmar', ficha: 's-ficha', registrar: 's-registrar', pacientes: 's-pacientes', cobranca: 's-cobranca', meudia: 's-meudia', gestao: 's-gestao', repasse: 's-repasse', conciliacao: 's-conciliacao' };
-var TITULOS = { hoje: 'Agenda', confirmar: 'Confirmações', ficha: 'Ficha do paciente', registrar: 'Registrar atendimento', pacientes: 'Pacientes', cobranca: 'Cobrança do mês', meudia: 'Meu dia', gestao: 'Pendências', repasse: 'Repasse', conciliacao: 'Conciliação' };
-var SO_GESTAO = { gestao: true, repasse: true, conciliacao: true };
+var TELAS = { hoje: 's-hoje', confirmar: 's-confirmar', ficha: 's-ficha', registrar: 's-registrar', pacientes: 's-pacientes', cobranca: 's-cobranca', meudia: 's-meudia', gestao: 's-gestao', repasse: 's-repasse', conciliacao: 's-conciliacao', areceber: 's-areceber' };
+var TITULOS = { hoje: 'Agenda', confirmar: 'Confirmações', ficha: 'Ficha do paciente', registrar: 'Registrar atendimento', pacientes: 'Pacientes', cobranca: 'Cobrança do mês', meudia: 'Meu dia', gestao: 'Pendências', repasse: 'Repasse', conciliacao: 'Conciliação', areceber: 'A receber e perdas' };
+var SO_GESTAO = { gestao: true, repasse: true, conciliacao: true, areceber: true };
 var telaAtual = 'hoje', navGen = 0;
 var INICIAR = {};
 function go(id, extra) {
@@ -526,8 +544,8 @@ function carregar() {
     $("#chip-mail").textContent = (ehGestao() ? 'gestão' : 'recepção') + (MOCK ? ' · simulação' : '');
     $("#chip-user").title = (email || '') + ' · perfil ' + (ehGestao() ? 'gestão' : 'recepção');
     if (ehGestao()) $("#chip-user").classList.add('gestao');
-    // menu por perfil (gestão 14/10): recepção vê Agenda · Registrar · Pacientes · Cobrança do mês · Meu dia; gestão também Pendências · Repasse · Conciliação
-    $$('[data-go=repasse], [data-go=gestao], [data-go=conciliacao]').forEach(function (x) { x.hidden = !ehGestao(); });
+    // menu por perfil (gestão 14/10): recepção vê Agenda · Registrar · Pacientes · Cobrança do mês · Meu dia; gestão também Pendências · Repasse · Conciliação · A receber
+    $$('[data-go=repasse], [data-go=gestao], [data-go=conciliacao], [data-go=areceber]').forEach(function (x) { x.hidden = !ehGestao(); });
     $$('.so-gestao').forEach(function (x) { x.hidden = !ehGestao(); });
     $$('.so-recepcao').forEach(function (x) { x.hidden = ehGestao(); });
     var dl = $("#dl-pagadores"); dl.innerHTML = ''; var vistos = {};

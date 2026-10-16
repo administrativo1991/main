@@ -1400,6 +1400,12 @@ API.lancamentos = function (d) {
   abas.forEach(function (aba) { linhasMes_(aba).linhas.forEach(function (r) { if (q && Duplicatas.normalizar(r.paciente).indexOf(q) < 0) return; r.aba = aba; r.saldo = saldo_(r); out.push(r); }); });
   return { ok: true, linhas: out.slice(-400), total: out.length };
 };
+// particular atendido com Pago? vazio, Não ou Parcial = a receber (Pendências e "A receber" da Fase 2 usam a mesma regra)
+// compra de plano "a receber" (lançada com Pago? = Não) entra; sessões de plano/mensalidade/convênio não (aprovado pela Roberta em 06/10)
+function emAberto_(r) {
+  return /^Atendido/.test(r.oque) && (!r.convenio || /^Particular$/i.test(r.convenio)) && (r.pago === '' || r.pago === 'Não' || r.pago === 'Parcial') &&
+    (!/^Mensalidade|pacote|plano|mensal|convênio|AAPI/i.test(r.procedimento) || /\(compra\)/i.test(r.procedimento));
+}
 API.gestaoResumo = function (d) {
   d = d || {};
   // recepção também vê (gestão, 07/10: a tela virou "Pendências"); exportar e virada do mês continuam só da gestão
@@ -1411,8 +1417,8 @@ API.gestaoResumo = function (d) {
   var out = {
     ok: true, mes: mes, abaExiste: m.existe, total: L.length, atendidos: atend.length,
     recebido: atend.reduce(function (a, r) { return a + (r.pago === 'Sim' ? r.valor : r.pago === 'Parcial' ? r.recebido : 0); }, 0),
-    // compra de plano "a receber" (lançada com Pago? = Não) entra aqui; sessões de plano/mensalidade/convênio não (aprovado pela Roberta em 06/10)
-    pagamentoPendente: atend.filter(function (r) { return particular(r) && (r.pago === '' || r.pago === 'Não' || r.pago === 'Parcial') && (!/^Mensalidade|pacote|plano|mensal|convênio|AAPI/i.test(r.procedimento) || /\(compra\)/i.test(r.procedimento)); }),
+    // regra em emAberto_ (a mesma da tela "A receber")
+    pagamentoPendente: atend.filter(emAberto_),
     nfPendente: atend.filter(function (r) { return (r.pago === 'Sim' || r.pago === 'Parcial') && r.nf !== 'Sim' && r.nf !== 'Não se aplica'; }),
     semGuia: L.filter(function (r) { return (!particular(r) || /^Convênio/i.test(r.pago)) && r.guia !== 'Sim' && /^Atendido/.test(r.oque) && !ehPerdido_(r.pago); }),
     // Faltas → Decidir (gestão, 15/10): TODA falta e desmarcação entra, com o Detalhe da recepção e a decisão da gestão
@@ -2545,6 +2551,64 @@ API.conciliar = function (d) {
     SpreadsheetApp.flush();
     return { ok: true, feitos: feitos, erros: erros };
   } finally { lock.releaseLock(); }
+};
+
+/* ================= A RECEBER E PERDAS (Fase 2, 16/10; só gestão) =================
+   "Em aberto" junta o a receber de TODAS as abas de mês (mesma regra de Pendências: emAberto_) com a idade de cada linha;
+   a gestão marca várias de uma vez como "Perdido / glosa" (pela mesma correção da Fase 1, com motivo e carimbo).
+   "Perdas do ano" soma as linhas perdidas de todas as abas por mês, motivo, convênio e profissional. */
+var MOTIVOS_PERDA = ['glosa do convênio', 'guia não autorizada', 'paciente não pagou', 'paciente desistiu', 'relevado pela gestão'];
+function abasDeMes_() { return CONFIG.MESES.filter(function (m) { return !!planilha_().getSheetByName(m); }); }
+function motivoPerda_(obs) { var m = String(obs || '').match(/PERDIDO \/ glosa:\s*([^|]+)/i); return m ? m[1].trim() : ''; }
+API.aReceber = function () {
+  var neg = soGestao_(); if (neg) return neg;
+  var hoje = ymdDate_(new Date()), idx = {}, linhas = [];
+  indicePacientes_().forEach(function (p) { idx[p.nome] = p; });
+  abasDeMes_().forEach(function (aba) {
+    linhasMes_(aba).linhas.forEach(function (r) {
+      if (!emAberto_(r)) return; var saldo = saldo_(r); if (!(saldo > 0)) return;
+      var d = ymdDate_(r.data), dias = d ? Math.round((hoje - d) / 864e5) : 0, p = idx[r.paciente] || {};
+      linhas.push({ aba: aba, linha: r.linha, id: r.id, data: r.data, paciente: r.paciente, pagador: p.pagador || '', profissional: r.profissional, procedimento: r.procedimento,
+        valor: r.valor, saldo: saldo, pago: r.pago || '(vazio)', dias: dias, faixa: dias <= 30 ? 'ate30' : dias <= 60 ? 'ate60' : 'mais60', obs: r.obs });
+    });
+  });
+  linhas.sort(function (a, b) { return b.dias - a.dias || (a.paciente < b.paciente ? -1 : 1); });
+  var soma = function (f) { return Math.round(linhas.filter(f).reduce(function (a, x) { return a + x.saldo; }, 0) * 100) / 100; };
+  return { ok: true, linhas: linhas, motivos: MOTIVOS_PERDA, total: soma(function () { return true; }),
+    faixas: { ate30: soma(function (x) { return x.faixa === 'ate30'; }), ate60: soma(function (x) { return x.faixa === 'ate60'; }), mais60: soma(function (x) { return x.faixa === 'mais60'; }) } };
+};
+// várias linhas como "Perdido / glosa" de uma vez: [{ aba, id }] + motivo
+API.darComoPerdido = function (d) {
+  var neg = soGestao_(); if (neg) return neg; d = d || {};
+  var motivo = String(d.motivo || '').trim(), itens = (d.itens || []).slice(0, 100);
+  if (!motivo) return { ok: false, erros: ['Escreva o motivo da perda.'] };
+  if (!itens.length) return { ok: false, erros: ['Nada marcado.'] };
+  var feitos = 0, erros = [];
+  itens.forEach(function (it) {
+    var r = API.corrigirLancamento({ aba: it.aba, id: it.id, campos: { pago: PAGO_PERDIDO, motivoPerdido: motivo } });
+    if (r && r.ok) feitos++; else erros.push((it.paciente ? it.paciente + ' ' : '') + (it.data || it.id) + ': ' + ((r && r.erros) || ['erro']).join(' '));
+  });
+  return { ok: true, feitos: feitos, erros: erros };
+};
+API.perdasAno = function () {
+  var neg = soGestao_(); if (neg) return neg;
+  var linhas = [], meses = [], grupo = function (o, k, v) { var g = o[k] = o[k] || { nome: k, n: 0, valor: 0 }; g.n++; g.valor = Math.round((g.valor + v) * 100) / 100; };
+  var porMotivo = {}, porConv = {}, porProf = {};
+  abasDeMes_().forEach(function (aba) {
+    var L = linhasMes_(aba).linhas, atendido = 0, perdido = 0, n = 0;
+    L.forEach(function (r) {
+      if (/^Atendido/.test(r.oque)) atendido += r.valor || 0;
+      if (!ehPerdido_(r.pago)) return;
+      var mot = motivoPerda_(r.obs) || 'sem motivo escrito', conv = r.convenio || 'Particular', v = r.valor || 0;
+      n++; perdido += v; grupo(porMotivo, mot, v); grupo(porConv, conv, v); grupo(porProf, r.profissional || '—', v);
+      linhas.push({ aba: aba, id: r.id, data: r.data, paciente: r.paciente, profissional: r.profissional, procedimento: r.procedimento, convenio: conv, valor: v, motivo: mot });
+    });
+    meses.push({ mes: aba, atendido: Math.round(atendido * 100) / 100, perdido: Math.round(perdido * 100) / 100, n: n });
+  });
+  var lista = function (o) { return Object.keys(o).map(function (k) { return o[k]; }).sort(function (a, b) { return b.valor - a.valor; }); };
+  var tot = meses.reduce(function (a, m) { a.atendido += m.atendido; a.perdido += m.perdido; a.n += m.n; return a; }, { atendido: 0, perdido: 0, n: 0 });
+  return { ok: true, meses: meses, porMotivo: lista(porMotivo), porConvenio: lista(porConv), porProfissional: lista(porProf), linhas: linhas,
+    total: { atendido: Math.round(tot.atendido * 100) / 100, perdido: Math.round(tot.perdido * 100) / 100, n: tot.n } };
 };
 
 API;
