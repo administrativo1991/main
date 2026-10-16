@@ -91,8 +91,8 @@ Aplicação de teste de paciente de convênio pede a **guia assinada**, como qua
 
 ## Pendências (16/10)
 
-A recepção usa Pendências como a gestão: corrige lançamentos (inclusive convênio e modalidade da linha), faz a virada do
-mês, cria a aba e as colunas, exporta o mês e publica o lembrete. **Só a gestão** decide faltas (Faltas → Decidir) e marca
+A recepção usa Pendências pra ver o que falta e corrigir lançamentos (inclusive convênio e modalidade da linha). **Só a
+gestão** exporta o mês, faz a virada (criar aba e colunas), publica o lembrete, decide faltas (Faltas → Decidir) e marca
 "Perdido / glosa". Tudo o que a recepção grava aparece pra gestão em "O que a recepção fez".
 
 ## 4. Pacientes
@@ -131,7 +131,7 @@ do mês para quem paga no fim do mês), com valor, Pix e favorecido. Confira e e
   como removida.
 - **Remarcar**: **⋯** → **Remarcar** → nova data e hora.
 - **Paciente não aparece no Registrar**: só quem está em Pacientes aparece. Cadastre primeiro.
-- **"A aba do mês não existe"**: crie em Pendências → Virada do mês.
+- **"A aba do mês não existe"**: peça à gestão pra criar (Pendências → Virada do mês).
 - **O app demorou**: depois de 20 s aparece "Demorou mais que o normal". Espere ou clique em tentar de novo.
 - **Erro vermelho**: copie a mensagem (ou tire print) e mande pra gestão. O que você digitou fica guardado.
 

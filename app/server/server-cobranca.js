@@ -450,7 +450,7 @@ API.editarSessoesCompetencia = function (d) {
 };
 // Mensalistas: cria a coluna Profissional e as 6 colunas da competência (gestão)
 API.criarColunasMes = function (d) {
-  d = d || {};
+  d = d || {}; if (usuario_().perfil !== 'gestao') return { ok: false, erros: ['Só a gestão cria colunas de mês.'] };
   var chave = String(d.chave || '').trim(); if (!chave && d.mes) { var i = CONFIG.MESES.indexOf(String(d.mes)); if (i >= 0) { var hj = new Date(); chave = CONFIG.MESES[i] + '/' + (hj.getFullYear() + (i < hj.getMonth() ? 1 : 0)); } }
   if (!mesDaChave_(chave)) return { ok: false, erros: ['Competência inválida.'] };
   var lock = LockService.getScriptLock(); lock.waitLock(20000);

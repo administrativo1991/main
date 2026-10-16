@@ -6,13 +6,13 @@ Complemento do `README-RECEPCAO.md` (a gestão usa tudo o que a recepção usa, 
 
 A recepção faz tudo o que a gestão faz em Agenda, Confirmações, Registrar, Pacientes, Cobrança do mês, Meu dia e
 Pendências (corrigir lançamentos, convênio/modalidade da linha, CPF e nascimento, cobrança por profissional, editar
-sessões, virada do mês, criar aba e colunas, exportar, lembrete). Ficam **só com a gestão**: **Faltas → Decidir**,
+sessões). Ficam **só com a gestão**: exportar o mês, virada do mês (criar aba e colunas), lembrete, **Faltas → Decidir**,
 marcar ou desmarcar **Perdido / glosa** (e o relatório de perdidos), a **IA** (card de uso e "Guias a conferir") e os
 menus **Repasse**, **Conciliação** e **A receber**.
 
 A gestão acompanha sem lançar em **Pendências → "O que a recepção fez · últimos 7 dias"** (primeiro card, só a gestão vê):
 junta `Alterações de cadastro`, `Alterações de lançamento` e `Lembretes` gravados por e-mail que não é da gestão, com
-quando, quem, o quê, de → para e quem informou/decidiu. Criar aba do mês, criar colunas e exportar também entram em
+quando, quem, o quê, de → para e quem informou/decidiu. Criar aba do mês, criar colunas e exportar ficam registrados em
 `Alterações de lançamento`.
 
 ## Quem é gestão

@@ -64,7 +64,7 @@ function carregarDia(forcarSemana) {
     var r = rr[0];
     if (r.data !== diaEscolhido()) return; // mudou de dia enquanto carregava
     DIA = r; $("#d-carregando").hidden = true;
-    $("#d-aviso-aba").hidden = r.abaMesExiste; if (!r.abaMesExiste) $("#d-aviso-aba").textContent = 'A aba "' + r.abaMes + '" ainda não existe na planilha. Crie em Pendências → Virada do mês.';
+    $("#d-aviso-aba").hidden = r.abaMesExiste; if (!r.abaMesExiste) $("#d-aviso-aba").textContent = 'A aba "' + r.abaMes + '" ainda não existe na planilha. Peça à gestão para criar em Pendências → Virada do mês.';
     preencherProfs();
     renderDia(); lerFimDia();
     resumoGestaoDia();

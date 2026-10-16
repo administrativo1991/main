@@ -2,8 +2,8 @@
 var GES = null, gesAberto = null, gesHora = null, gesCorr = null, LANC = null;
 INICIAR.gestao = function () {
   if (!BOOT) { setTimeout(INICIAR.gestao, 300); return; }
-  // 16/10: a recepção faz tudo o que a gestão faz aqui (exportar, virada, lembrete, linhas e cadastro); decidir faltas, perdido/glosa e a IA ficam com a gestão
-  $("#g-ia-card").hidden = !ehGestao();
+  // 16/10: a recepção corrige linhas e cadastro como a gestão; exportar, virada, lembrete, decidir faltas, perdido/glosa e a IA ficam com a gestão
+  ['g-virada-card', 'g-lemb', 'g-ia-card'].forEach(function (id) { $("#" + id).hidden = !ehGestao(); });
   if (ehGestao()) carregarIA();
   if (!$("#g-mes").options.length) { MESES_PT.forEach(function (m) { var o = document.createElement('option'); o.value = m; o.textContent = m; $("#g-mes").appendChild(o); }); $("#g-mes").value = MESES_PT[new Date().getMonth()]; }
   $("#g-nav").hidden = false; $("#g-atualizar").hidden = false; $("#g-print").hidden = false; $("#g-planilha").textContent = BOOT.planilha || 'Controle da Recepção 2026';
@@ -56,7 +56,7 @@ function renderGestao() {
   var faltas = (r.faltas || []).length, faltasSemDecisao = (r.faltas || []).filter(function (x) { return !x.decisao; }), aReceber = (r.pagamentoPendente || []).reduce(function (a, x) { return a + saldoReg(x); }, 0);
   $("#g-atualizado").textContent = 'atualizado às ' + ('0' + gesHora.getHours()).slice(-2) + ':' + ('0' + gesHora.getMinutes()).slice(-2);
   $("#g-kpis").hidden = false; $("#g-kpis").innerHTML = '<div class="kpi"><b>' + r.total + '</b><span>atendimentos no mês</span></div><div class="kpi"><b>' + r.atendidos + '</b><span>atendidos' + (faltas ? ' · ' + faltas + ' falta' + (faltas === 1 ? '' : 's') : '') + '</span></div><div class="kpi roxo"><b>' + esc(brlCurto(r.recebido)) + '</b><span>recebido</span></div><div class="kpi amarela cheio"><b>' + esc(brlCurto(aReceber)) + '</b><span>a receber (particular)</span></div><div class="kpi"><b>' + (r.semGuia || []).length + '</b><span>convênio sem guia</span></div>';
-  $("#g-export").hidden = false; $("#g-export-txt").textContent = 'Exportar ' + r.mes + ' (.xlsx)'; $("#g-export").disabled = !r.abaExiste;
+  $("#g-export").hidden = !ehGestao(); $("#g-export-txt").textContent = 'Exportar ' + r.mes + ' (.xlsx)'; $("#g-export").disabled = !r.abaExiste;
   $("#g-corpo").hidden = false;
   var V = function (l) { return l.valor ? 'R$ ' + brl(l.valor) : ''; }, D = function (l) { return l.data + (l.hora ? ' ' + l.hora : ''); };
   var nomes = function (l, n) { var x = (l || []).slice(0, n || 3).map(function (i) { return primeiroNome(i.paciente) + ' ' + String(i.data || '').slice(0, 5); }); return x.join(' · ') + ((l || []).length > (n || 3) ? ' · +' + ((l || []).length - (n || 3)) : ''); };
@@ -69,7 +69,7 @@ function renderGestao() {
     { k: 'pagador', cor: 'lilas', n: (r.pagadorDiferente || []).length, t: 'Pagou outra pessoa — conferir o nome na NF', s: (r.pagadorDiferente || []).length ? nomes(r.pagadorDiferente) + ' — se for sempre essa pessoa, promover a pagador habitual em Pacientes' : 'Ninguém pagou por outra pessoa.', acao: 'Revisar', tabela: function () { return tabelaG('Pagou outra pessoa (conferir nome na NF)', [['Data', D], ['Paciente', 'paciente'], ['Quem pagou', 'quem'], ['Valor', V], ['NF?', 'nf']], r.pagadorDiferente, 'Nenhum.', 'obs'); } }
   ];
   // O que a recepção fez (gestão, 16/10): a gestão acompanha sem lançar; últimos 7 dias, o que foi gravado por e-mail da recepção
-  if (ehGestao()) { var fr = r.feitoRecepcao || []; PEND.unshift({ k: 'feitorecepcao', cor: 'lilas', n: fr.length, t: 'O que a recepção fez · últimos 7 dias', s: fr.length ? contarPor(fr, 'tipo') + ' — cadastro, cobrança, correções de lançamento, virada e lembrete' : 'Nada alterado pela recepção nos últimos 7 dias.', acao: 'Ver lista',
+  if (ehGestao()) { var fr = r.feitoRecepcao || []; PEND.unshift({ k: 'feitorecepcao', cor: 'lilas', n: fr.length, t: 'O que a recepção fez · últimos 7 dias', s: fr.length ? contarPor(fr, 'tipo') + ' — cadastro, cobrança por profissional e correções de lançamento' : 'Nada alterado pela recepção nos últimos 7 dias.', acao: 'Ver lista',
     tabela: function () { return tabelaG('O que a recepção fez · últimos 7 dias', [['Quando', 'quando'], ['Por', function (x) { return String(x.por || '').split('@')[0]; }], ['Tipo', 'tipo'], ['Paciente', function (x) { return x.paciente || '—'; }], ['O quê', 'campo'], ['De', 'de'], ['Para', 'para'], ['Quem informou / decidiu', function (x) { return x.quem || '—'; }]], fr, 'Nada alterado pela recepção nos últimos 7 dias.'); } }); }
   // Avaliações em andamento (gestão, 15/10): aplicações de teste sem número fixo; quantas cada paciente já fez
   var av = r.avaliacoes || []; PEND.push({ k: 'avaliacoes', cor: 'lilas', n: av.length, t: 'Avaliações em andamento', s: av.length ? av.slice(0, 3).map(function (x) { return primeiroNome(x.paciente) + ' ' + x.n; }).join(' · ') + (av.length > 3 ? ' · +' + (av.length - 3) : '') + ' aplicações — sem número fixo; parou de vir? confira com a profissional' : 'Nenhuma aplicação de teste nos últimos 60 dias.', acao: 'Ver lista',

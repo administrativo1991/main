@@ -1744,7 +1744,7 @@ $("#chip-nome").textContent = quemSou(); $("#chip-av").textContent = quemSou().c
 $("#chip-mail").textContent = (ehGestao() ? 'gestão' : 'recepção') + (MOCK ? ' · simulação' : '');
 $("#chip-user").title = (email || '') + ' · perfil ' + (ehGestao() ? 'gestão' : 'recepção');
 if (ehGestao()) $("#chip-user").classList.add('gestao');
-// menu por perfil (gestão 16/10): Agenda · Confirmações · Registrar · Pacientes · Cobrança do mês · Meu dia · Pendências iguais pras duas (a recepção faz tudo o que a gestão faz ali, menos decidir faltas, perdido/glosa e a IA); Repasse · Conciliação · A receber só a gestão
+// menu por perfil (gestão 16/10): Agenda · Confirmações · Registrar · Pacientes · Cobrança do mês · Meu dia · Pendências iguais pras duas (a recepção faz o que a gestão faz ali, menos exportar, virada do mês, lembrete, decidir faltas, perdido/glosa e a IA); Repasse · Conciliação · A receber só a gestão
 $$('[data-go=repasse], [data-go=conciliacao], [data-go=areceber]').forEach(function (x) { x.hidden = !ehGestao(); });
 $$('.so-gestao').forEach(function (x) { x.hidden = !ehGestao(); });
 $$('.so-recepcao').forEach(function (x) { x.hidden = ehGestao(); });
@@ -1832,7 +1832,7 @@ return Promise.all([call('listaDoDia', { data: data }), emSemana() ? carregarSem
 var r = rr[0];
 if (r.data !== diaEscolhido()) return; // mudou de dia enquanto carregava
 DIA = r; $("#d-carregando").hidden = true;
-$("#d-aviso-aba").hidden = r.abaMesExiste; if (!r.abaMesExiste) $("#d-aviso-aba").textContent = 'A aba "' + r.abaMes + '" ainda não existe na planilha. Crie em Pendências → Virada do mês.';
+$("#d-aviso-aba").hidden = r.abaMesExiste; if (!r.abaMesExiste) $("#d-aviso-aba").textContent = 'A aba "' + r.abaMes + '" ainda não existe na planilha. Peça à gestão para criar em Pendências → Virada do mês.';
 preencherProfs();
 renderDia(); lerFimDia();
 resumoGestaoDia();
@@ -3323,7 +3323,7 @@ b.addEventListener('click', function () { cmFiltro = cmFiltro === x[0] ? 'todos'
 });
 // aviso: colunas da competência ainda não existem na aba Mensalistas (a gestão cria; o app cria sozinho no 1º pagamento)
 var av = '';
-if (!r.colunasExistem) av += '<div class="faixa amarela"><div class="corpo"><div class="t">Colunas de ' + esc(r.chave) + ' ainda não existem na aba Mensalistas</div><div>O app cria sozinho no primeiro pagamento registrado' + ', ou crie agora.' + '</div></div>' + '<div class="acoes"><button type="button" class="btn ter" id="cm-criar" data-chave="' + esc(r.chave) + '">Criar colunas de ' + esc(r.chave) + '</button></div>' + '</div>';
+if (!r.colunasExistem) av += '<div class="faixa amarela"><div class="corpo"><div class="t">Colunas de ' + esc(r.chave) + ' ainda não existem na aba Mensalistas</div><div>O app cria sozinho no primeiro pagamento registrado' + (ehGestao() ? ', ou crie agora.' : '. A gestão também pode criar em Pendências → Virada do mês.') + '</div></div>' + (ehGestao() ? '<div class="acoes"><button type="button" class="btn ter" id="cm-criar" data-chave="' + esc(r.chave) + '">Criar colunas de ' + esc(r.chave) + '</button></div>' : '') + '</div>';
 $("#cm-aviso").innerHTML = av;
 var bc = $("#cm-criar"); if (bc) bc.addEventListener('click', function () { var b = this; b.disabled = true; call('criarColunasMes', { chave: b.dataset.chave }).then(function (r2) { if (!r2.ok) { b.disabled = false; return toast((r2.erros || ['Não criou']).join(' ')); } toast('Colunas de ' + r2.chave + ' criadas'); carregarCobrancaMes(); }).catch(function (e) { b.disabled = false; toast('Erro: ' + e.message); }); });
 var lista = itens.filter(function (it) { return (cmFiltro === 'todos' || cmFiltro === grupoCM(it)) && (!q || semAcento(it.paciente).indexOf(q) >= 0 || semAcento(it.pagador || '').indexOf(q) >= 0 || semAcento(it.profissional).indexOf(q) >= 0); });
@@ -3473,8 +3473,8 @@ box.scrollIntoView({ behavior: 'smooth', block: 'center' });
 var GES = null, gesAberto = null, gesHora = null, gesCorr = null, LANC = null;
 INICIAR.gestao = function () {
 if (!BOOT) { setTimeout(INICIAR.gestao, 300); return; }
-// 16/10: a recepção faz tudo o que a gestão faz aqui (exportar, virada, lembrete, linhas e cadastro); decidir faltas, perdido/glosa e a IA ficam com a gestão
-$("#g-ia-card").hidden = !ehGestao();
+// 16/10: a recepção corrige linhas e cadastro como a gestão; exportar, virada, lembrete, decidir faltas, perdido/glosa e a IA ficam com a gestão
+['g-virada-card', 'g-lemb', 'g-ia-card'].forEach(function (id) { $("#" + id).hidden = !ehGestao(); });
 if (ehGestao()) carregarIA();
 if (!$("#g-mes").options.length) { MESES_PT.forEach(function (m) { var o = document.createElement('option'); o.value = m; o.textContent = m; $("#g-mes").appendChild(o); }); $("#g-mes").value = MESES_PT[new Date().getMonth()]; }
 $("#g-nav").hidden = false; $("#g-atualizar").hidden = false; $("#g-print").hidden = false; $("#g-planilha").textContent = BOOT.planilha || 'Controle da Recepção 2026';
@@ -3527,7 +3527,7 @@ var r = GES, soma = function (l) { return (l || []).reduce(function (a, x) { ret
 var faltas = (r.faltas || []).length, faltasSemDecisao = (r.faltas || []).filter(function (x) { return !x.decisao; }), aReceber = (r.pagamentoPendente || []).reduce(function (a, x) { return a + saldoReg(x); }, 0);
 $("#g-atualizado").textContent = 'atualizado às ' + ('0' + gesHora.getHours()).slice(-2) + ':' + ('0' + gesHora.getMinutes()).slice(-2);
 $("#g-kpis").hidden = false; $("#g-kpis").innerHTML = '<div class="kpi"><b>' + r.total + '</b><span>atendimentos no mês</span></div><div class="kpi"><b>' + r.atendidos + '</b><span>atendidos' + (faltas ? ' · ' + faltas + ' falta' + (faltas === 1 ? '' : 's') : '') + '</span></div><div class="kpi roxo"><b>' + esc(brlCurto(r.recebido)) + '</b><span>recebido</span></div><div class="kpi amarela cheio"><b>' + esc(brlCurto(aReceber)) + '</b><span>a receber (particular)</span></div><div class="kpi"><b>' + (r.semGuia || []).length + '</b><span>convênio sem guia</span></div>';
-$("#g-export").hidden = false; $("#g-export-txt").textContent = 'Exportar ' + r.mes + ' (.xlsx)'; $("#g-export").disabled = !r.abaExiste;
+$("#g-export").hidden = !ehGestao(); $("#g-export-txt").textContent = 'Exportar ' + r.mes + ' (.xlsx)'; $("#g-export").disabled = !r.abaExiste;
 $("#g-corpo").hidden = false;
 var V = function (l) { return l.valor ? 'R$ ' + brl(l.valor) : ''; }, D = function (l) { return l.data + (l.hora ? ' ' + l.hora : ''); };
 var nomes = function (l, n) { var x = (l || []).slice(0, n || 3).map(function (i) { return primeiroNome(i.paciente) + ' ' + String(i.data || '').slice(0, 5); }); return x.join(' · ') + ((l || []).length > (n || 3) ? ' · +' + ((l || []).length - (n || 3)) : ''); };
@@ -3540,7 +3540,7 @@ var PEND = [
 { k: 'pagador', cor: 'lilas', n: (r.pagadorDiferente || []).length, t: 'Pagou outra pessoa — conferir o nome na NF', s: (r.pagadorDiferente || []).length ? nomes(r.pagadorDiferente) + ' — se for sempre essa pessoa, promover a pagador habitual em Pacientes' : 'Ninguém pagou por outra pessoa.', acao: 'Revisar', tabela: function () { return tabelaG('Pagou outra pessoa (conferir nome na NF)', [['Data', D], ['Paciente', 'paciente'], ['Quem pagou', 'quem'], ['Valor', V], ['NF?', 'nf']], r.pagadorDiferente, 'Nenhum.', 'obs'); } }
 ];
 // O que a recepção fez (gestão, 16/10): a gestão acompanha sem lançar; últimos 7 dias, o que foi gravado por e-mail da recepção
-if (ehGestao()) { var fr = r.feitoRecepcao || []; PEND.unshift({ k: 'feitorecepcao', cor: 'lilas', n: fr.length, t: 'O que a recepção fez · últimos 7 dias', s: fr.length ? contarPor(fr, 'tipo') + ' — cadastro, cobrança, correções de lançamento, virada e lembrete' : 'Nada alterado pela recepção nos últimos 7 dias.', acao: 'Ver lista',
+if (ehGestao()) { var fr = r.feitoRecepcao || []; PEND.unshift({ k: 'feitorecepcao', cor: 'lilas', n: fr.length, t: 'O que a recepção fez · últimos 7 dias', s: fr.length ? contarPor(fr, 'tipo') + ' — cadastro, cobrança por profissional e correções de lançamento' : 'Nada alterado pela recepção nos últimos 7 dias.', acao: 'Ver lista',
 tabela: function () { return tabelaG('O que a recepção fez · últimos 7 dias', [['Quando', 'quando'], ['Por', function (x) { return String(x.por || '').split('@')[0]; }], ['Tipo', 'tipo'], ['Paciente', function (x) { return x.paciente || '—'; }], ['O quê', 'campo'], ['De', 'de'], ['Para', 'para'], ['Quem informou / decidiu', function (x) { return x.quem || '—'; }]], fr, 'Nada alterado pela recepção nos últimos 7 dias.'); } }); }
 // Avaliações em andamento (gestão, 15/10): aplicações de teste sem número fixo; quantas cada paciente já fez
 var av = r.avaliacoes || []; PEND.push({ k: 'avaliacoes', cor: 'lilas', n: av.length, t: 'Avaliações em andamento', s: av.length ? av.slice(0, 3).map(function (x) { return primeiroNome(x.paciente) + ' ' + x.n; }).join(' · ') + (av.length > 3 ? ' · +' + (av.length - 3) : '') + ' aplicações — sem número fixo; parou de vir? confira com a profissional' : 'Nenhuma aplicação de teste nos últimos 60 dias.', acao: 'Ver lista',

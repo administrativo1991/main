@@ -395,12 +395,12 @@ function bloqueioPlanilha_(abas) {
 }
 function letraCol_(c) { var t = ''; while (c > 0) { var m = (c - 1) % 26; t = String.fromCharCode(65 + m) + t; c = Math.floor((c - 1) / 26); } return t; }
 var CAMPO_VIRADA = 'Virada para o app';
-// ações da aba inteira (criar aba, colunas, exportar) entram em "Alterações de lançamento" pra gestão ver quem fez
+// ações da aba inteira (criar aba, colunas, exportar) entram em "Alterações de lançamento" (registro de quem fez)
 function logAcao_(aba, campo, para) {
   try { var sa = abaComCabecalho_(CONFIG.ABA.ALT_LANC, CONFIG.HL_LANC), ha = cabecalhos_(sa); gravarCelulas_(sa, proximaLinha_(sa, ha['ID']), ha, { 'Data/hora': agora_(), 'Aba': aba, 'ID': '(aba inteira)', 'Paciente': '', 'Campo': campo, 'De': '', 'Para': para || '', 'Quem informou': '', 'Registrado por (app)': (usuario_().email || 'app') + ' · ' + agora_() }); } catch (e) { }
 }
-// "O que a recepção fez" (gestão, 16/10): a gestão acompanha sem lançar. Junta "Alterações de cadastro", "Alterações de
-// lançamento" e "Lembretes" dos últimos `dias` dias, só o que foi gravado por e-mail fora da gestão (o último e-mail do log)
+// "O que a recepção fez" (gestão, 16/10): a gestão acompanha sem lançar. Junta "Alterações de cadastro" e "Alterações de
+// lançamento" dos últimos `dias` dias, só o que foi gravado por e-mail fora da gestão (o último e-mail do log)
 function feitoRecepcao_(dias) {
   var gest = CONFIG.GESTAO.concat(emailsGestao_()), limite = new Date(), out = [], ss = planilha_(), seq = 0;
   limite.setHours(0, 0, 0, 0); limite.setDate(limite.getDate() - (dias - 1));
@@ -414,7 +414,6 @@ function feitoRecepcao_(dias) {
   };
   junta(CONFIG.ABA.ALTERACOES, 'Cadastro', function (r) { return { paciente: r['Paciente'] || '', campo: r['Campo'] || '', de: r['De'], para: r['Para'], quem: r['Quem informou'] || '' }; });
   junta(CONFIG.ABA.ALT_LANC, 'Lançamento', function (r) { return { paciente: r['Paciente'] || '', campo: (r['Aba'] ? r['Aba'] + ' · ' : '') + (r['Campo'] || ''), de: r['De'], para: r['Para'], quem: r['Quem informou'] || '' }; });
-  junta(CONFIG.ABA.LEMBRETES, 'Lembrete', function (r) { return { paciente: '', campo: 'Lembrete da tela Hoje', de: '', para: r['Lembrete'] || '(encerrou o lembrete)', quem: '' }; });
   out.sort(function (a, b) { return b._t - a._t || b._s - a._s; });
   return out.slice(0, 300).map(function (o) { delete o._t; delete o._s; return o; });
 }
@@ -433,7 +432,7 @@ function estadoVirada_(mes) {
 // para sem gravar. Depois confere com getFormula que a linha 2 ficou sem fórmula e registra em "Alterações de lançamento".
 API.virarAbaMes = function (d) {
   d = d || {};
-  var u = usuario_();
+  var u = usuario_(); if (u.perfil !== 'gestao') return { ok: false, erros: ['Só a gestão vira a aba para o app.'] };
   var mes = String(d.mes || '').trim(); if (CONFIG.MESES.indexOf(mes) < 0) return { ok: false, erros: ['Mês inválido.'] };
   var s = planilha_().getSheetByName(mes); if (!s) return { ok: false, erros: ['A aba "' + mes + '" não existe.'] };
   var lock = LockService.getScriptLock(); lock.waitLock(20000);
@@ -641,6 +640,7 @@ function lembreteAtivo_() {
 // Gestão escreve (ou encerra) o lembrete: sempre uma linha nova; encerrar = linha com texto em branco
 API.salvarLembrete = function (d) {
   var u = usuario_();
+  if (u.perfil !== 'gestao') return { ok: false, erros: ['Só a gestão escreve o lembrete.'] };
   var texto = String(d.texto || '').trim(), ate = String(d.validoAte || '').trim(), encerrar = !!d.encerrar;
   if (!texto && !encerrar) return { ok: false, erros: ['Escreva o lembrete.'] };
   if (ate && !parseData_(ate)) return { ok: false, erros: ['"Válido até" inválido: use dd/mm/aaaa.'] };
@@ -1197,6 +1197,7 @@ function subpasta_(pai, nome, criadas) { var it = pai.getFoldersByName(nome); if
 // Exporta a aba do mês (só valores) para a planilha "MMM AA - Recepção atendimentos (app)" na pasta de atendimentos do mês;
 // se já existir, sobrescreve (é uma cópia, a fonte continua sendo a aba). Devolve o link direto pro .xlsx.
 API.exportarMes = function (d) {
+  if (usuario_().perfil !== 'gestao') return { ok: false, erros: ['Só a gestão exporta.'] };
   d = d || {};
   var mes = String(d.mes || nomeAbaMes_(new Date())).trim(), sm = planilha_().getSheetByName(mes), mesIdx = CONFIG.MESES.indexOf(mes);
   if (!sm || mesIdx < 0) return { ok: false, erros: ['A aba "' + mes + '" não existe.'] };
@@ -1226,6 +1227,7 @@ API.exportarMes = function (d) {
 // Gestão: cria a aba de um mês copiando a estrutura da aba-modelo: só cabeçalho, validações e formatação.
 // Nasce SEM fórmula em F/G/H/N (10/10): o app grava o cadastro em cada linha na hora de salvar.
 API.criarAbaMes = function (d) {
+  if (usuario_().perfil !== 'gestao') return { ok: false, erros: ['Só a gestão cria a aba do mês.'] };
   d = d || {};
   var nome = String(d.nome || '').trim(); if (CONFIG.MESES.indexOf(nome) < 0) return { ok: false, erros: ['Nome do mês inválido.'] };
   var ss = planilha_(); if (ss.getSheetByName(nome)) return { ok: false, erros: ['A aba "' + nome + '" já existe.'] };
