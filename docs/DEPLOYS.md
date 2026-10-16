@@ -24,7 +24,7 @@ coluna E não afeta o app. Atualizar `E2` faz parte de toda publicação (passo 
 | Canal | Deploy | Peças | Commit |
 |---|---|---|---|
 | Real (`arquivos_real`) | **2026-10-15-16** (Lançar o dia em lote) | 49 (duplicatas 3 · server 15 · index 31); ativas = 731–779; `antigo32:` = as do 2026-10-15-14 (683–730) | branch `claude/sweet-wozniak-aviy8u`, commit 9fe7855 |
-| Teste (`arquivos`) | **2026-10-15-15** (Lançar o dia em lote) | 49 (duplicatas 3 · server 15 · index 31), linhas 373–421; `antigo35:` = as do 13 (325–372) | branch `claude/sweet-wozniak-aviy8u`, commit 9fe7855 |
+| Teste (`arquivos`) | **2026-10-16-01** (Ficha do paciente) | 50 (duplicatas 3 · server 15 · index 32), linhas 422–471; `antigo36:` = as do 15 (373–421) | branch `claude/sweet-wozniak-aviy8u`, commit 78d631a |
 | Carregador real | 2026-10-06-02 (`dist/Code.real.gs`, implantado pela Roberta) | — | 4ad0272 |
 | Carregador teste | 2026-10-04-01 + nova versão pendente desde 05/10 (permissão do Drive, ver `COMO-INSTALAR.md`) | — | — |
 
@@ -48,6 +48,15 @@ Modelo:
 ```
 
 ## Lista
+
+### 2026-10-16-01 · Teste · Ficha do paciente
+- **O que mudou**: tela **Ficha do paciente** (ver `NOTAS-fase2.md`, item 4), aberta por Pacientes → Ficha, Agenda → Ver
+  ficha, Registrar → Ficha e o nome na Cobrança do mês.
+- **Peças**: 50 em `arquivos!A422:C471` com `novo:`; 22 iguais ao 15 copiadas por "colar valores", 28 gravadas (4 agentes).
+  Lidas de volta (direto em arquivo): **50/50 iguais a `dist/pedacos.json`**; index e duplicatas + server remontados iguais.
+  Ativação numa gravação só (A373:A471): 373–421 → `antigo36:`; ativas = só 422–471. E2 carimbado.
+- **Dados**: nenhum. **Voltar**: `antigo36:` → nome (373–421) e 422–471 → `antigo37:`.
+- **Commit**: 78d631a · **Aprovação**: só teste.
 
 ### 2026-10-15-16 · Real · Lançar o dia em lote
 - **O que mudou**: o mesmo código do teste 2026-10-15-15 (seção **Lançar o dia** no Meu dia).

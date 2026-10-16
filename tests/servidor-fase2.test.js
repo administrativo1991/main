@@ -90,4 +90,11 @@ console.log('salvar WhatsApp ok');
 const m2 = (0, eval)('Mensagens').confirmacao('', 'Rita Lima', [{ paciente: 'Theo Lima', profissional: 'Juliana Ribeiro', profMsg: 'Dra. Juliana Ribeiro', data: '20/10/2026', hora: '9:30' }, { paciente: 'Theo Lima', profissional: 'Dr. Victor Cunha', data: '21/10/2026', hora: '' }]);
 assert.ok(m2.startsWith('Olá, Rita! Passando para lembrar das suas consultas na Clínica Nascente:\n\n👤 *Theo* com Dra. Juliana Ribeiro\n🗓️ *Data:* 20/10/2026\n⏰ *Horário:* 09h30\n\n👤 *Theo* com Dr. Victor Cunha\n🗓️ *Data:* 21/10/2026\n📍'), m2);
 console.log('mensagem com dois profissionais ok');
+// só celular serve pro WhatsApp; fixo volta à parte (gestão, 16/10)
+const Mg = (0, eval)('Mensagens');
+assert.strictEqual(Mg.foneDoPaciente({ telPac: '(32) 3215-1234' }).fone, '', 'fixo não vira WhatsApp');
+assert.strictEqual(Mg.foneDoPaciente({ telPac: '(32) 3215-1234' }).fixoFmt, '(32) 3215-1234');
+assert.strictEqual(Mg.foneDoPaciente({ whats: '(32) 3215-1234', respTel: '32988887777' }).fone, '5532988887777', 'pula o fixo e usa o celular do responsável');
+assert.strictEqual(Mg.ehCelular('(32) 9 8888-7777'), true); assert.strictEqual(Mg.ehCelular('(32) 3215-1234'), false);
+console.log('só celular no WhatsApp ok');
 console.log('servidor-fase2: tudo ok');
