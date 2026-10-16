@@ -16,7 +16,7 @@ Arquivo de retomada da Fase 2 (começou em 15/10/2026, à noite). Quem abrir um 
 | 2 | **Lançar o dia em lote** (Meu dia) | **real** (16) |
 | 3 | Carga de telefones do ControleOdonto | 19 gravados na real (16/10, a 1ª página); faltam as outras páginas |
 | 4 | **Ficha do paciente** | **real** (16-03) |
-| 5 | **Conciliação** (gestão escolheu começar por ela); depois Perdas e Parcelas | Conciliação no teste (ver deploy em DEPLOYS) |
+| 5 | **Conciliação** (gestão escolheu começar por ela); depois Perdas e Parcelas | Conciliação **no teste** (16-04) |
 | 6 | Alertas (avisos dentro da Ficha e da Agenda, não tela própria) | a fazer |
 
 Fora da lista por enquanto: check-in e alta (não escolhidos em 15/10).

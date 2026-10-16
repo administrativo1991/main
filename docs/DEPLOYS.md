@@ -24,7 +24,7 @@ coluna E não afeta o app. Atualizar `E2` faz parte de toda publicação (passo 
 | Canal | Deploy | Peças | Commit |
 |---|---|---|---|
 | Real (`arquivos_real`) | **2026-10-16-03** (Ficha do paciente + WhatsApp só em celular) | 50 (duplicatas 3 · server 15 · index 32); ativas = 780–829; `antigo33:` = as do 2026-10-15-16 (731–779) | branch `claude/sweet-wozniak-aviy8u`, commit f3ba88c |
-| Teste (`arquivos`) | **2026-10-16-02** (Ficha + WhatsApp só em celular) | 50 (duplicatas 3 · server 15 · index 32), linhas 472–521; `antigo37:` = as do 16-01 (422–471) | branch `claude/sweet-wozniak-aviy8u`, commit f3ba88c |
+| Teste (`arquivos`) | **2026-10-16-04** (Conciliação PagBank) | 54 (duplicatas 3 · server 17 · index 34), linhas 522–575; `antigo38:` = as do 16-02 (472–521) | branch `claude/sweet-wozniak-aviy8u`, commit 64a8e16 |
 | Carregador real | 2026-10-06-02 (`dist/Code.real.gs`, implantado pela Roberta) | — | 4ad0272 |
 | Carregador teste | 2026-10-04-01 + nova versão pendente desde 05/10 (permissão do Drive, ver `COMO-INSTALAR.md`) | — | — |
 
@@ -48,6 +48,19 @@ Modelo:
 ```
 
 ## Lista
+
+### 2026-10-16-04 · Teste · Conciliação (PagBank)
+- **O que mudou**: menu **Conciliação** (só gestão; ver `NOTAS-fase2.md`, item 5 e `README-GESTAO.md`): importa o extrato
+  OFX e o CSV de vendas no cartão do PagBank, sugere as ligações com os lançamentos em Pix/cartão, e a gestão confirma ou
+  classifica (convênio, aluguel de sala, mês anterior…). Abas novas criadas pelo app na primeira importação: `Extrato
+  bancário` e `Vendas no cartão`; coluna nova `Conciliado` no fim da aba do mês, na primeira confirmação.
+- **Peças**: 54 em `arquivos!A522:C575` com `novo:`; 6 iguais ao 16-02 copiadas por "colar valores", 48 gravadas (6
+  agentes; 8 tiveram de ser regravadas porque dois agentes pararam no meio). Lidas de volta: **54/54 iguais a
+  `dist/pedacos.json`**; index igual a `dist/index.publicado.html`, duplicatas + server iguais a `dist/server.js`.
+  Ativação numa gravação só (A472:A575): 472–521 → `antigo38:`; ativas = só 522–575 (coluna A inteira conferida). E2 carimbado.
+- **Dados**: nenhum (as abas novas só nascem quando a gestão importar). **Voltar**: `antigo38:` → nome (472–521) e
+  522–575 → `antigo39:`.
+- **Commit**: 64a8e16 · **Aprovação**: só teste.
 
 ### 2026-10-16-03 · Real · Ficha do paciente + WhatsApp só em celular (+ dados)
 - **O que mudou**: o mesmo código do teste 2026-10-16-02 (Ficha do paciente; botão de WhatsApp só com celular).
