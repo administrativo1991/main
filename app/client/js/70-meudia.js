@@ -13,6 +13,7 @@ function carregarMeuDia() {
   var pDia = (typeof DIA !== 'undefined' && DIA && DIA.data === mdData) ? Promise.resolve(DIA) : call('listaDoDia', { data: mdData });
   var mes = MESES_PT[dt.getMonth()];
   var pMes = (typeof resumoMes !== 'undefined' && resumoMes[mes]) ? Promise.resolve(resumoMes[mes]) : call('gestaoResumo', { mes: mes }).then(function (r) { if (r && r.ok && typeof resumoMes !== 'undefined') resumoMes[mes] = r; return r; }).catch(function () { return null; });
+  carregarGuias(function () { if (aindaNa('meudia', navGen) && gen === mdGen) renderGuiasMeuDia(); }); // card "Guias lidas ontem" (75-guias.js)
   Promise.all([pDia, pMes]).then(function (rr) {
     if (!aindaNa('meudia', navGen) || gen !== mdGen) return;
     MD = rr[0]; mdAntigas = rr[1]; $("#md-carregando").hidden = true; renderMeuDia();

@@ -432,6 +432,34 @@ thead tr{background:#eee;color:#000}
 .pill,.tag{border:1px solid #999;background:#fff!important;color:#000!important}
 h1{font-size:18px}
 }
+/* ---------- guias lidas pela IA (Meu dia · Pendências) e card Uso da IA ---------- */
+.gl-lista{display:flex;flex-direction:column;gap:10px}
+.gl-item{display:grid;grid-template-columns:96px minmax(220px,1.4fr) minmax(220px,1.2fr) auto;gap:8px 14px;align-items:start;padding:12px;border:1px solid var(--borda);border-left:6px solid var(--lilas-med);border-radius:12px;background:var(--sup)}
+.gl-item.laranja{border-left-color:var(--lar-b);background:var(--lar-bg)}
+.gl-item.vermelha{border-left-color:var(--vm-b)}
+.gl-item.ok{background:var(--vd-bg);border-color:var(--vd-b)}
+.gl-thumb{display:flex;flex-direction:column;gap:4px;font-size:11px;color:var(--roxo);text-decoration:none;word-break:break-all}
+.gl-thumb img{width:96px;max-height:120px;object-fit:cover;object-position:top;border-radius:8px;border:1px solid var(--borda);background:#fff}
+.gl-st{font-size:12px;font-weight:700;color:var(--roxo);margin-bottom:2px}
+.gl-item.laranja .gl-st{color:var(--lar-tx)}
+.gl-lido b{font-weight:700}
+.gl-lido .sub,.gl-sug .sub{font-size:12px;color:var(--tx2);margin-top:2px;line-height:1.45}
+.gl-lido .motivos{color:var(--lar-tx);font-weight:600}
+.gl-sug{display:flex;flex-direction:column;gap:4px}
+.gl-sug-t{font-size:12px;font-weight:700;color:var(--tx2)}
+.gl-sem{font-size:13px;color:var(--vm-tx);font-weight:600;line-height:1.4}
+.gl-sug .check{font-size:13px}
+.gl-outras{border-top:1px dashed var(--borda);padding-top:6px;margin-top:4px}
+.gl-acoes{display:flex;flex-direction:column;gap:6px;align-items:stretch}
+.gl-acoes .btn{white-space:nowrap}
+.ia-gasto b{font-family:var(--fh);font-weight:600;font-size:22px;color:var(--roxo);display:block}
+.ia-barra{height:8px;border-radius:999px;background:var(--bg);overflow:hidden;margin:6px 0 8px}
+.ia-barra-in{height:100%;border-radius:999px;background:var(--vd-tx)}
+.ia-barra-in.amarela{background:var(--am-tx)}.ia-barra-in.vermelha{background:var(--vm-tx)}
+.ia-itens{display:flex;flex-wrap:wrap;gap:6px;margin:4px 0 8px}
+.ia-itens .tag{cursor:pointer;border:0;font-family:inherit}
+.ia-ler{display:inline-flex;align-items:center;gap:6px;border:0;background:none;overflow:visible}
+.ia-ler select{min-height:30px;padding:3px 8px;font-size:12px;border-radius:8px}
 /* ---------- telas estreitas ---------- */
 @media (max-width:1600px){
 table.dia .td-prof,table.dia .th-prof{display:none}
@@ -448,6 +476,10 @@ table.dia .td-prof,table.dia .th-prof{display:none}
 .painel-pac{flex-basis:100%;min-width:0;border-left:0;border-top:1px solid var(--borda);position:static;max-height:none}
 .tiles-filtro{grid-template-columns:repeat(3,minmax(0,1fr))}
 .tiles-resumo{grid-template-columns:repeat(2,minmax(0,1fr))}
+.gl-item{grid-template-columns:72px 1fr}
+.gl-item .gl-sug,.gl-item .gl-acoes{grid-column:1/-1}
+.gl-acoes{flex-direction:row;flex-wrap:wrap}
+.gl-thumb img{width:72px}
 }
 @media (max-width:480px){
 :root{--tabbar:calc(66px + env(safe-area-inset-bottom,0px))}
@@ -1206,6 +1238,10 @@ table.ar-mini{min-width:0}
 </section>
 </div>
 <aside class="lateral larga">
+<div class="card compacto" id="g-ia-card" hidden>
+<div class="passo" style="padding:0;gap:8px"><h2 style="font-size:15px">Uso da IA este mês</h2><span class="esp"></span><button type="button" class="btn link mini" id="g-ia-atualizar">atualizar</button></div>
+<div id="g-ia" class="muted" style="font-size:13px">carregando…</div>
+</div>
 <div class="card compacto" id="g-virada-card">
 <h2 style="font-size:15px">Virada do mês</h2>
 <ol class="virada" id="g-virada"></ol>
@@ -1357,6 +1393,10 @@ table.ar-mini{min-width:0}
 <div class="ld-lista" id="md-lancar"></div>
 <div id="md-lancar-erros"></div>
 <div class="acoes"><button type="button" class="btn" id="md-lancar-ok" disabled>Gravar</button><span class="muted" id="md-lancar-cont">nada marcado</span></div>
+</section>
+<section class="card compacto no-print" id="md-guias-card" hidden>
+<div class="passo" style="padding:0;flex-wrap:wrap;gap:8px 12px"><h2 style="font-size:15px" id="md-guias-t">Guias lidas ontem</h2><span class="tag lilas" id="md-n-guias-lidas">0</span><span class="muted" id="md-guias-sub">o app leu os PDFs da pasta e sugere a linha da sessão: confira e confirme</span></div>
+<div class="gl-lista" id="md-guias"></div>
 </section>
 <div class="fd-resumo" id="md-resumo" hidden></div>
 <div class="md-grid" id="md-corpo" hidden>
@@ -3435,7 +3475,8 @@ var GES = null, gesAberto = null, gesHora = null, gesCorr = null, LANC = null;
 INICIAR.gestao = function () {
 if (!BOOT) { setTimeout(INICIAR.gestao, 300); return; }
 // recepção vê pendências e lançamentos; exportar, virada do mês, lembrete e regras de cobrança continuam só da gestão
-['g-virada-card', 'g-lemb', 'g-so-gestao'].forEach(function (id) { $("#" + id).hidden = !ehGestao(); });
+['g-virada-card', 'g-lemb', 'g-so-gestao', 'g-ia-card'].forEach(function (id) { $("#" + id).hidden = !ehGestao(); });
+if (ehGestao()) carregarIA();
 if (!$("#g-mes").options.length) { MESES_PT.forEach(function (m) { var o = document.createElement('option'); o.value = m; o.textContent = m; $("#g-mes").appendChild(o); }); $("#g-mes").value = MESES_PT[new Date().getMonth()]; }
 $("#g-nav").hidden = false; $("#g-atualizar").hidden = false; $("#g-print").hidden = false; $("#g-planilha").textContent = BOOT.planilha || 'Controle da Recepção 2026';
 renderLembrete();
@@ -3494,7 +3535,7 @@ var nomes = function (l, n) { var x = (l || []).slice(0, n || 3).map(function (i
 var PEND = [
 { k: 'pag', cor: 'amarela', n: (r.pagamentoPendente || []).length, t: 'Particulares atendidos sem “Pago?”', s: (r.pagamentoPendente || []).length ? nomes(r.pagamentoPendente) + ' — a recepção cobra; linha amarela na planilha' : 'Todos os particulares atendidos têm Pago? preenchido.', acao: 'Ver lista', tabela: function () { return tabelaG('Particulares atendidos sem pagamento registrado', [['Data', D], ['Paciente', 'paciente'], ['Profissional', 'profissional'], ['Procedimento', 'procedimento'], ['Valor', V], ['Pago?', 'pago'], ['Em aberto', function (l) { return 'R$ ' + brl(saldoReg(l)); }], ['Obs.', 'obs']], r.pagamentoPendente, 'Nada pendente.', 'pag'); } },
 { k: 'nf', cor: 'laranja', n: (r.nfPendente || []).length, t: 'Pagos sem nota fiscal', s: (r.nfPendente || []).length ? brlCurto(soma(r.nfPendente)) + ' · emitir no Portal Nacional com o nome de “quem pagou”' : 'Nenhum pagamento sem NF.', acao: 'Ver lista', tabela: function () { return tabelaG('Pagos sem NF emitida', [['Data', D], ['Paciente', 'paciente'], ['Valor', V], ['Forma', 'forma'], ['Quem pagou', function (l) { return l.quem || '(pagador habitual)'; }], ['NF?', function (l) { return l.nf || '(em branco)'; }]], r.nfPendente, 'Nada pendente.', 'nf'); } },
-{ k: 'guia', cor: 'lilas', n: (r.semGuia || []).length, t: 'Convênio sem guia assinada', s: (r.semGuia || []).length ? contarPor(r.semGuia, 'convenio') + ' — glosa certa se faturar assim' : 'Todas as guias de convênio assinadas.', acao: 'Ver lista', tabela: function () { return tabelaG('Convênio sem guia assinada', [['Data', D], ['Paciente', 'paciente'], ['Convênio', 'convenio'], ['Profissional', 'profissional'], ['Guia', function (l) { return l.guia || '(em branco)'; }]], r.semGuia, 'Nada pendente.', 'guia'); } },
+{ k: 'guia', cor: 'lilas', n: (r.semGuia || []).length, t: 'Convênio sem guia assinada', s: (r.semGuia || []).length ? contarPor(r.semGuia, 'convenio') + ' — glosa certa se faturar assim' : 'Todas as guias de convênio assinadas.', acao: 'Ver lista', tabela: function () { return tabelaG('Convênio sem guia assinada', [['Data', D], ['Paciente', 'paciente'], ['Convênio', 'convenio'], ['Profissional', 'profissional'], ['Guia', function (l) { return l.guia || '(em branco)'; }], ['PDF na pasta?', function (l) { return l.pdfNaPasta === 'sim' ? 'sim' + (l.pdfArquivo ? ' (' + l.pdfArquivo + ')' : '') : l.pdfNaPasta === 'não' ? 'não' : '—'; }]], r.semGuia, 'Nada pendente.', 'guia'); } },
 { k: 'faltas', cor: 'vermelha', n: faltasSemDecisao.length, t: 'Faltas → Decidir', s: faltasSemDecisao.length ? faltasSemDecisao.length + ' sem decisão de ' + faltas + ' no mês — não abate · abate no mês seguinte · cobrar taxa · relevar' : (faltas ? 'Todas as ' + faltas + ' faltas do mês já têm decisão.' : 'Nenhuma falta ou desmarcação no mês.'), acao: ehGestao() ? 'Decidir' : 'Ver lista', tabela: tabelaFaltas },
 { k: 'cadincompleto', cor: 'laranja', n: (r.cadastroIncompleto || []).length, t: 'Atendidos sem cobrança cadastrada', s: (r.cadastroIncompleto || []).length ? (r.cadastroIncompleto || []).slice(0, 3).map(function (x) { return primeiroNome(x.paciente) + ' × ' + profCurto(x.profissional); }).join(' · ') + ((r.cadastroIncompleto || []).length > 3 ? ' · +' + ((r.cadastroIncompleto || []).length - 3) : '') + ' — o app cobrou pela tabela; cadastre em Pacientes → Cobrança por profissional' : 'Todo paciente atendido tem a cobrança cadastrada pro profissional.', acao: 'Ver lista', tabela: tabelaCadIncompleto },
 { k: 'pagador', cor: 'lilas', n: (r.pagadorDiferente || []).length, t: 'Pagou outra pessoa — conferir o nome na NF', s: (r.pagadorDiferente || []).length ? nomes(r.pagadorDiferente) + ' — se for sempre essa pessoa, promover a pagador habitual em Pacientes' : 'Ninguém pagou por outra pessoa.', acao: 'Revisar', tabela: function () { return tabelaG('Pagou outra pessoa (conferir nome na NF)', [['Data', D], ['Paciente', 'paciente'], ['Quem pagou', 'quem'], ['Valor', V], ['NF?', 'nf']], r.pagadorDiferente, 'Nenhum.', 'obs'); } }
@@ -3505,6 +3546,12 @@ tabela: function () { return tabelaG('Avaliações em andamento (aplicações de
 // Perdidos e glosas (só gestão): quanto se perdeu no mês; o Valor é a referência
 if (ehGestao()) { var perd = r.perdidos || []; PEND.push({ k: 'perdidos', cor: 'lilas', n: perd.length, t: 'Perdidos e glosas', s: perd.length ? brlCurto(soma(perd)) + ' perdidos no mês · ' + contarPor(perd, 'convenio') : 'Nenhum valor dado como perdido no mês.', acao: 'Ver lista',
 tabela: function () { return tabelaG('Perdidos e glosas · ' + brlCurto(soma(perd)), [['Data', D], ['Paciente', 'paciente'], ['Profissional', 'profissional'], ['Convênio', function (l) { return l.convenio || '—'; }], ['Valor de referência', V], ['Observação', 'obs']], perd, 'Nenhum valor dado como perdido no mês.'); } }); }
+// Guias a conferir (gestão, 16/10): guias lidas pela IA sem atendimento registrado, com baixa confiança ou que não pareceram guia
+if (ehGestao()) { var gc = r.guiasAConferir || []; PEND.push({ k: 'guiasconferir', cor: 'laranja', n: gc.length, t: 'Guias a conferir (lidas pela IA)', s: gc.length ? gc.slice(0, 3).map(function (g) { return (g.sugestao && g.sugestao.paciente ? primeiroNome(g.sugestao.paciente) : g.nome) + ' · ' + guiaStatusTxt(g.status); }).join(' · ') + (gc.length > 3 ? ' · +' + (gc.length - 3) : '') + ' — sem sessão registrada ou leitura em dúvida: confirme, escolha a linha ou ignore' : (r.guiasErro ? 'não consegui ler a aba Guias lidas: ' + r.guiasErro : 'Nenhuma guia lida em dúvida.'), acao: 'Conferir',
+tabela: function () { var card = el('<div class="tabela-card"><div class="passo" style="padding:14px 18px 4px"><h2 style="font-size:15px">Guias a conferir</h2><span class="tag ' + (gc.length ? 'laranja' : 'verde') + '">' + gc.length + '</span><span class="muted" style="font-weight:500">"PDF na pasta? = sim" sem linha casada na lista Convênio sem guia = problema de nome ou data; "não" = a guia não foi digitalizada</span></div><div class="gl-lista" style="padding:0 18px 16px"></div></div>'), box = $('.gl-lista', card);
+if (!gc.length) box.innerHTML = '<p class="muted" style="margin:0">Nada a conferir.</p>';
+gc.forEach(function (it) { box.appendChild(guiaItemEl(it, function () { r.guiasAConferir = r.guiasAConferir.filter(function (x) { return x.id !== it.id; }); carregarGestao(); })); });
+return card; } }); }
 // linhas de convênio sem o nome do convênio gravado (gestão, 10/10): o Repasse joga em "Convênio (sem nome)", sem regra
 if (ehGestao()) { var sc = r.semConvenio || []; PEND.push({ k: 'semconv', cor: 'laranja', n: sc.length, t: 'Linhas de convênio sem convênio', s: sc.length ? nomes(sc) + ' — Pago? de convênio (ou perdido) sem o convênio na linha: escolha o convênio' : 'Toda linha de convênio tem o convênio gravado.', acao: 'Corrigir',
 tabela: function () { return tabelaG('Linhas de convênio sem convênio', [['Data', D], ['Paciente', 'paciente'], ['Profissional', 'profissional'], ['Procedimento', 'procedimento'], ['Pago?', 'pago'], ['Valor', V], ['Modalidade', function (l) { return l.modalidade || '—'; }]], sc, 'Nenhuma.', 'amplo'); } }); }
@@ -3597,6 +3644,32 @@ return tabelaG('Lançamentos · ' + LANC.titulo + (LANC.total > LANC.linhas.leng
 $("#g-lanc-buscar").addEventListener('click', buscarLanc);
 $("#g-lanc-pac").addEventListener('keydown', function (e) { if (e.key === 'Enter') buscarLanc(); });
 $("#g-lanc-novo").addEventListener('click', function () { go('registrar'); var d = $("#a-data"); if (d) { d.focus(); if (d.select) d.select(); } toast('Ponha a data da sessão: ela vai pra aba do mês dessa data'); });
+/* ---------- card "Uso da IA este mês" (gestão, 16/10): gasto × teto, pausa geral/por item, ler guias agora, gatilho ---------- */
+var IAE = null, iaMsg = '';
+function carregarIA() { $("#g-ia").textContent = 'carregando…'; call('iaEstado', {}).then(function (e) { IAE = e; renderIA(); }).catch(function (err) { $("#g-ia").textContent = 'Não consegui ler o estado da IA: ' + err.message; }); }
+function renderIA() {
+var e = IAE, box = $("#g-ia"); if (!e) return;
+var pct = Math.min(100, e.pct || 0), cor = e.pausada ? 'vermelha' : pct >= (e.avisoPct || 80) ? 'amarela' : 'verde', ult = e.ultimaGuias;
+var h = '<div class="ia-gasto"><b>' + esc(usdTxt(e.gastoMes)) + '</b><span class="muted">de ' + esc(usdTxt(e.tetoMes)) + ' no mês · hoje ' + esc(usdTxt(e.gastoDia)) + ' de ' + esc(usdTxt(e.tetoDia)) + ' · ' + (e.chamadasMes || 0) + ' chamada' + (e.chamadasMes === 1 ? '' : 's') + '</span></div>' +
+'<div class="ia-barra"><div class="ia-barra-in ' + cor + '" style="width:' + pct + '%"></div></div>';
+if (e.pausada) h += '<div class="faixa erro" style="margin-top:8px">' + esc(e.mensagem) + '</div>';
+else if (pct >= (e.avisoPct || 80)) h += '<div class="faixa nota" style="margin-top:8px">' + ic('alerta', 14, 2.6) + ' Já usou ' + pct + '% do teto do mês (aviso enviado por e-mail). Ao chegar em 100% a IA para sozinha.</div>';
+if (e.temChave === false) h += '<div class="faixa nota" style="margin-top:8px">Chave da API não configurada: leitura automática indisponível. Apps Script → Configurações do projeto → Propriedades do script → ANTHROPIC_API_KEY.</div>';
+h += '<div class="ia-itens">' + Object.keys(e.itens || {}).map(function (k) { var nome = { guias: 'Guias', conciliacao: 'Conciliação', perguntar: 'Perguntar' }[k] || k; return '<button type="button" class="tag ' + (e.itens[k] ? 'verde' : 'cinza') + '" data-item="' + k + '" title="' + (e.itens[k] ? 'ativo: clique pra pausar só este item' : 'pausado: clique pra reativar') + '">' + esc(nome) + ' ' + (e.itens[k] ? 'ativa' : 'pausada') + '</button>'; }).join('') + '</div>';
+h += '<div class="muted" style="font-size:12px">modelo ' + esc(e.modelo || '') + (ult ? ' · última leitura de guias ' + esc(ult.quando || '') + ': ' + (ult.lidas || 0) + ' lida' + (ult.lidas === 1 ? '' : 's') + (ult.conferir ? ', ' + ult.conferir + ' a conferir' : '') + (ult.comErro ? ', ' + ult.comErro + ' com erro' : '') + (ult.restantes ? ', ' + ult.restantes + ' ficaram pra próxima' : '') + (ult.parou && ult.parou !== 'limite' ? ' · parou: ' + esc(ult.parou) : '') + (ult.custo ? ' · ' + esc(usdTxt(ult.custo)) : '') : ' · nenhuma leitura ainda') + '</div>';
+h += '<div class="acoes" style="flex-wrap:wrap"><button type="button" class="btn ' + (e.ativa ? 'sec' : '') + ' mini" id="g-ia-pausa">' + (e.ativa ? 'Pausar tudo' : 'Reativar') + '</button>' +
+'<span class="seg mini ia-ler"><select id="g-ia-mes" class="mini">' + MESES_PT.map(function (m, i) { return '<option' + (i === new Date().getMonth() ? ' selected' : '') + '>' + m + '</option>'; }).join('') + '</select><button type="button" class="btn ter mini" id="g-ia-ler"' + (e.pausada || e.temChave === false ? ' disabled' : '') + '>Ler guias agora</button></span>' +
+'<button type="button" class="btn ter mini" id="g-ia-gatilho" title="Cria ou refaz o gatilho que lê a pasta todo dia">' + (e.gatilho && e.gatilho.instalado ? 'Gatilho diário instalado (' + e.horaGatilho + 'h) · refazer' : 'Instalar gatilho diário (' + e.horaGatilho + 'h)') + '</button></div>' +
+'<div id="g-ia-msg">' + iaMsg + '</div>';
+box.innerHTML = h;
+$("#g-ia-pausa").addEventListener('click', function () { var b = this; doisCliques(b, e.ativa ? 'Confirmar: pausar toda a IA?' : 'Confirmar: reativar?', function () { b.disabled = true; call('iaPausar', { ativa: !e.ativa }).then(function (r) { if (!r.ok) { b.disabled = false; return toast((r.erros || ['Não gravou']).join(' ')); } toast(e.ativa ? 'IA pausada (aba IA, ia_ativa = Não)' : 'IA reativada'); IAE = r.estado; renderIA(); }).catch(function (err) { b.disabled = false; toast('Erro: ' + err.message); }); }); });
+$$('[data-item]', box).forEach(function (b) { b.addEventListener('click', function () { var k = b.dataset.item, on = !e.itens[k]; call('iaDefinir', { chave: 'ia_' + k, valor: on ? 'Sim' : 'Não' }).then(function (r) { if (!r.ok) return toast((r.erros || ['Não gravou']).join(' ')); IAE = r.estado; renderIA(); }).catch(function (err) { toast('Erro: ' + err.message); }); }); });
+$("#g-ia-ler").addEventListener('click', function () { var b = this, mes = $("#g-ia-mes").value; doisCliques(b, 'Confirmar: ler a pasta de ' + mes + '?', function () { b.disabled = true; b.textContent = 'Lendo… (até 5 min)'; iaMsg = ''; $("#g-ia-msg").innerHTML = '';
+call('lerGuias', { mes: mes }).then(function (r) { if (!r.ok) { iaMsg = erroBox(r.erros || [r.mensagens && r.mensagens[0] || 'Não leu'], 'Leitura parada'); carregarIA(); return; } toast(r.lidas + ' guia' + (r.lidas === 1 ? '' : 's') + ' lida' + (r.lidas === 1 ? '' : 's') + (r.novos ? ' de ' + r.novos + ' arquivo(s) novo(s)' : ': nenhum arquivo novo') + (r.custo ? ' · ' + usdTxt(r.custo) : '')); iaMsg = r.novos ? '<div class="faixa cinza">' + esc(r.lidas + ' lidas · ' + r.confirmar + ' prontas pra confirmar (Meu dia) · ' + r.conferir + ' a conferir · ' + r.ignoradas + ' ignoradas (tipo) · ' + r.duplicadas + ' duplicadas · ' + r.comErro + ' com erro' + (r.restantes ? ' · ' + r.restantes + ' ficaram pra próxima execução' : '') + (r.custoPorGuia ? ' · custo por guia ' + usdTxt(r.custoPorGuia, 4) : '') + (r.mensagens.length ? ' · ' + r.mensagens.join(' ') : '')) + '</div>' : '<div class="faixa cinza">Nenhum arquivo novo na pasta de ' + esc(mes) + '.</div>'; if (typeof invalidarResumo === 'function') invalidarResumo(); carregarIA(); carregarGestao(); }).catch(function (err) { iaMsg = erroBox(['Não consegui ler: ' + err.message + '. Se demorou mais de 5 minutos, parte das guias já pode estar na aba Guias lidas: atualize.']); carregarIA(); }); }); });
+$("#g-ia-gatilho").addEventListener('click', function () { var b = this; b.disabled = true; call('iaInstalarGatilho', {}).then(function (r) { if (!r.ok) { b.disabled = false; return $("#g-ia-msg").innerHTML = erroBox(r.erros || ['Não instalou']); } toast('Gatilho diário às ' + r.hora + 'h'); carregarIA(); }).catch(function (err) { b.disabled = false; toast('Erro: ' + err.message); }); });
+}
+function usdTxt(n, dec) { n = Number(n || 0); dec = dec || (n > 0 && n < 0.01 ? 4 : 2); return 'US$ ' + n.toLocaleString('pt-BR', { minimumFractionDigits: dec, maximumFractionDigits: dec }); }
+$("#g-ia-atualizar").addEventListener('click', carregarIA);
 function contarPor(l, campo) { var c = {}; (l || []).forEach(function (x) { var k = x[campo] || '—'; c[k] = (c[k] || 0) + 1; }); return Object.keys(c).map(function (k) { return k + ' ×' + c[k]; }).join(' · '); }
 function doisCliques(btn, texto, acao) { if (btn.dataset.ok !== '1') { btn.dataset.ok = '1'; btn.dataset.antes = btn.textContent; btn.textContent = texto; setTimeout(function () { if (btn.dataset.ok === '1') { btn.dataset.ok = ''; btn.textContent = btn.dataset.antes; } }, 6000); return; } btn.dataset.ok = ''; acao(); }
 function mudarMes(n) { var i = MESES_PT.indexOf($("#g-mes").value); i = (i + n + 12) % 12; $("#g-mes").value = MESES_PT[i]; gesAberto = null; carregarGestao(); }
@@ -3930,6 +4003,7 @@ $("#md-carregando").hidden = false; $("#md-corpo").hidden = true; $("#md-resumo"
 var pDia = (typeof DIA !== 'undefined' && DIA && DIA.data === mdData) ? Promise.resolve(DIA) : call('listaDoDia', { data: mdData });
 var mes = MESES_PT[dt.getMonth()];
 var pMes = (typeof resumoMes !== 'undefined' && resumoMes[mes]) ? Promise.resolve(resumoMes[mes]) : call('gestaoResumo', { mes: mes }).then(function (r) { if (r && r.ok && typeof resumoMes !== 'undefined') resumoMes[mes] = r; return r; }).catch(function () { return null; });
+carregarGuias(function () { if (aindaNa('meudia', navGen) && gen === mdGen) renderGuiasMeuDia(); }); // card "Guias lidas ontem" (75-guias.js)
 Promise.all([pDia, pMes]).then(function (rr) {
 if (!aindaNa('meudia', navGen) || gen !== mdGen) return;
 MD = rr[0]; mdAntigas = rr[1]; $("#md-carregando").hidden = true; renderMeuDia();
@@ -4078,6 +4152,72 @@ if (typeof DIA !== 'undefined' && DIA && DIA.data === MD.data) DIA = null; // a 
 LD_RES_MANTER = true; carregarMeuDia(); // os gravados saem da lista; os com erro ficam, com a mensagem
 }).catch(function (e) { $("#md-lancar-erros").innerHTML = erroBox(['Não consegui gravar: ' + e.message + '. Nada se perde: tente de novo.']); contarLancar(); });
 });
+/* ===== 75-guias.js ===== */
+/* ================= GUIAS LIDAS PELA IA (16/10) =================
+O gatilho diário lê os PDFs da pasta GUIAS DE CONVÊNIOS e grava a SUGESTÃO na aba Guias lidas. Aqui a recepção (e a gestão)
+confirma com um clique: Confirmar grava Guia assinada? = Sim, Nº da guia e Link da guia na(s) linha(s); Escolher outra linha
+abre as sessões de convênio do paciente; Não é guia / ignorar tira da lista. Usado pelo Meu dia (card "Guias lidas ontem") e
+pelas Pendências (card "Guias a conferir", gestão). Nada de alert/confirm nativo: dois cliques e toast. */
+var GUIAS = null, guiasGen = 0;
+function carregarGuias(depois) {
+var gen = ++guiasGen;
+return call('guiasLidas', {}).then(function (r) { if (gen !== guiasGen) return null; GUIAS = r && r.ok ? r : { itens: [], ontem: 0, ia: {} }; if (depois) depois(GUIAS); return GUIAS; }).catch(function (e) { if (gen !== guiasGen) return null; GUIAS = { itens: [], ontem: 0, ia: { mensagem: 'não consegui ler as guias: ' + e.message }, erro: true }; if (depois) depois(GUIAS); return GUIAS; });
+}
+function guiaStatusTxt(st) { return { lida: 'sugestão pronta', sem_atendimento: 'guia sem atendimento registrado', baixa_confianca: 'conferir (baixa confiança)', nao_e_guia: 'o app não viu uma guia', erro: 'erro na leitura' }[st] || st; }
+function linhaTxt(l) { return l.data + (l.hora ? ' ' + l.hora : '') + ' · ' + profCurto(l.profissional) + (l.guia === 'Sim' ? ' · já assinada' : ''); }
+// um item do card: miniatura/link · o que foi lido · linha(s) sugerida(s) · ações
+function guiaItemEl(it, aoMudar) {
+var lido = it.lido || {}, sug = it.sugestao || { linhas: [] }, baixa = it.status === 'baixa_confianca' || it.status === 'nao_e_guia', semLinha = !sug.linhas.length;
+var cor = baixa ? ' laranja' : it.status === 'sem_atendimento' ? ' vermelha' : '';
+var lidoHtml = '<b>' + esc(lido.nome || '(nome não lido)') + '</b>' + (sug.paciente && sug.paciente !== lido.nome ? ' <span class="muted">→ ' + esc(sug.paciente) + (sug.como ? ' (' + esc(sug.como) + ')' : '') + '</span>' : '') +
+'<div class="sub">' + esc([it.convenio, lido.numero ? 'guia nº ' + lido.numero : 'nº não lido', lido.carteirinha ? 'carteirinha ' + lido.carteirinha : '', lido.datas && lido.datas.length ? (lido.datas.length > 1 ? lido.datas.length + ' datas: ' : '') + lido.datas.join(', ') : 'sem data', lido.procedimento ? lido.procedimento + (lido.quantidade > 1 ? ' ×' + lido.quantidade : '') : '', lido.assinatura ? 'assinatura ok' : 'SEM assinatura visível', lido.legibilidade && lido.legibilidade !== 'boa' ? 'leitura ' + lido.legibilidade : ''].filter(Boolean).join(' · ')) + '</div>' +
+(it.motivos ? '<div class="sub motivos">' + ic('alerta', 12, 2.6) + ' ' + esc(it.motivos) + '</div>' : '') + (lido.observacao ? '<div class="sub">' + esc(lido.observacao) + '</div>' : '');
+var sugHtml = semLinha ? '<div class="gl-sem">' + esc(it.status === 'nao_e_guia' ? 'não parece uma guia: ignorar?' : 'nenhuma sessão de convênio registrada nessas datas: a sessão não foi lançada, ou nome/data não bateram') + '</div>' :
+'<div class="gl-sug-t">' + (sug.linhas.length === 1 ? 'linha sugerida' : sug.linhas.length + ' linhas sugeridas (guia de várias sessões)') + '</div>' + sug.linhas.map(function (l, i) { return '<label class="check"><input type="checkbox" data-l="' + i + '" checked> <span>' + esc(linhaTxt(l)) + ' <small class="muted">' + esc(l.aba) + '</small></span></label>'; }).join('');
+var cart = lido.carteirinha && sug.paciente ? '<label class="check"><input type="checkbox" data-cart checked> <span>gravar a carteirinha ' + esc(lido.carteirinha) + ' no cadastro de ' + esc(primeiroNome(sug.paciente)) + ' (se estiver vazio)</span></label>' : '';
+var row = el('<div class="gl-item' + cor + '" data-id="' + esc(it.id) + '"><a class="gl-thumb" href="' + esc(it.link) + '" target="_blank" rel="noopener" title="Abrir o PDF"><img src="' + esc(it.miniatura) + '" alt="" loading="lazy" onerror="this.style.display=\'none\'"><span>' + esc(it.nome) + '</span></a>' +
+'<div class="gl-lido"><div class="gl-st">' + esc(guiaStatusTxt(it.status)) + ' <small class="muted">· lida ' + esc(String(it.lidaEm || '').slice(0, 16)) + '</small></div>' + lidoHtml + '</div>' +
+'<div class="gl-sug">' + sugHtml + '<div class="gl-outras" hidden></div>' + cart + '<div class="gl-erro"></div></div>' +
+'<div class="gl-acoes"><button type="button" class="btn mini" data-conf' + (semLinha ? ' disabled' : '') + '>Confirmar</button><button type="button" class="btn ter mini" data-outra>Escolher outra linha</button>' + (semLinha && it.status !== 'nao_e_guia' && sug.paciente ? '<button type="button" class="btn ter mini" data-lancar>Lançar a sessão</button>' : '') + '<button type="button" class="btn link mini" data-ign>' + (it.status === 'nao_e_guia' ? 'Não é guia' : 'Não é guia / ignorar') + '</button></div></div>');
+var outras = $('.gl-outras', row), bOutra = $('[data-outra]', row), bConf = $('[data-conf]', row);
+bOutra.addEventListener('click', function () {
+if (!outras.hidden) { outras.hidden = true; return; }
+var cands = (it.candidatas || []).filter(function (c) { return !sug.linhas.some(function (l) { return l.aba === c.aba && l.id === c.id; }); });
+outras.innerHTML = '<div class="gl-sug-t">outras sessões de convênio de ' + esc(sug.paciente || lido.nome || 'quem?') + '</div>' + (cands.length ? cands.map(function (c, i) { return '<label class="check"><input type="checkbox" data-c="' + i + '"> <span>' + esc(linhaTxt(c)) + ' <small class="muted">' + esc(c.aba) + '</small></span></label>'; }).join('') : '<div class="muted">nenhuma outra sessão de convênio nos meses da guia. Se a sessão não foi lançada, use "Lançar a sessão" (Registrar).</div>');
+outras.hidden = false; outras.dataset.cands = JSON.stringify(cands); bConf.disabled = false;
+});
+bConf.addEventListener('click', function () {
+var linhas = $$('[data-l]', row).filter(function (c) { return c.checked; }).map(function (c) { return sug.linhas[+c.dataset.l]; });
+var cands = outras.hidden ? [] : JSON.parse(outras.dataset.cands || '[]'); $$('[data-c]', row).forEach(function (c) { if (c.checked) linhas.push(cands[+c.dataset.c]); });
+if (!linhas.length) { $('.gl-erro', row).innerHTML = erroBox(['Marque pelo menos uma linha.']); return; }
+var cb = $('[data-cart]', row), b = this; b.disabled = true; b.textContent = 'Gravando…'; $('.gl-erro', row).innerHTML = '';
+call('confirmarGuia', { idArquivo: it.id, linhas: linhas.map(function (l) { return { aba: l.aba, id: l.id, linha: l.linha, paciente: sug.paciente }; }), gravarCarteirinha: !!(cb && cb.checked) }).then(function (r) {
+if (!r.ok) { b.disabled = false; b.textContent = 'Confirmar'; $('.gl-erro', row).innerHTML = erroBox(r.erros || ['Não gravou']); return; }
+toast('Guia' + (r.numero ? ' ' + r.numero : '') + ' gravada em ' + r.gravadas.length + ' linha' + (r.gravadas.length === 1 ? '' : 's') + (r.carteirinha ? ' · carteirinha no cadastro' : '') + (r.erros && r.erros.length ? ' · ' + r.erros.join(' ') : ''));
+if (typeof invalidarResumo === 'function') invalidarResumo();
+row.classList.add('ok'); setTimeout(function () { row.remove(); if (aoMudar) aoMudar(it, 'confirmada'); }, 400);
+}).catch(function (e) { b.disabled = false; b.textContent = 'Confirmar'; $('.gl-erro', row).innerHTML = erroBox(['Não consegui gravar: ' + e.message]); });
+});
+var bl = $('[data-lancar]', row); if (bl) bl.addEventListener('click', function () { go('registrar', { paciente: sug.paciente.split(' / ')[0], data: (lido.datas || [])[0] || '', guia: 'Sim' }); });
+$('[data-ign]', row).addEventListener('click', function () {
+var b = this; doisCliques(b, 'Confirmar: ignorar este arquivo?', function () {
+b.disabled = true;
+call('ignorarGuia', { idArquivo: it.id, motivo: it.status === 'nao_e_guia' ? 'não é guia' : 'ignorada pela ' + quemSou().toLowerCase() }).then(function (r) { if (!r.ok) { b.disabled = false; return toast((r.erros || ['Não gravou']).join(' ')); } toast('Arquivo ignorado'); row.remove(); if (aoMudar) aoMudar(it, 'ignorada'); }).catch(function (e) { b.disabled = false; toast('Erro: ' + e.message); });
+});
+});
+return row;
+}
+// card do Meu dia: "Guias lidas ontem (n)" — todas as pendentes, o título diz quantas foram lidas ontem
+function renderGuiasMeuDia() {
+var card = $("#md-guias-card"), box = $("#md-guias"); if (!card) return;
+var g = GUIAS || { itens: [], ontem: 0, ia: {} }, itens = g.itens || [];
+card.hidden = !itens.length && !(g.ia && g.ia.mensagem);
+$("#md-n-guias-lidas").textContent = itens.length;
+$("#md-guias-t").textContent = 'Guias lidas ontem' + (g.ontem !== itens.length ? ' (' + g.ontem + ') e anteriores' : '');
+$("#md-guias-sub").textContent = g.ia && g.ia.pausada ? g.ia.mensagem : g.erro ? g.ia.mensagem : itens.length ? 'o app leu os PDFs da pasta e sugere a linha da sessão: confira e confirme (ou escolha outra linha)' : 'nenhuma guia pendente de confirmação';
+box.innerHTML = '';
+itens.forEach(function (it) { box.appendChild(guiaItemEl(it, function () { GUIAS.itens = GUIAS.itens.filter(function (x) { return x.id !== it.id; }); if (!GUIAS.itens.length) renderGuiasMeuDia(); })); });
+}
 /* ===== 90-boot.js ===== */
 /* ================= arranque ================= */
 go('hoje');

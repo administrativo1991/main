@@ -24,7 +24,15 @@ function api(nome, dados) {
 }
 
 // Só para o Google reconhecer as permissões que o app usa (o código real vem da planilha e não é lido na autorização).
-function permissoes_() { DriveApp.getRootFolder(); SpreadsheetApp.getActiveSpreadsheet(); LockService.getScriptLock(); CacheService.getScriptCache(); Session.getActiveUser(); }
+// Desde 16/10: conexões externas (API Claude), propriedades do script (chave da API), gatilhos e e-mail (aviso de teto).
+function permissoes_() { DriveApp.getRootFolder(); SpreadsheetApp.getActiveSpreadsheet(); LockService.getScriptLock(); CacheService.getScriptCache(); Session.getActiveUser(); UrlFetchApp.fetch('https://api.anthropic.com/'); PropertiesService.getScriptProperties(); ScriptApp.getProjectTriggers(); MailApp.getRemainingDailyQuota(); }
+
+// Gatilho diário (instalado pelo card "Uso da IA" em Pendências): lê as guias novas da pasta do Drive. O nome desta função
+// é o que o gatilho chama; o que ela faz está no servidor (API.gatilhoDiarioIA), então muda sem recolar o carregador.
+function gatilhoDiarioIA() {
+  var API = carregarServidor_();
+  return API.gatilhoDiarioIA({});
+}
 
 function limparCache() {
   var c = CacheService.getScriptCache(), chaves = [];

@@ -438,6 +438,35 @@ button.kpi[aria-pressed="true"] span,.kpi.roxo span{color:#fff;opacity:.9}
   h1{font-size:18px}
 }
 
+/* ---------- guias lidas pela IA (Meu dia · Pendências) e card Uso da IA ---------- */
+.gl-lista{display:flex;flex-direction:column;gap:10px}
+.gl-item{display:grid;grid-template-columns:96px minmax(220px,1.4fr) minmax(220px,1.2fr) auto;gap:8px 14px;align-items:start;padding:12px;border:1px solid var(--borda);border-left:6px solid var(--lilas-med);border-radius:12px;background:var(--sup)}
+.gl-item.laranja{border-left-color:var(--lar-b);background:var(--lar-bg)}
+.gl-item.vermelha{border-left-color:var(--vm-b)}
+.gl-item.ok{background:var(--vd-bg);border-color:var(--vd-b)}
+.gl-thumb{display:flex;flex-direction:column;gap:4px;font-size:11px;color:var(--roxo);text-decoration:none;word-break:break-all}
+.gl-thumb img{width:96px;max-height:120px;object-fit:cover;object-position:top;border-radius:8px;border:1px solid var(--borda);background:#fff}
+.gl-st{font-size:12px;font-weight:700;color:var(--roxo);margin-bottom:2px}
+.gl-item.laranja .gl-st{color:var(--lar-tx)}
+.gl-lido b{font-weight:700}
+.gl-lido .sub,.gl-sug .sub{font-size:12px;color:var(--tx2);margin-top:2px;line-height:1.45}
+.gl-lido .motivos{color:var(--lar-tx);font-weight:600}
+.gl-sug{display:flex;flex-direction:column;gap:4px}
+.gl-sug-t{font-size:12px;font-weight:700;color:var(--tx2)}
+.gl-sem{font-size:13px;color:var(--vm-tx);font-weight:600;line-height:1.4}
+.gl-sug .check{font-size:13px}
+.gl-outras{border-top:1px dashed var(--borda);padding-top:6px;margin-top:4px}
+.gl-acoes{display:flex;flex-direction:column;gap:6px;align-items:stretch}
+.gl-acoes .btn{white-space:nowrap}
+.ia-gasto b{font-family:var(--fh);font-weight:600;font-size:22px;color:var(--roxo);display:block}
+.ia-barra{height:8px;border-radius:999px;background:var(--bg);overflow:hidden;margin:6px 0 8px}
+.ia-barra-in{height:100%;border-radius:999px;background:var(--vd-tx)}
+.ia-barra-in.amarela{background:var(--am-tx)}.ia-barra-in.vermelha{background:var(--vm-tx)}
+.ia-itens{display:flex;flex-wrap:wrap;gap:6px;margin:4px 0 8px}
+.ia-itens .tag{cursor:pointer;border:0;font-family:inherit}
+.ia-ler{display:inline-flex;align-items:center;gap:6px;border:0;background:none;overflow:visible}
+.ia-ler select{min-height:30px;padding:3px 8px;font-size:12px;border-radius:8px}
+
 /* ---------- telas estreitas ---------- */
 @media (max-width:1600px){
   table.dia .td-prof,table.dia .th-prof{display:none}
@@ -454,6 +483,10 @@ button.kpi[aria-pressed="true"] span,.kpi.roxo span{color:#fff;opacity:.9}
   .painel-pac{flex-basis:100%;min-width:0;border-left:0;border-top:1px solid var(--borda);position:static;max-height:none}
   .tiles-filtro{grid-template-columns:repeat(3,minmax(0,1fr))}
   .tiles-resumo{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .gl-item{grid-template-columns:72px 1fr}
+  .gl-item .gl-sug,.gl-item .gl-acoes{grid-column:1/-1}
+  .gl-acoes{flex-direction:row;flex-wrap:wrap}
+  .gl-thumb img{width:72px}
 }
 @media (max-width:480px){
   :root{--tabbar:calc(66px + env(safe-area-inset-bottom,0px))}

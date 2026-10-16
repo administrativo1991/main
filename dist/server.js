@@ -2844,4 +2844,535 @@ function alertasDe_(nomes) {
 }
 API.alertas = function (d) { d = d || {}; return { ok: true, alertas: alertasDe_([].concat(d.pacientes || (d.paciente ? [d.paciente] : []))) }; };
 
+/* ================= IA — infraestrutura genérica (16/10/2026) =================
+   Mesmo escopo de server.js / server-cobranca.js / server-fase2.js (montado pelo build). Usada por qualquer item que fale com a
+   API Claude: guias (server-guias.js), conciliação assistida e "perguntar à planilha" (próximos).
+   Princípios: o modelo só propõe (quem grava é a pessoa, com um clique); a chave fica em PropertiesService
+   (ANTHROPIC_API_KEY), nunca no código nem na planilha; modelo, tetos, hora do gatilho e instruções ficam na aba `IA`
+   (a gestão edita); toda chamada vai pro `IA log` com tokens e custo; pausa geral e por item + teto do mês e do dia são
+   conferidos ANTES de cada chamada; a API nunca derruba o app: chamarIA devolve { ok:false, motivo } e a tela decide o texto. */
+var ABA_IA = 'IA', ABA_IA_LOG = 'IA log';
+var HIA = ['Parâmetro', 'Valor', 'Descrição'];
+var HIA_LOG = ['Data/hora', 'Item', 'Arquivos', 'Linhas', 'Modelo', 'Tokens entrada', 'Tokens saída', 'Custo (US$)', 'Quem', 'Resultado', 'Observação', 'Duração (s)'];
+var IA_ITENS = { guias: 'Guias', conciliacao: 'Conciliação', perguntar: 'Perguntar' };
+var IA_URL = 'https://api.anthropic.com/v1/messages', IA_VERSAO = '2023-06-01';
+var IA_CHAVE_PROP = 'ANTHROPIC_API_KEY';
+// carga inicial da aba IA (criada pelo app se não existir; chaves que faltarem são acrescentadas no fim, sem mexer nas existentes)
+var IA_PADRAO = [
+  ['ia_ativa', 'Sim', 'Geral. "Não" pausa toda chamada à IA (guias, conciliação, perguntar). O card "Uso da IA" em Pendências grava aqui (Pausar tudo / Reativar). Pausar não perde nada: as guias ficam na pasta e são lidas quando reativar.'],
+  ['ia_guias', 'Sim', 'Leitura das guias de convênio da pasta do Drive (gatilho diário). "Não" pausa só este item.'],
+  ['ia_conciliacao', 'Sim', 'Conciliação assistida (próximo item). "Não" pausa só este item.'],
+  ['ia_perguntar', 'Sim', '"Perguntar à planilha" (próximo item). "Não" pausa só este item.'],
+  ['modelo', 'claude-haiku-5-5', 'Modelo da API Claude. Haiku 5.5 = o mais barato da família com leitura de PDF/imagem (US$ 0,10 por milhão de tokens de entrada, 0,50 de saída). Mais preciso, ~10x o custo: claude-sonnet-5-5. Mudar aqui muda a próxima chamada.'],
+  ['esforco', 'low', 'Quanto o modelo pensa antes de responder: low · medium · high. low basta pra ler uma guia e segura o custo.'],
+  ['teto_mes_usd', 20, 'Teto de gasto no mês, em US$ (soma do IA log). Atingiu: a IA para sozinha e a tela avisa "teto do mês atingido".'],
+  ['teto_dia_usd', 3, 'Teto de gasto no dia, em US$.'],
+  ['aviso_pct', 80, 'Ao passar desta % do teto do mês: aviso amarelo no card e um e-mail (uma vez por mês) pro endereço abaixo.'],
+  ['preco_entrada_usd_mtok', 0.1, 'Preço do modelo por milhão de tokens de ENTRADA, em US$ (tabela da Anthropic). Usado pra estimar o custo no IA log.'],
+  ['preco_saida_usd_mtok', 0.5, 'Preço por milhão de tokens de SAÍDA, em US$.'],
+  ['email_aviso', 'administrativo@clinicanascente.com.br', 'Quem recebe o e-mail de 80 % do teto.'],
+  ['hora_gatilho', 19, 'Hora (0–23) em que o gatilho diário lê as guias novas da pasta. Mudar aqui e clicar "Instalar gatilho" no card.'],
+  ['pasta_guias_id', '15tjkAjub3f5jTc1Jy8ciklaZPG0_ULsP', 'Id da pasta raiz GUIAS DE CONVÊNIOS no Drive (Drives compartilhados / Recepção). Dentro: uma pasta por convênio (CEDPLAN, SABIN SINAI) e, em cada uma, uma por mês (10 OUT 26), com subpastas por paciente.'],
+  ['guias_mes_anterior_ate_dia', 5, 'Até este dia do mês o gatilho também lê a pasta do mês anterior (guias salvas atrasadas).'],
+  ['guias_max_por_execucao', 25, 'Máximo de arquivos lidos por execução do gatilho (o resto fica pro dia seguinte). Cada execução tem no máximo ~5 minutos.'],
+  ['instrucao_guias', 'Você lê guias de atendimento de convênio (Cedplan, Sabin Sinai) digitalizadas ou fotografadas por uma clínica de psicologia e pediatria. Extraia os dados e devolva somente o JSON pedido.\nRegras: cada página costuma ser uma guia; se uma página for continuação da anterior (mesmo número de guia, só mais datas ou assinaturas), marque continuacao_da_anterior = true. numero_guia: o número da guia ou da autorização (dígitos e hífens, sem espaços). carteirinha: o número do beneficiário na carteirinha (só dígitos). beneficiario: o nome do paciente como está na guia; se corresponder a um nome da lista de pacientes cadastrados (mesmo com abreviação, acento ou ordem diferente), devolva o nome exatamente como está na lista. datas: todas as datas de atendimento ou de sessão preenchidas na guia, no formato dd/mm/aaaa (guia com várias linhas de sessão = uma data por linha preenchida; linha em branco não conta). procedimento: a descrição do procedimento (ex.: Sessão de psicoterapia, Consulta); quantidade: o número de sessões ou procedimentos preenchidos. assinatura_visivel: true só se houver assinatura manuscrita (do paciente, do responsável ou do profissional) na guia. legibilidade: boa, parcial (algum campo em dúvida) ou ilegivel. Se o arquivo não for uma guia (comprovante, exame, foto solta, página em branco), e_guia = false e guias = []. Não invente: campo que não deu pra ler fica vazio ("" ou []). Em observacao, uma frase curta em português sobre o que viu (ex.: "guia Cedplan com 4 sessões assinadas").', 'Instrução que o modelo recebe pra ler uma guia (texto livre; a gestão pode ajustar). O JSON de resposta é fixo no código.'],
+  ['instrucao_conciliacao', '', 'Instrução do item Conciliação assistida (próximo).'],
+  ['instrucao_perguntar', '', 'Instrução do item Perguntar à planilha (próximo).']
+];
+var IA_NUMERICOS = { teto_mes_usd: 1, teto_dia_usd: 1, aviso_pct: 1, preco_entrada_usd_mtok: 1, preco_saida_usd_mtok: 1, hora_gatilho: 1, guias_mes_anterior_ate_dia: 1, guias_max_por_execucao: 1 };
+var IA_EDITAVEIS_TELA = { ia_ativa: 1, ia_guias: 1, ia_conciliacao: 1, ia_perguntar: 1, hora_gatilho: 1 };
+
+// aba IA: cria com a carga inicial se não existir; acrescenta no fim as chaves novas que faltarem (versões futuras)
+function abaIA_() {
+  var ss = planilha_(), s = ss.getSheetByName(ABA_IA), criadas = [];
+  if (!s) { s = ss.insertSheet(ABA_IA); s.getRange(1, 1, 1, HIA.length).setValues([HIA]).setFontWeight('bold'); s.setFrozenRows(1); }
+  var n = s.getLastRow(), tem = {};
+  if (n >= 2) s.getRange(2, 1, n - 1, 1).getValues().forEach(function (r) { var k = String(r[0] || '').trim(); if (k) tem[k] = 1; });
+  var faltam = IA_PADRAO.filter(function (p) { return !tem[p[0]]; });
+  if (faltam.length) { s.getRange(Math.max(n, 1) + 1, 1, faltam.length, 3).setValues(faltam.map(function (p) { return [p[0], p[1], p[2]]; })); faltam.forEach(function (p) { criadas.push(p[0]); }); }
+  return { s: s, criadas: criadas };
+}
+// lê a aba IA sempre fresca (é a pausa: tem de valer na chamada seguinte)
+function iaConfig_() {
+  var out = {}; IA_PADRAO.forEach(function (p) { out[p[0]] = p[1]; });
+  var s = abaIA_().s, n = s.getLastRow();
+  if (n >= 2) s.getRange(2, 1, n - 1, 2).getValues().forEach(function (r) {
+    var k = String(r[0] || '').trim(); if (!k) return; var v = r[1];
+    out[k] = typeof v === 'number' ? v : String(v == null ? '' : v).trim();
+    if (IA_NUMERICOS[k]) out[k] = numBR_(out[k]);
+  });
+  return out;
+}
+function simNao_(v) { return !/^n/i.test(String(v == null ? '' : v).trim() || 'Sim'); }
+function iaChave_() { try { return String(PropertiesService.getScriptProperties().getProperty(IA_CHAVE_PROP) || '').trim(); } catch (e) { return ''; } }
+function propIA_(k, v) { try { var p = PropertiesService.getScriptProperties(); if (v === undefined) return p.getProperty(k); if (v === null) p.deleteProperty(k); else p.setProperty(k, String(v)); } catch (e) { return null; } }
+function usd_(n) { return 'US$ ' + Number(n || 0).toFixed(2).replace('.', ','); }
+function mesChave_(d) { return Utilities.formatDate(d, CONFIG.TZ, 'MM/yyyy'); }
+
+/* ---------- IA log ---------- */
+function abaIALog_() { return abaComCabecalho_(ABA_IA_LOG, HIA_LOG); }
+// gasto do mês e do dia (US$) somando a coluna Custo do IA log; uma leitura por chamada (MEMO_)
+function gastoIA_() {
+  if (MEMO_.iagasto) return MEMO_.iagasto;
+  var s = planilha_().getSheetByName(ABA_IA_LOG), hoje = new Date(), hd = fmtData_(hoje), hm = mesChave_(hoje), mes = 0, dia = 0, chamadasMes = 0, chamadasDia = 0;
+  if (s && s.getLastRow() >= 2) {
+    var h = cabecalhos_(s), vals = s.getRange(2, 1, s.getLastRow() - 1, s.getLastColumn()).getValues();
+    vals.forEach(function (r) {
+      var dt = String(r[h['Data/hora'] - 1] || ''), c = numBR_(r[h['Custo (US$)'] - 1]); if (!dt) return;
+      if (dt.slice(3, 10) === hm) { mes += c; chamadasMes++; }
+      if (dt.slice(0, 10) === hd) { dia += c; chamadasDia++; }
+    });
+  }
+  MEMO_.iagasto = { mes: Math.round(mes * 10000) / 10000, dia: Math.round(dia * 10000) / 10000, chamadasMes: chamadasMes, chamadasDia: chamadasDia };
+  return MEMO_.iagasto;
+}
+function custoIA_(usage, cfg) {
+  var e = Number(usage && usage.input_tokens) || 0, s = Number(usage && usage.output_tokens) || 0;
+  var cr = Number(usage && usage.cache_read_input_tokens) || 0, cw = Number(usage && usage.cache_creation_input_tokens) || 0; // só pra contar; a leitura de cache custa 10 % da entrada
+  return Math.round(((e + cw) * (Number(cfg.preco_entrada_usd_mtok) || 0) + cr * (Number(cfg.preco_entrada_usd_mtok) || 0) * 0.1 + s * (Number(cfg.preco_saida_usd_mtok) || 0)) / 1e6 * 1e6) / 1e6;
+}
+function logIA_(l) {
+  try {
+    var s = abaIALog_(), h = cabecalhos_(s);
+    gravarCelulas_(s, proximaLinha_(s, h['Data/hora']), h, { 'Data/hora': agora_(), 'Item': l.item || '', 'Arquivos': l.arquivos || 0, 'Linhas': l.linhas || 0, 'Modelo': l.modelo || '', 'Tokens entrada': l.entrada || 0, 'Tokens saída': l.saida || 0, 'Custo (US$)': l.custo || 0, 'Quem': l.quem || '', 'Resultado': l.resultado || '', 'Observação': String(l.obs || '').slice(0, 500), 'Duração (s)': l.duracao || 0 });
+    if (MEMO_.iagasto && l.custo) { MEMO_.iagasto.mes += l.custo; MEMO_.iagasto.dia += l.custo; MEMO_.iagasto.chamadasMes++; MEMO_.iagasto.chamadasDia++; }
+  } catch (e) { /* o log nunca derruba a chamada */ }
+}
+// pausa geral, pausa do item, teto do mês e do dia: devolve { ok:false, motivo, mensagem } ou null
+function iaBloqueio_(item, cfg) {
+  if (!simNao_(cfg.ia_ativa)) return { ok: false, motivo: 'pausada', mensagem: 'IA pausada pela gestão' };
+  if (item && IA_ITENS[item] && !simNao_(cfg['ia_' + item])) return { ok: false, motivo: 'pausada_item', mensagem: 'IA pausada pela gestão (' + IA_ITENS[item] + ')' };
+  var g = gastoIA_(), tm = Number(cfg.teto_mes_usd) || 0, td = Number(cfg.teto_dia_usd) || 0;
+  if (tm > 0 && g.mes >= tm) return { ok: false, motivo: 'teto_mes', mensagem: 'IA pausada: teto do mês atingido (' + usd_(g.mes) + ' de ' + usd_(tm) + ')' };
+  if (td > 0 && g.dia >= td) return { ok: false, motivo: 'teto_dia', mensagem: 'IA pausada: teto do dia atingido (' + usd_(g.dia) + ' de ' + usd_(td) + ')' };
+  return null;
+}
+// 80 % do teto do mês: um e-mail por mês (marca em PropertiesService)
+function avisoTetoIA_(cfg) {
+  try {
+    var g = gastoIA_(), tm = Number(cfg.teto_mes_usd) || 0, pct = Number(cfg.aviso_pct) || 80; if (!(tm > 0) || g.mes < tm * pct / 100) return;
+    var marca = 'ia_aviso_' + mesChave_(new Date()).replace('/', '-'); if (propIA_(marca)) return;
+    var para = String(cfg.email_aviso || '').trim(); if (!para) return;
+    MailApp.sendEmail(para, 'Recepção Nascente: uso da IA em ' + Math.round(g.mes / tm * 100) + '% do teto do mês', 'O app já gastou ' + usd_(g.mes) + ' de ' + usd_(tm) + ' com a API Claude neste mês (' + g.chamadasMes + ' chamadas). Ao atingir o teto a IA para sozinha. Pra pausar antes ou mudar o teto: tela Pendências, card "Uso da IA este mês", ou a aba IA da planilha.');
+    propIA_(marca, agora_());
+  } catch (e) { /* aviso é só aviso */ }
+}
+
+/* ---------- chamarIA(item, payload) ----------
+   payload: { texto, instrucao (opcional; padrão = instrucao_<item> da aba IA), documentos: [{ nome, bytes|blob, mime }],
+             schema (JSON Schema da resposta; com ele `dados` volta como objeto), maxTokens, arquivos, linhas, quem, observacao }
+   devolve  { ok:true, dados, usage:{ entrada, saida }, custo, modelo } ou { ok:false, motivo, mensagem }
+   motivos: pausada · pausada_item · teto_mes · teto_dia · sem_chave · erro_api · recusa · json_invalido */
+function chamarIA(item, payload) {
+  payload = payload || {};
+  var t0 = new Date().getTime(), cfg = iaConfig_(), quem = payload.quem || (usuario_().email || 'gatilho');
+  var bloq = iaBloqueio_(item, cfg); if (bloq) return bloq;
+  var chave = iaChave_(); if (!chave) return { ok: false, motivo: 'sem_chave', mensagem: 'Chave da API não configurada (Apps Script → Configurações do projeto → Propriedades do script → ' + IA_CHAVE_PROP + ').' };
+  var content = [];
+  (payload.documentos || []).forEach(function (doc) {
+    var bytes = doc.bytes || (doc.blob && doc.blob.getBytes()), mime = String(doc.mime || (doc.blob && doc.blob.getContentType()) || 'application/pdf').toLowerCase();
+    if (!bytes) return;
+    var b64 = Utilities.base64Encode(bytes);
+    if (/^image\//.test(mime)) content.push({ type: 'image', source: { type: 'base64', media_type: mime, data: b64 } });
+    else content.push({ type: 'document', source: { type: 'base64', media_type: 'application/pdf', data: b64 }, title: String(doc.nome || 'documento').slice(0, 200) });
+  });
+  content.push({ type: 'text', text: String(payload.texto || '') });
+  var body = { model: String(cfg.modelo || 'claude-haiku-5-5'), max_tokens: payload.maxTokens || 4000, messages: [{ role: 'user', content: content }] };
+  var instr = payload.instrucao != null ? payload.instrucao : cfg['instrucao_' + item]; if (instr) body.system = String(instr);
+  var oc = {}; if (cfg.esforco) oc.effort = String(cfg.esforco); if (payload.schema) oc.format = { type: 'json_schema', schema: payload.schema };
+  if (Object.keys(oc).length) body.output_config = oc;
+  var base = { item: item, arquivos: payload.arquivos || (payload.documentos || []).length, linhas: payload.linhas || 0, modelo: body.model, quem: quem, obs: payload.observacao || '' };
+  var dur = function () { return Math.round((new Date().getTime() - t0) / 100) / 10; };
+  var code, txt;
+  try {
+    var resp = UrlFetchApp.fetch(IA_URL, { method: 'post', contentType: 'application/json', headers: { 'x-api-key': chave, 'anthropic-version': IA_VERSAO }, payload: JSON.stringify(body), muteHttpExceptions: true });
+    code = resp.getResponseCode(); txt = resp.getContentText();
+  } catch (e) {
+    logIA_(Object.assign({}, base, { resultado: 'erro', obs: 'sem resposta: ' + (e && e.message || e), duracao: dur() }));
+    return { ok: false, motivo: 'erro_api', mensagem: 'Não consegui falar com a API (' + (e && e.message || e) + ').' };
+  }
+  var j = null; try { j = JSON.parse(txt); } catch (e2) { j = null; }
+  if (code !== 200 || !j || j.type === 'error') {
+    var em = (j && j.error && j.error.message) || String(txt || '').slice(0, 200);
+    logIA_(Object.assign({}, base, { resultado: 'erro ' + code, obs: em, duracao: dur() }));
+    return { ok: false, motivo: 'erro_api', mensagem: 'A API respondeu ' + code + ': ' + em, codigo: code };
+  }
+  var usage = j.usage || {}, custo = custoIA_(usage, cfg), saida = { entrada: Number(usage.input_tokens) || 0, saida: Number(usage.output_tokens) || 0 };
+  var comum = Object.assign({}, base, { modelo: j.model || body.model, entrada: saida.entrada, saida: saida.saida, custo: custo, duracao: dur() });
+  if (j.stop_reason === 'refusal') { logIA_(Object.assign({}, comum, { resultado: 'recusa' })); avisoTetoIA_(cfg); return { ok: false, motivo: 'recusa', mensagem: 'O modelo recusou ler este arquivo.', usage: saida, custo: custo }; }
+  var texto = (j.content || []).filter(function (b) { return b.type === 'text'; }).map(function (b) { return b.text; }).join('');
+  var dados = texto;
+  if (payload.schema) {
+    try { dados = JSON.parse(texto); } catch (e3) { logIA_(Object.assign({}, comum, { resultado: 'json inválido', obs: (base.obs ? base.obs + ' · ' : '') + texto.slice(0, 200) })); return { ok: false, motivo: 'json_invalido', mensagem: 'A resposta não veio no formato esperado' + (j.stop_reason === 'max_tokens' ? ' (resposta cortada)' : '') + '.', usage: saida, custo: custo, texto: texto }; }
+  }
+  logIA_(Object.assign({}, comum, { resultado: 'ok' }));
+  avisoTetoIA_(cfg);
+  return { ok: true, dados: dados, usage: saida, custo: custo, modelo: j.model || body.model, parou: j.stop_reason || '' };
+}
+
+/* ---------- estado, pausa, gatilho (tela Pendências, card "Uso da IA este mês") ---------- */
+var GATILHO_FN = 'gatilhoDiarioIA';
+function gatilhoIA_() {
+  try { var t = ScriptApp.getProjectTriggers().filter(function (x) { return x.getHandlerFunction() === GATILHO_FN; }); return { instalado: t.length > 0, n: t.length }; } catch (e) { return { instalado: false, n: 0, erro: String(e && e.message || e) }; }
+}
+API.iaEstado = function () {
+  var cfg = iaConfig_(), g = gastoIA_(), gest = usuario_().perfil === 'gestao', tm = Number(cfg.teto_mes_usd) || 0, td = Number(cfg.teto_dia_usd) || 0;
+  var bloq = iaBloqueio_('', cfg), itens = {}; Object.keys(IA_ITENS).forEach(function (k) { itens[k] = simNao_(cfg['ia_' + k]); });
+  var ultima = null; try { ultima = JSON.parse(propIA_('ia_guias_ultima') || 'null'); } catch (e) { ultima = null; }
+  return { ok: true, ativa: simNao_(cfg.ia_ativa), itens: itens, gastoMes: g.mes, gastoDia: g.dia, chamadasMes: g.chamadasMes, tetoMes: tm, tetoDia: td, pct: tm > 0 ? Math.round(g.mes / tm * 100) : 0, avisoPct: Number(cfg.aviso_pct) || 80,
+    pausada: bloq ? bloq.motivo : '', mensagem: bloq ? bloq.mensagem : '', modelo: cfg.modelo, horaGatilho: Number(cfg.hora_gatilho) || 19, gatilho: gest ? gatilhoIA_() : null, temChave: gest ? !!iaChave_() : null, ultimaGuias: ultima, gestao: gest };
+};
+// grava um parâmetro da aba IA (só os que a tela expõe: ia_ativa, ia_<item>, hora_gatilho); registro no IA log
+API.iaDefinir = function (d) {
+  d = d || {}; var u = usuario_(); if (u.perfil !== 'gestao') return { ok: false, erros: ['Só a gestão.'] };
+  var k = String(d.chave || '').trim(), v = d.valor; if (!IA_EDITAVEIS_TELA[k]) return { ok: false, erros: ['Parâmetro não editável pela tela: ' + k] };
+  if (k === 'hora_gatilho') { v = parseInt(v, 10); if (!(v >= 0 && v <= 23)) return { ok: false, erros: ['Hora inválida (0–23).'] }; } else v = simNao_(v) ? 'Sim' : 'Não';
+  var lock = LockService.getScriptLock(); lock.waitLock(20000);
+  try {
+    var s = abaIA_().s, n = s.getLastRow(), linha = 0;
+    if (n >= 2) s.getRange(2, 1, n - 1, 1).getValues().forEach(function (r, i) { if (!linha && String(r[0] || '').trim() === k) linha = i + 2; });
+    if (!linha) return { ok: false, erros: ['Parâmetro ' + k + ' não está na aba IA.'] };
+    var antes = s.getRange(linha, 2).getValue(); s.getRange(linha, 2).setValue(v);
+    SpreadsheetApp.flush();
+    logIA_({ item: 'config', modelo: '', quem: u.email, resultado: k + ': ' + antes + ' → ' + v, obs: d.motivo || '' });
+    return { ok: true, chave: k, valor: v, estado: API.iaEstado() };
+  } finally { lock.releaseLock(); }
+};
+API.iaPausar = function (d) { d = d || {}; return API.iaDefinir({ chave: 'ia_ativa', valor: d.ativa === false || /^n/i.test(String(d.ativa || '')) ? 'Não' : 'Sim', motivo: d.ativa === false ? 'Pausar tudo (tela)' : 'Reativar (tela)' }); };
+// (re)cria o gatilho diário na hora da aba IA; o nome da função tem de existir no carregador (Code.gs)
+API.iaInstalarGatilho = function () {
+  if (usuario_().perfil !== 'gestao') return { ok: false, erros: ['Só a gestão.'] };
+  var cfg = iaConfig_(), h = Number(cfg.hora_gatilho); if (!(h >= 0 && h <= 23)) h = 19;
+  try {
+    ScriptApp.getProjectTriggers().forEach(function (t) { if (t.getHandlerFunction() === GATILHO_FN) ScriptApp.deleteTrigger(t); });
+    ScriptApp.newTrigger(GATILHO_FN).timeBased().everyDays(1).atHour(h).inTimezone(CONFIG.TZ).create();
+  } catch (e) { return { ok: false, erros: ['Não consegui criar o gatilho: ' + (e && e.message || e) + '. O carregador (Code.gs) precisa ser a versão com gatilhoDiarioIA e a permissão de gatilhos autorizada.'] }; }
+  logIA_({ item: 'config', quem: usuario_().email, resultado: 'gatilho diário às ' + h + 'h' });
+  return { ok: true, hora: h, gatilho: gatilhoIA_() };
+};
+// chamado pelo carregador no gatilho diário (sem usuário logado): cada item registra aqui o que deve rodar
+var ROTINAS_IA_ = [];
+API.gatilhoDiarioIA = function () {
+  var out = [];
+  ROTINAS_IA_.forEach(function (fn) { try { out.push(fn()); } catch (e) { out.push({ ok: false, erro: String(e && e.message || e) }); } });
+  return { ok: true, rotinas: out };
+};
+
+/* ================= GUIAS DE CONVÊNIO lidas da pasta do Drive (16/10/2026) =================
+   A recepção digitaliza a guia assinada e salva o PDF em GUIAS DE CONVÊNIOS / {CEDPLAN | SABIN SINAI} / {MM MÊS AA} /
+   {paciente} / dd-mm Nome.pdf (nada muda pra ela). Um gatilho diário (ou o botão "Ler guias agora", gestão) lê cada arquivo
+   novo com o modelo (chamarIA, server-ia.js), casa a guia com as linhas da aba do mês SEM modelo (regra do app: convênio,
+   paciente por carteirinha → nome → nome da pasta, data ±1 dia) e grava a SUGESTÃO na aba `Guias lidas`. Quem grava na linha
+   é a recepção, no card "Guias lidas ontem" do Meu dia (Confirmar · Escolher outra linha · Não é guia). Nada é apagado nem
+   movido no Drive: o app só lê. */
+var ABA_GUIAS = 'Guias lidas';
+var HGUIAS = ['ID do arquivo', 'Nome', 'Pasta', 'Link', 'Convênio', 'Data de leitura', 'Status', 'Resultado', 'Sugestão', 'Confiança', 'Motivos', 'Confirmado por', 'Linhas gravadas', 'Observação', 'Páginas', 'Custo (US$)', 'Hash'];
+CONFIG.HM.GUIA_N = 'Nº da guia'; CONFIG.HM.GUIA_LINK = 'Link da guia'; // colunas novas no fim da aba do mês (criadas na 1ª confirmação)
+var GUIA_STATUS_PENDENTE = { lida: 1, sem_atendimento: 1, baixa_confianca: 1, nao_e_guia: 1 };   // aparecem no card do Meu dia
+var GUIA_STATUS_CONFERIR = { sem_atendimento: 1, baixa_confianca: 1, erro: 1, nao_e_guia: 1 };   // card "Guias a conferir" (gestão)
+var GUIA_MIMES = { 'application/pdf': 'pdf', 'image/jpeg': 'img', 'image/png': 'img', 'image/webp': 'img', 'image/gif': 'img' };
+var GUIA_ORCAMENTO_MS = 270000; // o gatilho e a chamada da tela têm 6 min; parar antes e deixar o resto pro dia seguinte
+var GUIA_SCHEMA = { type: 'object', additionalProperties: false, required: ['e_guia', 'observacao', 'guias'], properties: {
+  e_guia: { type: 'boolean' }, observacao: { type: 'string' },
+  guias: { type: 'array', items: { type: 'object', additionalProperties: false,
+    required: ['pagina', 'continuacao_da_anterior', 'convenio', 'numero_guia', 'carteirinha', 'beneficiario', 'datas', 'procedimento', 'quantidade', 'assinatura_visivel', 'legibilidade'],
+    properties: { pagina: { type: 'integer' }, continuacao_da_anterior: { type: 'boolean' }, convenio: { type: 'string' }, numero_guia: { type: 'string' }, carteirinha: { type: 'string' }, beneficiario: { type: 'string' },
+      datas: { type: 'array', items: { type: 'string' } }, procedimento: { type: 'string' }, quantidade: { type: 'integer' }, assinatura_visivel: { type: 'boolean' }, legibilidade: { type: 'string', enum: ['boa', 'parcial', 'ilegivel'] } } } } } };
+
+/* ---------- pastas do Drive ---------- */
+function abaGuias_() { return abaComCabecalho_(ABA_GUIAS, HGUIAS); }
+// nome da pasta (CEDPLAN, SABIN SINAI) → convênio como está em Listas (Cedplan, Sabin Sinai); sem correspondência: o nome da pasta
+function convenioDaPasta_(nome) {
+  var n = semAcento_(nome).replace(/\s+/g, ' '), lista = colunaLista_(CONFIG.LISTAS.CONVENIO).filter(function (c) { return c && !/^Particular$/i.test(c); });
+  var exato = lista.filter(function (c) { return semAcento_(c) === n; })[0]; if (exato) return exato;
+  var comeca = lista.filter(function (c) { var cc = semAcento_(c); return n.indexOf(cc) === 0 || cc.indexOf(n) === 0; })[0];
+  return comeca || String(nome || '').trim();
+}
+// pasta do mês pelo NÚMERO no início do nome ("10 OUT 26", "07 JUL 26"; tolera "O7" com letra O), conferindo o ano se o nome terminar em 2 dígitos
+function pastaMes_(pastaConv, mesIdx, ano) {
+  var re = new RegExp('^[0O]?' + (mesIdx + 1) + '(\\D|$)'), aa = String(ano).slice(-2), it = pastaConv.getFolders();
+  while (it.hasNext()) {
+    var f = it.next(), nome = String(f.getName() || '').trim(); if (!re.test(nome)) continue;
+    var m = nome.match(/(\d{2})\s*$/); if (m && m[1] !== aa) continue;
+    return f;
+  }
+  return null;
+}
+// arquivos de uma pasta e das subpastas (por paciente), até 3 níveis
+function arquivosEm_(pasta, caminho, out, nivel) {
+  var fi = pasta.getFiles();
+  while (fi.hasNext()) { var f = fi.next(); out.push({ id: f.getId(), nome: String(f.getName() || ''), pasta: caminho, sub: nivel > 0 ? pasta.getName() : '', mime: String(f.getMimeType() || ''), tamanho: Number(f.getSize()) || 0, url: f.getUrl(), file: f }); }
+  if (nivel >= 3) return;
+  var fo = pasta.getFolders();
+  while (fo.hasNext()) { var p = fo.next(); arquivosEm_(p, caminho + '/' + p.getName(), out, nivel + 1); }
+}
+// meses a ler: o escolhido, ou o corrente (+ o anterior até o dia guias_mes_anterior_ate_dia)
+function mesesGuias_(cfg, mesNome) {
+  var hoje = new Date(), out = [];
+  if (mesNome) { var i = CONFIG.MESES.indexOf(mesNome); if (i < 0) return []; var ano = hoje.getFullYear() - (i > hoje.getMonth() ? 1 : 0); return [{ idx: i, ano: ano, nome: mesNome }]; }
+  out.push({ idx: hoje.getMonth(), ano: hoje.getFullYear(), nome: CONFIG.MESES[hoje.getMonth()] });
+  if (hoje.getDate() <= (Number(cfg.guias_mes_anterior_ate_dia) || 5)) { var ant = new Date(hoje.getFullYear(), hoje.getMonth() - 1, 1); out.push({ idx: ant.getMonth(), ano: ant.getFullYear(), nome: CONFIG.MESES[ant.getMonth()] }); }
+  return out;
+}
+// índice da aba Guias lidas: por id do arquivo e por hash do conteúdo
+function guiasLidasIdx_() {
+  var s = planilha_().getSheetByName(ABA_GUIAS), porId = {}, porHash = {}, linhas = [];
+  if (!s || s.getLastRow() < 2) return { porId: porId, porHash: porHash, linhas: linhas, s: s };
+  linhasComo_(s).forEach(function (r) { var id = String(r['ID do arquivo'] || '').trim(); if (!id) return; r.id = id; porId[id] = r; linhas.push(r); var hs = String(r['Hash'] || '').trim(); if (hs && !porHash[hs]) porHash[hs] = r; });
+  return { porId: porId, porHash: porHash, linhas: linhas, s: s };
+}
+function hashBytes_(bytes) { try { return Utilities.computeDigest(Utilities.DigestAlgorithm.MD5, bytes).map(function (b) { return ('0' + ((b + 256) % 256).toString(16)).slice(-2); }).join(''); } catch (e) { return ''; } }
+function pacientesConvenio_(conv) {
+  var l = indicePacientes_().filter(function (p) { return p.convenio && !/^Particular$/i.test(p.convenio) && !/^n/i.test(p.ativo || 'Sim'); });
+  var doConv = conv ? l.filter(function (p) { return semAcento_(p.convenio) === semAcento_(conv); }) : [];
+  return doConv.length ? doConv : l;
+}
+// carteirinha do cadastro (Pacientes → Nº da carteirinha), por paciente e por número
+function carteirinhas_() {
+  if (MEMO_.cart) return MEMO_.cart;
+  var s = planilha_().getSheetByName(CONFIG.ABA.PACIENTES), h = s ? cabecalhos_(s) : {}, porNome = {}, porNum = {};
+  if (s && h[CONFIG.H.CARTEIRINHA] && s.getLastRow() >= 2) {
+    var vals = s.getRange(2, 1, s.getLastRow() - 1, Math.max(h[CONFIG.H.NOME], h[CONFIG.H.CARTEIRINHA])).getValues();
+    vals.forEach(function (r) { var n = String(r[h[CONFIG.H.NOME] - 1] || '').trim(), c = Duplicatas.digitos(String(r[h[CONFIG.H.CARTEIRINHA] - 1] || '')); if (n && c) { porNome[n] = c; if (!porNum[c]) porNum[c] = n; } });
+  }
+  MEMO_.cart = { porNome: porNome, porNum: porNum };
+  return MEMO_.cart;
+}
+
+/* ---------- casamento (sem modelo) ---------- */
+function dataLida_(t) {
+  t = String(t || '').trim(); var m = t.match(/^(\d{4})-(\d{2})-(\d{2})/); if (m) t = m[3] + '/' + m[2] + '/' + m[1];
+  var m2 = t.match(/^(\d{1,2})[\/.-](\d{1,2})[\/.-](\d{2,4})$/); if (m2) t = ('0' + m2[1]).slice(-2) + '/' + ('0' + m2[2]).slice(-2) + '/' + (m2[3].length === 2 ? '20' + m2[3] : m2[3]);
+  var d = parseData_(t); return d ? fmtData_(d) : '';
+}
+// "28-09 Isabelly Silva de Paiva .pdf" → { data: '28/09/aaaa' (com o ano do mês da pasta), nome: 'Isabelly Silva de Paiva' }
+function dicaDoNome_(nome, ano) {
+  var t = String(nome || '').replace(/\.[a-z0-9]{2,4}$/i, '').replace(/[_]+/g, ' ').replace(/\s*\(\d+\)\s*$/, '').trim(), data = '';
+  var m = t.match(/(\d{1,2})[-\/.](\d{1,2})/); if (m) { data = dataLida_(('0' + m[1]).slice(-2) + '/' + ('0' + m[2]).slice(-2) + '/' + ano); t = t.replace(m[0], ' '); }
+  t = t.replace(/\b(assinad[oa]|cedplan|sabin|sinai|guia|scan|digitalizad[oa])\b/gi, ' ').replace(/\s+/g, ' ').trim();
+  return { data: data, nome: t };
+}
+function melhorNome_(texto, candidatos) {
+  var best = null, nota = 0; if (!String(texto || '').trim()) return { nome: '', nota: 0 };
+  candidatos.forEach(function (n) { var x = notaNome_(texto, [n]); if (x > nota || (x === nota && best && n.length < best.length)) { nota = x; best = n; } });
+  return { nome: nota >= 0.8 ? best : '', nota: nota };
+}
+// uma guia lida → { paciente, confianca, motivos[], linhas[], tipo }
+function casarGuia_(g, conv, dica, mesPasta) {
+  var motivos = [], baixa = false, cart = carteirinhas_(), nomesConv = pacientesConvenio_(conv).map(function (p) { return p.nome; }), nomesTodos = indicePacientes_().map(function (p) { return p.nome; });
+  var numCart = Duplicatas.digitos(String(g.carteirinha || '')), paciente = '', como = '';
+  if (numCart && cart.porNum[numCart]) { paciente = cart.porNum[numCart]; como = 'carteirinha'; }
+  if (!paciente) { var m1 = melhorNome_(g.beneficiario, nomesConv); if (!m1.nome) m1 = melhorNome_(g.beneficiario, nomesTodos); if (m1.nome) { paciente = m1.nome; como = 'nome lido'; if (m1.nota < 1) motivos.push('nome parecido, não igual (' + g.beneficiario + ')'); } }
+  if (!paciente && dica && dica.nome) { var m2 = melhorNome_(dica.nome, nomesConv); if (!m2.nome) m2 = melhorNome_(dica.nome, nomesTodos); if (m2.nome) { paciente = m2.nome; como = 'nome da pasta/arquivo'; motivos.push('nome lido na guia não bateu com o cadastro; usei o da pasta/arquivo'); baixa = true; } }
+  if (!paciente) { motivos.push('nome sem correspondência no cadastro (' + (g.beneficiario || 'não lido') + ')'); baixa = true; }
+  if (paciente && numCart && cart.porNome[paciente] && cart.porNome[paciente] !== numCart) { motivos.push('carteirinha lida (' + numCart + ') diverge do cadastro (' + cart.porNome[paciente] + ')'); baixa = true; }
+  if (paciente && como !== 'carteirinha' && dica && dica.nome) { var m3 = notaNome_(dica.nome, [paciente]); if (m3 < 0.5) { motivos.push('nome da pasta/arquivo (' + dica.nome + ') não bate com ' + paciente); baixa = true; } }
+  if (g.legibilidade && g.legibilidade !== 'boa') { motivos.push('leitura ' + g.legibilidade); baixa = true; }
+  if (g.assinatura_visivel === false) { motivos.push('sem assinatura visível'); baixa = true; }
+  if (g.convenio && conv && semAcento_(g.convenio).indexOf(semAcento_(conv).split(' ')[0]) < 0) motivos.push('convênio lido (' + g.convenio + ') diferente da pasta (' + conv + ')');
+  var datas = (g.datas || []).map(dataLida_).filter(Boolean);
+  if (!datas.length && dica && dica.data) { datas = [dica.data]; motivos.push('data não lida na guia; usei a do nome do arquivo'); baixa = true; }
+  if (!datas.length) { motivos.push('sem data de atendimento'); baixa = true; }
+  var linhas = [], vistos = {};
+  if (paciente) datas.forEach(function (ds) {
+    var d = parseData_(ds), cands = [];
+    [new Date(d.getFullYear(), d.getMonth() - 1, 15), d, new Date(d.getFullYear(), d.getMonth() + 1, 15)].forEach(function (dm) {
+      var aba = nomeAbaMes_(dm); if (cands.some(function (c) { return c.aba === aba; }) || !planilha_().getSheetByName(aba)) return;
+      linhasMes_(aba).linhas.forEach(function (r) {
+        if (r.paciente !== paciente || !/^Atendido/.test(r.oque) || ehPerdido_(r.pago)) return;
+        var convL = !r.convenio || /^Particular$/i.test(r.convenio) ? '' : r.convenio;
+        if (!(convL || /^Convênio/i.test(r.pago))) return;
+        if (convL && conv && semAcento_(convL) !== semAcento_(conv)) return;
+        var dr = parseData_(r.data); if (!dr) return; var dif = Math.abs(diasEntre_(r.data, ds)); if (dif > 1) return;
+        cands.push({ aba: aba, id: r.id, linha: r.linha, data: r.data, hora: r.hora, profissional: r.profissional, procedimento: r.procedimento, guia: r.guia, guiaN: '', dif: dif, dataGuia: ds });
+      });
+    });
+    var exatas = cands.filter(function (c) { return c.dif === 0; }), usar = exatas.length ? exatas : cands;
+    if (exatas.length === 0 && cands.length) motivos.push('sessão de ' + ds + ' não achada; sugeri a de ' + cands[0].data);
+    usar.forEach(function (c) { var k = c.aba + '|' + (c.id || c.linha); if (!vistos[k]) { vistos[k] = 1; linhas.push(c); } });
+  });
+  var tipo = !linhas.length ? 'nenhuma' : linhas.length === 1 ? 'uma' : 'varias';
+  if (paciente && datas.length && tipo === 'nenhuma') motivos.push('nenhuma sessão de convênio de ' + paciente + ' em ' + datas.join(', '));
+  return { paciente: paciente, como: como, confianca: baixa ? 'baixa' : 'alta', motivos: motivos, linhas: linhas, tipo: tipo, datas: datas };
+}
+
+/* ---------- leitura (gatilho diário ou botão) ---------- */
+function lerGuias_(opts) {
+  opts = opts || {};
+  var t0 = new Date().getTime(), cfg = iaConfig_(), quem = opts.quem || usuario_().email || 'gatilho';
+  var res = { ok: true, lidas: 0, confirmar: 0, conferir: 0, ignoradas: 0, comErro: 0, duplicadas: 0, restantes: 0, custo: 0, parou: '', mensagens: [], quando: agora_() };
+  var fim = function () { res.duracao = Math.round((new Date().getTime() - t0) / 1000); propIA_('ia_guias_ultima', JSON.stringify({ quando: res.quando, lidas: res.lidas, confirmar: res.confirmar, conferir: res.conferir, comErro: res.comErro, restantes: res.restantes, parou: res.parou, custo: res.custo, origem: opts.origem || '' })); return res; };
+  var bloq = iaBloqueio_('guias', cfg); if (bloq) { res.ok = false; res.parou = bloq.motivo; res.mensagens.push(bloq.mensagem); return fim(); }
+  if (!iaChave_()) { res.ok = false; res.parou = 'sem_chave'; res.mensagens.push('Chave da API não configurada: leitura automática indisponível.'); return fim(); }
+  var raiz; try { raiz = DriveApp.getFolderById(String(cfg.pasta_guias_id || '').trim()); } catch (e) { res.ok = false; res.parou = 'pasta'; res.mensagens.push('Não consegui abrir a pasta das guias (' + (e && e.message || e) + '). Confira pasta_guias_id na aba IA e a permissão do Drive no carregador.'); return fim(); }
+  var meses = mesesGuias_(cfg, opts.mes), lista = [], itc = raiz.getFolders();
+  while (itc.hasNext()) {
+    var pc = itc.next(), conv = convenioDaPasta_(pc.getName());
+    meses.forEach(function (m) { var pm = pastaMes_(pc, m.idx, m.ano); if (!pm) return; var tmp = []; arquivosEm_(pm, pc.getName() + '/' + pm.getName(), tmp, 0); tmp.forEach(function (a) { a.conv = conv; a.ano = m.ano; a.mesNome = m.nome; lista.push(a); }); });
+  }
+  var idx = guiasLidasIdx_(), novos = lista.filter(function (a) { var r = idx.porId[a.id]; return !r || String(r['Status'] || '') === 'erro'; });
+  // ordem: pasta, depois nome; "nome (1).pdf" (cópia baixada de novo) depois de "nome.pdf", pra duplicata apontar pro original
+  var chaveOrd = function (a) { return a.pasta + '/' + a.nome.replace(/\s*\(\d+\)(\.[a-z0-9]+)?$/i, '$1') + (/\(\d+\)/.test(a.nome) ? '~' : ''); };
+  novos.sort(function (a, b) { return chaveOrd(a).localeCompare(chaveOrd(b)); });
+  var max = Number(cfg.guias_max_por_execucao) || 25, s = abaGuias_(), h = cabecalhos_(s), feitos = 0, processados = 0;
+  var gravar = function (a, pares) { var r = idx.porId[a.id], linha = r ? r._linha : proximaLinha_(s, h['ID do arquivo']); var base = { 'ID do arquivo': a.id, 'Nome': a.nome, 'Pasta': a.pasta, 'Link': a.url, 'Convênio': a.conv || '', 'Data de leitura': agora_() }; Object.keys(pares).forEach(function (k) { base[k] = pares[k]; }); gravarCelulas_(s, linha, h, base); if (!r) idx.porId[a.id] = Object.assign({ _linha: linha, id: a.id }, base); };
+  for (var i = 0; i < novos.length; i++) {
+    var a = novos[i];
+    if (feitos >= max || new Date().getTime() - t0 > GUIA_ORCAMENTO_MS) { res.parou = res.parou || 'limite'; break; }
+    processados++;
+    var tipo = GUIA_MIMES[a.mime.toLowerCase()];
+    if (!tipo) { gravar(a, { 'Status': 'nao_lida_tipo', 'Observação': 'tipo ' + (a.mime || '?') + ': o app só lê PDF, JPG e PNG' }); res.ignoradas++; continue; }
+    var blob, bytes; try { blob = a.file.getBlob(); bytes = blob.getBytes(); } catch (e1) { gravar(a, { 'Status': 'erro', 'Observação': 'não consegui abrir: ' + (e1 && e1.message || e1) }); res.comErro++; continue; }
+    var hs = hashBytes_(bytes), dup = hs && idx.porHash[hs];
+    if (dup && dup.id !== a.id) { gravar(a, { 'Status': 'duplicada', 'Hash': hs, 'Observação': 'mesmo conteúdo que ' + (dup['Nome'] || dup.id) + ' (' + dup['Pasta'] + ')' }); res.duplicadas++; continue; }
+    var pacs = pacientesConvenio_(a.conv), dica = dicaDoNome_(a.sub || a.nome, a.ano || new Date().getFullYear()), dicaArq = dicaDoNome_(a.nome, a.ano || new Date().getFullYear());
+    if (!dica.nome) dica.nome = dicaArq.nome; if (!dica.data) dica.data = dicaArq.data;
+    var texto = 'Arquivo: ' + a.nome + '\nPasta: ' + a.pasta + (a.sub ? ' (subpasta do paciente: ' + a.sub + ')' : '') + '\nConvênio da pasta: ' + (a.conv || '?') + '\nMês da pasta: ' + (a.mesNome || '') + '/' + (a.ano || '') + '\n\nPacientes de convênio cadastrados (nome · carteirinha · convênio):\n' +
+      pacs.map(function (p) { return p.nome + ' · ' + (carteirinhas_().porNome[p.nome] || '-') + ' · ' + p.convenio; }).join('\n');
+    var r = chamarIA('guias', { documentos: [{ nome: a.nome, bytes: bytes, mime: tipo === 'img' ? a.mime.toLowerCase() : 'application/pdf' }], texto: texto, schema: GUIA_SCHEMA, maxTokens: 3000, arquivos: 1, linhas: pacs.length, quem: quem, observacao: a.pasta + '/' + a.nome });
+    feitos++;
+    if (!r.ok) {
+      if (r.motivo === 'recusa' || r.motivo === 'json_invalido') { gravar(a, { 'Status': 'erro', 'Hash': hs, 'Observação': r.mensagem, 'Custo (US$)': r.custo || 0 }); res.comErro++; res.custo += r.custo || 0; continue; }
+      if (r.motivo === 'erro_api') { gravar(a, { 'Status': 'erro', 'Hash': hs, 'Observação': r.mensagem }); res.comErro++; if (res.comErro >= 3) { res.parou = 'erro_api'; res.mensagens.push('leitura automática indisponível hoje (' + r.mensagem + ')'); break; } continue; }
+      processados--; res.parou = r.motivo; res.mensagens.push(r.mensagem); break; // pausa, teto ou chave: nada é gravado; o arquivo fica pro próximo dia
+    }
+    res.custo += r.custo || 0;
+    if (hs) idx.porHash[hs] = { id: a.id, Nome: a.nome, Pasta: a.pasta }; // só o que foi lido vale como original de uma duplicata
+    var d = r.dados || {}, guias = (d.guias || []).filter(function (g) { return g && !g.continuacao_da_anterior; }), lido = { e_guia: d.e_guia !== false && guias.length > 0, observacao: d.observacao || '', guias: guias, modelo: r.modelo, tokens: r.usage };
+    if (!lido.e_guia) { gravar(a, { 'Status': 'nao_e_guia', 'Hash': hs, 'Resultado': JSON.stringify(lido), 'Confiança': 'baixa', 'Motivos': 'o modelo não viu uma guia: ' + (d.observacao || ''), 'Páginas': (d.guias || []).length, 'Custo (US$)': r.custo || 0 }); res.conferir++; continue; }
+    var cas = guias.map(function (g) { return casarGuia_(g, a.conv, dica, a.mesNome); });
+    var linhas = [], vistos = {}, motivos = [], pacientes = [], baixa = false, semLinha = false;
+    cas.forEach(function (c) { c.linhas.forEach(function (l) { var k = l.aba + '|' + (l.id || l.linha); if (!vistos[k]) { vistos[k] = 1; linhas.push(l); } }); c.motivos.forEach(function (m) { if (motivos.indexOf(m) < 0) motivos.push(m); }); if (c.paciente && pacientes.indexOf(c.paciente) < 0) pacientes.push(c.paciente); if (c.confianca === 'baixa') baixa = true; if (c.tipo === 'nenhuma') semLinha = true; });
+    var status = !linhas.length ? 'sem_atendimento' : baixa ? 'baixa_confianca' : 'lida';
+    if (status === 'lida' && semLinha) { status = 'baixa_confianca'; motivos.push('parte das datas sem sessão registrada'); }
+    var sug = { paciente: pacientes.join(' / '), linhas: linhas.map(function (l) { return { aba: l.aba, id: l.id, linha: l.linha, data: l.data, hora: l.hora, profissional: l.profissional, procedimento: l.procedimento, guia: l.guia }; }), datas: [].concat.apply([], cas.map(function (c) { return c.datas; })), como: cas[0] && cas[0].como };
+    gravar(a, { 'Status': status, 'Hash': hs, 'Resultado': JSON.stringify(lido), 'Sugestão': JSON.stringify(sug), 'Confiança': baixa ? 'baixa' : 'alta', 'Motivos': motivos.join('; '), 'Páginas': guias.length, 'Custo (US$)': r.custo || 0, 'Observação': '' });
+    res.lidas++; if (status === 'lida') res.confirmar++; else res.conferir++;
+  }
+  res.restantes = Math.max(0, novos.length - processados);
+  SpreadsheetApp.flush();
+  res.novos = novos.length; res.custo = Math.round(res.custo * 1e6) / 1e6; res.custoPorGuia = res.lidas ? Math.round(res.custo / res.lidas * 1e6) / 1e6 : 0;
+  return fim();
+}
+ROTINAS_IA_.push(function () { return lerGuias_({ origem: 'gatilho', quem: 'gatilho' }); });
+// botão "Ler guias agora" (gestão): mês escolhido ou o corrente
+API.lerGuias = function (d) { d = d || {}; if (usuario_().perfil !== 'gestao') return { ok: false, erros: ['Só a gestão dispara a leitura.'] }; var r = lerGuias_({ mes: String(d.mes || '').trim(), origem: 'tela' }); r.erros = r.ok ? [] : r.mensagens.slice(); return r; };
+
+/* ---------- card do Meu dia e das Pendências ---------- */
+function parseJSON_(t) { try { return JSON.parse(String(t || '')) || null; } catch (e) { return null; } }
+function thumb_(id) { return 'https://drive.google.com/thumbnail?id=' + id + '&sz=w240'; }
+function guiaItem_(r) {
+  var lido = parseJSON_(r['Resultado']) || {}, sug = parseJSON_(r['Sugestão']) || { linhas: [] };
+  var g = (lido.guias || [])[0] || {};
+  return { id: r.id, nome: r['Nome'], pasta: r['Pasta'], link: r['Link'], miniatura: thumb_(r.id), convenio: r['Convênio'], lidaEm: r['Data de leitura'], status: r['Status'], confianca: r['Confiança'] || '', motivos: r['Motivos'] || '', obs: r['Observação'] || '',
+    lido: { numero: g.numero_guia || '', carteirinha: g.carteirinha || '', nome: g.beneficiario || '', datas: [].concat.apply([], (lido.guias || []).map(function (x) { return (x.datas || []).map(dataLida_).filter(Boolean); })), procedimento: g.procedimento || '', quantidade: g.quantidade || 0, assinatura: g.assinatura_visivel !== false, legibilidade: g.legibilidade || '', observacao: lido.observacao || '', paginas: (lido.guias || []).length, numeros: (lido.guias || []).map(function (x) { return x.numero_guia; }).filter(Boolean) },
+    sugestao: { paciente: sug.paciente || '', linhas: sug.linhas || [], como: sug.como || '' }, confirmadoPor: r['Confirmado por'] || '', linhasGravadas: r['Linhas gravadas'] || '', custo: numBR_(r['Custo (US$)']) };
+}
+// linhas de convênio do paciente nos meses das datas (mês anterior e seguinte também) pra "Escolher outra linha"
+function candidatasGuia_(paciente, datas) {
+  var abas = {}, out = [];
+  (datas.length ? datas : [hoje_()]).forEach(function (ds) { var d = parseData_(ds) || new Date(); [new Date(d.getFullYear(), d.getMonth() - 1, 15), d, new Date(d.getFullYear(), d.getMonth() + 1, 15)].forEach(function (dm) { abas[nomeAbaMes_(dm)] = 1; }); });
+  Object.keys(abas).forEach(function (aba) { if (!planilha_().getSheetByName(aba)) return; linhasMes_(aba).linhas.forEach(function (r) { if (r.paciente !== paciente || !/^Atendido/.test(r.oque)) return; var convL = !r.convenio || /^Particular$/i.test(r.convenio) ? '' : r.convenio; if (!(convL || /^Convênio/i.test(r.pago))) return; out.push({ aba: aba, id: r.id, linha: r.linha, data: r.data, hora: r.hora, profissional: r.profissional, procedimento: r.procedimento, guia: r.guia }); }); });
+  return out.slice(-40);
+}
+API.guiasLidas = function (d) {
+  d = d || {};
+  var idx = guiasLidasIdx_(), ontem = fmtData_(dataMais_(new Date(), -1)), itens = [], nOntem = 0;
+  idx.linhas.forEach(function (r) {
+    var st = String(r['Status'] || ''); if (!GUIA_STATUS_PENDENTE[st] && !(d.todas && GUIA_STATUS_CONFERIR[st])) return;
+    var it = guiaItem_(r); if (String(it.lidaEm || '').slice(0, 10) === ontem) nOntem++;
+    if (d.candidatas !== false) it.candidatas = it.sugestao.paciente ? candidatasGuia_(it.sugestao.paciente.split(' / ')[0], it.lido.datas) : [];
+    itens.push(it);
+  });
+  itens.sort(function (a, b) { return String(b.lidaEm).localeCompare(String(a.lidaEm)) || String(a.nome).localeCompare(String(b.nome)); });
+  var estado = API.iaEstado();
+  return { ok: true, itens: itens, ontem: nOntem, ontemData: ontem, ia: { pausada: estado.pausada, mensagem: estado.mensagem, ultima: estado.ultimaGuias } };
+};
+function linhaGuias_(idx, idArquivo) { var r = idx.porId[String(idArquivo || '').trim()]; return r || null; }
+// Confirmar: grava Guia assinada? = Sim, Nº da guia e Link da guia nas linhas escolhidas, com log; opcionalmente a carteirinha no cadastro
+API.confirmarGuia = function (d) {
+  d = d || {};
+  var u = usuario_(), linhas = (d.linhas || []).filter(function (l) { return l && l.aba && (l.id || l.linha); });
+  if (!linhas.length) return { ok: false, erros: ['Escolha pelo menos uma linha.'] };
+  var lock = LockService.getScriptLock(); lock.waitLock(20000);
+  try {
+    var idx = guiasLidasIdx_(), r = linhaGuias_(idx, d.idArquivo); if (!r) return { ok: false, erros: ['Guia não encontrada na aba Guias lidas.'] };
+    if (String(r['Status'] || '') === 'confirmada' && !d.denovo) return { ok: false, erros: ['Esta guia já foi confirmada (' + r['Confirmado por'] + ').'] };
+    var it = guiaItem_(r), numero = String(d.numero != null ? d.numero : (it.lido.numeros.join(', ') || it.lido.numero)).trim(), link = String(r['Link'] || ''), carimbo = (u.email || 'app') + ' · ' + agora_();
+    var HM = CONFIG.HM, gravadas = [], erros = [], sa = abaComCabecalho_(CONFIG.ABA.ALT_LANC, CONFIG.HL_LANC), ha = cabecalhos_(sa);
+    linhas.forEach(function (l) {
+      var s = planilha_().getSheetByName(l.aba); if (!s) { erros.push('Aba ' + l.aba + ' não existe.'); return; }
+      var bloq = bloqueioPlanilha_([s]); if (bloq) { erros.push(bloq); return; }
+      var h = garantirColunas_(s, [HM.GUIA_N, HM.GUIA_LINK]).h, linha = 0;
+      if (l.id && h[HM.ID]) { var ids = s.getRange(2, h[HM.ID], Math.max(s.getLastRow() - 1, 1), 1).getValues(); for (var i = 0; i < ids.length; i++) if (String(ids[i][0]).trim() === String(l.id).trim()) { linha = i + 2; break; } }
+      if (!linha && l.linha) { linha = Number(l.linha); if (!(linha >= 2) || String(s.getRange(linha, h[HM.PACIENTE]).getValue() || '').trim() !== String(it.sugestao.paciente.split(' / ')[0] || l.paciente || '')) linha = 0; }
+      if (!linha) { erros.push('Não achei a linha ' + (l.id || l.linha) + ' em ' + l.aba + '.'); return; }
+      var atual = s.getRange(linha, 1, 1, s.getLastColumn()).getValues()[0], g = function (k) { var c = h[HM[k]]; return c ? String(atual[c - 1] == null ? '' : atual[c - 1]).trim() : ''; };
+      var pares = {}, mud = [], paciente = g('PACIENTE');
+      if (g('GUIA') !== 'Sim') { pares[HM.GUIA] = 'Sim'; mud.push({ campo: 'Guia assinada?', de: g('GUIA'), para: 'Sim' }); }
+      if (numero && g('GUIA_N') !== numero) { var nv = g('GUIA_N') && g('GUIA_N').indexOf(numero) < 0 ? g('GUIA_N') + ', ' + numero : numero; pares[HM.GUIA_N] = nv; mud.push({ campo: 'Nº da guia', de: g('GUIA_N'), para: nv }); }
+      if (link && g('GUIA_LINK') !== link) { pares[HM.GUIA_LINK] = link; mud.push({ campo: 'Link da guia', de: g('GUIA_LINK') ? '(outro link)' : '', para: link }); }
+      if (!mud.length) { gravadas.push(l.aba + ':' + (l.id || linha) + ' (já estava)'); return; }
+      if (h[HM.LOG]) pares[HM.LOG] = (g('LOG') ? g('LOG') + ' | ' : '') + 'guia lida (IA) confirmada por ' + carimbo;
+      gravarCelulas_(s, linha, h, pares);
+      mud.forEach(function (m) { gravarCelulas_(sa, proximaLinha_(sa, ha['ID']), ha, { 'Data/hora': agora_(), 'Aba': l.aba, 'ID': l.id || ('linha ' + linha), 'Paciente': paciente, 'Campo': m.campo, 'De': m.de, 'Para': m.para, 'Quem informou': 'guia lida pela IA (' + r['Nome'] + ') · confirmada por ' + (u.perfil === 'gestao' ? 'gestão' : 'recepção'), 'Registrado por (app)': carimbo }); });
+      gravadas.push(l.aba + ':' + (l.id || linha));
+    });
+    if (!gravadas.length) return { ok: false, erros: erros.length ? erros : ['Nada gravado.'] };
+    // carteirinha lida → cadastro (só se o cadastro estiver vazio), com log em Alterações de cadastro
+    var cartGravada = '';
+    if (d.gravarCarteirinha && it.lido.carteirinha && it.sugestao.paciente) {
+      var nomeP = it.sugestao.paciente.split(' / ')[0], sp = aba_(CONFIG.ABA.PACIENTES), hp = garantirColunasPacientes_().h, p = indicePacientes_().filter(function (x) { return x.nome === nomeP; })[0];
+      if (p && hp[CONFIG.H.CARTEIRINHA]) {
+        var cAtual = String(sp.getRange(p.linha, hp[CONFIG.H.CARTEIRINHA]).getValue() || '').trim(), numC = Duplicatas.digitos(it.lido.carteirinha);
+        if (!cAtual && numC) {
+          sp.getRange(p.linha, hp[CONFIG.H.CARTEIRINHA]).setNumberFormat('@').setValue(numC);
+          if (hp[CONFIG.H.LOG]) sp.getRange(p.linha, hp[CONFIG.H.LOG]).setValue((String(sp.getRange(p.linha, hp[CONFIG.H.LOG]).getValue() || '') + ' | carteirinha lida na guia por ' + carimbo).replace(/^ \| /, ''));
+          var sc = abaComCabecalho_(CONFIG.ABA.ALTERACOES, CONFIG.HC), hc = cabecalhos_(sc);
+          gravarCelulas_(sc, proximaLinha_(sc, hc['Paciente']), hc, { 'Data/hora': agora_(), 'Paciente': nomeP, 'Campo': CONFIG.H.CARTEIRINHA, 'De': '', 'Para': numC, 'Quem informou': 'guia lida pela IA (' + r['Nome'] + ')', 'Registrado por (app)': carimbo });
+          cartGravada = numC; invalidar_(['pac']); delete MEMO_.cart;
+        }
+      }
+    }
+    var hg = cabecalhos_(idx.s);
+    gravarCelulas_(idx.s, r._linha, hg, { 'Status': 'confirmada', 'Confirmado por': carimbo, 'Linhas gravadas': gravadas.join(', '), 'Observação': (String(r['Observação'] || '') + (d.observacao ? ' | ' + d.observacao : '')).replace(/^ \| /, '') });
+    invalidar_(['comp']); SpreadsheetApp.flush();
+    return { ok: true, gravadas: gravadas, erros: erros, carteirinha: cartGravada, numero: numero };
+  } finally { lock.releaseLock(); }
+};
+// Não é guia / ignorar (com motivo): a linha fica como ignorada; o arquivo não é lido de novo
+API.ignorarGuia = function (d) {
+  d = d || {}; var u = usuario_();
+  var lock = LockService.getScriptLock(); lock.waitLock(20000);
+  try {
+    var idx = guiasLidasIdx_(), r = linhaGuias_(idx, d.idArquivo); if (!r) return { ok: false, erros: ['Guia não encontrada.'] };
+    var hg = cabecalhos_(idx.s), carimbo = (u.email || 'app') + ' · ' + agora_();
+    gravarCelulas_(idx.s, r._linha, hg, { 'Status': 'ignorada', 'Confirmado por': carimbo, 'Observação': 'ignorada: ' + String(d.motivo || 'não é guia').trim() });
+    SpreadsheetApp.flush();
+    return { ok: true };
+  } finally { lock.releaseLock(); }
+};
+
+/* ---------- Pendências: "PDF na pasta?" na lista Convênio sem guia + card Guias a conferir ---------- */
+var gestaoResumoSemIA_ = API.gestaoResumo;
+API.gestaoResumo = function (d) {
+  var r = gestaoResumoSemIA_(d);
+  if (!r || !r.ok) return r;
+  try {
+    var idx = guiasLidasIdx_(), porId = {}, porPacData = {}, conferir = [];
+    idx.linhas.forEach(function (g) {
+      var st = String(g['Status'] || ''); if (st === 'ignorada' || st === 'nao_lida_tipo' || st === 'duplicada') return;
+      var it = guiaItem_(g);
+      (it.sugestao.linhas || []).forEach(function (l) { if (l.id) porId[l.id] = it.nome; });
+      String(g['Linhas gravadas'] || '').split(',').forEach(function (x) { var m = x.trim().match(/^[^:]+:([^ ]+)/); if (m) porId[m[1]] = it.nome; });
+      var nomes = (it.sugestao.paciente || '').split(' / ').concat(it.lido.nome ? [it.lido.nome] : []);
+      nomes.forEach(function (n) { if (!n) return; it.lido.datas.forEach(function (ds) { porPacData[Duplicatas.normalizar(n) + '|' + ds] = it.nome; }); });
+      if (GUIA_STATUS_CONFERIR[st] && usuario_().perfil === 'gestao') conferir.push(it);
+    });
+    (r.semGuia || []).forEach(function (l) { var arq = (l.id && porId[l.id]) || porPacData[Duplicatas.normalizar(l.paciente) + '|' + l.data] || ''; l.pdfNaPasta = arq ? 'sim' : 'não'; l.pdfArquivo = arq; });
+    r.guiasAConferir = conferir;
+  } catch (e) { r.guiasAConferir = []; r.guiasErro = String(e && e.message || e); }
+  return r;
+};
+
 API;
