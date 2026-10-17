@@ -23,7 +23,7 @@ coluna E não afeta o app. Atualizar `E2` faz parte de toda publicação (passo 
 
 | Canal | Deploy | Peças | Commit |
 |---|---|---|---|
-| Real (`arquivos_real`) | **2026-10-17-01** (Evolução e saúde financeira) | 66 (duplicatas 3 · server 25 · index 38); ativas = as do 16-24 com server 23 em 1122, server 24 (nova) em 1123 e index 4, 5, 9, 10, 13, 14, 35 em 1124–1130 (antigas → `antigo54:`) | branch `claude/lucid-wright-6vx5yt`, commit 60cbb3e |
+| Real (`arquivos_real`) | **2026-10-17-02** (Evolução: valor perto de zero vira traço) | 66 (duplicatas 3 · server 25 · index 38); ativas = as do 17-01 com index 35 em 1131 (1130 → `antigo55:`) | branch `claude/lucid-wright-6vx5yt`, commit 4958ca3 |
 | Teste (`arquivos`) | **2026-10-16-10** (Alertas, ⚠ abre a Ficha) | 60 (duplicatas 3 · server 20 · index 37), linhas 750–809; `antigo42:` = as do 16-09 (690–749) | branch `claude/sweet-wozniak-aviy8u`, commit cede9d7 |
 | Carregador real | 2026-10-16 (`dist/Code.real.gs` com `gatilhoDiarioIA` + permissões; versão 2 do projeto real, implantada pela gestão em 16/10 17:27) | — | 618b511 |
 | Carregador teste | 2026-10-04-01 + nova versão pendente desde 05/10 (permissão do Drive, ver `COMO-INSTALAR.md`) | — | — |
@@ -48,6 +48,14 @@ Modelo:
 ```
 
 ## Lista
+
+### 2026-10-17-02 · Real · Evolução: valor perto de zero vira traço de 2px
+- **O que mudou** (gestão, 17/10: "abril não tem o sem plantão"): abril sem plantões é −R$ 63,56, menos de 1px na escala, e a
+  barra sumia. Nas colunas, valor diferente de zero tem no mínimo 2px (para cima ou para baixo).
+- **Peças**: index 35 copiada para 1131, 1 `findReplace`; LEN 33.586 / UNICODE 2.945.404 = build. Ativação A1130:A1131;
+  somas 330.391 / 493.194, 25/38, nenhum `novo:`. Testes 15/15; simulação 1280 sem erro.
+  **Voltar**: 1130 `antigo55:` → `index.html` e 1131 → `antigo56:`.
+- **Commit**: 4958ca3 · **Aprovação**: gestão, 17/10 ("faz e publica").
 
 ### 2026-10-17-01 · Real · Evolução e saúde financeira
 - **O que mudou**: menu **Evolução** (só gestão; no celular, Pendências → Regras e tabelas): último mês fechado em cartões,
