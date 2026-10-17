@@ -23,7 +23,7 @@ coluna E não afeta o app. Atualizar `E2` faz parte de toda publicação (passo 
 
 | Canal | Deploy | Peças | Commit |
 |---|---|---|---|
-| Real (`arquivos_real`) | **2026-10-16-17** (conciliação: IA olha pagadores conhecidos + histórico; "o que é?" com nomes claros; busca de paciente por pagador/responsável) | 65 (duplicatas 3 · server 24 · index 38); ativas = as do 16-16 menos 1077, 1079, 1084, 1086, 1093, 1094, 1096, 1100 (→ `antigo47:`) mais 1101–1108 | branch `claude/lucid-wright-6vx5yt`, commit 8c4a8b3 |
+| Real (`arquivos_real`) | **2026-10-16-18** (conciliação: Pix de sessão em aberto resolvido na tela, parcial e adiantamento de mensalidade; correção do Salvar) | 65 (duplicatas 3 · server 24 · index 38); ativas = as do 16-17 menos 1097, 1103, 1108 (→ `antigo48:`) mais 1109–1111 | branch `claude/lucid-wright-6vx5yt`, commit f2451f2 |
 | Teste (`arquivos`) | **2026-10-16-10** (Alertas, ⚠ abre a Ficha) | 60 (duplicatas 3 · server 20 · index 37), linhas 750–809; `antigo42:` = as do 16-09 (690–749) | branch `claude/sweet-wozniak-aviy8u`, commit cede9d7 |
 | Carregador real | 2026-10-16 (`dist/Code.real.gs` com `gatilhoDiarioIA` + permissões; versão 2 do projeto real, implantada pela gestão em 16/10 17:27) | — | 618b511 |
 | Carregador teste | 2026-10-04-01 + nova versão pendente desde 05/10 (permissão do Drive, ver `COMO-INSTALAR.md`) | — | — |
@@ -48,6 +48,23 @@ Modelo:
 ```
 
 ## Lista
+
+### 2026-10-16-18 · Real · conciliação: Pix de sessão em aberto resolvido na tela, adiantamento, correção do Salvar
+- **O que mudou** (pedidos da gestão, 16/10 noite): (1) Pix que paga sessão em aberto se resolve na própria Conciliação —
+  faixa da IA "sessão em aberto" com **Registrar pagamento e conciliar** e "o que é?" → **Sessão/consulta em aberto →**;
+  registra o recebimento como a Ficha (`corrigirLancamento`, data do Pix, forma Pix) e concilia; Pix menor = parcial;
+  (2) **Pix maior que o em aberto** (caso do pai do Igor, setembro + outubro juntos): a sobra vira adiantamento de mensalidade
+  se fecha com 1 a 3 meses seguintes não pagos da cobrança mensal do paciente, registrado como na Cobrança do mês
+  (`registrarPagamentoMes`) e conciliado no mesmo Pix; senão recusa explicando; 1º clique mostra o plano (servidor, sem
+  gravar), 2º grava; (3) **correção**: o "Salvar" das entradas com faixa da IA não fazia nada (o clique ia pro botão da faixa);
+  (4) celular: "o que é?" e botões longos não alargam a tela. Detalhe em `NOTAS-api.md` §8 e `docs/README-GESTAO.md`.
+- **Peças**: 3 células (server 23 · index 4, 34), copiadas para 1109–1111 com `novo:`, 13 `findReplace` restritos à célula,
+  cada um com 1 ocorrência. Layout ativo remontado a partir do 16-17 e conferido igual ao build de 8c4a8b3 antes.
+- **Conferência**: LEN/UNICODE das 3 iguais ao esperado (36232/3059722 · 11790/848658 · 22815/2047895). Ativação numa gravação
+  só (A1097:A1111). Lido de volta: server 24 partes únicas, index 38, duplicatas 3; somas 318.495 / 463.400 / 32.115 = build de
+  f2451f2. Fórmulas temporárias apagadas, E2 carimbado. Testes locais 14/14; simulação 1280/390 sem erro e sem rolagem lateral.
+  **Voltar**: `antigo48:` → nome nas 3 linhas antigas (1097, 1103, 1108) e 1109–1111 → `antigo49:`.
+- **Commit**: f2451f2 · **Aprovação**: gestão, 16/10 ("sim, faz assim e publica junto").
 
 ### 2026-10-16-17 · Real · conciliação: pagadores conhecidos, nomes claros no "o que é?", busca por pagador/responsável
 - **O que mudou** (pedidos da gestão depois da 1ª rodada real em Setembro, 16/10): (1) a IA recebe a lista **PAGADORES
