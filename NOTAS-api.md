@@ -214,7 +214,11 @@ ganhou **Registrar pagamento e conciliar** e o "o que é?" ganhou **Sessão/cons
 `abertosJanela_`, a mesma janela dos candidatos A). `API.conciliarAberto({ id, abertos, obs })` (só gestão): confere entrada
 pendente e não-cartão, sessões ainda em aberto, Pix ≤ soma do em aberto (senão recusa sem gravar); registra com
 `API.corrigirLancamento` (`recebidoAgora`, data do Pix, forma Pix), da sessão mais antiga pra mais nova, e concilia com
-`API.conciliar`. Junto: correção do "Salvar" das entradas com faixa da IA (o clique ia pro botão da faixa).
+`API.conciliar`. Junto: correção do "Salvar" das entradas com faixa da IA (o clique ia pro botão da faixa). Pix maior que o em aberto
+(gestão, 17/10, caso do Igor): `concAdiantamento_` procura, a partir do mês seguinte ao da última sessão escolhida, até 3
+competências não pagas de uma linha mensal do paciente (Mensalidade fixa, ou Por sessão + Antecipado; um profissional, ou o
+da sessão); a soma tem de bater com a sobra (±R$ 0,01). Registra com `API.registrarPagamentoMes` (antes das sessões: se
+recusar, nada foi gravado) e liga as linhas criadas no mesmo Pix. `simular: true` devolve só o plano (1º clique da tela).
 
 **Como testar na real (depois da publicação)**: Conciliação → Setembro e Outubro → **Sugerir com IA** → conferir 5–10
 sugestões contra o extrato → Aceitar as certas. Março a agosto: **Confirmar sugestões fixas**. IA log: custo por lote.

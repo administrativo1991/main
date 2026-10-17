@@ -19,6 +19,8 @@ const ss = planilha({
   Procedimentos: [['Procedimento', 'Especialidade', 'Valor', 'Obs'], ['Sessão de psicologia', 'Psicologia', 120, '']],
   Mensalistas: [['Paciente', 'Modalidade', 'Valor', 'Pagador', 'OUTUBRO/2026 — sessões agendadas', 'OUTUBRO/2026 — valor cobrado', 'OUTUBRO/2026 — pago?', 'OUTUBRO/2026 — data', 'OUTUBRO/2026 — forma', 'OUTUBRO/2026 — NF'],
     ['Lia Mensal', 'Mensal', 425, 'Marta Mensal', 4, 425, 'Sim', '03/10/2026', 'Pix', '']],
+  'Cobrança por profissional': [['ID', 'Paciente', 'Profissional', 'Ativo', 'Cobrança', 'Convênio', 'Valor por sessão (R$)', 'Valor mensal (R$)', 'Pagamento', 'Vigente desde', 'Vigente até', 'Valor decidido por', 'Valor decidido em', 'Observação de cobrança', 'Registrado por (app)'],
+    ['C-1', 'Rui Aberto', 'Juliana Ribeiro', 'Sim', 'Mensalidade fixa', '', '', 150, 'Antecipado', '', '', 'gestão', '01/10/2026', '', '']],
   Setembro: [HM, lanc('S1', '15/09/2026', 'Ana Souza', 120, 'Dinheiro')],
   Outubro: [HM, lanc('L1', '02/10/2026', 'Gustavo Travnik', 90, 'Pix'), lanc('L2', '09/10/2026', 'Gustavo Travnik', 90, 'Pix'), lanc('L4', '05/10/2026', 'Ana Souza', 120, 'Pix'),
     lanc('R1', '06/10/2026', 'Rui Aberto', 120, 'Pix', 'Não'), lanc('L5', '05/10/2026', 'Bruno Card', 200, 'Cartão de crédito')]
@@ -159,4 +161,24 @@ c = ok(API.conciliacao({ chave: 'Outubro/2026' }), 'depois de quitar');
 assert.ok(/R2.*\+.*R3|R3.*\+.*R2/.test(c.resolvidos.find(e => e.id === 'B22').ligado)); assert.ok(!c.abertos.length || !c.abertos.some(a => /^R[23]$/.test(a.id)));
 assert.ok(!c.semBanco.some(x => /^R[23]$/.test(x.id)), 'os dois recebimentos do R2 conciliados (um por Pix)');
 console.log('pagar sessão em aberto ok');
+
+// 10. Pix maior que o em aberto: a sobra vira adiantamento de mensalidade se fecha com os meses seguintes (gestão, 17/10, caso do Igor)
+O.push(lanc('R4', '28/10/2026', 'Rui Aberto', 120, 'Pix', 'Não'), lanc('R5', '29/10/2026', 'Ana Souza', 120, 'Pix', 'Não'));
+ok(API.importarExtrato({ texto: '<OFX>\n' + [tx('B30', '20261030', '420.00', 'Pix recebido - Paulo Aberto'), tx('B31', '20261030', '300.00', 'Pix recebido - Paulo Aberto'), tx('B32', '20261030', '200.00', 'Pix recebido - Carla Souza')].join('\n') + '\n</OFX>' }), 'importa 4');
+c = ok(API.conciliacao({ chave: 'Outubro/2026' }), 'com R4');
+r = API.conciliarAberto({ id: 'B32', abertos: [ab('R5')] }); assert.strictEqual(r.ok, false); assert.ok(/não tem cobrança mensal/.test(r.erros[0]), r.erros[0]);
+r = API.conciliarAberto({ id: 'B31', abertos: [ab('R4')] }); assert.strictEqual(r.ok, false); assert.ok(/não fecha com a mensalidade/.test(r.erros[0]), r.erros[0]);
+r = ok(API.conciliarAberto({ id: 'B30', abertos: [ab('R4')], simular: true }), 'simular'); assert.strictEqual(r.plano, 'Rui 28/10 quitada + R$ 150,00 adiantamento de novembro + R$ 150,00 adiantamento de dezembro (Juliana)', r.plano);
+assert.strictEqual(linR('R4')[hO('Pago?')], 'Não', 'simular não grava');
+r = ok(API.conciliarAberto({ id: 'B30', abertos: [ab('R4')] }), 'adiantamento');
+assert.deepStrictEqual(r.adiantamento.map(x => x.chave), ['Novembro/2026', 'Dezembro/2026']); assert.strictEqual(linR('R4')[hO('Pago?')], 'Sim');
+const adi = O.filter(l => /^Mensalidade de (novembro|dezembro)/.test(l[hO('Procedimento')]));
+assert.strictEqual(adi.length, 2, 'linhas de mensalidade na aba do mês do Pix'); assert.ok(adi.every(l => l[hO('Valor (R$)')] === 150 && l[hO('Pago?')] === 'Sim' && l[hO('Forma de pagamento')] === 'Pix'));
+const MS = ss._m.Mensalistas.d, iRui = MS.findIndex(l => l[0] === 'Rui Aberto'); assert.ok(iRui > 0, 'Rui entrou em Mensalistas');
+assert.strictEqual(MS[iRui][MS[0].indexOf('NOVEMBRO/2026 — pago?')], 'Sim'); assert.strictEqual(MS[iRui][MS[0].indexOf('DEZEMBRO/2026 — pago?')], 'Sim');
+c = ok(API.conciliacao({ chave: 'Outubro/2026' }), 'depois do adiantamento');
+const b30 = c.resolvidos.find(e => e.id === 'B30'); assert.strictEqual(b30.situacao, 'conciliado'); assert.ok(/adiantamento: Novembro\/2026, Dezembro\/2026/.test(b30.obs), b30.obs);
+assert.ok(!c.semBanco.some(x => x.id === 'R4' || adi.some(l => l[hO('ID')] === x.id)), 'sessão e mensalidades conciliadas com o Pix');
+r = API.conciliarAberto({ id: 'B31', abertos: [ab('R5')] }); assert.strictEqual(r.ok, false);
+console.log('adiantamento ok');
 console.log('servidor-conciliacao-ia: tudo ok');

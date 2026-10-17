@@ -66,15 +66,26 @@ function ccPagarAberto(e, abertos, obs, btn) {
   return call('conciliarAberto', { id: e.id, abertos: ccRecs(abertos), obs: obs || '' }).then(function (r) {
     if (btn) btn.disabled = false;
     if (!r.ok) { $("#cc-aviso").innerHTML = erroBox(r.erros || ['Não registrei'], 'Não registrei o pagamento'); return; }
-    toast('Pagamento registrado: ' + r.pagos.map(function (x) { return x.paciente.split(' ')[0] + ' ' + ccDia(x.data) + ' ' + ccR(x.valor) + (x.quitou ? '' : ' (parcial)'); }).join(', ') + ' · conciliado');
+    toast('Registrado e conciliado: ' + (r.plano || r.pagos.map(function (x) { return x.paciente.split(' ')[0] + ' ' + ccDia(x.data) + ' ' + ccR(x.valor) + (x.quitou ? '' : ' (parcial)'); }).join(', ')));
     $("#cc-aviso").innerHTML = r.erros && r.erros.length ? erroBox(r.erros, 'Atenção') : '';
     carregarConc();
   }).catch(function (x) { if (btn) btn.disabled = false; toast('Não registrei: ' + x.message); });
 }
+// 1º clique: o servidor diz o que vai fazer (sem gravar; Pix maior que o em aberto = adiantamento de mensalidade, se fechar); 2º clique: grava
+function ccConfirmarPagar(b, e, abertos, obs) {
+  if (b.dataset.ok === '1') { b.dataset.ok = ''; b.textContent = b.dataset.antes; return ccPagarAberto(e, abertos, obs, b); }
+  b.disabled = true;
+  call('conciliarAberto', { id: e.id, abertos: ccRecs(abertos), simular: true }).then(function (r) {
+    b.disabled = false;
+    if (!r.ok) { toast((r.erros || ['Não dá'])[0]); $("#cc-aviso").innerHTML = erroBox(r.erros || [], 'Não dá pra registrar assim'); return; }
+    b.dataset.ok = '1'; b.dataset.antes = b.textContent; b.textContent = 'Confirmar: ' + r.plano + '?';
+    setTimeout(function () { if (b.dataset.ok === '1') { b.dataset.ok = ''; b.textContent = b.dataset.antes; } }, 8000);
+  }).catch(function (x) { b.disabled = false; toast('Não consegui conferir: ' + x.message); });
+}
 // o que o Pix faz nas sessões, da mais antiga pra mais nova (mesma conta do servidor): "quita" / "R$ 100 de R$ 200, fica R$ 100"
 function ccAbertoResumo(valor, abertos) {
   var resto = valor, tot = abertos.reduce(function (a, x) { return a + x.valor; }, 0);
-  if (valor > tot + 0.005) return { ok: false, txt: 'o Pix (' + ccR(valor) + ') é maior que o em aberto (' + ccR(tot) + ')' };
+  if (valor > tot + 0.005) return { ok: false, txt: 'Pix ' + ccR(valor - tot) + ' maior que o em aberto: se fechar com a mensalidade, a sobra entra como adiantamento' };
   var partes = abertos.slice().sort(function (a, b) { return dataObj(a.data) - dataObj(b.data); }).map(function (a) { var v = Math.min(resto, a.valor); resto -= v; var q = String(a.paciente || '').split(' ')[0] + ' ' + ccDia(a.data); return v < 0.005 ? null : v >= a.valor - 0.005 ? q + ' quitada' : q + ': ' + ccR(v) + ' de ' + ccR(a.valor) + ', fica ' + ccR(a.valor - v) + ' em aberto'; }).filter(Boolean);
   return { ok: true, txt: partes.join(' · ') };
 }
@@ -118,12 +129,12 @@ function renderConc() {
       var sit = selS.value, l = sit === 'conciliado' && selL && selL.value !== '' ? ord[+selL.value] : null, obs = $('.cc-obs', it).value.trim();
       if (!sit) return toast('Escolha o que é');
       if (sit === 'conciliado' && !l) return toast('Escolha qual lançamento');
-      if (sit === 'aberto') { if (!selA.value) return toast('Escolha qual sessão'); var a = abertos[+selA.value], res = ccAbertoResumo(x.valor, [a]); if (!res.ok) return toast('Não dá: ' + res.txt); var b = this; return doisCliques(b, 'Confirmar: ' + res.txt + '?', function () { ccPagarAberto(x, [a], obs, b); }); }
+      if (sit === 'aberto') { if (!selA.value) return toast('Escolha qual sessão'); return ccConfirmarPagar(this, x, [abertos[+selA.value]], obs); }
       var recs = l ? ccRecs([l]) : [], extra = { situacao: l ? 'conciliado' : sit, obs: obs };
       ccSalvar([p.e ? Object.assign({ tipo: 'ext', id: x.id, recs: recs }, extra) : ccItemVenda(x, recs, extra)], this);
     });
     var bIA = $('.cc-ia-aceitar', it); if (bIA) bIA.addEventListener('click', function () { ccSalvar([ccItemIA(p)], this); });
-    var bPg = $('.cc-ia-pagar', it); if (bPg) bPg.addEventListener('click', function () { var b = this; doisCliques(b, 'Confirmar: ' + ccAbertoResumo(x.valor, x.ia.abertos).txt + '?', function () { ccPagarAberto(x, x.ia.abertos, 'IA: ' + (x.ia.motivo || ''), b); }); });
+    var bPg = $('.cc-ia-pagar', it); if (bPg) bPg.addEventListener('click', function () { ccConfirmarPagar(this, x, x.ia.abertos, 'IA: ' + (x.ia.motivo || '')); });
     $$('.cc-ficha', it).forEach(function (a) { a.addEventListener('click', function (ev) { ev.preventDefault(); go('ficha', { nome: a.getAttribute('data-nome') }); }); });
     lsl.appendChild(it);
   });
@@ -162,7 +173,7 @@ function ccIAHtml(ia, valor) {
   else if (ia.acao === 'em_aberto') {
     var res = valor != null ? ccAbertoResumo(valor, ia.abertos || []) : null;
     corpo = '<span>sessão em aberto: ' + (ia.abertos || []).map(function (a) { return '<a href="#" class="link-discreto cc-ficha" data-nome="' + esc(a.paciente) + '">' + esc(a.paciente) + '</a> <span class="muted">' + esc(ccDia(a.data) + ' · ' + ccR(a.valor)) + '</span>'; }).join(', ') + (res ? ' <span class="muted">→ ' + esc(res.txt) + '</span>' : '') + '</span>';
-    if (res && res.ok) corpo += ' <button type="button" class="btn mini cc-ia-pagar">Registrar pagamento e conciliar</button>';
+    if (res) corpo += ' <button type="button" class="btn mini cc-ia-pagar">Registrar pagamento e conciliar</button>';
     else if (!res) corpo += '<span>. Registre o pagamento na Ficha; depois ele concilia aqui.</span>';
   }
   var podeAceitar = ia.acao === 'ligar' || ia.acao === 'situacao';

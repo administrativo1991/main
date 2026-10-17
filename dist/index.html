@@ -707,6 +707,7 @@ table.cm .acoes{justify-content:flex-end;gap:4px;flex-wrap:wrap}
 .cc-ia.faixa{padding:8px 12px}
 .cc-ia-corpo{display:flex;flex-wrap:wrap;align-items:center;gap:6px 12px;margin-top:4px}
 .cc-ia-corpo .cc-recs{display:flex;flex:1 1 auto}
+.cc-ia-corpo .btn,.cc-form .btn{white-space:normal;max-width:100%;height:auto;text-align:left}
 #cc-res-card summary{cursor:pointer}
 @media (max-width:700px){
   #cc-resumo{grid-template-columns:repeat(2,minmax(0,1fr))}
@@ -2072,14 +2073,18 @@ function mockConc(nome, d) {
     { id: 'B7', data: dd(5), valor: 0.42, tipo: 'Rendimento', quem: '', desc: 'Rendimento', situacao: 'não é paciente' },
     { id: 'B8', data: dd(4), valor: 500, tipo: 'Outro', quem: 'Resgate de CDB', desc: 'Renda Fixa - Resgate de CDB', sugestao: 'não é paciente', fixa: true },
     { id: 'B9', data: dd(7), valor: 160, tipo: 'Pix', quem: 'Debora Leidiane Travnik', desc: '' }, { id: 'B10', data: dd(3), valor: 425, tipo: 'Pix', quem: 'Marta Mensal', desc: '' },
-    { id: 'B11', data: dd(8), valor: 120, tipo: 'Pix', quem: 'Paulo Aberto', desc: '' }, { id: 'B12', data: dd(9), valor: 100, tipo: 'Pix', quem: 'Aline Rezende Fortes Pinheiro', desc: '' }];
+    { id: 'B11', data: dd(8), valor: 120, tipo: 'Pix', quem: 'Paulo Aberto', desc: '' }, { id: 'B12', data: dd(9), valor: 100, tipo: 'Pix', quem: 'Aline Rezende Fortes Pinheiro', desc: '' }, { id: 'B13', data: dd(9), valor: 300, tipo: 'Pix', quem: 'Paulo Aberto', desc: '' }];
   if (!mockVendas) mockVendas = [{ id: 'V1', data: dd(2), forma: 'Crédito', parcelas: 'à Vista', bandeira: 'Visa', bruto: 215, taxa: 6.43, liquido: 208.57, liberacao: dd(3), comprador: '', depositoSug: { id: 'B6', data: dd(3), valor: 208.57, situacao: 'pendente' } },
     { id: 'V2', data: dd(4), forma: 'Crédito', parcelas: 'Parcelado 4x', bandeira: 'Mastercard', bruto: 1200, taxa: 23.4, liquido: 1176.6, liberacao: dd(4), comprador: '', depositoSug: null }];
   if (nome === 'conciliacaoIA') { if (!mockIAE.itens.conciliacao) return { ok: false, motivo: 'pausada_item', erros: ['IA pausada pela gestão (Conciliação)'] }; mockConcIA = true; mockIAE.gastoMes = Math.round((mockIAE.gastoMes + 0.031) * 1000) / 1000; return { ok: true, sugeridas: 4, semSugestao: 1, restantes: 0, custo: 0.031, lotes: 1, mensagem: '', erros: [] }; }
   if (nome === 'conciliarAberto') { var eA = (mockExt || []).filter(function (e) { return e.id === d.id; })[0], tot = 0; (d.abertos || []).forEach(function (k) { var a = mockAbertos().filter(function (x) { return x.id === k.id; })[0]; if (a) tot += a.valor; });
-    if (!eA || !tot) return { ok: false, erros: ['Escolha a sessão em aberto.'] }; if (eA.valor > tot + 0.005) return { ok: false, erros: ['O Pix (R$ ' + brl(eA.valor) + ') é maior que o em aberto escolhido (R$ ' + brl(tot) + ').'] };
-    var resto = eA.valor, pagos = []; (d.abertos || []).forEach(function (k) { var a = mockAbertos().filter(function (x) { return x.id === k.id; })[0]; if (!a || resto < 0.005) return; var v = Math.min(resto, a.valor); resto -= v; mockPagoAberto[a.id] = (mockPagoAberto[a.id] || 0) + v; pagos.push({ aba: a.aba, linha: a.linha, id: a.id, paciente: a.paciente, data: a.data, valor: v, quitou: v >= a.valor - 0.005 }); });
-    mockConcOk[eA.id] = 'conciliado'; return { ok: true, pagos: pagos, erros: [] }; }
+    if (!eA || !tot) return { ok: false, erros: ['Escolha a sessão em aberto.'] };
+    var abs = (d.abertos || []).map(function (k) { return mockAbertos().filter(function (x) { return x.id === k.id; })[0]; }).filter(Boolean), sobra = Math.round((eA.valor - tot) * 100) / 100, mensal = { 'Rui Aberto': 180 }[abs[0].paciente];
+    if (sobra > 0.005 && sobra !== mensal) return { ok: false, erros: ['O Pix (R$ ' + brl(eA.valor) + ') é maior que o em aberto escolhido (R$ ' + brl(tot) + '). ' + (mensal ? 'A sobra (R$ ' + brl(sobra) + ') não fecha com a mensalidade (R$ ' + brl(mensal) + '): resolva à mão.' : abs[0].paciente + ' não tem cobrança mensal: a sobra não tem onde entrar como adiantamento.')] };
+    var plano = abs.map(function (a) { var v = Math.min(a.valor, eA.valor); return a.paciente.split(' ')[0] + ' ' + a.data.slice(0, 5) + (v >= a.valor - 0.005 ? ' quitada' : ': R$ ' + brl(v) + ' de R$ ' + brl(a.valor) + ', fica R$ ' + brl(a.valor - v) + ' em aberto'); }).join(' + ') + (sobra > 0.005 ? ' + R$ ' + brl(sobra) + ' adiantamento de ' + MESES_PT[(new Date().getMonth() + 1) % 12].toLowerCase() + ' (Juliana)' : '');
+    if (d.simular) return { ok: true, plano: plano };
+    var resto = Math.min(eA.valor, tot), pagos = []; (d.abertos || []).forEach(function (k) { var a = mockAbertos().filter(function (x) { return x.id === k.id; })[0]; if (!a || resto < 0.005) return; var v = Math.min(resto, a.valor); resto -= v; mockPagoAberto[a.id] = (mockPagoAberto[a.id] || 0) + v; pagos.push({ aba: a.aba, linha: a.linha, id: a.id, paciente: a.paciente, data: a.data, valor: v, quitou: v >= a.valor - 0.005 }); });
+    mockConcOk[eA.id] = 'conciliado'; return { ok: true, pagos: pagos, plano: plano, erros: [] }; }
   if (nome === 'conciliar') { (d.itens || []).forEach(function (it) { mockConcOk[it.id] = it.recs && it.recs.length ? 'conciliado' : it.situacao; (it.recs || []).forEach(function (r) { mockConcOk['lanc:' + r.id] = 1; }); }); return { ok: true, feitos: (d.itens || []).length, erros: [] }; }
   var L = function (id, dia, pac, prof, valor, forma) { return { aba: MESES_PT[h.getMonth()], linha: 2 + +id.slice(1), id: id, paciente: pac, profissional: prof, data: dd(dia), dataPag: dd(dia), valor: valor, forma: forma }; };
   var sug = [{ tipo: 'pix', forca: 'forte', aviso: '', ext: mockExt[0], recs: [L('L1', 2, 'Theo Barreto Lima', 'Juliana Ribeiro', 120, 'Pix')] },
@@ -4675,15 +4680,26 @@ function ccPagarAberto(e, abertos, obs, btn) {
   return call('conciliarAberto', { id: e.id, abertos: ccRecs(abertos), obs: obs || '' }).then(function (r) {
     if (btn) btn.disabled = false;
     if (!r.ok) { $("#cc-aviso").innerHTML = erroBox(r.erros || ['Não registrei'], 'Não registrei o pagamento'); return; }
-    toast('Pagamento registrado: ' + r.pagos.map(function (x) { return x.paciente.split(' ')[0] + ' ' + ccDia(x.data) + ' ' + ccR(x.valor) + (x.quitou ? '' : ' (parcial)'); }).join(', ') + ' · conciliado');
+    toast('Registrado e conciliado: ' + (r.plano || r.pagos.map(function (x) { return x.paciente.split(' ')[0] + ' ' + ccDia(x.data) + ' ' + ccR(x.valor) + (x.quitou ? '' : ' (parcial)'); }).join(', ')));
     $("#cc-aviso").innerHTML = r.erros && r.erros.length ? erroBox(r.erros, 'Atenção') : '';
     carregarConc();
   }).catch(function (x) { if (btn) btn.disabled = false; toast('Não registrei: ' + x.message); });
 }
+// 1º clique: o servidor diz o que vai fazer (sem gravar; Pix maior que o em aberto = adiantamento de mensalidade, se fechar); 2º clique: grava
+function ccConfirmarPagar(b, e, abertos, obs) {
+  if (b.dataset.ok === '1') { b.dataset.ok = ''; b.textContent = b.dataset.antes; return ccPagarAberto(e, abertos, obs, b); }
+  b.disabled = true;
+  call('conciliarAberto', { id: e.id, abertos: ccRecs(abertos), simular: true }).then(function (r) {
+    b.disabled = false;
+    if (!r.ok) { toast((r.erros || ['Não dá'])[0]); $("#cc-aviso").innerHTML = erroBox(r.erros || [], 'Não dá pra registrar assim'); return; }
+    b.dataset.ok = '1'; b.dataset.antes = b.textContent; b.textContent = 'Confirmar: ' + r.plano + '?';
+    setTimeout(function () { if (b.dataset.ok === '1') { b.dataset.ok = ''; b.textContent = b.dataset.antes; } }, 8000);
+  }).catch(function (x) { b.disabled = false; toast('Não consegui conferir: ' + x.message); });
+}
 // o que o Pix faz nas sessões, da mais antiga pra mais nova (mesma conta do servidor): "quita" / "R$ 100 de R$ 200, fica R$ 100"
 function ccAbertoResumo(valor, abertos) {
   var resto = valor, tot = abertos.reduce(function (a, x) { return a + x.valor; }, 0);
-  if (valor > tot + 0.005) return { ok: false, txt: 'o Pix (' + ccR(valor) + ') é maior que o em aberto (' + ccR(tot) + ')' };
+  if (valor > tot + 0.005) return { ok: false, txt: 'Pix ' + ccR(valor - tot) + ' maior que o em aberto: se fechar com a mensalidade, a sobra entra como adiantamento' };
   var partes = abertos.slice().sort(function (a, b) { return dataObj(a.data) - dataObj(b.data); }).map(function (a) { var v = Math.min(resto, a.valor); resto -= v; var q = String(a.paciente || '').split(' ')[0] + ' ' + ccDia(a.data); return v < 0.005 ? null : v >= a.valor - 0.005 ? q + ' quitada' : q + ': ' + ccR(v) + ' de ' + ccR(a.valor) + ', fica ' + ccR(a.valor - v) + ' em aberto'; }).filter(Boolean);
   return { ok: true, txt: partes.join(' · ') };
 }
@@ -4727,12 +4743,12 @@ function renderConc() {
       var sit = selS.value, l = sit === 'conciliado' && selL && selL.value !== '' ? ord[+selL.value] : null, obs = $('.cc-obs', it).value.trim();
       if (!sit) return toast('Escolha o que é');
       if (sit === 'conciliado' && !l) return toast('Escolha qual lançamento');
-      if (sit === 'aberto') { if (!selA.value) return toast('Escolha qual sessão'); var a = abertos[+selA.value], res = ccAbertoResumo(x.valor, [a]); if (!res.ok) return toast('Não dá: ' + res.txt); var b = this; return doisCliques(b, 'Confirmar: ' + res.txt + '?', function () { ccPagarAberto(x, [a], obs, b); }); }
+      if (sit === 'aberto') { if (!selA.value) return toast('Escolha qual sessão'); return ccConfirmarPagar(this, x, [abertos[+selA.value]], obs); }
       var recs = l ? ccRecs([l]) : [], extra = { situacao: l ? 'conciliado' : sit, obs: obs };
       ccSalvar([p.e ? Object.assign({ tipo: 'ext', id: x.id, recs: recs }, extra) : ccItemVenda(x, recs, extra)], this);
     });
     var bIA = $('.cc-ia-aceitar', it); if (bIA) bIA.addEventListener('click', function () { ccSalvar([ccItemIA(p)], this); });
-    var bPg = $('.cc-ia-pagar', it); if (bPg) bPg.addEventListener('click', function () { var b = this; doisCliques(b, 'Confirmar: ' + ccAbertoResumo(x.valor, x.ia.abertos).txt + '?', function () { ccPagarAberto(x, x.ia.abertos, 'IA: ' + (x.ia.motivo || ''), b); }); });
+    var bPg = $('.cc-ia-pagar', it); if (bPg) bPg.addEventListener('click', function () { ccConfirmarPagar(this, x, x.ia.abertos, 'IA: ' + (x.ia.motivo || '')); });
     $$('.cc-ficha', it).forEach(function (a) { a.addEventListener('click', function (ev) { ev.preventDefault(); go('ficha', { nome: a.getAttribute('data-nome') }); }); });
     lsl.appendChild(it);
   });
@@ -4771,7 +4787,7 @@ function ccIAHtml(ia, valor) {
   else if (ia.acao === 'em_aberto') {
     var res = valor != null ? ccAbertoResumo(valor, ia.abertos || []) : null;
     corpo = '<span>sessão em aberto: ' + (ia.abertos || []).map(function (a) { return '<a href="#" class="link-discreto cc-ficha" data-nome="' + esc(a.paciente) + '">' + esc(a.paciente) + '</a> <span class="muted">' + esc(ccDia(a.data) + ' · ' + ccR(a.valor)) + '</span>'; }).join(', ') + (res ? ' <span class="muted">→ ' + esc(res.txt) + '</span>' : '') + '</span>';
-    if (res && res.ok) corpo += ' <button type="button" class="btn mini cc-ia-pagar">Registrar pagamento e conciliar</button>';
+    if (res) corpo += ' <button type="button" class="btn mini cc-ia-pagar">Registrar pagamento e conciliar</button>';
     else if (!res) corpo += '<span>. Registre o pagamento na Ficha; depois ele concilia aqui.</span>';
   }
   var podeAceitar = ia.acao === 'ligar' || ia.acao === 'situacao';

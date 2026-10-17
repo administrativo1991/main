@@ -132,7 +132,31 @@ function iaConciliacaoAnexar_(c) {
 /* Pix que paga sessão(ões) em aberto, resolvido na conciliação (gestão, 17/10: "queria poder resolver nessa mesma página"):
    registra o recebimento nas sessões (o mesmo de "Registrar pagamento" na Ficha: API.corrigirLancamento com recebidoAgora, data
    do Pix, forma Pix), da mais antiga pra mais nova, e concilia a entrada com elas (API.conciliar). Pix menor que o em aberto =
-   recebimento parcial (o resto continua em aberto); Pix maior que o em aberto escolhido = recusa (nada é gravado). */
+   recebimento parcial (o resto continua em aberto). Pix maior que o em aberto (gestão, 17/10: "pai do Igor pagou setembro e
+   outubro juntos"): a sobra é adiantamento de mensalidade se fecha com 1 a 3 meses seguintes ainda não pagos de uma cobrança
+   mensal do paciente (Mensalidade fixa ou Antecipado por sessão) e é registrada como na Cobrança do mês
+   (API.registrarPagamentoMes); senão, recusa explicando (nada é gravado). d.simular = só devolve o plano, sem gravar. */
+// sobra de um Pix como adiantamento: { ok, profissional, comps: [{ chave, valor }] } ou { ok: false, erro }
+function concAdiantamento_(paciente, profPref, depoisDe, resto) {
+  var mensal = function (l) { return l && l.ativo && (l.cobranca === 'Mensalidade fixa' || (l.cobranca === 'Por sessão' && l.pagamento === 'Antecipado')); };
+  var profs = []; cobrancasProf_().forEach(function (l) { if (l.paciente === paciente && mensal(l) && profs.indexOf(l.profissional) < 0) profs.push(l.profissional); });
+  if (!profs.length) return { ok: false, erro: paciente + ' não tem cobrança mensal (mensalidade fixa ou antecipado) em Cobrança por profissional: a sobra não tem onde entrar como adiantamento.' };
+  var prof = profs.length === 1 ? profs[0] : profs.indexOf(profPref) >= 0 ? profPref : '';
+  if (!prof) return { ok: false, erro: paciente + ' tem cobrança mensal com mais de um profissional (' + profs.join(', ') + '): registre o adiantamento na Cobrança do mês.' };
+  var comps = [], soma = 0, ultimo = '';
+  for (var i = 1; i <= 6 && comps.length < 3 && soma < resto - 0.005; i++) {
+    var m = new Date(depoisDe.getFullYear(), depoisDe.getMonth() + i, 1, 12), chave = chaveMes_(m), l = linhaVigente_(paciente, prof, m).linha;
+    if (!mensal(l)) continue;
+    var c = competenciaDe_(l, chave); if (/^Sim$/i.test(c.pago)) continue;
+    var nAb = c.abatimentos.reduce(function (a, x) { return a + (x.n || 1); }, 0), sess = c.sessoes;
+    var cobrado = l.cobranca === 'Mensalidade fixa' ? l.valorMensal : (c.valorCobrado != null ? c.valorCobrado : (l.valorSessao != null && sess != null ? Math.round(l.valorSessao * Math.max(0, sess - nAb) * 100) / 100 : null));
+    if (!(cobrado > 0)) return { ok: false, erro: chave + ' de ' + paciente + ' ainda sem valor a cobrar (sessões agendadas?): registre na Cobrança do mês.' };
+    comps.push({ chave: chave, valor: cobrado }); soma = Math.round((soma + cobrado) * 100) / 100; ultimo = brl_(cobrado);
+  }
+  if (!comps.length) return { ok: false, erro: 'Não achei mês seguinte em aberto na cobrança mensal de ' + paciente + '.' };
+  if (Math.abs(soma - resto) > 0.01) return { ok: false, erro: 'A sobra (' + brl_(resto) + ') não fecha com a mensalidade de ' + paciente + ' (' + comps.map(function (c) { return c.chave.split('/')[0].toLowerCase() + ' ' + brl_(c.valor); }).join(' + ') + '): resolva à mão.' };
+  return { ok: true, profissional: prof, comps: comps };
+}
 API.conciliarAberto = function (d) {
   var neg = soGestao_(); if (neg) return neg; d = d || {};
   var sE = abaComCabecalho_(ABA_EXT, HEXT), e = linhasComo_(sE).filter(function (x) { return String(x['ID do banco']) === String(d.id || ''); })[0];
@@ -149,8 +173,25 @@ API.conciliarAberto = function (d) {
   if (!sessoes.length && !erros.length) erros.push('Escolha a sessão em aberto.');
   if (erros.length) return { ok: false, erros: erros };
   var emAberto = Math.round(sessoes.reduce(function (a, x) { return a + saldo_(x.r); }, 0) * 100) / 100;
-  if (valor > emAberto + 0.005) return { ok: false, erros: ['O Pix (' + brl_(valor) + ') é maior que o em aberto escolhido (' + brl_(emAberto) + '). Escolha mais sessões ou resolva de outro jeito.'] };
   sessoes.sort(function (a, b) { return ymdDate_(a.r.data) - ymdDate_(b.r.data); });
+  var adi = null, ultima = sessoes[sessoes.length - 1].r;
+  if (valor > emAberto + 0.005) {
+    var pacs = sessoes.map(function (x) { return x.r.paciente; }).filter(function (n, i, a) { return a.indexOf(n) === i; });
+    var pre = 'O Pix (' + brl_(valor) + ') é maior que o em aberto escolhido (' + brl_(emAberto) + '). ';
+    if (pacs.length > 1) return { ok: false, erros: [pre + 'Sessões de mais de um paciente: a sobra não vira adiantamento; resolva à mão.'] };
+    adi = concAdiantamento_(pacs[0], ultima.profissional, ymdDate_(ultima.data), Math.round((valor - emAberto) * 100) / 100);
+    if (!adi.ok) return { ok: false, erros: [pre + adi.erro] };
+  }
+  var plano = sessoes.map(function (x) { var v = Math.min(saldo_(x.r), valor); return x.r.paciente.split(' ')[0] + ' ' + x.r.data.slice(0, 5) + (v >= saldo_(x.r) - 0.005 ? ' quitada' : ': ' + brl_(v) + ' de ' + brl_(saldo_(x.r)) + ', fica ' + brl_(saldo_(x.r) - v) + ' em aberto'); })
+    .concat(adi ? [adi.comps.map(function (c) { return brl_(c.valor) + ' adiantamento de ' + c.chave.split('/')[0].toLowerCase(); }).join(' + ') + ' (' + adi.profissional.replace(/^Dra?\.\s+/, '').split(' ')[0] + ')'] : []).join(' + ');
+  if (d.simular) return { ok: true, plano: plano };
+  var lancAdi = [];
+  if (adi) { // primeiro o adiantamento: se a Cobrança do mês recusar, nada foi gravado
+    var ra = API.registrarPagamentoMes({ paciente: ultima.paciente, profissional: adi.profissional, competencias: adi.comps.map(function (c) { return c.chave; }), data: dataPix, forma: 'Pix', valor: Math.round((valor - emAberto) * 100) / 100, observacao: 'Pix no banco em ' + dataPix + ' (conciliação; ' + brl_(valor) + ' no total)' });
+    if (!ra.ok) return { ok: false, erros: ['Adiantamento não registrado: '].concat(ra.erros || []) };
+    ra.feitos.forEach(function (f) { if (f.id) lancAdi.push({ aba: f.aba, linha: f.linha, id: f.id }); });
+    valor = emAberto;
+  }
   var resto = valor, pagos = [];
   sessoes.forEach(function (x) {
     if (resto < 0.005 || erros.length) return;
@@ -159,10 +200,12 @@ API.conciliarAberto = function (d) {
     resto = Math.round((resto - v) * 100) / 100;
     pagos.push({ aba: x.aba, linha: x.r.linha, id: x.r.id, paciente: x.r.paciente, data: x.r.data, valor: v, quitou: v >= saldo_(x.r) - 0.005 });
   });
-  if (!pagos.length) return { ok: false, erros: erros };
-  var obs = String(d.obs || '').trim(), rcc = API.conciliar({ itens: [{ tipo: 'ext', id: e['ID do banco'], recs: pagos.map(function (p) { return { aba: p.aba, linha: p.linha, id: p.id }; }), obs: obs || 'pagamento de sessão em aberto, registrado na conciliação' }] });
+  if (!pagos.length && !lancAdi.length) return { ok: false, erros: erros };
+  var recs = pagos.map(function (p) { return { aba: p.aba, linha: p.linha, id: p.id }; }).concat(lancAdi);
+  var obs = [String(d.obs || '').trim() || 'pagamento de sessão em aberto, registrado na conciliação', adi ? 'adiantamento: ' + adi.comps.map(function (c) { return c.chave; }).join(', ') + ' (' + adi.profissional + ')' : ''].filter(Boolean).join(' · ');
+  var rcc = recs.length ? API.conciliar({ itens: [{ tipo: 'ext', id: e['ID do banco'], recs: recs, obs: obs }] }) : API.conciliar({ itens: [{ tipo: 'ext', id: e['ID do banco'], recs: [], situacao: 'mensalidade anotada em Mensalistas', obs: obs }] });
   if (!rcc.ok || rcc.erros.length) erros = erros.concat(rcc.erros || ['Recebimento registrado, mas não consegui conciliar: recarregue e ligue a entrada ao lançamento.']);
-  return { ok: true, pagos: pagos, erros: erros };
+  return { ok: true, pagos: pagos, adiantamento: adi ? adi.comps : [], plano: plano, erros: erros };
 };
 function gravarSugIA_(itens) {
   if (!itens.length) return;
