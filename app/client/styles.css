@@ -705,7 +705,7 @@ table.cm .acoes{justify-content:flex-end;gap:4px;flex-wrap:wrap}
   .cc-sug .cc-lados{flex:1 1 calc(100% - 40px)}
   .cc-sug>.tag{margin-left:28px;white-space:normal}
   .cc-form{flex-basis:100%}
-  .cc-form select,.cc-form input{max-width:none}
+  .cc-form select,.cc-form input{max-width:100%;min-width:0}
 }
 /* a receber e perdas (Fase 2, 16/10) */
 .ar-faixas button{text-align:left;background:var(--sup);border:1px solid var(--borda);border-radius:14px;padding:12px 14px;cursor:pointer;font:inherit;color:inherit}

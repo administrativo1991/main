@@ -133,4 +133,30 @@ F.chamadas.length = 0; ok(API.conciliacaoIA({ chave: 'Outubro/2026' }), 'sugerir
 const t8 = F.chamadas[0].body.messages[0].content[0].text;
 assert.ok(/E\d+ · Debora Leidiane Travnik → cadastro: Gustavo Travnik \(pagador habitual\) → decisões anteriores da gestão: 1× conciliado — ligado a Gustavo Travnik/.test(t8), t8.split('PAGADORES')[1].slice(0, 300));
 assert.ok(!/quem pagou: Outro Travnik/.test(t8), 'B12 já tem sugestão pelo histórico');
+
+// 9. Pix que paga sessão em aberto, resolvido na própria conciliação (gestão, 17/10): registra o recebimento e concilia
+O.push(lanc('R2', '20/10/2026', 'Rui Aberto', 200, 'Pix', 'Não'), lanc('R3', '27/10/2026', 'Rui Aberto', 120, 'Pix', 'Não'));
+ok(API.importarExtrato({ texto: '<OFX>\n' + [tx('B20', '20261030', '100.00', 'Pix recebido - Paulo Aberto'), tx('B21', '20261030', '500.00', 'Pix recebido - Paulo Aberto'), tx('B22', '20261031', '220.00', 'Pix recebido - Paulo Aberto')].join('\n') + '\n</OFX>' }), 'importa 3');
+c = ok(API.conciliacao({ chave: 'Outubro/2026' }), 'com abertos');
+assert.deepStrictEqual(c.abertos.map(a => a.id).sort(), ['R2', 'R3'], 'lista de sessões em aberto pra escolher à mão'); assert.strictEqual(c.abertos.find(a => a.id === 'R2').pagador, 'Paulo Aberto');
+const ab = id => { const a = c.abertos.find(x => x.id === id); return { aba: a.aba, linha: a.linha, id: a.id }; };
+email = 'recepcao@clinicanascente.com.br'; assert.strictEqual(API.conciliarAberto({ id: 'B20', abertos: [ab('R2')] }).ok, false, 'só gestão'); email = 'gestao@clinicanascente.com.br';
+r = API.conciliarAberto({ id: 'B21', abertos: [ab('R2'), ab('R3')] }); assert.strictEqual(r.ok, false); assert.ok(/maior que o em aberto/.test(r.erros[0]), 'Pix maior que o em aberto: recusa');
+const hO = n => O[0].indexOf(n), linR = id => O.find(l => l[hO('ID')] === id);
+assert.strictEqual(linR('R2')[hO('Pago?')], 'Não', 'recusa não grava nada');
+r = ok(API.conciliarAberto({ id: 'B20', abertos: [ab('R2')] }), 'parcial');
+assert.deepStrictEqual(r.pagos.map(p => [p.id, p.valor, p.quitou]), [['R2', 100, false]]);
+assert.strictEqual(linR('R2')[hO('Pago?')], 'Parcial'); assert.strictEqual(linR('R2')[hO('Valor recebido (R$)')], 100); { const dp = linR('R2')[hO('Data do pagamento')]; assert.strictEqual(dp instanceof RealDate ? fmt(dp, '', 'dd/MM/yyyy') : dp, '30/10/2026'); } assert.strictEqual(linR('R2')[hO('Forma de pagamento')], 'Pix');
+assert.ok(/Recebido R\$ 100,00 em 30\/10\/2026 \(Pix\)/.test(linR('R2')[hO('Observação')]), linR('R2')[hO('Observação')]); assert.ok(/PagBank 30\/10\/2026 · R\$ 100,00/.test(linR('R2')[hO('Conciliado')]));
+c = ok(API.conciliacao({ chave: 'Outubro/2026' }), 'depois do parcial');
+assert.strictEqual(c.resolvidos.find(e => e.id === 'B20').situacao, 'conciliado'); assert.strictEqual(c.abertos.find(a => a.id === 'R2').valor, 100, 'fica R$ 100 em aberto');
+assert.ok(!c.semBanco.some(x => x.id === 'R2'), 'o recebimento novo já sai conciliado');
+assert.strictEqual(API.conciliarAberto({ id: 'B20', abertos: [ab('R2')] }).ok, false, 'entrada já resolvida');
+r = ok(API.conciliarAberto({ id: 'B22', abertos: [ab('R3'), ab('R2')] }), 'duas sessões');
+assert.deepStrictEqual(r.pagos.map(p => [p.id, p.valor, p.quitou]), [['R2', 100, true], ['R3', 120, true]], 'da mais antiga pra mais nova');
+assert.strictEqual(linR('R2')[hO('Pago?')], 'Sim'); assert.strictEqual(linR('R3')[hO('Pago?')], 'Sim');
+c = ok(API.conciliacao({ chave: 'Outubro/2026' }), 'depois de quitar');
+assert.ok(/R2.*\+.*R3|R3.*\+.*R2/.test(c.resolvidos.find(e => e.id === 'B22').ligado)); assert.ok(!c.abertos.length || !c.abertos.some(a => /^R[23]$/.test(a.id)));
+assert.ok(!c.semBanco.some(x => /^R[23]$/.test(x.id)), 'os dois recebimentos do R2 conciliados (um por Pix)');
+console.log('pagar sessão em aberto ok');
 console.log('servidor-conciliacao-ia: tudo ok');

@@ -209,6 +209,13 @@ entradas resolvidas na mesma situação (aluguel de sala / não é paciente / co
 sugestão ("como antes"). Na tela, "o que é?" tem nomes claros (`CC_ROTULO`; os valores gravados não mudam). Próximo passo:
 **Pedir de novo à IA** em Setembro e comparar.
 
+**Pix que paga sessão em aberto (17/10, pedido da gestão: "queria poder resolver nessa mesma página")**: a sugestão `em_aberto`
+ganhou **Registrar pagamento e conciliar** e o "o que é?" ganhou **Sessão/consulta em aberto →** (lista `resp.abertos` =
+`abertosJanela_`, a mesma janela dos candidatos A). `API.conciliarAberto({ id, abertos, obs })` (só gestão): confere entrada
+pendente e não-cartão, sessões ainda em aberto, Pix ≤ soma do em aberto (senão recusa sem gravar); registra com
+`API.corrigirLancamento` (`recebidoAgora`, data do Pix, forma Pix), da sessão mais antiga pra mais nova, e concilia com
+`API.conciliar`. Junto: correção do "Salvar" das entradas com faixa da IA (o clique ia pro botão da faixa).
+
 **Como testar na real (depois da publicação)**: Conciliação → Setembro e Outubro → **Sugerir com IA** → conferir 5–10
 sugestões contra o extrato → Aceitar as certas. Março a agosto: **Confirmar sugestões fixas**. IA log: custo por lote.
 

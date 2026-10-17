@@ -57,9 +57,13 @@ function concIACandidatos_(c, ocupados) {
   mensalistasIdx_().linhas.forEach(function (l) {
     chaves.forEach(function (ch) { var mc = l.comp[ch]; if (!mc || !(mc.pago === 'Sim' || mc.pago === 'Parcial')) return; M.push({ paciente: l.paciente, pagador: l.pagador, chave: ch, valor: numBR_(mc.valorCobrado) || l.valor, data: mc.data, forma: mc.forma }); });
   });
-  var pacs = {}, A = [], deA = new Date(c.ini.getTime() - 60 * 864e5); indicePacientes_().forEach(function (p) { pacs[p.nome] = p; });
-  Object.keys(c.todas).forEach(function (m) { c.todas[m].linhas.forEach(function (r) { if (emAberto_(r) && saldoAberto_(r) > 0 && noJanela(r.data, deA, c.fim)) A.push({ aba: m, linha: r.linha, id: r.id, paciente: r.paciente, profissional: r.profissional, data: r.data, valor: saldoAberto_(r), pagador: (pacs[r.paciente] || {}).pagador || '' }); }); });
-  return { L: L.slice(0, 250), M: M.slice(0, 120), A: A.slice(0, 150) };
+  return { L: L.slice(0, 250), M: M.slice(0, 120), A: abertosJanela_(c).slice(0, 150) };
+}
+// sessões em aberto (com saldo) de 60 dias antes do mês até o fim dele: candidatos A da IA e a lista "Sessão em aberto" da tela
+function abertosJanela_(c) {
+  var pacs = {}, A = [], de = ymdDate_(new Date(c.ini.getTime() - 60 * 864e5)), ate = ymdDate_(c.fim); indicePacientes_().forEach(function (p) { pacs[p.nome] = p; });
+  Object.keys(c.todas).forEach(function (m) { c.todas[m].linhas.forEach(function (r) { var x = ymdDate_(r.data); if (emAberto_(r) && saldoAberto_(r) > 0 && x && x >= de && x <= ate) A.push({ aba: m, linha: r.linha, id: r.id, paciente: r.paciente, profissional: r.profissional, data: r.data, valor: saldoAberto_(r), pagador: (pacs[r.paciente] || {}).pagador || '', pagadorExtrato: (pacs[r.paciente] || {}).pagadorExtrato || '', resp: (pacs[r.paciente] || {}).resp || '' }); }); });
+  return A;
 }
 function concIATexto_(c, lote, cand, cod) {
   var convs = []; try { convs = colunaLista_(CONFIG.LISTAS.CONVENIO).filter(function (x) { return x && !/^Particular$/i.test(x); }); } catch (e) { }
@@ -121,8 +125,45 @@ function iaConciliacaoAnexar_(c) {
   var cfg = iaConfig_(), bloq = iaBloqueio_('conciliacao', cfg), g = gastoIA_();
   c.resp.ia = { bloqueio: bloq ? bloq.mensagem : (!iaChave_() ? 'Chave da API não configurada.' : ''), modelo: cfg.modelo, gastoMes: g.mes, tetoMes: Number(cfg.teto_mes_usd) || 0, comIA: conta.comIA, aSugerir: conta.aSugerir };
   c.ocupados = ocupados;
+  // pra resolver na própria tela uma entrada que paga sessão em aberto (gestão, 17/10): só se há Pix solto
+  c.resp.abertos = c.resp.semLancamento.some(function (e) { return e.tipo !== 'Cartão (vendas)'; }) ? abertosJanela_(c).slice(0, 300) : [];
   return c;
 }
+/* Pix que paga sessão(ões) em aberto, resolvido na conciliação (gestão, 17/10: "queria poder resolver nessa mesma página"):
+   registra o recebimento nas sessões (o mesmo de "Registrar pagamento" na Ficha: API.corrigirLancamento com recebidoAgora, data
+   do Pix, forma Pix), da mais antiga pra mais nova, e concilia a entrada com elas (API.conciliar). Pix menor que o em aberto =
+   recebimento parcial (o resto continua em aberto); Pix maior que o em aberto escolhido = recusa (nada é gravado). */
+API.conciliarAberto = function (d) {
+  var neg = soGestao_(); if (neg) return neg; d = d || {};
+  var sE = abaComCabecalho_(ABA_EXT, HEXT), e = linhasComo_(sE).filter(function (x) { return String(x['ID do banco']) === String(d.id || ''); })[0];
+  if (!e) return { ok: false, erros: ['Não achei a entrada do banco.'] };
+  if (String(e['Situação'] || 'pendente') !== 'pendente') return { ok: false, erros: ['Esta entrada já foi resolvida (' + e['Situação'] + '). Recarregue.'] };
+  if (/cart/i.test(String(e['Tipo'] || ''))) return { ok: false, erros: ['Depósito de cartão: ligue à venda, não a sessão em aberto.'] };
+  var valor = numBR_(e['Valor (R$)']), dataPix = fmtData_(e['Data']), erros = [], sessoes = [];
+  (d.abertos || []).slice(0, 12).forEach(function (k) {
+    var r = linhasMes_(k.aba).linhas.filter(function (l) { return l.id && l.id === String(k.id || ''); })[0];
+    if (!r) { erros.push('Não achei o lançamento ' + k.id + ' em ' + k.aba + '; recarregue.'); return; }
+    if (!emAberto_(r) || !(saldo_(r) > 0)) { erros.push(r.paciente + ' ' + r.data + ': não está mais em aberto; recarregue.'); return; }
+    if (!sessoes.some(function (x) { return x.aba === k.aba && x.r.id === r.id; })) sessoes.push({ aba: k.aba, r: r });
+  });
+  if (!sessoes.length && !erros.length) erros.push('Escolha a sessão em aberto.');
+  if (erros.length) return { ok: false, erros: erros };
+  var emAberto = Math.round(sessoes.reduce(function (a, x) { return a + saldo_(x.r); }, 0) * 100) / 100;
+  if (valor > emAberto + 0.005) return { ok: false, erros: ['O Pix (' + brl_(valor) + ') é maior que o em aberto escolhido (' + brl_(emAberto) + '). Escolha mais sessões ou resolva de outro jeito.'] };
+  sessoes.sort(function (a, b) { return ymdDate_(a.r.data) - ymdDate_(b.r.data); });
+  var resto = valor, pagos = [];
+  sessoes.forEach(function (x) {
+    if (resto < 0.005 || erros.length) return;
+    var v = Math.min(resto, saldo_(x.r)), rc = API.corrigirLancamento({ aba: x.aba, id: x.r.id, campos: { recebidoAgora: v, dataPagamento: dataPix, forma: 'Pix', observacao: 'Pix no banco em ' + dataPix + ' (conciliação)' } });
+    if (!rc.ok) { erros.push(x.r.paciente + ' ' + x.r.data + ': ' + (rc.erros || []).join(' ')); return; }
+    resto = Math.round((resto - v) * 100) / 100;
+    pagos.push({ aba: x.aba, linha: x.r.linha, id: x.r.id, paciente: x.r.paciente, data: x.r.data, valor: v, quitou: v >= saldo_(x.r) - 0.005 });
+  });
+  if (!pagos.length) return { ok: false, erros: erros };
+  var obs = String(d.obs || '').trim(), rcc = API.conciliar({ itens: [{ tipo: 'ext', id: e['ID do banco'], recs: pagos.map(function (p) { return { aba: p.aba, linha: p.linha, id: p.id }; }), obs: obs || 'pagamento de sessão em aberto, registrado na conciliação' }] });
+  if (!rcc.ok || rcc.erros.length) erros = erros.concat(rcc.erros || ['Recebimento registrado, mas não consegui conciliar: recarregue e ligue a entrada ao lançamento.']);
+  return { ok: true, pagos: pagos, erros: erros };
+};
 function gravarSugIA_(itens) {
   if (!itens.length) return;
   var lock = LockService.getScriptLock(); lock.waitLock(20000);

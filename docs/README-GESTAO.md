@@ -88,6 +88,13 @@ Mensalistas) · Pagamento do convênio (= convênio (fatura)) · Aluguel de sala
 resgate, transferência da própria clínica, devolução). Pagador que você sempre resolveu igual (aluguel, movimentação,
 convênio) já chega com a mesma sugestão, marcada "(como antes)".
 
+**Pix que paga sessão em aberto (17/10)** — resolve na própria conciliação, sem ir à Ficha: na faixa da IA "sessão em
+aberto", **Registrar pagamento e conciliar** (dois cliques; o botão mostra o que vai acontecer, ex. "Gabriel 30/09: R$ 100 de
+R$ 200, fica R$ 100 em aberto"); ou, à mão, "o que é?" → **Sessão/consulta em aberto →** e escolher a sessão (as do pagador
+vêm primeiro). O app registra o recebimento na sessão (o mesmo do "Registrar pagamento" da Ficha: data do Pix, forma Pix,
+anotado na Observação) e já concilia. Pix menor que a sessão = pagamento parcial (o resto continua em aberto); Pix maior que o
+em aberto escolhido não é aceito.
+
 **Busca de paciente** (Pacientes, Ficha, Agenda, Registrar): acha pelo nome do paciente, do pagador habitual, do nome no
 extrato e do responsável, e mostra por qual achou; em Pacientes e na Ficha aparecem também os inativos.
 

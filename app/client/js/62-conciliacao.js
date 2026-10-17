@@ -60,6 +60,30 @@ function ccSalvar(itens, btn) {
     carregarConc();
   }).catch(function (e) { if (btn) btn.disabled = false; toast('Não salvei: ' + e.message); });
 }
+// Pix que paga sessão em aberto (gestão, 17/10): registra o recebimento na(s) sessão(ões) e concilia, sem sair da tela
+function ccPagarAberto(e, abertos, obs, btn) {
+  if (btn) btn.disabled = true;
+  return call('conciliarAberto', { id: e.id, abertos: ccRecs(abertos), obs: obs || '' }).then(function (r) {
+    if (btn) btn.disabled = false;
+    if (!r.ok) { $("#cc-aviso").innerHTML = erroBox(r.erros || ['Não registrei'], 'Não registrei o pagamento'); return; }
+    toast('Pagamento registrado: ' + r.pagos.map(function (x) { return x.paciente.split(' ')[0] + ' ' + ccDia(x.data) + ' ' + ccR(x.valor) + (x.quitou ? '' : ' (parcial)'); }).join(', ') + ' · conciliado');
+    $("#cc-aviso").innerHTML = r.erros && r.erros.length ? erroBox(r.erros, 'Atenção') : '';
+    carregarConc();
+  }).catch(function (x) { if (btn) btn.disabled = false; toast('Não registrei: ' + x.message); });
+}
+// o que o Pix faz nas sessões, da mais antiga pra mais nova (mesma conta do servidor): "quita" / "R$ 100 de R$ 200, fica R$ 100"
+function ccAbertoResumo(valor, abertos) {
+  var resto = valor, tot = abertos.reduce(function (a, x) { return a + x.valor; }, 0);
+  if (valor > tot + 0.005) return { ok: false, txt: 'o Pix (' + ccR(valor) + ') é maior que o em aberto (' + ccR(tot) + ')' };
+  var partes = abertos.slice().sort(function (a, b) { return dataObj(a.data) - dataObj(b.data); }).map(function (a) { var v = Math.min(resto, a.valor); resto -= v; var q = String(a.paciente || '').split(' ')[0] + ' ' + ccDia(a.data); return v < 0.005 ? null : v >= a.valor - 0.005 ? q + ' quitada' : q + ': ' + ccR(v) + ' de ' + ccR(a.valor) + ', fica ' + ccR(a.valor - v) + ' em aberto'; }).filter(Boolean);
+  return { ok: true, txt: partes.join(' · ') };
+}
+// sessões em aberto pra escolher à mão: primeiro as do pagador (nome do Pix bate com paciente, pagador, nome no extrato ou responsável), depois por valor
+function ccAbertosOrd(e) {
+  var tq = semAcento(e.quem || '').split(/[^a-z]+/).filter(function (t) { return t.length > 2; });
+  var nota = function (a) { var ns = semAcento([a.paciente, a.pagador, a.pagadorExtrato, a.resp].join(' ')).split(/[^a-z]+/); return tq.filter(function (t) { return ns.indexOf(t) >= 0; }).length; };
+  return (CC.abertos || []).map(function (a) { return { a: a, n: nota(a) }; }).sort(function (x, y) { return y.n - x.n || Math.abs(x.a.valor - e.valor) - Math.abs(y.a.valor - e.valor) || dataObj(x.a.data) - dataObj(y.a.data); }).map(function (x) { return x.a; });
+}
 function renderConc() {
   var r = CC, s = r.resumo;
   if (!s.temExtrato) $("#cc-aviso").innerHTML = aviso('cinza', 'Importe o extrato do PagBank', 'No app ou site do PagBank: <b>Extrato → Exportar → OFX</b>, do começo do mês até hoje (pode pegar mais de um mês; o que já foi importado não repete). Para o cartão, em <b>Vendas → Exportar → CSV detalhado</b>.');
@@ -83,19 +107,23 @@ function renderConc() {
   $("#cc-n-semlanc").textContent = pend.length;
   pend.forEach(function (p) {
     var x = p.e || p.v, valor = p.e ? x.valor : x.bruto, sug = p.e ? x.sugestao : '';
-    var opts = '<option value="">o que é?</option>' + (r.semBanco.length ? '<option value="conciliado">' + esc(ccRot('conciliado')) + ' →</option>' : '') + sits.map(function (o) { return '<option value="' + esc(o) + '"' + (o === sug ? ' selected' : '') + '>' + esc(ccRot(o)) + '</option>'; }).join('');
+    var abertos = p.e && !/cart/i.test(x.tipo) ? ccAbertosOrd(x) : [];
+    var opts = '<option value="">o que é?</option>' + (r.semBanco.length ? '<option value="conciliado">' + esc(ccRot('conciliado')) + ' →</option>' : '') + (abertos.length ? '<option value="aberto">Sessão/consulta em aberto →</option>' : '') + sits.map(function (o) { return '<option value="' + esc(o) + '"' + (o === sug ? ' selected' : '') + '>' + esc(ccRot(o)) + '</option>'; }).join('');
     var lancs = '<option value="">qual lançamento?</option>' + semBancoOrd(valor, x.data).map(function (l, j) { return '<option value="' + j + '">' + esc(l.paciente + ' · ' + ccDia(l.dataPag) + ' · ' + ccR(l.valor) + ' · ' + l.forma) + '</option>'; }).join('');
-    var it = el('<div class="fd-item cc-pend"><span class="cc-lado">' + (p.e ? ccBancoHtml(x) : ccVendaHtml(x)) + '</span>' + (sug ? '<span class="tag lilas" title="' + (x.historico ? 'mesma situação das ' + x.historico + ' entrada(s) já resolvida(s) deste pagador' : '') + '">sugestão: ' + esc(ccRot(sug)) + (x.historico ? ' (como antes)' : '') + '</span>' : '') + ccIAHtml(x.ia) + '<span class="esp"></span><span class="cc-form"><select class="cc-sit" aria-label="O que é">' + opts + '</select>' + (r.semBanco.length ? '<select class="cc-lanc" aria-label="Qual lançamento" hidden>' + lancs + '</select>' : '') + '<input class="cc-obs" placeholder="Observação (opcional)" aria-label="Observação"><button type="button" class="btn mini">Salvar</button></span></div>');
+    var it = el('<div class="fd-item cc-pend"><span class="cc-lado">' + (p.e ? ccBancoHtml(x) : ccVendaHtml(x)) + '</span>' + (sug ? '<span class="tag lilas" title="' + (x.historico ? 'mesma situação das ' + x.historico + ' entrada(s) já resolvida(s) deste pagador' : '') + '">sugestão: ' + esc(ccRot(sug)) + (x.historico ? ' (como antes)' : '') + '</span>' : '') + ccIAHtml(x.ia, p.e ? x.valor : null) + '<span class="esp"></span><span class="cc-form"><select class="cc-sit" aria-label="O que é">' + opts + '</select>' + (r.semBanco.length ? '<select class="cc-lanc" aria-label="Qual lançamento" hidden>' + lancs + '</select>' : '') + (abertos.length ? '<select class="cc-aberto" aria-label="Qual sessão em aberto" hidden><option value="">qual sessão?</option>' + abertos.map(function (a, j) { return '<option value="' + j + '">' + esc(a.paciente + ' · ' + ccDia(a.data) + ' · ' + ccR(a.valor) + (a.pagador && a.pagador !== a.paciente ? ' · pagador: ' + a.pagador : '')) + '</option>'; }).join('') + '</select>' : '') + '<input class="cc-obs" placeholder="Observação (opcional)" aria-label="Observação"><button type="button" class="btn mini">Salvar</button></span></div>');
     var ord = semBancoOrd(valor, x.data), selL = $('.cc-lanc', it), selS = $('.cc-sit', it);
-    selS.addEventListener('change', function () { if (selL) { selL.hidden = selS.value !== 'conciliado'; if (selL.hidden) selL.value = ''; else selL.focus(); } });
-    $('button', it).addEventListener('click', function () {
+    var selA = $('.cc-aberto', it);
+    selS.addEventListener('change', function () { [[selL, 'conciliado'], [selA, 'aberto']].forEach(function (q) { if (!q[0]) return; q[0].hidden = selS.value !== q[1]; if (q[0].hidden) q[0].value = ''; else q[0].focus(); }); });
+    $('.cc-form button', it).addEventListener('click', function () {
       var sit = selS.value, l = sit === 'conciliado' && selL && selL.value !== '' ? ord[+selL.value] : null, obs = $('.cc-obs', it).value.trim();
       if (!sit) return toast('Escolha o que é');
       if (sit === 'conciliado' && !l) return toast('Escolha qual lançamento');
+      if (sit === 'aberto') { if (!selA.value) return toast('Escolha qual sessão'); var a = abertos[+selA.value], res = ccAbertoResumo(x.valor, [a]); if (!res.ok) return toast('Não dá: ' + res.txt); var b = this; return doisCliques(b, 'Confirmar: ' + res.txt + '?', function () { ccPagarAberto(x, [a], obs, b); }); }
       var recs = l ? ccRecs([l]) : [], extra = { situacao: l ? 'conciliado' : sit, obs: obs };
       ccSalvar([p.e ? Object.assign({ tipo: 'ext', id: x.id, recs: recs }, extra) : ccItemVenda(x, recs, extra)], this);
     });
     var bIA = $('.cc-ia-aceitar', it); if (bIA) bIA.addEventListener('click', function () { ccSalvar([ccItemIA(p)], this); });
+    var bPg = $('.cc-ia-pagar', it); if (bPg) bPg.addEventListener('click', function () { var b = this; doisCliques(b, 'Confirmar: ' + ccAbertoResumo(x.valor, x.ia.abertos).txt + '?', function () { ccPagarAberto(x, x.ia.abertos, 'IA: ' + (x.ia.motivo || ''), b); }); });
     $$('.cc-ficha', it).forEach(function (a) { a.addEventListener('click', function (ev) { ev.preventDefault(); go('ficha', { nome: a.getAttribute('data-nome') }); }); });
     lsl.appendChild(it);
   });
@@ -124,14 +152,19 @@ $("#cc-confirmar").addEventListener('click', function () {
 });
 /* ---------- conciliação assistida (IA parte 2, 17/10): o que sobrou das regras vai pro modelo; a sugestão aparece em cada entrada
    e só vale com o clique (Aceitar = o mesmo Salvar). Sugestões fixas (resgate, própria clínica, antes do 1º mês do app) confirmam em lote. ---------- */
-function ccIAHtml(ia) {
+function ccIAHtml(ia, valor) {
   if (!ia) return '';
   var cab = '<span class="tag lilas">IA · ' + esc({ alta: 'confiança alta', media: 'confiança média', baixa: 'confiança baixa' }[ia.conf] || ia.conf || '') + '</span> ';
   if (ia.acao === 'nenhuma') return '<div class="cc-ia muted">IA: ' + esc(ia.motivo || 'não soube dizer') + '</div>';
   var corpo = '';
   if (ia.acao === 'ligar') corpo = '<span class="cc-recs">' + (ia.recs || []).map(ccLancHtml).join('') + '</span>';
   else if (ia.acao === 'situacao') corpo = '<b>' + esc(ccRot(ia.sit)) + '</b>';
-  else if (ia.acao === 'em_aberto') corpo = '<span>parece pagar sessões em aberto: ' + (ia.abertos || []).map(function (a) { return '<a href="#" class="link-discreto cc-ficha" data-nome="' + esc(a.paciente) + '">' + esc(a.paciente) + '</a> <span class="muted">' + esc(ccDia(a.data) + ' · ' + ccR(a.valor)) + '</span>'; }).join(', ') + '. Registre o pagamento na Ficha; depois ele concilia aqui.</span>';
+  else if (ia.acao === 'em_aberto') {
+    var res = valor != null ? ccAbertoResumo(valor, ia.abertos || []) : null;
+    corpo = '<span>sessão em aberto: ' + (ia.abertos || []).map(function (a) { return '<a href="#" class="link-discreto cc-ficha" data-nome="' + esc(a.paciente) + '">' + esc(a.paciente) + '</a> <span class="muted">' + esc(ccDia(a.data) + ' · ' + ccR(a.valor)) + '</span>'; }).join(', ') + (res ? ' <span class="muted">→ ' + esc(res.txt) + '</span>' : '') + '</span>';
+    if (res && res.ok) corpo += ' <button type="button" class="btn mini cc-ia-pagar">Registrar pagamento e conciliar</button>';
+    else if (!res) corpo += '<span>. Registre o pagamento na Ficha; depois ele concilia aqui.</span>';
+  }
   var podeAceitar = ia.acao === 'ligar' || ia.acao === 'situacao';
   return '<div class="cc-ia faixa lilas">' + cab + esc(ia.motivo || '') + (ia.aviso ? ' <span class="tag laranja">' + esc(ia.aviso) + '</span>' : '') + '<div class="cc-ia-corpo">' + corpo + (podeAceitar ? ' <button type="button" class="btn mini cc-ia-aceitar">Aceitar</button>' : '') + '</div></div>';
 }
