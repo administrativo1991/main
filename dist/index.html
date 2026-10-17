@@ -703,6 +703,8 @@ table.cm .acoes{justify-content:flex-end;gap:4px;flex-wrap:wrap}
 .cc-form{display:flex;flex-wrap:wrap;gap:6px;align-items:center;flex:1 1 420px;justify-content:flex-end}
 .cc-form select,.cc-form input{width:auto;min-height:36px;padding:6px 10px;font-size:13px;flex:1 1 160px;max-width:260px}
 .cc-tab{min-width:620px}
+.cc-ir{text-decoration:none;cursor:pointer;white-space:nowrap}
+.cc-realce{box-shadow:0 0 0 3px var(--roxo);transition:box-shadow .3s}
 .cc-lanc{order:9;flex:1 1 100%;border:1px solid var(--borda);border-radius:10px;padding:6px 10px;font-size:13px;background:var(--sup)}
 .cc-lanc[hidden]{display:none}
 .cc-lanc-itens{max-height:220px;overflow-y:auto;display:flex;flex-direction:column;gap:2px;margin-top:4px}
@@ -4734,7 +4736,7 @@ function renderConc() {
   var ls = $("#cc-sug"); ls.innerHTML = '';
   r.sugestoes.forEach(function (g, i) {
     var lado = g.venda ? ccVendaHtml(g.venda) : ccBancoHtml(g.ext);
-    var it = el('<label class="fd-item cc-sug check"><input type="checkbox" data-i="' + i + '"' + (g.forca === 'forte' ? ' checked' : '') + '><span class="cc-lados"><span class="cc-lado">' + lado + '</span><span class="cc-seta" aria-hidden="true">→</span><span class="cc-lado cc-recs">' + g.recs.map(ccLancHtml).join('') + '</span></span>' + (g.aviso ? '<span class="tag laranja">' + esc(g.aviso) + '</span>' : g.forca === 'forte' ? '<span class="tag verde">bate</span>' : '') + '</label>');
+    var it = el('<label class="fd-item cc-sug check"' + (g.venda ? ' data-v="' + esc(g.venda.id) + '"' : '') + '><input type="checkbox" data-i="' + i + '"' + (g.forca === 'forte' ? ' checked' : '') + '><span class="cc-lados"><span class="cc-lado">' + lado + '</span><span class="cc-seta" aria-hidden="true">→</span><span class="cc-lado cc-recs">' + g.recs.map(ccLancHtml).join('') + '</span></span>' + (g.aviso ? '<span class="tag laranja">' + esc(g.aviso) + '</span>' : g.forca === 'forte' ? '<span class="tag verde">bate</span>' : '') + '</label>');
     ls.appendChild(it);
   });
   // 2) no banco, sem lançamento (entradas do extrato e vendas no cartão)
@@ -4750,7 +4752,7 @@ function renderConc() {
     var opts = '<option value="">o que é?</option>' + (r.semBanco.length ? '<option value="conciliado">' + esc(ccRot('conciliado')) + ' →</option>' : '') + (abertos.length ? '<option value="aberto">Sessão/consulta em aberto →</option>' : '') + sits.map(function (o) { return '<option value="' + esc(o) + '"' + (o === sug ? ' selected' : '') + '>' + esc(ccRot(o)) + '</option>'; }).join('');
     // vários lançamentos num Pix só (gestão, 17/10): marca quantos quiser; a soma aparece contra o valor da entrada
     var lancs = '<div class="cc-lanc-soma muted">marque o(s) lançamento(s)</div><div class="cc-lanc-itens">' + semBancoOrd(valor, x.data).map(function (l, j) { return '<label class="check"><input type="checkbox" value="' + j + '"> ' + esc(l.paciente + ' · ' + ccDia(l.dataPag) + ' · ' + ccR(l.valor) + ' · ' + l.forma) + '</label>'; }).join('') + '</div>';
-    var it = el('<div class="fd-item cc-pend"><span class="cc-lado">' + (p.e ? ccBancoHtml(x) : ccVendaHtml(x)) + '</span>' + (sug ? '<span class="tag lilas" title="' + (x.historico ? 'mesma situação das ' + x.historico + ' entrada(s) já resolvida(s) deste pagador' : '') + '">sugestão: ' + esc(ccRot(sug)) + (x.historico ? ' (como antes)' : '') + '</span>' : '') + ccIAHtml(x.ia, p.e ? x.valor : null) + '<span class="esp"></span><span class="cc-form"><select class="cc-sit" aria-label="O que é">' + opts + '</select>' + (r.semBanco.length ? '<div class="cc-lanc" role="group" aria-label="Quais lançamentos" hidden>' + lancs + '</div>' : '') + (abertos.length ? '<select class="cc-aberto" aria-label="Qual sessão em aberto" hidden><option value="">qual sessão?</option>' + abertos.map(function (a, j) { return '<option value="' + j + '">' + esc(a.paciente + ' · ' + ccDia(a.data) + ' · ' + ccR(a.valor) + (a.pagador && a.pagador !== a.paciente ? ' · pagador: ' + a.pagador : '')) + '</option>'; }).join('') + '</select>' : '') + '<input class="cc-obs" placeholder="Observação (opcional)" aria-label="Observação"><button type="button" class="btn mini">Salvar</button></span></div>');
+    var it = el('<div class="fd-item cc-pend"' + (p.v ? ' data-v="' + esc(x.id) + '"' : '') + '><span class="cc-lado">' + (p.e ? ccBancoHtml(x) : ccVendaHtml(x)) + '</span>' + (sug ? '<span class="tag lilas" title="' + (x.historico ? 'mesma situação das ' + x.historico + ' entrada(s) já resolvida(s) deste pagador' : '') + '">sugestão: ' + esc(ccRot(sug)) + (x.historico ? ' (como antes)' : '') + '</span>' : '') + ccIAHtml(x.ia, p.e ? x.valor : null) + '<span class="esp"></span><span class="cc-form"><select class="cc-sit" aria-label="O que é">' + opts + '</select>' + (r.semBanco.length ? '<div class="cc-lanc" role="group" aria-label="Quais lançamentos" hidden>' + lancs + '</div>' : '') + (abertos.length ? '<select class="cc-aberto" aria-label="Qual sessão em aberto" hidden><option value="">qual sessão?</option>' + abertos.map(function (a, j) { return '<option value="' + j + '">' + esc(a.paciente + ' · ' + ccDia(a.data) + ' · ' + ccR(a.valor) + (a.pagador && a.pagador !== a.paciente ? ' · pagador: ' + a.pagador : '')) + '</option>'; }).join('') + '</select>' : '') + '<input class="cc-obs" placeholder="Observação (opcional)" aria-label="Observação"><button type="button" class="btn mini">Salvar</button></span></div>');
     var ord = semBancoOrd(valor, x.data), selL = $('.cc-lanc', it), selS = $('.cc-sit', it);
     var selA = $('.cc-aberto', it);
     var marcados = function () { return selL ? $$('input:checked', selL).map(function (c) { return ord[+c.value]; }) : []; };
@@ -4779,11 +4781,17 @@ function renderConc() {
   // 4) vendas no cartão
   $("#cc-vendas-card").hidden = !r.vendas.length;
   $("#cc-taxas").textContent = r.vendas.length ? r.vendas.length + ' vendas · taxas ' + ccR(s.taxasCartao) : '';
-  $("#cc-vendas").innerHTML = r.vendas.map(function (v) { return '<tr><td>' + esc(ccDia(v.data)) + '</td><td>' + esc([v.forma, v.parcelas].filter(Boolean).join(' · ')) + '<div class="sub">' + esc(v.bandeira || '') + '</div></td><td class="num">' + esc(brl(v.bruto)) + '</td><td class="num">' + esc(brl(v.taxa)) + '</td><td class="num"><b>' + esc(brl(v.liquido)) + '</b></td><td>' + (v.depositoSug ? esc(ccDia(v.depositoSug.data)) : '<span class="muted">não achei</span>') + '</td><td><span class="tag ' + (v.situacao === 'pendente' ? 'amarela' : 'verde') + '">' + esc(ccRot(v.situacao)) + '</span>' + (v.ligado ? '<div class="sub">' + esc(v.ligado) + '</div>' : '') + '</td></tr>'; }).join('');
+  $("#cc-vendas").innerHTML = r.vendas.map(function (v) { return '<tr><td>' + esc(ccDia(v.data)) + '</td><td>' + esc([v.forma, v.parcelas].filter(Boolean).join(' · ')) + '<div class="sub">' + esc(v.bandeira || '') + '</div></td><td class="num">' + esc(brl(v.bruto)) + '</td><td class="num">' + esc(brl(v.taxa)) + '</td><td class="num"><b>' + esc(brl(v.liquido)) + '</b></td><td>' + (v.depositoSug ? esc(ccDia(v.depositoSug.data)) : '<span class="muted">não achei</span>') + '</td><td>' + (v.situacao === 'pendente' ? '<a href="#" class="tag amarela cc-ir" data-v="' + esc(v.id) + '" title="Ir até a venda pra resolver">pendente · resolver ↑</a>' : '<span class="tag verde">' + esc(ccRot(v.situacao)) + '</span>') + (v.ligado ? '<div class="sub">' + esc(v.ligado) + '</div>' : '') + '</td></tr>'; }).join('');
   // 5) resolvidas
   $("#cc-n-res").textContent = r.resolvidos.length ? '(' + r.resolvidos.length + ')' : '';
   $("#cc-res-card").hidden = !r.resolvidos.length;
   $("#cc-res").innerHTML = r.resolvidos.map(function (e) { return '<div class="fd-item">' + ccBancoHtml(e) + '<span class="esp"></span><span class="tag ' + (e.situacao === 'conciliado' ? 'verde' : 'lilas') + '">' + esc(ccRot(e.situacao)) + '</span>' + (e.ligado || e.obs ? '<span class="muted" style="flex-basis:100%;font-size:12px">' + esc([e.ligado, e.obs].filter(Boolean).join(' · ')) + '</span>' : '') + '</div>'; }).join('');
+  // "pendente" na tabela de vendas leva até a venda no card Sugestões ou "No banco, sem lançamento" (gestão, 17/10)
+  $$('.cc-ir', $("#s-conciliacao")).forEach(function (a) { a.addEventListener('click', function (ev) { ev.preventDefault();
+    var alvo = $$('.cc-sug[data-v], .cc-pend[data-v]', $("#s-conciliacao")).filter(function (x) { return x.getAttribute('data-v') === a.getAttribute('data-v'); })[0];
+    if (!alvo) return toast('Não achei essa venda nos cards de cima: recarregue');
+    alvo.scrollIntoView({ behavior: 'smooth', block: 'center' }); alvo.classList.add('cc-realce'); setTimeout(function () { alvo.classList.remove('cc-realce'); }, 2500);
+    var f = $('.cc-sit', alvo) || $('input', alvo); if (f) f.focus({ preventScroll: true }); }); });
   $$('.cc-ficha', $("#s-conciliacao")).forEach(function (a) { a.addEventListener('click', function (ev) { ev.preventDefault(); ev.stopPropagation(); go('ficha', { nome: a.getAttribute('data-nome') }); }); });
   ccContarMarcados();
 }
