@@ -23,7 +23,7 @@ coluna E não afeta o app. Atualizar `E2` faz parte de toda publicação (passo 
 
 | Canal | Deploy | Peças | Commit |
 |---|---|---|---|
-| Real (`arquivos_real`) | **2026-10-16-22** (conciliação reconhece "pago com crédito do Pix de dd/mm") | 65 (duplicatas 3 · server 24 · index 38); ativas = as do 16-21 com server 15 em 1119 (1092 → `antigo52:`) | branch `claude/lucid-wright-6vx5yt`, commit d73cdce |
+| Real (`arquivos_real`) | **2026-10-16-24** ("pendente" das vendas no cartão leva até a venda) | 65 (duplicatas 3 · server 24 · index 38); ativas = as do 16-22 com index 4 e 34 em 1120–1121 (1116–1117 → `antigo53:`) | branch `claude/lucid-wright-6vx5yt`, commit 902ecee |
 | Teste (`arquivos`) | **2026-10-16-10** (Alertas, ⚠ abre a Ficha) | 60 (duplicatas 3 · server 20 · index 37), linhas 750–809; `antigo42:` = as do 16-09 (690–749) | branch `claude/sweet-wozniak-aviy8u`, commit cede9d7 |
 | Carregador real | 2026-10-16 (`dist/Code.real.gs` com `gatilhoDiarioIA` + permissões; versão 2 do projeto real, implantada pela gestão em 16/10 17:27) | — | 618b511 |
 | Carregador teste | 2026-10-04-01 + nova versão pendente desde 05/10 (permissão do Drive, ver `COMO-INSTALAR.md`) | — | — |
@@ -48,6 +48,15 @@ Modelo:
 ```
 
 ## Lista
+
+### 2026-10-16-24 · Real · "pendente" das vendas no cartão leva até a venda
+- **O que mudou** (gestão, 16/10: "não tem como alterar o pendente das vendas de cartão"): na tabela "Vendas no cartão do mês",
+  "pendente · resolver ↑" é link: rola até a venda no card Sugestões ou "No banco, sem lançamento", realça e põe o cursor no
+  "o que é?".
+- **Peças**: index 4 e 34 copiadas para 1120–1121, 5 `findReplace`; lidas de volta idênticas ao build. Ativação A1116:A1121;
+  somas 320.926 / 467.040 / 32.115 = build de 902ecee, 24/38/3. Testes 14/14; simulação 1280/390 sem erro.
+  **Voltar**: `antigo53:` → `index.html` em 1116–1117 e 1120–1121 → `antigo54:`.
+- **Commit**: 902ecee · **Aprovação**: gestão, 16/10 ("sim, faz o link e publica").
 
 ### 2026-10-16-23 · Real (dados) · conciliação de setembro e outubro aplicada pelo Claude
 - **O que mudou** (lista conferida com a gestão em 16/10): mesma lógica do app (`conciliar`, `conciliarAberto`,
