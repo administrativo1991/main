@@ -49,6 +49,20 @@ Modelo:
 
 ## Lista
 
+### 2026-10-16-23 · Real (dados) · conciliação de setembro e outubro aplicada pelo Claude
+- **O que mudou** (lista conferida com a gestão em 16/10): mesma lógica do app (`conciliar`, `conciliarAberto`,
+  `registrarAtendimento`) rodada sobre uma cópia local da planilha real e só as células mudadas gravadas. Setembro 58/58
+  entradas resolvidas; outubro 40/45 (pendentes: Giselene 14/10, Natalha 15/10, Ranieli 15/10, Joseane 16/10, cartão R$ 140 de
+  16/10). Correções: Ana Juracy 01/09 = agosto da Maria Eduarda; Jhonne 01/09 religado à sessão dele; Lucilene 29/09 = Helena;
+  Gloria/Patricia/Raiane/Aline de setembro = antes do app; linha duplicada do Davi (Mensalidade setembro R$ 160) esvaziada e
+  reaproveitada; 3 avaliações R$ 400 (Michelle, Daniel, João Victor; Giovana; cartão 4x 13/10); setembros da Cristina e da
+  Fernanda quitados, Gabriel parcial (R$ 100 em aberto); Fernanda: Luciana como nome no extrato (**conferir**).
+- **Gravado**: Setembro (coluna nova "Valor recebido", "Conciliado", 3 linhas SETABERTO), Outubro (coluna nova "Conciliado",
+  linhas 15, 164, 165), Extrato bancário (76 linhas), Vendas no cartão (5), Pacientes (1 célula), registros em Alterações de
+  cadastro e de lançamento. Carimbo "Claude, a pedido de administrativo@… · 16/10/2026 22:09". Antes de gravar, as colunas
+  mexidas foram relidas e estavam iguais à cópia. A última parte (vendas, cadastro, registros) foi gravada depois, num segundo
+  pedido; entre os dois, as 5 vendas apareceram "pendente" no app.
+
 ### 2026-10-16-22 · Real · conciliação reconhece "pago com crédito"
 - **O que mudou** (gestão, 16/10): sessão registrada com "pago com crédito do Pix de dd/mm" na Observação não aparece mais em
   "lançado, sem entrar no banco" nem vira candidata da IA (o dinheiro já foi conciliado no Pix original). `recebimentosApp_`.
