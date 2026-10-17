@@ -23,7 +23,7 @@ coluna E não afeta o app. Atualizar `E2` faz parte de toda publicação (passo 
 
 | Canal | Deploy | Peças | Commit |
 |---|---|---|---|
-| Real (`arquivos_real`) | **2026-10-16-24** ("pendente" das vendas no cartão leva até a venda) | 65 (duplicatas 3 · server 24 · index 38); ativas = as do 16-22 com index 4 e 34 em 1120–1121 (1116–1117 → `antigo53:`) | branch `claude/lucid-wright-6vx5yt`, commit 902ecee |
+| Real (`arquivos_real`) | **2026-10-17-01** (Evolução e saúde financeira) | 66 (duplicatas 3 · server 25 · index 38); ativas = as do 16-24 com server 23 em 1122, server 24 (nova) em 1123 e index 4, 5, 9, 10, 13, 14, 35 em 1124–1130 (antigas → `antigo54:`) | branch `claude/lucid-wright-6vx5yt`, commit 60cbb3e |
 | Teste (`arquivos`) | **2026-10-16-10** (Alertas, ⚠ abre a Ficha) | 60 (duplicatas 3 · server 20 · index 37), linhas 750–809; `antigo42:` = as do 16-09 (690–749) | branch `claude/sweet-wozniak-aviy8u`, commit cede9d7 |
 | Carregador real | 2026-10-16 (`dist/Code.real.gs` com `gatilhoDiarioIA` + permissões; versão 2 do projeto real, implantada pela gestão em 16/10 17:27) | — | 618b511 |
 | Carregador teste | 2026-10-04-01 + nova versão pendente desde 05/10 (permissão do Drive, ver `COMO-INSTALAR.md`) | — | — |
@@ -48,6 +48,23 @@ Modelo:
 ```
 
 ## Lista
+
+### 2026-10-17-01 · Real · Evolução e saúde financeira
+- **O que mudou**: menu **Evolução** (só gestão; no celular, Pendências → Regras e tabelas): último mês fechado em cartões,
+  8 gráficos (receita própria por origem, atendimentos/pacientes/novos, resultado com e sem plantões, despesa por grupo,
+  pessoal ÷ receita própria, cobertura do ponto de equilíbrio, retenção 90/120 dias, caixa), plantões num bloco recolhido,
+  tabela mês a mês e "Como ler". `API.evolucao` (`app/server/server-evolucao.js`).
+- **Dados (gravados antes da publicação, com o OK da gestão)**: abas novas na real — `Evolução mensal` (Jan–Set/26, dos
+  fechamentos 02–10; grupos de despesa conferidos contra o total e resultado recalculado igual ao do fechamento nos 9 meses)
+  e `Histórico de atendimentos` (1.044 atendimentos do ControleOdonto Jan–Ago/26, nomes trocados pelos do cadastro em 7 casos;
+  conferido por fórmula: linhas, soma dos tamanhos dos nomes, nomes distintos, Cedplan e datas). As duas só são lidas.
+- **Peças**: server 23 copiada para 1122 (1 `findReplace`: sai o `API;` final) + **server 24 nova** em 1123 (a Evolução +
+  `API;`, pra a 23 não chegar perto do limite de 50 mil caracteres da célula); index 4, 5, 9, 10, 13, 14 e 35 copiadas para
+  1124–1130, 7 `findReplace`. As 9 linhas lidas de volta idênticas ao build, caractere por caractere. Ativação em um lote;
+  somas 330.391 / 493.045 / 32.115 = build de 60cbb3e, 25/38/3, nenhum `novo:` sobrando. Testes 15/15; simulação
+  1280/390 sem erro e sem rolagem lateral.
+  **Voltar**: `antigo54:` → nome original nas linhas 1118, 1120, 1034, 1078, 1098, 1080, 1081, 1064 e 1122–1130 → `antigo55:`.
+- **Commit**: 60cbb3e · **Aprovação**: gestão, 17/10 ("publique").
 
 ### 2026-10-16-24 · Real · "pendente" das vendas no cartão leva até a venda
 - **O que mudou** (gestão, 16/10: "não tem como alterar o pendente das vendas de cartão"): na tabela "Vendas no cartão do mês",
