@@ -23,7 +23,7 @@ coluna E não afeta o app. Atualizar `E2` faz parte de toda publicação (passo 
 
 | Canal | Deploy | Peças | Commit |
 |---|---|---|---|
-| Real (`arquivos_real`) | **2026-10-16-18** (conciliação: Pix de sessão em aberto resolvido na tela, parcial e adiantamento de mensalidade; correção do Salvar) | 65 (duplicatas 3 · server 24 · index 38); ativas = as do 16-17 menos 1097, 1103, 1108 (→ `antigo48:`) mais 1109–1111 | branch `claude/lucid-wright-6vx5yt`, commit f2451f2 |
+| Real (`arquivos_real`) | **2026-10-16-19** (conciliação: vários lançamentos num Pix à mão; adiantamento pergunta o profissional) | 65 (duplicatas 3 · server 24 · index 38); ativas = as do 16-18 menos 1109–1111 (→ `antigo49:`) mais 1112–1114 | branch `claude/lucid-wright-6vx5yt`, commit ed51ef4 |
 | Teste (`arquivos`) | **2026-10-16-10** (Alertas, ⚠ abre a Ficha) | 60 (duplicatas 3 · server 20 · index 37), linhas 750–809; `antigo42:` = as do 16-09 (690–749) | branch `claude/sweet-wozniak-aviy8u`, commit cede9d7 |
 | Carregador real | 2026-10-16 (`dist/Code.real.gs` com `gatilhoDiarioIA` + permissões; versão 2 do projeto real, implantada pela gestão em 16/10 17:27) | — | 618b511 |
 | Carregador teste | 2026-10-04-01 + nova versão pendente desde 05/10 (permissão do Drive, ver `COMO-INSTALAR.md`) | — | — |
@@ -48,6 +48,20 @@ Modelo:
 ```
 
 ## Lista
+
+### 2026-10-16-19 · Real · conciliação: vários lançamentos num Pix à mão; adiantamento pergunta o profissional
+- **O que mudou** (gestão, 16/10: "nesses casos, onde não salva nada, o que eu faço?"): (1) "o que é?" → **Sessão/consulta
+  lançada →** virou lista de marcar: vários lançamentos num Pix só, com a soma contra o valor (bate / passa / faltam; se não
+  bate, pede confirmação) — assim fecha à mão o Pix cujas partes foram registradas na Ficha e na Cobrança do mês;
+  (2) adiantamento de paciente com cobrança mensal em mais de um profissional: aparece "adiantamento de qual profissional?"
+  ao lado do botão, em vez de recusar. Como resolver os casos recusados: `docs/README-GESTAO.md`.
+- **Peças**: 3 células (server 23 · index 4, 34) copiadas para 1112–1114 (cópia B:C e rótulo `novo:` no mesmo pedido), 12
+  `findReplace` restritos à célula, cada um com 1 ocorrência. Layout ativo remontado do 16-18 e conferido igual ao build de f2451f2.
+- **Conferência**: as 3 células lidas de volta **idênticas ao build** (comparação do texto inteiro; LEN/UNICODE 36544/3087816 ·
+  12225/888892 · 24839/2225023). Ativação numa gravação só (A1109:A1114). Somas 318.807 / 465.859 / 32.115 = build de ed51ef4,
+  24/38/3 partes únicas. Fórmulas temporárias apagadas, E2 carimbado. Testes 14/14; simulação 1280/390 sem erro.
+  **Voltar**: `antigo49:` → nome em 1109–1111 e 1112–1114 → `antigo50:`.
+- **Commit**: ed51ef4 · **Aprovação**: gestão, 16/10 ("ok").
 
 ### 2026-10-16-18 · Real · conciliação: Pix de sessão em aberto resolvido na tela, adiantamento, correção do Salvar
 - **O que mudou** (pedidos da gestão, 16/10 noite): (1) Pix que paga sessão em aberto se resolve na própria Conciliação —
