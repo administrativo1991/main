@@ -23,7 +23,7 @@ coluna E não afeta o app. Atualizar `E2` faz parte de toda publicação (passo 
 
 | Canal | Deploy | Peças | Commit |
 |---|---|---|---|
-| Real (`arquivos_real`) | **2026-10-16-19** (conciliação: vários lançamentos num Pix à mão; adiantamento pergunta o profissional) | 65 (duplicatas 3 · server 24 · index 38); ativas = as do 16-18 menos 1109–1111 (→ `antigo49:`) mais 1112–1114 | branch `claude/lucid-wright-6vx5yt`, commit ed51ef4 |
+| Real (`arquivos_real`) | **2026-10-16-20** (conciliação: Pix maior que o em aberto nunca recusado — parte do mês seguinte ou crédito no cadastro) | 65 (duplicatas 3 · server 24 · index 38); ativas = as do 16-19 menos 1112–1114 (→ `antigo50:`) mais 1115–1117 | branch `claude/lucid-wright-6vx5yt`, commit 0cb3eee |
 | Teste (`arquivos`) | **2026-10-16-10** (Alertas, ⚠ abre a Ficha) | 60 (duplicatas 3 · server 20 · index 37), linhas 750–809; `antigo42:` = as do 16-09 (690–749) | branch `claude/sweet-wozniak-aviy8u`, commit cede9d7 |
 | Carregador real | 2026-10-16 (`dist/Code.real.gs` com `gatilhoDiarioIA` + permissões; versão 2 do projeto real, implantada pela gestão em 16/10 17:27) | — | 618b511 |
 | Carregador teste | 2026-10-04-01 + nova versão pendente desde 05/10 (permissão do Drive, ver `COMO-INSTALAR.md`) | — | — |
@@ -48,6 +48,20 @@ Modelo:
 ```
 
 ## Lista
+
+### 2026-10-16-20 · Real · conciliação: Pix maior que o em aberto nunca é recusado
+- **O que mudou** (gestão, 16/10: "socorro, muita coisa pra fazer… tem que ter uma forma mais fácil"): o "Registrar pagamento
+  e conciliar" resolve tudo num clique (mais a confirmação). Sobra que não fecha com a mensalidade → meses inteiros enquanto
+  couber + o resto como **parte** do próximo mês (Cobrança do mês, "Pagou só uma parte"); paciente sem cobrança mensal (ou
+  sessões de irmãos) → a sobra vira **crédito** anotado na Observação de cobrança do cadastro ("Crédito R$ X (Pix de dd/mm):
+  abater nas próximas sessões"), que a recepção vê ao cobrar. Celular: selects do "o que é?" não alargam a tela.
+- **Peças**: 3 células (server 23 · index 4, 34) copiadas para 1115–1117, 13 `findReplace` restritos à célula, 1 ocorrência
+  cada. Layout ativo remontado do 16-19 e conferido igual ao build de ed51ef4.
+- **Conferência**: as 3 células lidas de volta idênticas ao build (texto inteiro). Ativação numa gravação só (A1112:A1117).
+  Somas 320.400 / 465.940 / 32.115 = build de 0cb3eee, 24/38/3 partes únicas. E2 carimbado. Testes 14/14 (inclui gravação real de
+  mês parcial e crédito no cadastro); simulação 1280/390 sem erro e sem rolagem lateral.
+  **Voltar**: `antigo50:` → nome em 1112–1114 e 1115–1117 → `antigo51:`.
+- **Commit**: 0cb3eee · **Aprovação**: gestão, 16/10 ("tem que ter uma forma mais fácil… ou que você faça ou o API").
 
 ### 2026-10-16-19 · Real · conciliação: vários lançamentos num Pix à mão; adiantamento pergunta o profissional
 - **O que mudou** (gestão, 16/10: "nesses casos, onde não salva nada, o que eu faço?"): (1) "o que é?" → **Sessão/consulta

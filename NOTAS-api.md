@@ -9,7 +9,7 @@ Arquivo de retomada deste item. Quem abrir um chat novo lê, nesta ordem: `docs/
 > total** (seção 2). O que a leitura real mostrou e o que mudou por causa dela está na seção 2 ("Setembro na real").
 > Próximo passo da recepção/gestão: confirmar as guias no card "Guias lidas ontem" (Meu dia). Seção 6 diz como.
 
-> **Parte 2 (16/10, noite)**: conciliação assistida **publicada na real** (deploy `2026-10-16-16`, ajustes no `2026-10-16-17`, `-18` e `-19`, seção 8). Junto: modelo
+> **Parte 2 (16/10, noite)**: conciliação assistida **publicada na real** (deploy `2026-10-16-16`, ajustes no `2026-10-16-17` a `-20`, seção 8). Junto: modelo
 > **Sonnet 5.5** pra todos os itens (já gravado na aba IA da real), preço por modelo no código e teto do mês **US$ 10**.
 > Próximo passo da gestão: Conciliação → Setembro/Outubro → **Sugerir com IA**, conferir algumas, e anotar o custo real aqui.
 
