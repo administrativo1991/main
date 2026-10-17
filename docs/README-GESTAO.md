@@ -99,7 +99,8 @@ recusa por valor:
 - Pix **maior**, paciente que paga por sessão: a sobra vira **crédito**, anotado sozinho na Observação de cobrança do cadastro
   ("Crédito R$ X (Pix de dd/mm): abater nas próximas sessões; usou tudo, apague esta anotação"), que a recepção vê na hora
   de cobrar. A própria anotação diz o que fazer: a recepção registra a sessão como paga com o crédito e, quando o crédito
-  acaba, apaga a anotação (POP da recepção, seção 3).
+  acaba, apaga a anotação (POP da recepção, seção 3). Sessão com "pago com crédito" na Observação não aparece em
+  "lançado, sem entrar no banco" (o dinheiro já foi conciliado no Pix original).
 Pix com várias partes já registradas em outras telas: "o que é?" → **Sessão/consulta lançada →** aceita **vários
 lançamentos**, mostrando a soma contra o valor.
 

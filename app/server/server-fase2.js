@@ -284,6 +284,9 @@ function recebimentosApp_(todas) {
       var soma = pays.reduce(function (a, x) { return a + x.valor; }, 0), itens = [];
       if (!pays.length) itens.push({ valor: total, dataPag: r.dataPag || r.data, forma: String(r.forma || '') });
       else { if (total - soma > 0.01) itens.push({ valor: Math.round((total - soma) * 100) / 100, dataPag: r.data, forma: String(r.forma || '') }); itens = itens.concat(pays); }
+      // "pago com crédito do Pix de dd/mm" (gestão, 17/10): o dinheiro já entrou no Pix original, conciliado lá; esse pagamento
+      // não é esperado no banco (sai de "lançado, sem entrar no banco" e não vira candidato). Os "Recebido R$ …" da linha continuam
+      if (/pago com cr[eé]dito/i.test(r.obs || '')) itens = itens.filter(function (it) { return pays.indexOf(it) >= 0; });
       var cel = cc ? String((concs[r.linha - 2] || [''])[0] || '') : '', jaConc = (cel.match(/(^|\| )(PagBank|Cartão) /g) || []).length; // quantos recebimentos da linha já foram conciliados
       var p = idx[r.paciente] || {};
       itens.forEach(function (it, k) {

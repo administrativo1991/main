@@ -36,7 +36,8 @@ gestão, aba `Parâmetros`).
 - **Não**: fica em aberto na linha com o valor; aparece em "A cobrar" no Meu dia e em "a receber" na Cobrança do mês.
 - **Parcial**: valor recebido agora; o resto fica em aberto (o app escreve o saldo na observação).
 - **Crédito do paciente**: se o ⚠ Atenção na cobrança diz "Crédito R$ X (Pix de dd/mm)", **não cobre** a sessão: registre
-  como paga (Pago? Sim, forma Pix, data do pagamento = a do Pix do crédito, Observação "pago com crédito do Pix de dd/mm").
+  como paga (Pago? Sim, forma Pix, data do pagamento = a do Pix do crédito, Observação **"pago com crédito do Pix de dd/mm"** —
+  escreva assim: é por essa frase que a Conciliação sabe que esse dinheiro já entrou no banco).
   Depois, em Pacientes → Editar, na **Observação de cobrança**: usou tudo, **apague a anotação do crédito**; usou parte, troque
   o valor para o que sobrou.
 

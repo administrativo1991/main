@@ -206,5 +206,10 @@ const dez = O.find(l => /^Mensalidade de dezembro/.test(l[hO('Procedimento')]) &
 assert.ok(dez, 'linha de dezembro'); assert.strictEqual(dez[hO('Pago?')], 'Parcial'); assert.strictEqual(dez[hO('Valor (R$)')], 50); assert.strictEqual(dez[hO('Valor recebido (R$)')], 30);
 c = ok(API.conciliacao({ chave: 'Outubro/2026' }), 'depois do B41'); assert.strictEqual(c.resolvidos.find(e => e.id === 'B41').situacao, 'conciliado');
 assert.ok(!c.semBanco.some(x => x.id === dez[hO('ID')]), 'parte de dezembro conciliada com o Pix');
+// 12. sessão paga com crédito (recepção: "pago com crédito do Pix de dd/mm"): não aparece em "lançado, sem entrar no banco"
+const l8 = lanc('R8', '30/10/2026', 'Ana Souza', 80, 'Pix'); l8[hO('Observação')] = 'pago com crédito do Pix de 30/10/2026'; O.push(l8);
+const l9 = lanc('R9', '30/10/2026', 'Ana Souza', 80, 'Pix'); O.push(l9);
+c = ok(API.conciliacao({ chave: 'Outubro/2026' }), 'com crédito usado');
+assert.ok(!c.semBanco.some(x => x.id === 'R8'), 'pago com crédito: não esperado no banco'); assert.ok(c.semBanco.some(x => x.id === 'R9'), 'Pix comum continua');
 console.log('profissional escolhido ok');
 console.log('servidor-conciliacao-ia: tudo ok');
