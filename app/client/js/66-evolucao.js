@@ -63,7 +63,9 @@ function evGrafico(host, cfg) {
   var y0 = y(0);
   if (cfg.tipo === 'col' || cfg.tipo === 'grupo') {
     var k = cfg.series.length, w = Math.min(cfg.tipo === 'grupo' ? 14 : 24, (bw * 0.7 - (k - 1) * 2) / k);
-    cfg.series.forEach(function (se, j) { se.v.forEach(function (v, i) { if (v == null) return; var x = cx(i) - (k * w + (k - 1) * 2) / 2 + j * (w + 2); s += '<path d="' + evBarra(x, y0, y(v), w, 4) + '" fill="' + se.cor + '"/>'; }); });
+    cfg.series.forEach(function (se, j) { se.v.forEach(function (v, i) { if (v == null) return; var x = cx(i) - (k * w + (k - 1) * 2) / 2 + j * (w + 2), yv = y(v);
+      if (v !== 0 && Math.abs(yv - y0) < 2) yv = v > 0 ? y0 - 2 : y0 + 2; // valor perto de zero (ex.: −R$ 63) ainda aparece como um traço de 2px
+      s += '<path d="' + evBarra(x, y0, yv, w, 4) + '" fill="' + se.cor + '"/>'; }); });
   } else if (cfg.tipo === 'pilha') {
     var w2 = Math.min(24, bw * 0.6);
     for (var i2 = 0; i2 < n; i2++) {
