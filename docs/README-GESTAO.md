@@ -88,20 +88,19 @@ Mensalistas) · Pagamento do convênio (= convênio (fatura)) · Aluguel de sala
 resgate, transferência da própria clínica, devolução). Pagador que você sempre resolveu igual (aluguel, movimentação,
 convênio) já chega com a mesma sugestão, marcada "(como antes)".
 
-**Pix que paga sessão em aberto (17/10)** — resolve na própria conciliação, sem ir à Ficha: na faixa da IA "sessão em
-aberto", **Registrar pagamento e conciliar** (dois cliques; o botão mostra o que vai acontecer, ex. "Gabriel 30/09: R$ 100 de
-R$ 200, fica R$ 100 em aberto"); ou, à mão, "o que é?" → **Sessão/consulta em aberto →** e escolher a sessão (as do pagador
-vêm primeiro). O app registra o recebimento na sessão (o mesmo do "Registrar pagamento" da Ficha: data do Pix, forma Pix,
-anotado na Observação) e já concilia. Pix menor que a sessão = pagamento parcial (o resto continua em aberto). **Pix maior**
-que o em aberto (ex.: o pai do Igor pagou setembro e outubro juntos): se a sobra fecha com 1 a 3 meses seguintes ainda não
-pagos da cobrança mensal do paciente (mensalidade fixa ou antecipado), ela entra como **adiantamento** — o mesmo registro da
-Cobrança do mês (Mensalistas + linha "Mensalidade de …"/"Antecipado de …" na aba do mês do Pix) — e tudo é conciliado junto.
-O primeiro clique mostra o que vai ser feito (ex.: "Igor 30/09 quitada + R$ 200,00 adiantamento de outubro (Juliana)"); o
-segundo grava. Com cobrança mensal em mais de um profissional, aparece a lista "adiantamento de qual profissional?". Se a
-sobra não fecha ou o paciente não tem cobrança mensal, o app diz por quê e não grava nada: registre as partes nas telas de
-sempre (sessão na Ficha → Registrar pagamento; mês na Cobrança do mês → Registrar pagamento, com "Pagou só uma parte" se for o
-caso; crédito de paciente por sessão = Observação de cobrança no cadastro) e volte à Conciliação: **Sessão/consulta lançada →**
-aceita **vários lançamentos** num Pix só, mostrando a soma contra o valor (se não bater, pede confirmação).
+**Pix que paga sessão em aberto (17/10)** — resolve na própria conciliação, num clique (dois, com a confirmação): na faixa da
+IA "sessão em aberto", **Registrar pagamento e conciliar**; ou, à mão, "o que é?" → **Sessão/consulta em aberto →** e escolher a
+sessão (as do pagador vêm primeiro). O primeiro clique mostra o que vai ser feito; o segundo grava e concilia. O app nunca
+recusa por valor:
+- Pix **menor** que a sessão: pagamento parcial (o resto continua em aberto).
+- Pix **maior**, paciente com mensalidade (fixa ou antecipado): a sobra paga os meses seguintes ainda não pagos — inteiros
+  enquanto couber, e o resto como **parte** do próximo mês (ex.: "R$ 150 de R$ 200 de novembro (fica R$ 50)"), pelo mesmo
+  registro da Cobrança do mês. Com mensalidade em mais de um profissional, aparece "adiantamento de qual profissional?".
+- Pix **maior**, paciente que paga por sessão: a sobra vira **crédito**, anotado sozinho na Observação de cobrança do cadastro
+  ("Crédito R$ X (Pix de dd/mm): abater nas próximas sessões"), que a recepção vê na hora de cobrar. Quando abater, apague a
+  anotação no cadastro.
+Pix com várias partes já registradas em outras telas: "o que é?" → **Sessão/consulta lançada →** aceita **vários
+lançamentos**, mostrando a soma contra o valor.
 
 **Busca de paciente** (Pacientes, Ficha, Agenda, Registrar): acha pelo nome do paciente, do pagador habitual, do nome no
 extrato e do responsável, e mostra por qual achou; em Pacientes e na Ficha aparecem também os inativos.

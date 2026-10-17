@@ -91,7 +91,7 @@ function ccConfirmarPagar(b, e, abertos, obs) {
 // o que o Pix faz nas sessões, da mais antiga pra mais nova (mesma conta do servidor): "quita" / "R$ 100 de R$ 200, fica R$ 100"
 function ccAbertoResumo(valor, abertos) {
   var resto = valor, tot = abertos.reduce(function (a, x) { return a + x.valor; }, 0);
-  if (valor > tot + 0.005) return { ok: false, txt: 'Pix ' + ccR(valor - tot) + ' maior que o em aberto: se fechar com a mensalidade, a sobra entra como adiantamento' };
+  if (valor > tot + 0.005) return { ok: false, txt: 'sobram ' + ccR(valor - tot) + ': viram adiantamento da mensalidade ou crédito do paciente (o botão mostra antes de gravar)' };
   var partes = abertos.slice().sort(function (a, b) { return dataObj(a.data) - dataObj(b.data); }).map(function (a) { var v = Math.min(resto, a.valor); resto -= v; var q = String(a.paciente || '').split(' ')[0] + ' ' + ccDia(a.data); return v < 0.005 ? null : v >= a.valor - 0.005 ? q + ' quitada' : q + ': ' + ccR(v) + ' de ' + ccR(a.valor) + ', fica ' + ccR(a.valor - v) + ' em aberto'; }).filter(Boolean);
   return { ok: true, txt: partes.join(' · ') };
 }
