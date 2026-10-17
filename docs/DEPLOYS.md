@@ -23,7 +23,7 @@ coluna E não afeta o app. Atualizar `E2` faz parte de toda publicação (passo 
 
 | Canal | Deploy | Peças | Commit |
 |---|---|---|---|
-| Real (`arquivos_real`) | **2026-10-16-21** (crédito do paciente: a anotação diz pra apagar quando acabar) | 65 (duplicatas 3 · server 24 · index 38); ativas = as do 16-20 com server 23 em 1118 (1115 → `antigo51:`) | branch `claude/lucid-wright-6vx5yt`, commit 5c81624 |
+| Real (`arquivos_real`) | **2026-10-16-22** (conciliação reconhece "pago com crédito do Pix de dd/mm") | 65 (duplicatas 3 · server 24 · index 38); ativas = as do 16-21 com server 15 em 1119 (1092 → `antigo52:`) | branch `claude/lucid-wright-6vx5yt`, commit d73cdce |
 | Teste (`arquivos`) | **2026-10-16-10** (Alertas, ⚠ abre a Ficha) | 60 (duplicatas 3 · server 20 · index 37), linhas 750–809; `antigo42:` = as do 16-09 (690–749) | branch `claude/sweet-wozniak-aviy8u`, commit cede9d7 |
 | Carregador real | 2026-10-16 (`dist/Code.real.gs` com `gatilhoDiarioIA` + permissões; versão 2 do projeto real, implantada pela gestão em 16/10 17:27) | — | 618b511 |
 | Carregador teste | 2026-10-04-01 + nova versão pendente desde 05/10 (permissão do Drive, ver `COMO-INSTALAR.md`) | — | — |
@@ -48,6 +48,15 @@ Modelo:
 ```
 
 ## Lista
+
+### 2026-10-16-22 · Real · conciliação reconhece "pago com crédito"
+- **O que mudou** (gestão, 16/10): sessão registrada com "pago com crédito do Pix de dd/mm" na Observação não aparece mais em
+  "lançado, sem entrar no banco" nem vira candidata da IA (o dinheiro já foi conciliado no Pix original). `recebimentosApp_`.
+  POP da recepção diz pra escrever exatamente essa frase.
+- **Peças**: 1 célula (server 15) copiada para 1119, 1 `findReplace`. LEN/UNICODE 12978/1153053 = build. Ativação A1092 + A1119;
+  somas 320.926 / 465.940 / 32.115 = build de d73cdce, 24/38/3 partes únicas. Testes 14/14.
+  **Voltar**: 1092 → `server.js` e 1119 → `antigo53:`.
+- **Commit**: d73cdce · **Aprovação**: gestão, 16/10 ("sim, faz o app reconhecer o pago com crédito").
 
 ### 2026-10-16-21 · Real · crédito do paciente: a anotação diz pra apagar quando acabar
 - **O que mudou** (gestão, 16/10: "inclua essa diretiva"): o crédito anotado pela Conciliação passa a dizer "Crédito R$ X (Pix
