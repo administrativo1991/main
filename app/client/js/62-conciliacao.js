@@ -63,7 +63,7 @@ function ccSalvar(itens, btn) {
 // Pix que paga sessão em aberto (gestão, 17/10): registra o recebimento na(s) sessão(ões) e concilia, sem sair da tela
 function ccPagarAberto(e, abertos, obs, btn) {
   if (btn) btn.disabled = true;
-  return call('conciliarAberto', { id: e.id, abertos: ccRecs(abertos), obs: obs || '' }).then(function (r) {
+  return call('conciliarAberto', { id: e.id, abertos: ccRecs(abertos), obs: obs || '', profissional: btn && btn.dataset.prof || '' }).then(function (r) {
     if (btn) btn.disabled = false;
     if (!r.ok) { $("#cc-aviso").innerHTML = erroBox(r.erros || ['Não registrei'], 'Não registrei o pagamento'); return; }
     toast('Registrado e conciliado: ' + (r.plano || r.pagos.map(function (x) { return x.paciente.split(' ')[0] + ' ' + ccDia(x.data) + ' ' + ccR(x.valor) + (x.quitou ? '' : ' (parcial)'); }).join(', ')));
@@ -75,8 +75,14 @@ function ccPagarAberto(e, abertos, obs, btn) {
 function ccConfirmarPagar(b, e, abertos, obs) {
   if (b.dataset.ok === '1') { b.dataset.ok = ''; b.textContent = b.dataset.antes; return ccPagarAberto(e, abertos, obs, b); }
   b.disabled = true;
-  call('conciliarAberto', { id: e.id, abertos: ccRecs(abertos), simular: true }).then(function (r) {
+  call('conciliarAberto', { id: e.id, abertos: ccRecs(abertos), simular: true, profissional: b.dataset.prof || '' }).then(function (r) {
     b.disabled = false;
+    // adiantamento com mais de um profissional (gestão, 17/10): a lista aparece ao lado do botão; escolhido, confere de novo
+    if (!r.ok && r.profissionais && r.profissionais.length) {
+      var sp = b.parentNode.querySelector('.cc-prof');
+      if (!sp) { sp = el('<select class="cc-prof" aria-label="De qual profissional é o adiantamento"><option value="">adiantamento de qual profissional?</option>' + r.profissionais.map(function (p) { return '<option>' + esc(p) + '</option>'; }).join('') + '</select>'); b.parentNode.insertBefore(sp, b); sp.addEventListener('change', function () { b.dataset.prof = sp.value; if (sp.value) ccConfirmarPagar(b, e, abertos, obs); }); }
+      sp.focus(); return toast('Escolha de qual profissional é o adiantamento');
+    }
     if (!r.ok) { toast((r.erros || ['Não dá'])[0]); $("#cc-aviso").innerHTML = erroBox(r.erros || [], 'Não dá pra registrar assim'); return; }
     b.dataset.ok = '1'; b.dataset.antes = b.textContent; b.textContent = 'Confirmar: ' + r.plano + '?';
     setTimeout(function () { if (b.dataset.ok === '1') { b.dataset.ok = ''; b.textContent = b.dataset.antes; } }, 8000);
@@ -120,18 +126,23 @@ function renderConc() {
     var x = p.e || p.v, valor = p.e ? x.valor : x.bruto, sug = p.e ? x.sugestao : '';
     var abertos = p.e && !/cart/i.test(x.tipo) ? ccAbertosOrd(x) : [];
     var opts = '<option value="">o que é?</option>' + (r.semBanco.length ? '<option value="conciliado">' + esc(ccRot('conciliado')) + ' →</option>' : '') + (abertos.length ? '<option value="aberto">Sessão/consulta em aberto →</option>' : '') + sits.map(function (o) { return '<option value="' + esc(o) + '"' + (o === sug ? ' selected' : '') + '>' + esc(ccRot(o)) + '</option>'; }).join('');
-    var lancs = '<option value="">qual lançamento?</option>' + semBancoOrd(valor, x.data).map(function (l, j) { return '<option value="' + j + '">' + esc(l.paciente + ' · ' + ccDia(l.dataPag) + ' · ' + ccR(l.valor) + ' · ' + l.forma) + '</option>'; }).join('');
-    var it = el('<div class="fd-item cc-pend"><span class="cc-lado">' + (p.e ? ccBancoHtml(x) : ccVendaHtml(x)) + '</span>' + (sug ? '<span class="tag lilas" title="' + (x.historico ? 'mesma situação das ' + x.historico + ' entrada(s) já resolvida(s) deste pagador' : '') + '">sugestão: ' + esc(ccRot(sug)) + (x.historico ? ' (como antes)' : '') + '</span>' : '') + ccIAHtml(x.ia, p.e ? x.valor : null) + '<span class="esp"></span><span class="cc-form"><select class="cc-sit" aria-label="O que é">' + opts + '</select>' + (r.semBanco.length ? '<select class="cc-lanc" aria-label="Qual lançamento" hidden>' + lancs + '</select>' : '') + (abertos.length ? '<select class="cc-aberto" aria-label="Qual sessão em aberto" hidden><option value="">qual sessão?</option>' + abertos.map(function (a, j) { return '<option value="' + j + '">' + esc(a.paciente + ' · ' + ccDia(a.data) + ' · ' + ccR(a.valor) + (a.pagador && a.pagador !== a.paciente ? ' · pagador: ' + a.pagador : '')) + '</option>'; }).join('') + '</select>' : '') + '<input class="cc-obs" placeholder="Observação (opcional)" aria-label="Observação"><button type="button" class="btn mini">Salvar</button></span></div>');
+    // vários lançamentos num Pix só (gestão, 17/10): marca quantos quiser; a soma aparece contra o valor da entrada
+    var lancs = '<div class="cc-lanc-soma muted">marque o(s) lançamento(s)</div><div class="cc-lanc-itens">' + semBancoOrd(valor, x.data).map(function (l, j) { return '<label class="check"><input type="checkbox" value="' + j + '"> ' + esc(l.paciente + ' · ' + ccDia(l.dataPag) + ' · ' + ccR(l.valor) + ' · ' + l.forma) + '</label>'; }).join('') + '</div>';
+    var it = el('<div class="fd-item cc-pend"><span class="cc-lado">' + (p.e ? ccBancoHtml(x) : ccVendaHtml(x)) + '</span>' + (sug ? '<span class="tag lilas" title="' + (x.historico ? 'mesma situação das ' + x.historico + ' entrada(s) já resolvida(s) deste pagador' : '') + '">sugestão: ' + esc(ccRot(sug)) + (x.historico ? ' (como antes)' : '') + '</span>' : '') + ccIAHtml(x.ia, p.e ? x.valor : null) + '<span class="esp"></span><span class="cc-form"><select class="cc-sit" aria-label="O que é">' + opts + '</select>' + (r.semBanco.length ? '<div class="cc-lanc" role="group" aria-label="Quais lançamentos" hidden>' + lancs + '</div>' : '') + (abertos.length ? '<select class="cc-aberto" aria-label="Qual sessão em aberto" hidden><option value="">qual sessão?</option>' + abertos.map(function (a, j) { return '<option value="' + j + '">' + esc(a.paciente + ' · ' + ccDia(a.data) + ' · ' + ccR(a.valor) + (a.pagador && a.pagador !== a.paciente ? ' · pagador: ' + a.pagador : '')) + '</option>'; }).join('') + '</select>' : '') + '<input class="cc-obs" placeholder="Observação (opcional)" aria-label="Observação"><button type="button" class="btn mini">Salvar</button></span></div>');
     var ord = semBancoOrd(valor, x.data), selL = $('.cc-lanc', it), selS = $('.cc-sit', it);
     var selA = $('.cc-aberto', it);
-    selS.addEventListener('change', function () { [[selL, 'conciliado'], [selA, 'aberto']].forEach(function (q) { if (!q[0]) return; q[0].hidden = selS.value !== q[1]; if (q[0].hidden) q[0].value = ''; else q[0].focus(); }); });
+    var marcados = function () { return selL ? $$('input:checked', selL).map(function (c) { return ord[+c.value]; }) : []; };
+    if (selL) selL.addEventListener('change', function () { var m = marcados(), soma = Math.round(m.reduce(function (a, l) { return a + l.valor; }, 0) * 100) / 100; $('.cc-lanc-soma', selL).innerHTML = m.length ? 'soma ' + esc(ccR(soma)) + ' de ' + esc(ccR(valor)) + (Math.abs(soma - valor) < 0.01 ? ' <span class="tag verde">bate</span>' : ' <span class="tag laranja">' + (soma > valor ? 'passa ' : 'faltam ') + esc(ccR(Math.abs(Math.round((valor - soma) * 100) / 100))) + '</span>') : 'marque o(s) lançamento(s)'; });
+    selS.addEventListener('change', function () { [[selL, 'conciliado'], [selA, 'aberto']].forEach(function (q) { if (!q[0]) return; q[0].hidden = selS.value !== q[1]; if (q[0].hidden) { if (q[0].tagName === 'SELECT') q[0].value = ''; else $$('input', q[0]).forEach(function (c) { c.checked = false; }); } else q[0].focus(); }); });
     $('.cc-form button', it).addEventListener('click', function () {
-      var sit = selS.value, l = sit === 'conciliado' && selL && selL.value !== '' ? ord[+selL.value] : null, obs = $('.cc-obs', it).value.trim();
+      var sit = selS.value, ls = sit === 'conciliado' ? marcados() : [], obs = $('.cc-obs', it).value.trim();
       if (!sit) return toast('Escolha o que é');
-      if (sit === 'conciliado' && !l) return toast('Escolha qual lançamento');
+      if (sit === 'conciliado' && !ls.length) return toast('Marque o(s) lançamento(s)');
       if (sit === 'aberto') { if (!selA.value) return toast('Escolha qual sessão'); return ccConfirmarPagar(this, x, [abertos[+selA.value]], obs); }
-      var recs = l ? ccRecs([l]) : [], extra = { situacao: l ? 'conciliado' : sit, obs: obs };
-      ccSalvar([p.e ? Object.assign({ tipo: 'ext', id: x.id, recs: recs }, extra) : ccItemVenda(x, recs, extra)], this);
+      var recs = ccRecs(ls), extra = { situacao: ls.length ? 'conciliado' : sit, obs: obs }, item = p.e ? Object.assign({ tipo: 'ext', id: x.id, recs: recs }, extra) : ccItemVenda(x, recs, extra), b = this;
+      var soma = Math.round(ls.reduce(function (a, l) { return a + l.valor; }, 0) * 100) / 100;
+      if (ls.length && Math.abs(soma - valor) >= 0.01) return doisCliques(b, 'Soma ' + ccR(soma) + ' ≠ ' + ccR(valor) + ': confirmar?', function () { ccSalvar([item], b); });
+      ccSalvar([item], b);
     });
     var bIA = $('.cc-ia-aceitar', it); if (bIA) bIA.addEventListener('click', function () { ccSalvar([ccItemIA(p)], this); });
     var bPg = $('.cc-ia-pagar', it); if (bPg) bPg.addEventListener('click', function () { ccConfirmarPagar(this, x, x.ia.abertos, 'IA: ' + (x.ia.motivo || '')); });

@@ -218,7 +218,9 @@ pendente e não-cartão, sessões ainda em aberto, Pix ≤ soma do em aberto (se
 (gestão, 17/10, caso do Igor): `concAdiantamento_` procura, a partir do mês seguinte ao da última sessão escolhida, até 3
 competências não pagas de uma linha mensal do paciente (Mensalidade fixa, ou Por sessão + Antecipado; um profissional, ou o
 da sessão); a soma tem de bater com a sobra (±R$ 0,01). Registra com `API.registrarPagamentoMes` (antes das sessões: se
-recusar, nada foi gravado) e liga as linhas criadas no mesmo Pix. `simular: true` devolve só o plano (1º clique da tela).
+recusar, nada foi gravado) e liga as linhas criadas no mesmo Pix. `simular: true` devolve só o plano (1º clique da tela). Mais de um profissional com cobrança mensal: a resposta traz
+`profissionais` e a tela pede a escolha (`d.profissional`). "Sessão/consulta lançada →" virou lista de marcar (vários
+lançamentos por entrada, soma × valor).
 
 **Como testar na real (depois da publicação)**: Conciliação → Setembro e Outubro → **Sugerir com IA** → conferir 5–10
 sugestões contra o extrato → Aceitar as certas. Março a agosto: **Confirmar sugestões fixas**. IA log: custo por lote.

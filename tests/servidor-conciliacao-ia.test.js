@@ -20,7 +20,9 @@ const ss = planilha({
   Mensalistas: [['Paciente', 'Modalidade', 'Valor', 'Pagador', 'OUTUBRO/2026 — sessões agendadas', 'OUTUBRO/2026 — valor cobrado', 'OUTUBRO/2026 — pago?', 'OUTUBRO/2026 — data', 'OUTUBRO/2026 — forma', 'OUTUBRO/2026 — NF'],
     ['Lia Mensal', 'Mensal', 425, 'Marta Mensal', 4, 425, 'Sim', '03/10/2026', 'Pix', '']],
   'Cobrança por profissional': [['ID', 'Paciente', 'Profissional', 'Ativo', 'Cobrança', 'Convênio', 'Valor por sessão (R$)', 'Valor mensal (R$)', 'Pagamento', 'Vigente desde', 'Vigente até', 'Valor decidido por', 'Valor decidido em', 'Observação de cobrança', 'Registrado por (app)'],
-    ['C-1', 'Rui Aberto', 'Juliana Ribeiro', 'Sim', 'Mensalidade fixa', '', '', 150, 'Antecipado', '', '', 'gestão', '01/10/2026', '', '']],
+    ['C-1', 'Rui Aberto', 'Juliana Ribeiro', 'Sim', 'Mensalidade fixa', '', '', 150, 'Antecipado', '', '', 'gestão', '01/10/2026', '', ''],
+    ['C-2', 'Bruno Card', 'Giovana Grossi', 'Sim', 'Mensalidade fixa', '', '', 50, 'Antecipado', '', '', 'gestão', '01/10/2026', '', ''],
+    ['C-3', 'Bruno Card', 'Victor Cunha', 'Sim', 'Mensalidade fixa', '', '', 80, 'Antecipado', '', '', 'gestão', '01/10/2026', '', '']],
   Setembro: [HM, lanc('S1', '15/09/2026', 'Ana Souza', 120, 'Dinheiro')],
   Outubro: [HM, lanc('L1', '02/10/2026', 'Gustavo Travnik', 90, 'Pix'), lanc('L2', '09/10/2026', 'Gustavo Travnik', 90, 'Pix'), lanc('L4', '05/10/2026', 'Ana Souza', 120, 'Pix'),
     lanc('R1', '06/10/2026', 'Rui Aberto', 120, 'Pix', 'Não'), lanc('L5', '05/10/2026', 'Bruno Card', 200, 'Cartão de crédito')]
@@ -181,4 +183,14 @@ const b30 = c.resolvidos.find(e => e.id === 'B30'); assert.strictEqual(b30.situa
 assert.ok(!c.semBanco.some(x => x.id === 'R4' || adi.some(l => l[hO('ID')] === x.id)), 'sessão e mensalidades conciliadas com o Pix');
 r = API.conciliarAberto({ id: 'B31', abertos: [ab('R5')] }); assert.strictEqual(r.ok, false);
 console.log('adiantamento ok');
+
+// 11. adiantamento com mais de um profissional: o servidor devolve a lista; com o profissional escolhido, segue
+const l6 = lanc('R6', '28/10/2026', 'Bruno Card', 100, 'Pix', 'Não'); l6[3] = 'Clara Outra'; O.push(l6);
+ok(API.importarExtrato({ texto: '<OFX>\n' + tx('B40', '20261030', '150.00', 'Pix recebido - Bruno Card') + '\n</OFX>' }), 'importa 5');
+c = ok(API.conciliacao({ chave: 'Outubro/2026' }), 'com R6');
+r = API.conciliarAberto({ id: 'B40', abertos: [ab('R6')], simular: true }); assert.strictEqual(r.ok, false); assert.deepStrictEqual(r.profissionais, ['Giovana Grossi', 'Victor Cunha']); assert.ok(/escolha de qual/.test(r.erros[0]));
+r = API.conciliarAberto({ id: 'B40', abertos: [ab('R6')], simular: true, profissional: 'Victor Cunha' }); assert.strictEqual(r.ok, false, 'sobra 50 não fecha com 80'); assert.ok(/não fecha/.test(r.erros[0]));
+r = ok(API.conciliarAberto({ id: 'B40', abertos: [ab('R6')], profissional: 'Giovana Grossi' }), 'com profissional'); assert.ok(/R\$ 50,00 adiantamento de novembro \(Giovana\)/.test(r.plano), r.plano);
+c = ok(API.conciliacao({ chave: 'Outubro/2026' }), 'depois do B40'); assert.strictEqual(c.resolvidos.find(e => e.id === 'B40').situacao, 'conciliado');
+console.log('profissional escolhido ok');
 console.log('servidor-conciliacao-ia: tudo ok');

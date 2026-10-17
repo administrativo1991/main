@@ -3617,12 +3617,13 @@ function iaConciliacaoAnexar_(c) {
    mensal do paciente (Mensalidade fixa ou Antecipado por sessão) e é registrada como na Cobrança do mês
    (API.registrarPagamentoMes); senão, recusa explicando (nada é gravado). d.simular = só devolve o plano, sem gravar. */
 // sobra de um Pix como adiantamento: { ok, profissional, comps: [{ chave, valor }] } ou { ok: false, erro }
-function concAdiantamento_(paciente, profPref, depoisDe, resto) {
+function concAdiantamento_(paciente, profPref, depoisDe, resto, profEscolhido) {
   var mensal = function (l) { return l && l.ativo && (l.cobranca === 'Mensalidade fixa' || (l.cobranca === 'Por sessão' && l.pagamento === 'Antecipado')); };
   var profs = []; cobrancasProf_().forEach(function (l) { if (l.paciente === paciente && mensal(l) && profs.indexOf(l.profissional) < 0) profs.push(l.profissional); });
   if (!profs.length) return { ok: false, erro: paciente + ' não tem cobrança mensal (mensalidade fixa ou antecipado) em Cobrança por profissional: a sobra não tem onde entrar como adiantamento.' };
-  var prof = profs.length === 1 ? profs[0] : profs.indexOf(profPref) >= 0 ? profPref : '';
-  if (!prof) return { ok: false, erro: paciente + ' tem cobrança mensal com mais de um profissional (' + profs.join(', ') + '): registre o adiantamento na Cobrança do mês.' };
+  // mais de um profissional com cobrança mensal: a gestão escolhe na tela (gestão, 17/10); sem escolha, vale o da sessão, se for um deles
+  var prof = profEscolhido && profs.indexOf(profEscolhido) >= 0 ? profEscolhido : profs.length === 1 ? profs[0] : profs.indexOf(profPref) >= 0 ? profPref : '';
+  if (!prof) return { ok: false, erro: paciente + ' tem cobrança mensal com mais de um profissional (' + profs.join(', ') + '): escolha de qual é o adiantamento.', profissionais: profs };
   var comps = [], soma = 0, ultimo = '';
   for (var i = 1; i <= 6 && comps.length < 3 && soma < resto - 0.005; i++) {
     var m = new Date(depoisDe.getFullYear(), depoisDe.getMonth() + i, 1, 12), chave = chaveMes_(m), l = linhaVigente_(paciente, prof, m).linha;
@@ -3659,8 +3660,8 @@ API.conciliarAberto = function (d) {
     var pacs = sessoes.map(function (x) { return x.r.paciente; }).filter(function (n, i, a) { return a.indexOf(n) === i; });
     var pre = 'O Pix (' + brl_(valor) + ') é maior que o em aberto escolhido (' + brl_(emAberto) + '). ';
     if (pacs.length > 1) return { ok: false, erros: [pre + 'Sessões de mais de um paciente: a sobra não vira adiantamento; resolva à mão.'] };
-    adi = concAdiantamento_(pacs[0], ultima.profissional, ymdDate_(ultima.data), Math.round((valor - emAberto) * 100) / 100);
-    if (!adi.ok) return { ok: false, erros: [pre + adi.erro] };
+    adi = concAdiantamento_(pacs[0], ultima.profissional, ymdDate_(ultima.data), Math.round((valor - emAberto) * 100) / 100, String(d.profissional || '').trim());
+    if (!adi.ok) return { ok: false, erros: [pre + adi.erro], profissionais: adi.profissionais || [] };
   }
   var plano = sessoes.map(function (x) { var v = Math.min(saldo_(x.r), valor); return x.r.paciente.split(' ')[0] + ' ' + x.r.data.slice(0, 5) + (v >= saldo_(x.r) - 0.005 ? ' quitada' : ': ' + brl_(v) + ' de ' + brl_(saldo_(x.r)) + ', fica ' + brl_(saldo_(x.r) - v) + ' em aberto'); })
     .concat(adi ? [adi.comps.map(function (c) { return brl_(c.valor) + ' adiantamento de ' + c.chave.split('/')[0].toLowerCase(); }).join(' + ') + ' (' + adi.profissional.replace(/^Dra?\.\s+/, '').split(' ')[0] + ')'] : []).join(' + ');

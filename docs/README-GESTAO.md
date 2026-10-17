@@ -97,8 +97,11 @@ que o em aberto (ex.: o pai do Igor pagou setembro e outubro juntos): se a sobra
 pagos da cobrança mensal do paciente (mensalidade fixa ou antecipado), ela entra como **adiantamento** — o mesmo registro da
 Cobrança do mês (Mensalistas + linha "Mensalidade de …"/"Antecipado de …" na aba do mês do Pix) — e tudo é conciliado junto.
 O primeiro clique mostra o que vai ser feito (ex.: "Igor 30/09 quitada + R$ 200,00 adiantamento de outubro (Juliana)"); o
-segundo grava. Se a sobra não fecha, o paciente não tem cobrança mensal ou tem com mais de um profissional, o app diz por quê
-e não grava nada.
+segundo grava. Com cobrança mensal em mais de um profissional, aparece a lista "adiantamento de qual profissional?". Se a
+sobra não fecha ou o paciente não tem cobrança mensal, o app diz por quê e não grava nada: registre as partes nas telas de
+sempre (sessão na Ficha → Registrar pagamento; mês na Cobrança do mês → Registrar pagamento, com "Pagou só uma parte" se for o
+caso; crédito de paciente por sessão = Observação de cobrança no cadastro) e volte à Conciliação: **Sessão/consulta lançada →**
+aceita **vários lançamentos** num Pix só, mostrando a soma contra o valor (se não bater, pede confirmação).
 
 **Busca de paciente** (Pacientes, Ficha, Agenda, Registrar): acha pelo nome do paciente, do pagador habitual, do nome no
 extrato e do responsável, e mostra por qual achou; em Pacientes e na Ficha aparecem também os inativos.

@@ -694,6 +694,11 @@ table.cm .acoes{justify-content:flex-end;gap:4px;flex-wrap:wrap}
 .cc-form{display:flex;flex-wrap:wrap;gap:6px;align-items:center;flex:1 1 420px;justify-content:flex-end}
 .cc-form select,.cc-form input{width:auto;min-height:36px;padding:6px 10px;font-size:13px;flex:1 1 160px;max-width:260px}
 .cc-tab{min-width:620px}
+.cc-lanc{order:9;flex:1 1 100%;border:1px solid var(--borda);border-radius:10px;padding:6px 10px;font-size:13px;background:var(--sup)}
+.cc-lanc[hidden]{display:none}
+.cc-lanc-itens{max-height:220px;overflow-y:auto;display:flex;flex-direction:column;gap:2px;margin-top:4px}
+.cc-lanc-itens .check{font-weight:400;min-height:32px;overflow-wrap:anywhere}
+.cc-form .cc-lanc input{flex:none;width:auto;min-height:0;padding:0;max-width:none}
 .cc-ia{flex-basis:100%;font-size:13px;margin:2px 0 0}
 .cc-ia.faixa{padding:8px 12px}
 .cc-ia-corpo{display:flex;flex-wrap:wrap;align-items:center;gap:6px 12px;margin-top:4px}
