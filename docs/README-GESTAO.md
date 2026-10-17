@@ -8,7 +8,7 @@ A recepção faz tudo o que a gestão faz em Agenda, Confirmações, Registrar, 
 Pendências (corrigir lançamentos, convênio/modalidade da linha, CPF e nascimento, cobrança por profissional, editar
 sessões). Ficam **só com a gestão**: exportar o mês, virada do mês (criar aba e colunas), lembrete, **Faltas → Decidir**,
 marcar ou desmarcar **Perdido / glosa** (e o relatório de perdidos), a **IA** (card de uso e "Guias a conferir") e os
-menus **Repasse**, **Conciliação** e **A receber**.
+menus **Repasse**, **Conciliação**, **A receber** e **Evolução**.
 
 A gestão acompanha sem lançar em **Pendências → "O que a recepção fez · últimos 7 dias"** (primeiro card, só a gestão vê):
 junta `Alterações de cadastro`, `Alterações de lançamento` e `Lembretes` gravados por e-mail que não é da gestão, com
@@ -134,6 +134,36 @@ Menu **A receber** (só a gestão).
 - **Perdas do ano**: quanto se perdeu por mês (e o % do atendido), por motivo, por convênio e por profissional, e a lista.
   Linhas marcadas direto na planilha sem motivo aparecem como "sem motivo escrito".
 
+## Evolução e saúde financeira (Fase 2, 17/10)
+
+Menu **Evolução** (ou Pendências → Regras e tabelas → "Evolução e saúde financeira", no celular). Só a gestão vê.
+
+- **No topo**: o último mês fechado: receita própria, resultado, resultado sem plantões, cobertura do ponto de equilíbrio
+  e pessoal sobre a receita própria, com a seta contra o mês anterior.
+- **Gráficos**: receita própria por origem · atendimentos, pacientes únicos e novos · resultado com e sem plantões ·
+  despesa por grupo · pessoal ÷ receita própria · cobertura (100% = empata) · retenção (voltou em até 90 e 120 dias) ·
+  caixa (patrimônio e acumulador). Passe o mouse (ou toque) num mês para ver os números.
+- **Plantões** (Santa Casa e Unimed) ficam num bloco recolhido, fora da operação própria: receita, repasse de 82% e o que
+  fica na clínica.
+- **Mês a mês**: a tabela com os mesmos números, e "Como ler" com as observações de cada mês.
+
+**De onde vêm os números**
+- Dinheiro: aba `Evolução mensal`, uma linha por mês fechado (Jan–Set/26 vieram dos fechamentos 02 a 10). Colunas: receita
+  por origem (Particular, Cedplan, Sabin, Aluguel de sala, Outras receitas), plantões (Santa Casa, Unimed), repasses
+  (total e dos plantões — vazio = 82% dos plantões), despesa por grupo, Recuperações (negativo, abate do Pessoal),
+  Despesa total e Resultado (vazios = o app soma/calcula), patrimônio, acumulador, Sessões fora do sistema, Fonte,
+  Conferido (Sim / vazio = "a conferir") e Observação (aparece em "Como ler"). Mês = `MM/AAAA`.
+- Cobertura = (receita própria − repasses próprios − 18% de tributo) ÷ despesa; é a régua dos fechamentos.
+- Atendimentos: Jan–Ago/26 da aba `Histórico de atendimentos` (exports do ControleOdonto, com o nome do cadastro); de
+  setembro em diante, das abas de mês do app (linha "Atendido", sem as linhas de pagamento: Mensalidade de…, Pagamento de…,
+  compra de plano, taxa de falta). Paciente novo = primeiro atendimento desde jan/26. Retenção de um mês só aparece depois
+  que a janela de 90/120 dias fecha (antes: "em apuração").
+- Sessões fora do sistema (ex.: 78 do Sabin em agosto, só no relatório de guias) somam no total de atendimentos do mês,
+  mas não em pacientes, novos e retenção.
+
+**Todo mês**: depois do fechamento, acrescente a linha do mês em `Evolução mensal` (copie a linha de cima e troque os
+números). Os atendimentos não precisam de nada: o app lê sozinho.
+
 ## Parcelamentos (Fase 2)
 
 Ficam na **Ficha do paciente** (card "Parcelamentos"); gestão e recepção criam e recebem.
@@ -161,6 +191,7 @@ código (`ALERTA_*`, `app/server/server-fase2.js`); para mudar, peça. "Sem celu
 2. Dia 1: conferir se o Atendimento mostra a aba nova no topo.
 3. Durante o mês: Gestão → pendências de pagamento e NF; Mensalistas → quem está pendente/atrasado (a recepção já vê o aviso ao atender).
 4. Fechamento: Conciliação do mês (extrato e vendas no cartão do PagBank); depois Gestão → exportar o mês pro Financeiro / contabilidade.
+5. Fechamento pronto (arquivo NN_FECHAMENTO): uma linha nova na aba `Evolução mensal` com os números dele (ver "Evolução e saúde financeira").
 
 ## Virada de 01/11 (modelo antecipado)
 

@@ -1,0 +1,26 @@
+<section class="tela coluna" id="s-evolucao" hidden>
+  <div class="titulo">
+    <h1>Evolução e saúde financeira</h1>
+    <span class="muted">só a gestão vê · fechamentos + atendimentos</span>
+    <span class="esp"></span>
+    <button type="button" class="btn ter imprimir so-pc"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9V3h12v6"/><rect x="3" y="9" width="18" height="9" rx="2"/><path d="M6 14h12v7H6z"/></svg>Imprimir</button>
+  </div>
+  <div id="ev-carregando" class="carregando">Carregando…</div>
+  <div id="ev-aviso"></div>
+  <div id="ev-corpo" hidden style="display:flex;flex-direction:column;gap:16px">
+    <div class="muted" id="ev-ref" style="font-size:13px"></div>
+    <div class="fd-resumo ev-tiles" id="ev-tiles"></div>
+    <div class="ev-grid" id="ev-graficos"></div>
+    <details class="card compacto ev-plantoes" id="ev-plantoes">
+      <summary><h2 style="font-size:15px;display:inline">Plantões (Santa Casa e Unimed)</h2> <span class="muted" style="font-size:13px">fora da operação própria · só a gestão</span></summary>
+      <div class="muted" style="font-size:13px">Receita dos plantões do Dr. Victor faturada pela clínica. O repasse é de 82%; o que fica na clínica é antes dos tributos retidos na nota.</div>
+      <div id="ev-pl-graf"></div>
+      <div class="tabela-wrap"><table class="ev-tab"><thead><tr><th>Mês</th><th class="num">Santa Casa</th><th class="num">Unimed</th><th class="num">Total</th><th class="num">Repasse</th><th class="num">Fica na clínica</th></tr></thead><tbody id="ev-pl-linhas"></tbody></table></div>
+    </details>
+    <details class="card compacto" id="ev-tabela" open>
+      <summary><h2 style="font-size:15px;display:inline">Mês a mês</h2> <span class="muted" style="font-size:13px">os números dos gráficos</span></summary>
+      <div class="tabela-wrap"><table class="ev-tab"><thead id="ev-t-cab"></thead><tbody id="ev-t-linhas"></tbody></table></div>
+    </details>
+    <div class="card pessego" id="ev-notas"></div>
+  </div>
+</section>
