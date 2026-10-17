@@ -23,7 +23,7 @@ coluna E não afeta o app. Atualizar `E2` faz parte de toda publicação (passo 
 
 | Canal | Deploy | Peças | Commit |
 |---|---|---|---|
-| Real (`arquivos_real`) | **2026-10-16-20** (conciliação: Pix maior que o em aberto nunca recusado — parte do mês seguinte ou crédito no cadastro) | 65 (duplicatas 3 · server 24 · index 38); ativas = as do 16-19 menos 1112–1114 (→ `antigo50:`) mais 1115–1117 | branch `claude/lucid-wright-6vx5yt`, commit 0cb3eee |
+| Real (`arquivos_real`) | **2026-10-16-21** (crédito do paciente: a anotação diz pra apagar quando acabar) | 65 (duplicatas 3 · server 24 · index 38); ativas = as do 16-20 com server 23 em 1118 (1115 → `antigo51:`) | branch `claude/lucid-wright-6vx5yt`, commit 5c81624 |
 | Teste (`arquivos`) | **2026-10-16-10** (Alertas, ⚠ abre a Ficha) | 60 (duplicatas 3 · server 20 · index 37), linhas 750–809; `antigo42:` = as do 16-09 (690–749) | branch `claude/sweet-wozniak-aviy8u`, commit cede9d7 |
 | Carregador real | 2026-10-16 (`dist/Code.real.gs` com `gatilhoDiarioIA` + permissões; versão 2 do projeto real, implantada pela gestão em 16/10 17:27) | — | 618b511 |
 | Carregador teste | 2026-10-04-01 + nova versão pendente desde 05/10 (permissão do Drive, ver `COMO-INSTALAR.md`) | — | — |
@@ -48,6 +48,15 @@ Modelo:
 ```
 
 ## Lista
+
+### 2026-10-16-21 · Real · crédito do paciente: a anotação diz pra apagar quando acabar
+- **O que mudou** (gestão, 16/10: "inclua essa diretiva"): o crédito anotado pela Conciliação passa a dizer "Crédito R$ X (Pix
+  de dd/mm): abater nas próximas sessões; usou tudo, apague esta anotação". Docs: POP da recepção (§3, "Crédito do paciente"),
+  guia da recepção (§4) e guia da gestão.
+- **Peças**: 1 célula (server 23) copiada para 1118, 1 `findReplace`. LEN/UNICODE 38278/3259745 = build. Ativação A1115:A1118;
+  somas 320.541 / 465.940 / 32.115 = build de 5c81624, 24/38/3 partes únicas. Testes 14/14.
+  **Voltar**: 1115 → `server.js` e 1118 → `antigo52:`.
+- **Commit**: 5c81624 · **Aprovação**: gestão, 16/10.
 
 ### 2026-10-16-20 · Real · conciliação: Pix maior que o em aberto nunca é recusado
 - **O que mudou** (gestão, 16/10: "socorro, muita coisa pra fazer… tem que ter uma forma mais fácil"): o "Registrar pagamento
