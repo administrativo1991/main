@@ -3683,7 +3683,8 @@ API.conciliarAberto = function (d) {
     if (erros.length && !lancAdi.length) return { ok: false, erros: erros };
     valor = emAberto;
   } else if (adi && adi.credito) { // sem cobrança mensal: a sobra vira crédito anotado no cadastro (a recepção lê na cobrança)
-    notaCredito = 'Crédito ' + brl_(sobra) + ' (Pix de ' + dataPix + '): abater nas próximas sessões';
+    // a própria anotação diz o que fazer (gestão, 17/10): a recepção abate e apaga quando o crédito acabar
+    notaCredito = 'Crédito ' + brl_(sobra) + ' (Pix de ' + dataPix + '): abater nas próximas sessões; usou tudo, apague esta anotação';
     var pc = linhaPaciente_(ultima.paciente), obsAnt = pc ? String(pc.obsCobranca || '').trim() : '';
     var rcad = API.atualizarCadastro({ nome: ultima.paciente, campos: { obsCobranca: (obsAnt ? obsAnt + ' | ' : '') + notaCredito }, quemInformou: 'conciliação (Pix de ' + dataPix + ')' });
     if (!rcad.ok) return { ok: false, erros: ['Não consegui anotar o crédito no cadastro: '].concat(rcad.erros || []) };

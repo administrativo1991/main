@@ -100,6 +100,10 @@ Aplicação de teste de paciente de convênio pede a **guia assinada**, como qua
   **Cobrança por profissional** a recepção também inclui e edita (**+ Adicionar profissional** / **Editar**): quando a
   Juliana, o profissional ou a gestão passa como o paciente paga, lance e escreva em "Valor decidido por" quem decidiu.
   Lance só o que foi combinado por eles; desconto pedido pelo paciente continua sem negociar na recepção.
+- **Crédito do paciente** (a gestão anota pela Conciliação quando um Pix veio a mais): aparece no ⚠ Atenção na cobrança como
+  "Crédito R$ X (Pix de dd/mm): abater nas próximas sessões". Na sessão, não cobre: registre como paga (Pix, data do Pix do
+  crédito, Observação "pago com crédito do Pix de dd/mm"). **Quando o crédito acabar, apague a anotação** na Observação de
+  cobrança (Pacientes → Editar); se sobrou parte, troque o valor.
 - **Ficha**: tudo do paciente numa tela (contatos, o que deve, guias, sessões, próximos horários, cobrança, mensagens).
   Abre em Pacientes → Ficha, no painel da Agenda (**Ver ficha**), no Registrar e clicando no nome na Cobrança do mês.
 - Depois de cadastrar aqui, cadastre também no ControleOdonto.

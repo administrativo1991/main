@@ -174,7 +174,7 @@ r = ok(API.conciliarAberto({ id: 'B32', abertos: [ab('R5')], simular: true }), '
 assert.strictEqual(r.plano, 'Ana 29/10 quitada + R$ 80,00 fica de crédito de Ana (anotado no cadastro pra recepção abater)', r.plano);
 r = ok(API.conciliarAberto({ id: 'B32', abertos: [ab('R5')] }), 'crédito'); assert.strictEqual(r.credito, 80);
 const PS = ss._m.Pacientes.d, hOC = PS[0].findIndex(x => /^Observação de cobrança/.test(x)), ana = PS.find(l => l[0] === 'Ana Souza');
-assert.ok(/Crédito R\$ 80,00 \(Pix de 30\/10\/2026\): abater nas próximas sessões/.test(ana[hOC]), ana[hOC]);
+assert.ok(/Crédito R\$ 80,00 \(Pix de 30\/10\/2026\): abater nas próximas sessões; usou tudo, apague esta anotação/.test(ana[hOC]), ana[hOC]);
 assert.strictEqual(linR('R5')[hO('Pago?')], 'Sim');
 r = ok(API.conciliarAberto({ id: 'B30', abertos: [ab('R4')], simular: true }), 'simular'); assert.strictEqual(r.plano, 'Rui 28/10 quitada + R$ 150,00 adiantamento de novembro + R$ 150,00 adiantamento de dezembro (Juliana)', r.plano);
 assert.strictEqual(linR('R4')[hO('Pago?')], 'Não', 'simular não grava');

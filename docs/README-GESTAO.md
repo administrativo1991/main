@@ -97,8 +97,9 @@ recusa por valor:
   enquanto couber, e o resto como **parte** do próximo mês (ex.: "R$ 150 de R$ 200 de novembro (fica R$ 50)"), pelo mesmo
   registro da Cobrança do mês. Com mensalidade em mais de um profissional, aparece "adiantamento de qual profissional?".
 - Pix **maior**, paciente que paga por sessão: a sobra vira **crédito**, anotado sozinho na Observação de cobrança do cadastro
-  ("Crédito R$ X (Pix de dd/mm): abater nas próximas sessões"), que a recepção vê na hora de cobrar. Quando abater, apague a
-  anotação no cadastro.
+  ("Crédito R$ X (Pix de dd/mm): abater nas próximas sessões; usou tudo, apague esta anotação"), que a recepção vê na hora
+  de cobrar. A própria anotação diz o que fazer: a recepção registra a sessão como paga com o crédito e, quando o crédito
+  acaba, apaga a anotação (POP da recepção, seção 3).
 Pix com várias partes já registradas em outras telas: "o que é?" → **Sessão/consulta lançada →** aceita **vários
 lançamentos**, mostrando a soma contra o valor.
 
